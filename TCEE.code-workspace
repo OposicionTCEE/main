@@ -1,0 +1,85 @@
+{
+  // Espacio de trabajo de la oposición. Ábrelo con: Archivo > Abrir área de trabajo desde archivo…
+  // La raíz es la carpeta TCEE (la que contiene "main" y todos los "Tema-…").
+  "folders": [
+    { "path": "..", "name": "TCEE" }
+  ],
+  "settings": {
+    // ---- Edición ----
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 1500,
+    "[latex]": {
+      "editor.wordWrap": "on",
+      "editor.tabCompletion": "on",
+      "editor.snippetSuggestions": "top",
+      "editor.tabSize": 4,
+      "editor.quickSuggestions": { "other": "on", "comments": "off", "strings": "off" }
+    },
+    "editor.minimap.enabled": false,
+
+    // ---- Compilación (LaTeX Workshop) ----
+    // Igual que Overleaf: con errores menores el PDF se genera igualmente; con un error grave
+    // se conserva el último PDF correcto (ver main/scripts/compilar.sh). El .tex se guarda siempre.
+    "latex-workshop.latex.recipes": [
+      { "name": "Compilar tema", "tools": ["latexmk-tcee"] }
+    ],
+    "latex-workshop.latex.tools": [
+      {
+        "name": "latexmk-tcee",
+        "command": "bash",
+        "args": ["%WORKSPACE_FOLDER%/main/scripts/compilar.sh", "%DOC%", "%OUTDIR%"],
+        "env": {}
+      }
+    ],
+    "latex-workshop.latex.outDir": "%DIR%/.build",
+    "latex-workshop.latex.autoBuild.run": "never",
+    "latex-workshop.latex.autoClean.run": "never",
+    "latex-workshop.view.pdf.viewer": "tab",
+    "latex-workshop.view.pdf.internal.synctex.keybinding": "double-click",
+    "latex-workshop.message.error.show": false,
+    "latex-workshop.message.warning.show": false,
+
+    // ---- Git / GitHub ----
+    "git.autoRepositoryDetection": "subFolders",
+    "git.repositoryScanMaxDepth": 1,
+    "git.autofetch": true,
+    "git.confirmSync": false,
+    "git.enableSmartCommit": true,
+    "git.terminalAuthentication": true,
+
+    // ---- Ocultar archivos de compilación ----
+    "files.exclude": {
+      "**/.build": true, "**/*.aux": true, "**/*.fls": true, "**/*.fdb_latexmk": true,
+      "**/*.synctex.gz": true, "**/*.leq": true, "**/*.toc": true, "**/*.out": true
+    },
+    "search.exclude": { "**/.build": true, "**/*.log": true, "**/*.pdf": true }
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Sincronizar todos los temas con GitHub",
+        "type": "shell",
+        "command": "bash main/scripts/sincronizar_todo.sh",
+        "options": { "cwd": "${workspaceFolder}" },
+        "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
+        "problemMatcher": []
+      },
+      {
+        "label": "Descargar temas que falten",
+        "type": "shell",
+        "command": "bash main/scripts/clonar_temas.sh",
+        "options": { "cwd": "${workspaceFolder}" },
+        "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
+        "problemMatcher": []
+      }
+    ]
+  },
+  "extensions": {
+    "recommendations": [
+      "james-yu.latex-workshop",
+      "anthropic.claude-code",
+      "ms-ceintl.vscode-language-pack-es"
+    ]
+  }
+}
