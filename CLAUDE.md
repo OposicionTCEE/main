@@ -7,8 +7,6 @@ La carpeta raíz (`TCEE/`) contiene:
 - `Tema-<ejercicio>.<parte>.<número>/` — un repositorio de GitHub por tema (organización `OposicionTCEE`).
   Cada uno tiene `main.tex` (o `4_B_xx.tex` en 4.B.24–26) y sus figuras PNG.
 
-GitHub es la fuente de verdad. Ya no se edita en Overleaf.
-
 ## Cómo trabajar con los temas
 - Compilación: `bash main/scripts/compilar.sh <ruta>/Tema-X/main` (envuelve `latexmk -pdf -f …`).
   Compila en `.build/.tmp` y solo copia el PDF a `.build/` si se genera: con un error grave se conserva el último PDF correcto.
