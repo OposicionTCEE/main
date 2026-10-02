@@ -10,8 +10,9 @@ La carpeta raíz (`TCEE/`) contiene:
 GitHub es la fuente de verdad. Ya no se edita en Overleaf.
 
 ## Cómo trabajar con los temas
-- Compilación: `latexmk -pdf -f -synctex=1 -interaction=nonstopmode -file-line-error -outdir=.build main.tex`
-  desde la carpeta del tema. `-f` es intencionado: muchos temas tienen errores menores y el PDF debe salir igual.
+- Compilación: `bash main/scripts/compilar.sh <ruta>/Tema-X/main` (envuelve `latexmk -pdf -f …`).
+  Compila en `.build/.tmp` y solo copia el PDF a `.build/` si se genera: con un error grave se conserva el último PDF correcto.
+  `-f` es intencionado: muchos temas tienen errores menores y el PDF debe salir igual.
   El estado de cada tema está en `main/ESTADO_COMPILACION.md`.
 - Las ecuaciones se escriben con `\eqblock{<matemática en aligned>}{<pie>}`. El pie debe nombrar el modelo
   ("… Modelo de SOLOW"): el análisis de relaciones entre temas depende de ello.

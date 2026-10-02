@@ -18,15 +18,16 @@
     "editor.minimap.enabled": false,
 
     // ---- Compilación (LaTeX Workshop) ----
-    // Igual que Overleaf: si hay errores en el texto, se genera el PDF igualmente.
+    // Igual que Overleaf: con errores menores el PDF se genera igualmente; con un error grave
+    // se conserva el último PDF correcto (ver main/scripts/compilar.sh). El .tex se guarda siempre.
     "latex-workshop.latex.recipes": [
       { "name": "Compilar tema", "tools": ["latexmk-tcee"] }
     ],
     "latex-workshop.latex.tools": [
       {
         "name": "latexmk-tcee",
-        "command": "latexmk",
-        "args": ["-pdf", "-f", "-synctex=1", "-interaction=nonstopmode", "-file-line-error", "-outdir=%OUTDIR%", "%DOC%"],
+        "command": "bash",
+        "args": ["%WORKSPACE_FOLDER%/main/scripts/compilar.sh", "%DOC%", "%OUTDIR%"],
         "env": {}
       }
     ],

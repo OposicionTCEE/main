@@ -18,7 +18,7 @@ Al terminar tendrás en tu Mac:
 
 1. **Deja de editar en Overleaf** desde este momento. Si tienes cambios en Overleaf que no estén en GitHub, súbelos primero desde Overleaf (*Menú › GitHub › Push Overleaf changes to GitHub*) en cada proyecto que hayas tocado.
 2. **No canceles Overleaf todavía.** Hazlo cuando lleves unos días trabajando con este entorno sin problemas.
-3. Seis temas no generan PDF por errores en el texto (no por el programa): 3.A.9, 3.B.13, 3.B.18, 3.B.43, 4.B.15 y 4.B.25. El detalle está en [ESTADO_COMPILACION.md](ESTADO_COMPILACION.md). Claude puede corregirlos cuando quieras.
+3. Seis temas no generan PDF por errores graves en el texto (no por el programa); puedes seguir editándolos igual: 3.A.9, 3.B.13, 3.B.18, 3.B.43, 4.B.15 y 4.B.25. El detalle está en [ESTADO_COMPILACION.md](ESTADO_COMPILACION.md). Claude puede corregirlos cuando quieras.
 
 ---
 
@@ -43,6 +43,8 @@ Al terminar tendrás en tu Mac:
    ```
 
 ## Paso 3 · Instalar VS Code
+
+> **Si ya tienes VS Code instalado, salta este paso.**
 
 1. Descarga VS Code de <https://code.visualstudio.com/> (botón *Download for Mac*).
 2. Abre el `.zip` descargado y arrastra **Visual Studio Code** a la carpeta **Aplicaciones**.
@@ -88,7 +90,11 @@ La primera vez que sincronices (paso 8) puede volver a pedirte autorización: ac
 2. **Compilar**: `⌘ + ⌥ + B` (o el icono **TeX** de la barra izquierda › *Build LaTeX project*). La primera vez tarda en torno a un minuto.
 3. **Ver el PDF**: `⌘ + ⌥ + V`. Se abre en una pestaña; arrástrala a la derecha para tenerla al lado del texto.
 4. **Saltar del PDF al texto**: doble clic sobre el PDF. **Del texto al PDF**: `⌘ + ⌥ + J`.
-5. Los cambios **se guardan solos**. El PDF se actualiza cada vez que compilas.
+5. Los cambios **se guardan solos**, compile o no el documento. Guardar y compilar son cosas independientes.
+
+**Qué pasa cuando la compilación falla** (igual que en Overleaf):
+- Con errores menores (un carácter raro, un `$` suelto…), el PDF se genera igualmente.
+- Con un error grave (una llave o una nota al pie sin cerrar), no se puede generar un PDF nuevo: **se mantiene el último PDF que compiló bien** y aparece un aviso. Tu texto está guardado y se sincronizará con GitHub igual.
 
 Los avisos de error de compilación no saltan en pantalla (hay muchos antiguos en los temas). Para verlos: menú **Ver › Problemas**.
 
