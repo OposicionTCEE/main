@@ -1,0 +1,60 @@
+{
+  // Atajos de escritura para los temas. Escribe el prefijo y pulsa Tab.
+  // Con Tab saltas de un hueco al siguiente.
+  "Ecuación con pie (eqblock)": {
+    "scope": "latex",
+    "prefix": "eqb",
+    "body": [
+      "\\eqblock{",
+      "\\begin{aligned}",
+      "    ${1:Y=C+I}",
+      "\\end{aligned}",
+      "}{${2:Descripción}. ${3:Modelo de AUTOR}}",
+      "$0"
+    ],
+    "description": "Bloque de ecuación con pie. Nombra el modelo en el pie para que el análisis de relaciones lo detecte."
+  },
+  "Imagen con título y fuente": {
+    "scope": "latex",
+    "prefix": "img",
+    "body": ["\\imagenfit{${1:archivo.png}}{${2:Título}}{${3:Elaboración propia}}", "$0"],
+    "description": "Inserta una figura con \\imagenfit{archivo}{título}{fuente}"
+  },
+  "Recuadro especial": {
+    "scope": "latex",
+    "prefix": "rec",
+    "body": ["\\begin{specialblock}{${1:Título}}", "    $2", "\\end{specialblock}", "$0"],
+    "description": "Recuadro especial (specialblock)"
+  },
+  "Lista numerada (lnum)": {
+    "scope": "latex",
+    "prefix": "lnum",
+    "body": ["\\begin{lnum}", "    \\item $1", "\\end{lnum}", "$0"]
+  },
+  "Lista (la)": {
+    "scope": "latex",
+    "prefix": "la",
+    "body": ["\\begin{la}", "    \\item $1", "\\end{la}", "$0"]
+  },
+  "Remisión a otro tema": {
+    "scope": "latex",
+    "prefix": "vertema",
+    "body": ["([\\authorfont{Ver Tema ${1:3.A.43}}])$0"],
+    "description": "Remisión con el formato habitual: ([Ver Tema X])"
+  },
+  "Nota OJO": {
+    "scope": "latex",
+    "prefix": "ojo",
+    "body": ["\\textbf{(OJO:} ${1:texto}\\textbf{)}$0"]
+  },
+  "Anexo": {
+    "scope": "latex",
+    "prefix": "anexo",
+    "body": ["\\anexo{\\textbf{${1:Título del anexo}}}", "$0"]
+  },
+  "Puntos clave": {
+    "scope": "latex",
+    "prefix": "pclave",
+    "body": ["\\puntosclave{", "    $1", "}", "$0"]
+  }
+}

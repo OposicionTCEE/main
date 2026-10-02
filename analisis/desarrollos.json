@@ -1,0 +1,1902 @@
+{
+ "generado": "2026-10-02",
+ "descripcion": "Modelos desarrollados matemáticamente en cada tema (ver analisis/Desarrollos_modelos_TCEE.xlsx)",
+ "por_tema": {
+  "3.A.29": [
+   {
+    "familia": "Descuento cuasi-hiperbólico",
+    "area": "Microeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Preferencias Intertemporales: Funcion de Utilidad Intertemporal",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Generaciones solapadas",
+    "area": "Crecimiento",
+    "forma": "Versión original",
+    "epigrafes": "Heterogeneidad de agentes | Ejemplo: Economia de intercambio puro",
+    "bloques": 4,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Ramsey-Cass-Koopmans",
+    "area": "Crecimiento",
+    "forma": "Versión original",
+    "epigrafes": "Optimizacion de los Hogares | Optimizacion de las Empresas | Equilibrio",
+    "bloques": 4,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Renta permanente",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Variaciones en la renta ( w )",
+    "bloques": 1,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.25": [
+   {
+    "familia": "Asignación del tiempo",
+    "area": "Microeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Modelo de BECKER | Duracion optima de la formacion",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Capital humano y ecuación de ingresos",
+    "area": "Mercado de trabajo",
+    "forma": "Versión original",
+    "epigrafes": "Ecuaciones de ingresos de Mincer",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Demanda de trabajo neoclásica",
+    "area": "Mercado de trabajo",
+    "forma": "Versión original",
+    "epigrafes": "Corto plazo | Largo plazo | Obtencion de la demanda intertemporal de trabajo",
+    "bloques": 5,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Elección ocio-consumo (oferta de trabajo neoclásica)",
+    "area": "Microeconomía",
+    "forma": "Versión original",
+    "epigrafes": "El problema del consumidor: Eleccion entre consumo y ocio | Variaciones en la Funcion de Oferta Marshalliana",
+    "bloques": 4,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Elección ocio-consumo (oferta de trabajo neoclásica)",
+    "area": "Microeconomía",
+    "forma": "Oferta intertemporal de trabajo (Lucas-Rapping 1969)",
+    "epigrafes": "Obtencion de la oferta intertemporal de trabajo",
+    "bloques": 4,
+    "grado": "Completo"
+   }
+  ],
+  "3.A.6": [
+   {
+    "familia": "Curva de Phillips",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Curva de PHILLIPS y sorpresa monetaria",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Elección ocio-consumo (oferta de trabajo neoclásica)",
+    "area": "Microeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Modelo: Optimizacion intertemporal Ocio-Consumo",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Inconsistencia temporal de la política",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Funcion de Perdida Social",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Islas de Lucas (información imperfecta)",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Supuestos | Actualizacion de las expectativas y reaccion | Funcion de Oferta Agregada de LUCAS: Reaccion conjunta | Curvas de Oferta y Demanda Agregada. LUCAS",
+    "bloques": 15,
+    "grado": "Completo"
+   }
+  ],
+  "3.A.18": [
+   {
+    "familia": "Ciudad lineal (diferenciación espacial)",
+    "area": "Microeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Costes de transporte: lineales | Costes de transporte: Cuadraticos | Modelos espaciales: Resolucion analitica",
+    "bloques": 3,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Ciudad lineal (diferenciación espacial)",
+    "area": "Microeconomía",
+    "forma": "Ciudad circular (Salop 1979)",
+    "epigrafes": "Implicaciones de Politica Economica",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Competencia monopolística",
+    "area": "Microeconomía",
+    "forma": "Dixit-Stiglitz (1977)",
+    "epigrafes": "Consumidor: Preferencia por la variedad | Condicion CES: Simplificacion | Elasticidades-renta unitarias | Elasticidad-precio de la demanda de una variedad | Elasticidad de sustitucion: Intersectorial e Intrasectorial | Indice de precios: Deflactor del bienestar | Productor: Competencia monopolistica | Condicion de libre entrada",
+    "bloques": 9,
+    "grado": "Completo"
+   }
+  ],
+  "3.B.6": [
+   {
+    "familia": "Competencia monopolística",
+    "area": "Microeconomía",
+    "forma": "Dixit-Stiglitz (1977)",
+    "epigrafes": "Demanda: CES-isoelastica | Productor: Simetria en costes",
+    "bloques": 3,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Empresas heterogéneas",
+    "area": "Comercio internacional",
+    "forma": "Versión original",
+    "epigrafes": "Demanda: CES-isoelastica | Implicaciones de Politica Economica: Apertura al comercio | Modelo de MELITZ: Desarrollos auxiliares",
+    "bloques": 10,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Empresas heterogéneas",
+    "area": "Comercio internacional",
+    "forma": "Melitz-Ottaviano (2008)",
+    "epigrafes": "Demanda: CES-isoelastica | Condicion de libre entrada",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Nueva teoría del comercio (rendimientos crecientes)",
+    "area": "Comercio internacional",
+    "forma": "Versión original",
+    "epigrafes": "Condicion de libre entrada | Equilibrio: Vaciamiento de mercado(s) | Implicaciones de Politica Economica: Apertura comercial",
+    "bloques": 3,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.19": [
+   {
+    "familia": "Duopolio de Bertrand",
+    "area": "Microeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Desarrollo formal",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Duopolio de Cournot",
+    "area": "Microeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Desarrollo",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Duopolio de Cournot",
+    "area": "Microeconomía",
+    "forma": "Variaciones conjeturales (Bowley 1924)",
+    "epigrafes": "Variacion conjentural: ¿Que es? Derivacion analitica",
+    "bloques": 8,
+    "grado": "Completo"
+   }
+  ],
+  "3.A.13": [
+   {
+    "familia": "Filtrado en mercado de seguros",
+    "area": "Microeconomía",
+    "forma": "Screening monopolístico (Mussa-Rosen 1978)",
+    "epigrafes": "Planteamiento del problema de optimizacion",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Principal-agente",
+    "area": "Microeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Planteamiento del problema de optimizacion | Ejemplo: Desarrollo grafico | Beneficio: Principal",
+    "bloques": 5,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Principal-agente",
+    "area": "Microeconomía",
+    "forma": "Holmström (1979) — condiciones de primer orden",
+    "epigrafes": "Casos particulares: Analisis de las CPO's (HOMSTROM)",
+    "bloques": 3,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Señalización en el mercado de trabajo",
+    "area": "Microeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Equilibrios agrupadores (pooling) | Ejemplo.- Educacion (SPENCE, 1973)",
+    "bloques": 2,
+    "grado": "Parcial"
+   }
+  ],
+  "3.B.3": [
+   {
+    "familia": "Irrelevancia de la estructura financiera",
+    "area": "Finanzas",
+    "forma": "Versión original",
+    "epigrafes": "Proposicion II.- r_E D: r_ WACC cte. | Trade off theory : Impuestos y bancarrota | (sin epígrafe)",
+    "bloques": 8,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Señalización en el mercado de trabajo",
+    "area": "Microeconomía",
+    "forma": "Señalización financiera (Ross 1977)",
+    "epigrafes": "Senalizacion y control: ROSS (1977)",
+    "bloques": 1,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.16": [
+   {
+    "familia": "Competencia perfecta (equilibrio parcial)",
+    "area": "Microeconomía",
+    "forma": "Versión original",
+    "epigrafes": "La Demanda: el Consumidor | Funcion de Demanda Individual | Funcion de Demanda Agregada | La Oferta: la Curva de Oferta del Productor | Funcion de Oferta Individual | Rendimientos Decrecientes a Escala | Rendimietos Mixtos a Escala: Decrecientes para Niveles Iniciales de Produccion | Rendimientos Constantes a Escala",
+    "bloques": 10,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Equilibrio general walrasiano / Arrow-Debreu",
+    "area": "Microeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Tationnement: Subastador walrasiano",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Incidencia impositiva en equilibrio parcial",
+    "area": "Sector público",
+    "forma": "Versión original",
+    "epigrafes": "Impuesto sobre el consumo",
+    "bloques": 3,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.21": [
+   {
+    "familia": "Equilibrio general walrasiano / Arrow-Debreu",
+    "area": "Microeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Funcion de Exceso de Demanda Agregada | Ley de WALRAS | Tatonnement en precios: General y reforzado | Informacion simetrica: Mercado de activos | Teoria del Equilibrio General (produccion): ARROW-DEBREU",
+    "bloques": 9,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Equilibrio general walrasiano / Arrow-Debreu",
+    "area": "Microeconomía",
+    "forma": "Equilibrio de Radner (1972)",
+    "epigrafes": "Equilibrio de RADNER | Desarrollo formal | Teoria del Equilibrio General: Modelo de comercio secuancial (RADNER)",
+    "bloques": 4,
+    "grado": "Completo"
+   }
+  ],
+  "3.A.31": [
+   {
+    "familia": "Tablas input-output",
+    "area": "Microeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Representacion matematica: Operadores | Los coeficientes tecnicos | Coeficientes de CHENERY y WATANABE",
+    "bloques": 3,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.12": [
+   {
+    "familia": "Análisis envolvente de datos (DEA)",
+    "area": "Microeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Modelo basico",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Frontera estocástica (SFA)",
+    "area": "Microeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Modelo",
+    "bloques": 2,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.20": [
+   {
+    "familia": "Imposición / tarificación óptima de Ramsey",
+    "area": "Sector público",
+    "forma": "Ramsey-Boiteux (1956)",
+    "epigrafes": "Precios RAMSEY-BOITEAUX",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Monopolio",
+    "area": "Microeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Poder de mercado",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Regulación con información asimétrica",
+    "area": "Regulación",
+    "forma": "Versión original",
+    "epigrafes": "Desarrollo formal: Empresa publica",
+    "bloques": 2,
+    "grado": "Parcial"
+   }
+  ],
+  "4.B.11": [
+   {
+    "familia": "Imposición / tarificación óptima de Ramsey",
+    "area": "Sector público",
+    "forma": "Versión original",
+    "epigrafes": "Base general: | La regla de RAMSEY | Una reinterpretacion de la regla de RAMSEY: Regla de la elasticidad inversa",
+    "bloques": 5,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Imposición óptima sobre la renta",
+    "area": "Sector público",
+    "forma": "Versión original",
+    "epigrafes": "Impuesto sobre la Renta Personal: Desarrollo analitico (MIRRLESS, 1971)",
+    "bloques": 1,
+    "grado": "Parcial"
+   }
+  ],
+  "4.B.10": [
+   {
+    "familia": "Imposición óptima sobre la renta",
+    "area": "Sector público",
+    "forma": "Impuesto lineal óptimo (Stern 1976)",
+    "epigrafes": "Efecto incentivo al trabajo: Endogeneidad de la renta (STERN, 1987)",
+    "bloques": 1,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.23": [
+   {
+    "familia": "Bienes públicos: provisión eficiente",
+    "area": "Sector público",
+    "forma": "Versión original",
+    "epigrafes": "Definicion: Fallo de Mercado",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Bienes públicos: provisión eficiente",
+    "area": "Sector público",
+    "forma": "Lindahl (1919)",
+    "epigrafes": "Mecanismo de revelacion: Precios LINDAHL",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Externalidades y corrección pigouviana",
+    "area": "Microeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Definicion: Fallo de Mercado | Implicaciones de Politica Economica | Intervecion: Impuestos/Subvenciones | Externalidad Negativa: Mal Publico (Informacion completa)",
+    "bloques": 4,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Externalidades y corrección pigouviana",
+    "area": "Microeconomía",
+    "forma": "Negociación coasiana (Coase 1960)",
+    "epigrafes": "Derechos de propiedad: Negociacion descentralizada (Teorema de COASE)",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Inconsistencia temporal de la política",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Modelo de Deficit Publico: Problemas de Inconsistencia Dinamica",
+    "bloques": 2,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.38": [
+   {
+    "familia": "Equivalencia ricardiana",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Financiacion del gasto: Equivalencia Ricardiana",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Generaciones solapadas",
+    "area": "Crecimiento",
+    "forma": "Versión original",
+    "epigrafes": "Economia sin Sector Publico: Ahorro voluntario | Neutralidad del Sector Publico: Sistema de Capitalizacion | Intervencion del Sector Publico: Sistema de Reparto",
+    "bloques": 4,
+    "grado": "Completo"
+   },
+   {
+    "familia": "IS-LM",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Politica Fiscal: Teoria",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Modelo AK",
+    "area": "Crecimiento",
+    "forma": "Gasto público productivo (Barro 1990)",
+    "epigrafes": "Desarrollo analitico",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Modelo keynesiano simple (renta-gasto / aspa keynesiana)",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Politica fiscal: Gasto e Impuestos",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Mundell-Fleming",
+    "area": "Macroeconomía abierta",
+    "forma": "Versión original",
+    "epigrafes": "Economia abierta: Modelo MUNDELL-FLEMING",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Suavización impositiva",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Comodin.- Tipo Impositivo Optimo | Implicaciones de Politica Economica: Suavizacion de la senda impositiva",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Teoría cuantitativa del dinero",
+    "area": "Macroeconomía",
+    "forma": "Neocuantitativismo (Friedman 1956)",
+    "epigrafes": "Enfoque Monetarista",
+    "bloques": 1,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.40": [
+   {
+    "familia": "Equivalencia ricardiana",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Equivalencia Ricardiana: Politica Fiscal expansiva (ejemplo)",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "IS-LM",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Interrelacion con la Politica Monetaria: Tipo de Interes",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Modelo keynesiano simple (renta-gasto / aspa keynesiana)",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Multiplicador Fiscal: Modelo keynesiano basico | Interrelacion con la Politica Monetaria: Tipo de Interes | Estabilizadores automaticos: Balance estructural",
+    "bloques": 3,
+    "grado": "Parcial"
+   }
+  ],
+  "3.B.14": [
+   {
+    "familia": "Burbujas racionales",
+    "area": "Macroeconomía abierta",
+    "forma": "Versión original",
+    "epigrafes": "Formacion de Expectativas: Rules of thumb y Racionalidad | Burbujas especulativas: BLANCHARD",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Equilibrio de cartera",
+    "area": "Macroeconomía abierta",
+    "forma": "McKinnon (1969)",
+    "epigrafes": "Mercado de Activos: Cuenta Financiera | Mercado de Bienes: Cuenta Corriente",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Modelo keynesiano simple (renta-gasto / aspa keynesiana)",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Desarrollo formal: el Aspa Keynesiana",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Modelo monetario del tipo de cambio (precios flexibles)",
+    "area": "Macroeconomía abierta",
+    "forma": "Versión original",
+    "epigrafes": "Precios flexibles: FRENKEL y MUSSA (1976) | ¿Que pasa en realidad? -- Evidencia Empirica",
+    "bloques": 6,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Modelo monetario del tipo de cambio (precios flexibles)",
+    "area": "Macroeconomía abierta",
+    "forma": "Sobrerreacción (Dornbusch 1976)",
+    "epigrafes": "Efectos a Corto Plazo: Aumento no anticipado ( M^s )",
+    "bloques": 4,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Paridad de intereses",
+    "area": "Macroeconomía abierta",
+    "forma": "Versión original",
+    "epigrafes": "Desarrollo formal | Paridad Cubierta de Intereses: Forward | Paridad No Cubierta de Intereses: Especulacion | Implicaciones de Politica Economica",
+    "bloques": 4,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Paridad de intereses",
+    "area": "Macroeconomía abierta",
+    "forma": "Paradoja del margen forward (contraste de eficiencia)",
+    "epigrafes": "Paridad Cubierta de Intereses: Forward | Paridad No Cubierta de Intereses: Especulacion | Paradoja del Margen Forward: Hipotesis de los Mercados Eficientes",
+    "bloques": 3,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Paridad de poder adquisitivo",
+    "area": "Macroeconomía abierta",
+    "forma": "Versión original",
+    "epigrafes": "Paridad de Poder Adquisitivo: Absoluta | Paridad de Poder Adquisitivo: Relativa",
+    "bloques": 3,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.4": [
+   {
+    "familia": "Harrod-Domar",
+    "area": "Crecimiento",
+    "forma": "Versión original",
+    "epigrafes": "ROY HARROD: Demanda Efectiva y crecimiento economico",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Modelo keynesiano simple (renta-gasto / aspa keynesiana)",
+    "area": "Macroeconomía",
+    "forma": "Sistema keynesiano completo (Teoría General)",
+    "epigrafes": "Determinantes de la inversion: Incentivo a invertir | Efecto del atesoramiento",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Modelo macroeconómico clásico/neoclásico",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Exceso de demanda de dinero en el Modelo Neoclasico: Mecanismo de Ajuste",
+    "bloques": 4,
+    "grado": "Completo"
+   }
+  ],
+  "3.A.5": [
+   {
+    "familia": "Curva de Phillips",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "La curva de PHILLIPS",
+    "bloques": 3,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Curva de Phillips",
+    "area": "Macroeconomía",
+    "forma": "Aumentada con expectativas / tasa natural (Friedman 1968, Phelps 1967)",
+    "epigrafes": "Expectativas adaptativas",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "IS-LM",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Primeros planteamientos | Economia cerrada | Economia abierta",
+    "bloques": 4,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Renta permanente",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Renta permanente",
+    "bloques": 3,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Teoría cuantitativa del dinero",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "La Demanda de dinero | Mecanismos de Transmision: la Teoria Cuantitativa del Dinero",
+    "bloques": 5,
+    "grado": "Completo"
+   }
+  ],
+  "3.A.39": [
+   {
+    "familia": "Dinámica y sostenibilidad de la deuda pública",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Deficit Publico: Marco General | Deficit Publico: Conceptos | Inflacion | Ciclo Economico | Aportaciones de KEYNES | Monetarismo | Politica Fiscal y Politica Monetaria: Vinculo | Dinamica del Deficit Publico | Sostenibilidad de la Deuda Publica | Deuda Publica: Economia Cerrada | Deficit Publico: Economia Abierta",
+    "bloques": 18,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Equivalencia ricardiana",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "¿Cual es la mejor forma de financiar el Gasto del Estado?: Equivalencia Ricardiana",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "IS-LM",
+    "area": "Macroeconomía",
+    "forma": "Blinder-Solow (1973)",
+    "epigrafes": "Revision de BLINDER y SOLOW (1973): SNC final",
+    "bloques": 1,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.42": [
+   {
+    "familia": "Acelerador financiero",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Acelerador Financiero: BERNANKE y GETLEY",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Burbujas racionales",
+    "area": "Macroeconomía abierta",
+    "forma": "Versión original",
+    "epigrafes": "Burbujas financieras: BLANCHARD",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Ciclo Real (RBC)",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Ciclos Reales: Modelo canonico | Optimizacion de los hogares | Perturbacion tecnologica: Efectos sobre la condicion de EULER | Optimizacion de las empresas",
+    "bloques": 4,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Curva de Phillips",
+    "area": "Macroeconomía",
+    "forma": "Curva de Phillips neokeynesiana / híbrida",
+    "epigrafes": "Curva de PHILLIPS: Empresas",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Islas de Lucas (información imperfecta)",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Ciclos nominales: Curva de Oferta de LUCAS",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Nueva macroeconomía de economía abierta (NOEM)",
+    "area": "Macroeconomía abierta",
+    "forma": "Pequeña economía abierta NK (Galí-Monacelli 2005)",
+    "epigrafes": "Modelo canonico: Derivacion analitica | ¿Divina Coincidencia? Politica Monetaria y Shocks",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Nuevo keynesiano de tres ecuaciones (NEK-2)",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Modelo canonico: Derivacion analitica | Regla de Taylor: Autoridad Monetaria | ¿Divina Coincidencia? Politica Monetaria y Shocks",
+    "bloques": 3,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.7": [
+   {
+    "familia": "Costes de menú",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Modelo de Costes de Menu: MANKIW",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Costes de menú",
+    "area": "Macroeconomía",
+    "forma": "Blanchard-Kiyotaki (1987)",
+    "epigrafes": "Modelo combinado de efectos agregados. BLANCHARD-KIYOTAKI",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Curva de Phillips",
+    "area": "Macroeconomía",
+    "forma": "Curva de Phillips neokeynesiana / híbrida",
+    "epigrafes": "Curva de PHILLIPS de la NEK | Modificaciones: Curvas de PHILLIPS hibridas",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Nuevo keynesiano de tres ecuaciones (NEK-2)",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Curva IS ampliada por expectativas | Curva de PHILLIPS de la NEK | Modificaciones: Curvas de PHILLIPS hibridas | Regla de TAYLOR: Autoridad monetaria | Deseabilidad del Equilibrio: Principio de TAYLOR | Deseabilidad del Equilibrio",
+    "bloques": 7,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Racionamiento del crédito",
+    "area": "Finanzas",
+    "forma": "Versión original",
+    "epigrafes": "Mercado de credito",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Salarios de eficiencia",
+    "area": "Mercado de trabajo",
+    "forma": "Versión original",
+    "epigrafes": "Mercado de trabajo",
+    "bloques": 1,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.28": [
+   {
+    "familia": "Búsqueda y emparejamiento (DMP)",
+    "area": "Mercado de trabajo",
+    "forma": "Versión original",
+    "epigrafes": "Desempleo friccional: Enfoque parcial. Modelo DPM",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Curva de Phillips",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Descomposicion del desempleo: Desempleo y Tasa Natural | Desarrollo teorico de la Curva de PHILLIPS: LIPSEY (SNC)",
+    "bloques": 5,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Curva de Phillips",
+    "area": "Macroeconomía",
+    "forma": "Aumentada con expectativas / tasa natural (Friedman 1968, Phelps 1967)",
+    "epigrafes": "Tasa natural de paro: FRIEDMAN",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "NAIRU / WS-PS",
+    "area": "Mercado de trabajo",
+    "forma": "Versión original",
+    "epigrafes": "Curva salarial | Fijacion de precios",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Nuevo keynesiano de tres ecuaciones (NEK-2)",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Hogares | Los flujos en el mercado de trabajo | Empresa | Determinacion de salarios | Persistencia del desempelo: NEK-2 | Inflacion y desempleo | Perturbaciones macroeconomicas",
+    "bloques": 12,
+    "grado": "Completo"
+   }
+  ],
+  "3.A.37": [
+   {
+    "familia": "Nuevo keynesiano de tres ecuaciones (NEK-2)",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "La cuantificacion de sus efectos: modelo de la NEK-2",
+    "bloques": 1,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.41": [
+   {
+    "familia": "Hiperinflación",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Modelo de CAGAN | Hiperinflacion racional: Ingresos por senoreaje",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Inflación por conflicto distributivo",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Conflicting-claims inflation : Inflacion distributiva",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "NAIRU / WS-PS",
+    "area": "Mercado de trabajo",
+    "forma": "Versión original",
+    "epigrafes": "Curva salarial: Sindicatos | Fijacion de precios: Empresas",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Nuevo keynesiano de tres ecuaciones (NEK-2)",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Shocks de oferta: Marco NEK-2 | Modelo NEK-2: ZLB y forward-guidance | NEK-2: Efectos sobre la Eficiencia y el Bienestar | Implicaciones de Politica Economica",
+    "bloques": 4,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Teoría cuantitativa del dinero",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Limitaciones: Enfoque Monetario",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Teoría fiscal del nivel de precios",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Fiscal Theory of Prices : Senda de Deficit Publico",
+    "bloques": 1,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.33": [
+   {
+    "familia": "Ciclo vital",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Teoria del Ciclo Vital: ANDO y MODIGLIANI",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Renta permanente",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Hipotesis de la Renta Permanente: FRIEDMAN",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Renta permanente",
+    "area": "Macroeconomía",
+    "forma": "Paseo aleatorio del consumo (Hall 1978)",
+    "epigrafes": "Paseo aleatorio: HALL | Limitaciones: Contrastacion Empirica",
+    "bloques": 4,
+    "grado": "Completo"
+   }
+  ],
+  "3.A.34": [
+   {
+    "familia": "Opciones reales de inversión",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Opciones reales: McDONALD y SIEGEL (1986)",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "q de Tobin",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Q de TOBIN: Valor de mercado y coste de reposicion",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "q de Tobin",
+    "area": "Macroeconomía",
+    "forma": "Hayashi (1982)",
+    "epigrafes": "Teoria de la Inversion: Informacion perfecta | Desarrollo analitico: Costes de ajuste | Solucion analitica: HAMILTONIANO | Estabilidad del equilibrio: Unicidad de la senda de convergencia | Efectos de la Politica Monetaria | Efectos de la Politica Fiscal | Mercados perfectos: Implicaciones de Politica Economica | Costes hundidos (irreversibilidad) e Incertidumbre: Politica Fiscal",
+    "bloques": 10,
+    "grado": "Completo"
+   }
+  ],
+  "3.B.2": [
+   {
+    "familia": "CAPM",
+    "area": "Finanzas",
+    "forma": "Versión original",
+    "epigrafes": "Riesgo no diversificable: Obtencion",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Descuento de dividendos / crecimiento constante",
+    "area": "Finanzas",
+    "forma": "Versión original",
+    "epigrafes": "Coste de capital accionario: Equity",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Opciones reales de inversión",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Incertidumbre: Opciones reales",
+    "bloques": 1,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.35": [
+   {
+    "familia": "Cash-in-advance (CIA)",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Cash-In-Advance Models",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Demanda de dinero por inventario",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Modelo de Inventario: Motivo transaccion",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Demanda de dinero por inventario",
+    "area": "Macroeconomía",
+    "forma": "Shopping-time",
+    "epigrafes": "Shopping-Time Models",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Dinero en la función de utilidad (MIU)",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Utilidad Directa: Dinero en la Funcion de Utilidad (SIDRAUTSKY, 1967) | Implicaciones: Funcion de Demanda de Dinero",
+    "bloques": 3,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Generaciones solapadas",
+    "area": "Crecimiento",
+    "forma": "Versión original",
+    "epigrafes": "Modelo MGS: Economia pura de intercambio",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Preferencia por la liquidez",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Enfoque Keynesiano",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Teoría cuantitativa del dinero",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Enfoque Neoclasico: la Teoria Cuantitativa del Dinero",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Teoría cuantitativa del dinero",
+    "area": "Macroeconomía",
+    "forma": "Neocuantitativismo (Friedman 1956)",
+    "epigrafes": "Enfoque Monetarista: Neocuantitativismo",
+    "bloques": 2,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.27": [
+   {
+    "familia": "Monopolio sindical",
+    "area": "Mercado de trabajo",
+    "forma": "Derecho a gestionar (Nickell-Andrews 1983)",
+    "epigrafes": "Derecho a gestionar: NICKELL y ANDREWS",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Monopolio sindical",
+    "area": "Mercado de trabajo",
+    "forma": "Negociación de Nash (1950)",
+    "epigrafes": "Enfoque axiomatico: NASH",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Monopolio sindical",
+    "area": "Mercado de trabajo",
+    "forma": "Negociación eficiente (McDonald-Solow 1981)",
+    "epigrafes": "Eficiencia debil",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Salarios de eficiencia",
+    "area": "Mercado de trabajo",
+    "forma": "Versión original",
+    "epigrafes": "Trabajo germinal: SOLOW",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Salarios de eficiencia",
+    "area": "Mercado de trabajo",
+    "forma": "Shapiro-Stiglitz (1984)",
+    "epigrafes": "Modelo de referencia: SHAPIRO-STIGLITZ | Equilibrio: Condicion de no-escaqueo",
+    "bloques": 2,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.26": [
+   {
+    "familia": "Búsqueda y emparejamiento (DMP)",
+    "area": "Mercado de trabajo",
+    "forma": "Versión original",
+    "epigrafes": "Modelo baseline -- MORTENSEN, 1970 | Funcion de emparejamiento | Equilibrio estacionario | Condicion del trabajador: salario de reserva | Condicion de creacion de empleo: Producto | Equilibrio negociador: Fijacion del salario",
+    "bloques": 10,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Costes de ajuste (demanda dinámica de factores)",
+    "area": "Mercado de trabajo",
+    "forma": "Versión original",
+    "epigrafes": "Modelos de costes de ajuste | Modelo alternativo: Costes de ajustes lineales",
+    "bloques": 2,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.43": [
+   {
+    "familia": "Ramsey-Cass-Koopmans",
+    "area": "Crecimiento",
+    "forma": "Versión original",
+    "epigrafes": "Desarrollo analitico | Estado Estacionario | Analisis normativo",
+    "bloques": 3,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Solow-Swan",
+    "area": "Crecimiento",
+    "forma": "Versión original",
+    "epigrafes": "Supuestos y debates de las CAMBRIDGE | Desarrollo analitico | Estado Estacionario | Regla de Oro | Desarrollo",
+    "bloques": 5,
+    "grado": "Completo"
+   }
+  ],
+  "3.A.44": [
+   {
+    "familia": "Capital humano",
+    "area": "Crecimiento",
+    "forma": "Versión original",
+    "epigrafes": "Externalidades de Capital ( K ) | Supuestos | Desarrollo | Implicaciones",
+    "bloques": 4,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Expansión de variedades (I+D)",
+    "area": "Crecimiento",
+    "forma": "Versión original",
+    "epigrafes": "Productores finales | Empresas de bienes intermedios: I+D | Consumidores finales",
+    "bloques": 3,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Modelo AK",
+    "area": "Crecimiento",
+    "forma": "Versión original",
+    "epigrafes": "Supuestos | Desarrollo analitico | Funcion de SOBELOW",
+    "bloques": 3,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Modelo AK",
+    "area": "Crecimiento",
+    "forma": "Externalidades / learning-by-doing (Arrow 1962; Romer 1986)",
+    "epigrafes": "Externalidades de Capital ( K )",
+    "bloques": 1,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.2": [
+   {
+    "familia": "Modelo ricardiano",
+    "area": "Comercio internacional",
+    "forma": "Versión original",
+    "epigrafes": "Teoria de la Ventaja Comparativa",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Teoría del valor-trabajo y reproducción",
+    "area": "Pensamiento económico",
+    "forma": "Versión original",
+    "epigrafes": "Ley del Valor",
+    "bloques": 1,
+    "grado": "Parcial"
+   }
+  ],
+  "3.B.5": [
+   {
+    "familia": "Factores específicos",
+    "area": "Comercio internacional",
+    "forma": "Versión original",
+    "epigrafes": "Autarquia: Desarrollo formal | Equilibrio: Salarios y asignacion del trabajo | Ganancias agregadas: Conjunto de consumo y compensaciones",
+    "bloques": 3,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Heckscher-Ohlin",
+    "area": "Comercio internacional",
+    "forma": "Versión original",
+    "epigrafes": "Autarquia: Desarrollo formal | Distribucion de la renta: Efecto STOLPER-SAMUELSON",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Modelo ricardiano",
+    "area": "Comercio internacional",
+    "forma": "Versión original",
+    "epigrafes": "Coste de oportunidad: Relaciones de transformacion | Ventaja comparativa | Implicaciones de Politica Economica: Aumento de la produccion | Autarquia: Desarrollo del modelo | Precios relativos: Produccion | Apertura comercial | Oferta y Demanda relativas: Determinacion del precio relativo",
+    "bloques": 9,
+    "grado": "Completo"
+   }
+  ],
+  "3.B.7": [
+   {
+    "familia": "Arancel en equilibrio parcial / arancel óptimo",
+    "area": "Comercio internacional",
+    "forma": "Versión original",
+    "epigrafes": "Aranceles | Politica Comercial optima",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Empresas heterogéneas",
+    "area": "Comercio internacional",
+    "forma": "Marco ACR / \"modelo ARA\" (Arkolakis-Costinot-Rodríguez-Clare 2012)",
+    "epigrafes": "Modelo ARA: Equilibrio General",
+    "bloques": 35,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Empresas heterogéneas",
+    "area": "Comercio internacional",
+    "forma": "Melitz-Ottaviano (2008)",
+    "epigrafes": "Productor | Condicion de libre entrada: Beneficio esperado | Modelo MELITZ-OTTAVIANO: Comercio intrasectorial y aranceles",
+    "bloques": 43,
+    "grado": "Completo"
+   }
+  ],
+  "3.B.10": [
+   {
+    "familia": "Empresas heterogéneas",
+    "area": "Comercio internacional",
+    "forma": "Melitz-Ottaviano (2008)",
+    "epigrafes": "Marco de Equilibrio Parcial: efectos sobre la estructura del mercado",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Modelo de gravedad",
+    "area": "Comercio internacional",
+    "forma": "Versión original",
+    "epigrafes": "Modelos gravitatorios: ¿Cuanto ha afectado? | Resultado (II): Efecto frontera | Metodologia empirica de la integracion: Otros metodos cuantitativos",
+    "bloques": 3,
+    "grado": "Parcial"
+   }
+  ],
+  "3.B.12": [
+   {
+    "familia": "Enfoque de elasticidades",
+    "area": "Macroeconomía abierta",
+    "forma": "Versión original",
+    "epigrafes": "Enfoque Elasticidades: Condicion MARSHALL-LERNER",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Enfoque intertemporal de la cuenta corriente",
+    "area": "Macroeconomía abierta",
+    "forma": "Modelo de dos períodos (Obstfeld-Rogoff 1996)",
+    "epigrafes": "Modelo de OBSTFELD-ROGOFF: Dos periodos | Desarrollo grafico",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Enfoque monetario de la balanza de pagos",
+    "area": "Macroeconomía abierta",
+    "forma": "Versión original",
+    "epigrafes": "Modelo Monetario: Sustituibilidad perfecta",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Equilibrio de cartera",
+    "area": "Macroeconomía abierta",
+    "forma": "Versión original",
+    "epigrafes": "Mercado de Activos: Cuenta Financiera | Mercado de Bienes: Cuenta Corriente",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Equilibrio de cartera",
+    "area": "Macroeconomía abierta",
+    "forma": "McKinnon (1969)",
+    "epigrafes": "Mercado de Activos: Cuenta Financiera",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Mundell-Fleming",
+    "area": "Macroeconomía abierta",
+    "forma": "IS-LM-BP",
+    "epigrafes": "Modelo MUNDELL-FLEMING: Equilibrio General",
+    "bloques": 1,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.32": [
+   {
+    "familia": "Curva de Phillips",
+    "area": "Macroeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Shocks (negativos): Costes de produccion",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Curva de Phillips",
+    "area": "Macroeconomía",
+    "forma": "Curva de Phillips neokeynesiana / híbrida",
+    "epigrafes": "Curva de PHILLIPS: Optimizacion de las empresas",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Nueva macroeconomía de economía abierta (NOEM)",
+    "area": "Macroeconomía abierta",
+    "forma": "Versión original",
+    "epigrafes": "Politica Fiscal: FURLANETTO (2006)",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Nueva macroeconomía de economía abierta (NOEM)",
+    "area": "Macroeconomía abierta",
+    "forma": "Pequeña economía abierta NK (Galí-Monacelli 2005)",
+    "epigrafes": "Economia pequena y abierta: GALI y MONACELLI (2005) | Curva IS: Optimizacion de los Hogares | Derivacion del modelo GALI y MONACELLI (2005) -- NOEM",
+    "bloques": 8,
+    "grado": "Completo"
+   }
+  ],
+  "3.B.17": [
+   {
+    "familia": "Crisis cambiarias de primera generación",
+    "area": "Macroeconomía abierta",
+    "forma": "Versión original",
+    "epigrafes": "Marco analitico: FLOOD y GARBER (1984) | Anticipacion de la crisis cambiaria: Tipo de cambio sombra",
+    "bloques": 4,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Crisis cambiarias de segunda generación",
+    "area": "Macroeconomía abierta",
+    "forma": "Jeanne (2000)",
+    "epigrafes": "Gobierno: Funcion objetivo | Equilibrio: Reaccion optima del Gobierno | Exposicion: Regiones e interpretacion economica",
+    "bloques": 4,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Crisis cambiarias de tercera generación",
+    "area": "Macroeconomía abierta",
+    "forma": "Versión original",
+    "epigrafes": "Equilibrio | Riqueza privada: Problemas de balance",
+    "bloques": 4,
+    "grado": "Completo"
+   }
+  ],
+  "3.B.23": [
+   {
+    "familia": "APT (arbitraje)",
+    "area": "Finanzas",
+    "forma": "Versión original",
+    "epigrafes": "Modelos factoriales | Ejemplo - APT | Derivacion del Modelo",
+    "bloques": 13,
+    "grado": "Completo"
+   },
+   {
+    "familia": "CAPM",
+    "area": "Finanzas",
+    "forma": "Versión original",
+    "epigrafes": "Nueva medida de riesgo: la beta ( ) | Demostracion | Linea del mercado de activos (SML) | Gestion activa de carteras: busqueda de alpha y analisis fundamental",
+    "bloques": 15,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Selección de carteras media-varianza",
+    "area": "Finanzas",
+    "forma": "Versión original",
+    "epigrafes": "Activo financiero: Rendimiento y riesgo | Cartera de activos arriesgados | Generalizacion: carteras con multiples activos arriesgados | Cartera de mercado: Desarrollo analitico | Las funciones de utilidad | Optimizacion media-varianza | Demostracion: Modelo MARKOWITZ (1952)",
+    "bloques": 12,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Selección de carteras media-varianza",
+    "area": "Finanzas",
+    "forma": "Capital Allocation Line",
+    "epigrafes": "Ponderacion: Capital Allocation Line (CAL) | Combinacion de riesgo optima: Curva de Minima Varianza (CMV)",
+    "bloques": 5,
+    "grado": "Completo"
+   }
+  ],
+  "3.B.4": [
+   {
+    "familia": "CAPM",
+    "area": "Finanzas",
+    "forma": "Versión original",
+    "epigrafes": "Diversificacion del riesgo",
+    "bloques": 1,
+    "grado": "Parcial"
+   }
+  ],
+  "3.B.25": [
+   {
+    "familia": "Valoración de opciones",
+    "area": "Finanzas",
+    "forma": "Versión original",
+    "epigrafes": "¿Que valor tiene la opcion? Distribucion truncada: dos fuentes de valor | Sensibilidades: Linealidad o No-linealidad | Construccion de la cartera delta-neutral",
+    "bloques": 6,
+    "grado": "Completo"
+   }
+  ],
+  "3.B.26": [
+   {
+    "familia": "Pánicos bancarios",
+    "area": "Finanzas",
+    "forma": "Versión original",
+    "epigrafes": "Modelo: DIAMOND y DYBVIG (1983)",
+    "bloques": 3,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Pérdida esperada e inesperada (IRB / Vasicek ASRF)",
+    "area": "Finanzas",
+    "forma": "Versión original",
+    "epigrafes": "Ex ante: Calidad creditica y asimetrias informativas | Provisiones contables: Perdidas esperadas | Capital regulatorio: Perdidas inesperadas",
+    "bloques": 3,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Riesgo de crédito estructural",
+    "area": "Finanzas",
+    "forma": "Versión original",
+    "epigrafes": "Extensiones: MERTON (1974)",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Riesgo de crédito estructural",
+    "area": "Finanzas",
+    "forma": "Seguro de depósitos como opción put (Merton 1977)",
+    "epigrafes": "Seguro de depositos: Fondo de Garantia de Depositos",
+    "bloques": 2,
+    "grado": "Parcial"
+   }
+  ],
+  "3.B.31": [
+   {
+    "familia": "DICE",
+    "area": "Cambio climático",
+    "forma": "Versión original",
+    "epigrafes": "Modulo economico | Modulo climatico | Calibracion y resolucion: Implicaciones de Politica Economica",
+    "bloques": 10,
+    "grado": "Completo"
+   }
+  ],
+  "3.B.15": [
+   {
+    "familia": "Enfoque intertemporal de la cuenta corriente",
+    "area": "Macroeconomía abierta",
+    "forma": "Versión original",
+    "epigrafes": "Efectos: Modelo intertemporal de consumo con restricciones de capital",
+    "bloques": 1,
+    "grado": "Parcial"
+   }
+  ],
+  "3.B.29": [
+   {
+    "familia": "Dinámica y sostenibilidad de la deuda pública",
+    "area": "Macroeconomía",
+    "forma": "Deuda externa: brecha de absorción",
+    "epigrafes": "Ajustes: ¿Como podemos evitar una crisis de deuda?",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Enfoque intertemporal de la cuenta corriente",
+    "area": "Macroeconomía abierta",
+    "forma": "Versión original",
+    "epigrafes": "Planteamiento del modelo con horizonte infinito | Analisis:",
+    "bloques": 6,
+    "grado": "Completo"
+   }
+  ],
+  "3.A.3": [
+   {
+    "familia": "Teoría cuantitativa del dinero",
+    "area": "Macroeconomía",
+    "forma": "Saldos reales de Cambridge (M = kPY)",
+    "epigrafes": "Teoria del dinero",
+    "bloques": 1,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.17": [
+   {
+    "familia": "Monopolio",
+    "area": "Microeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Desarrollo formal | Condiciones necesarias: CPO | Indice de Lerner | Mercado de factores: Ineficiecia asignativa | Demandas dependientes y costes separables",
+    "bloques": 6,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Monopolio",
+    "area": "Microeconomía",
+    "forma": "Discriminación de precios",
+    "epigrafes": "Discriminacion de primer grado: Informacion perfecta",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Monopolio",
+    "area": "Microeconomía",
+    "forma": "Monopsonio",
+    "epigrafes": "Monopsonio",
+    "bloques": 1,
+    "grado": "Parcial"
+   }
+  ],
+  "3.A.22": [
+   {
+    "familia": "Segundo óptimo",
+    "area": "Microeconomía",
+    "forma": "Versión original",
+    "epigrafes": "Teoria General del Second-Best: Desarrollo. LIPSEY y LANCASTER (1956) | Diferentes CPO's: MISHAN | Situaciones Informacionales: Costes informacionales y Politica aplicable | Teoria del Third-Best: Desarrollo completo",
+    "bloques": 5,
+    "grado": "Completo"
+   }
+  ],
+  "4.B.8": [
+   {
+    "familia": "Incidencia impositiva en equilibrio parcial",
+    "area": "Sector público",
+    "forma": "Versión original",
+    "epigrafes": "¿Como depende la traslacion del precio? La determinacion del precio",
+    "bloques": 1,
+    "grado": "Parcial"
+   }
+  ],
+  "3.B.19": [
+   {
+    "familia": "Coordinación internacional (juego de cooperación)",
+    "area": "Macroeconomía abierta",
+    "forma": "Versión original",
+    "epigrafes": "Aproximacion dinamica:",
+    "bloques": 1,
+    "grado": "Parcial"
+   }
+  ],
+  "3.B.24": [
+   {
+    "familia": "Estructura temporal: expectativas y hábitat",
+    "area": "Finanzas",
+    "forma": "Versión original",
+    "epigrafes": "Teoria de las Expectativas puras",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Estructura temporal: expectativas y hábitat",
+    "area": "Finanzas",
+    "forma": "Hábitat preferido (Modigliani-Sutch 1966)",
+    "epigrafes": "Teoria del habitat preferido",
+    "bloques": 1,
+    "grado": "Parcial"
+   }
+  ],
+  "3.B.27": [
+   {
+    "familia": "Pérdida esperada e inesperada (IRB / Vasicek ASRF)",
+    "area": "Finanzas",
+    "forma": "Versión original",
+    "epigrafes": "Riesgo de credito: Perdida esperadas/inesperadas",
+    "bloques": 1,
+    "grado": "Parcial"
+   }
+  ]
+ },
+ "por_familia": {
+  "Descuento cuasi-hiperbólico": [
+   "3.A.29"
+  ],
+  "Renta permanente": [
+   "3.A.29",
+   "3.A.33",
+   "3.A.5"
+  ],
+  "Ramsey-Cass-Koopmans": [
+   "3.A.29",
+   "3.A.43"
+  ],
+  "Generaciones solapadas": [
+   "3.A.29",
+   "3.A.35",
+   "3.A.38"
+  ],
+  "Asignación del tiempo": [
+   "3.A.25"
+  ],
+  "Elección ocio-consumo (oferta de trabajo neoclásica)": [
+   "3.A.25",
+   "3.A.6"
+  ],
+  "Demanda de trabajo neoclásica": [
+   "3.A.25"
+  ],
+  "Capital humano y ecuación de ingresos": [
+   "3.A.25"
+  ],
+  "Inconsistencia temporal de la política": [
+   "3.A.23",
+   "3.A.6"
+  ],
+  "Islas de Lucas (información imperfecta)": [
+   "3.A.42",
+   "3.A.6"
+  ],
+  "Curva de Phillips": [
+   "3.A.28",
+   "3.A.32",
+   "3.A.42",
+   "3.A.5",
+   "3.A.6",
+   "3.A.7"
+  ],
+  "Competencia monopolística": [
+   "3.A.18",
+   "3.B.6"
+  ],
+  "Ciudad lineal (diferenciación espacial)": [
+   "3.A.18"
+  ],
+  "Nueva teoría del comercio (rendimientos crecientes)": [
+   "3.B.6"
+  ],
+  "Empresas heterogéneas": [
+   "3.B.10",
+   "3.B.6",
+   "3.B.7"
+  ],
+  "Duopolio de Cournot": [
+   "3.A.19"
+  ],
+  "Duopolio de Bertrand": [
+   "3.A.19"
+  ],
+  "Principal-agente": [
+   "3.A.13"
+  ],
+  "Filtrado en mercado de seguros": [
+   "3.A.13"
+  ],
+  "Señalización en el mercado de trabajo": [
+   "3.A.13",
+   "3.B.3"
+  ],
+  "Irrelevancia de la estructura financiera": [
+   "3.B.3"
+  ],
+  "Equilibrio general walrasiano / Arrow-Debreu": [
+   "3.A.16",
+   "3.A.21"
+  ],
+  "Competencia perfecta (equilibrio parcial)": [
+   "3.A.16"
+  ],
+  "Incidencia impositiva en equilibrio parcial": [
+   "3.A.16",
+   "4.B.8"
+  ],
+  "Tablas input-output": [
+   "3.A.31"
+  ],
+  "Análisis envolvente de datos (DEA)": [
+   "3.A.12"
+  ],
+  "Frontera estocástica (SFA)": [
+   "3.A.12"
+  ],
+  "Regulación con información asimétrica": [
+   "3.A.20"
+  ],
+  "Imposición / tarificación óptima de Ramsey": [
+   "3.A.20",
+   "4.B.11"
+  ],
+  "Monopolio": [
+   "3.A.17",
+   "3.A.20"
+  ],
+  "Imposición óptima sobre la renta": [
+   "4.B.10",
+   "4.B.11"
+  ],
+  "Bienes públicos: provisión eficiente": [
+   "3.A.23"
+  ],
+  "Externalidades y corrección pigouviana": [
+   "3.A.23"
+  ],
+  "Modelo keynesiano simple (renta-gasto / aspa keynesiana)": [
+   "3.A.38",
+   "3.A.4",
+   "3.A.40",
+   "3.B.14"
+  ],
+  "IS-LM": [
+   "3.A.38",
+   "3.A.39",
+   "3.A.40",
+   "3.A.5"
+  ],
+  "Suavización impositiva": [
+   "3.A.38"
+  ],
+  "Modelo AK": [
+   "3.A.38",
+   "3.A.44"
+  ],
+  "Mundell-Fleming": [
+   "3.A.38",
+   "3.B.12"
+  ],
+  "Teoría cuantitativa del dinero": [
+   "3.A.3",
+   "3.A.35",
+   "3.A.38",
+   "3.A.41",
+   "3.A.5"
+  ],
+  "Equivalencia ricardiana": [
+   "3.A.38",
+   "3.A.39",
+   "3.A.40"
+  ],
+  "Modelo monetario del tipo de cambio (precios flexibles)": [
+   "3.B.14"
+  ],
+  "Equilibrio de cartera": [
+   "3.B.12",
+   "3.B.14"
+  ],
+  "Paridad de poder adquisitivo": [
+   "3.B.14"
+  ],
+  "Paridad de intereses": [
+   "3.B.14"
+  ],
+  "Burbujas racionales": [
+   "3.A.42",
+   "3.B.14"
+  ],
+  "Harrod-Domar": [
+   "3.A.4"
+  ],
+  "Modelo macroeconómico clásico/neoclásico": [
+   "3.A.4"
+  ],
+  "Dinámica y sostenibilidad de la deuda pública": [
+   "3.A.39",
+   "3.B.29"
+  ],
+  "Ciclo Real (RBC)": [
+   "3.A.42"
+  ],
+  "Nuevo keynesiano de tres ecuaciones (NEK-2)": [
+   "3.A.28",
+   "3.A.37",
+   "3.A.41",
+   "3.A.42",
+   "3.A.7"
+  ],
+  "Acelerador financiero": [
+   "3.A.42"
+  ],
+  "Nueva macroeconomía de economía abierta (NOEM)": [
+   "3.A.32",
+   "3.A.42"
+  ],
+  "Costes de menú": [
+   "3.A.7"
+  ],
+  "Salarios de eficiencia": [
+   "3.A.27",
+   "3.A.7"
+  ],
+  "Racionamiento del crédito": [
+   "3.A.7"
+  ],
+  "Búsqueda y emparejamiento (DMP)": [
+   "3.A.26",
+   "3.A.28"
+  ],
+  "NAIRU / WS-PS": [
+   "3.A.28",
+   "3.A.41"
+  ],
+  "Hiperinflación": [
+   "3.A.41"
+  ],
+  "Teoría fiscal del nivel de precios": [
+   "3.A.41"
+  ],
+  "Inflación por conflicto distributivo": [
+   "3.A.41"
+  ],
+  "Ciclo vital": [
+   "3.A.33"
+  ],
+  "q de Tobin": [
+   "3.A.34"
+  ],
+  "Opciones reales de inversión": [
+   "3.A.34",
+   "3.B.2"
+  ],
+  "CAPM": [
+   "3.B.2",
+   "3.B.23",
+   "3.B.4"
+  ],
+  "Descuento de dividendos / crecimiento constante": [
+   "3.B.2"
+  ],
+  "Demanda de dinero por inventario": [
+   "3.A.35"
+  ],
+  "Dinero en la función de utilidad (MIU)": [
+   "3.A.35"
+  ],
+  "Cash-in-advance (CIA)": [
+   "3.A.35"
+  ],
+  "Preferencia por la liquidez": [
+   "3.A.35"
+  ],
+  "Monopolio sindical": [
+   "3.A.27"
+  ],
+  "Costes de ajuste (demanda dinámica de factores)": [
+   "3.A.26"
+  ],
+  "Solow-Swan": [
+   "3.A.43"
+  ],
+  "Capital humano": [
+   "3.A.44"
+  ],
+  "Expansión de variedades (I+D)": [
+   "3.A.44"
+  ],
+  "Modelo ricardiano": [
+   "3.A.2",
+   "3.B.5"
+  ],
+  "Teoría del valor-trabajo y reproducción": [
+   "3.A.2"
+  ],
+  "Factores específicos": [
+   "3.B.5"
+  ],
+  "Heckscher-Ohlin": [
+   "3.B.5"
+  ],
+  "Arancel en equilibrio parcial / arancel óptimo": [
+   "3.B.7"
+  ],
+  "Modelo de gravedad": [
+   "3.B.10"
+  ],
+  "Enfoque de elasticidades": [
+   "3.B.12"
+  ],
+  "Enfoque monetario de la balanza de pagos": [
+   "3.B.12"
+  ],
+  "Enfoque intertemporal de la cuenta corriente": [
+   "3.B.12",
+   "3.B.15",
+   "3.B.29"
+  ],
+  "Crisis cambiarias de primera generación": [
+   "3.B.17"
+  ],
+  "Crisis cambiarias de segunda generación": [
+   "3.B.17"
+  ],
+  "Crisis cambiarias de tercera generación": [
+   "3.B.17"
+  ],
+  "Selección de carteras media-varianza": [
+   "3.B.23"
+  ],
+  "APT (arbitraje)": [
+   "3.B.23"
+  ],
+  "Valoración de opciones": [
+   "3.B.25"
+  ],
+  "Riesgo de crédito estructural": [
+   "3.B.26"
+  ],
+  "Pánicos bancarios": [
+   "3.B.26"
+  ],
+  "Pérdida esperada e inesperada (IRB / Vasicek ASRF)": [
+   "3.B.26",
+   "3.B.27"
+  ],
+  "DICE": [
+   "3.B.31"
+  ],
+  "Segundo óptimo": [
+   "3.A.22"
+  ],
+  "Coordinación internacional (juego de cooperación)": [
+   "3.B.19"
+  ],
+  "Estructura temporal: expectativas y hábitat": [
+   "3.B.24"
+  ]
+ }
+}
