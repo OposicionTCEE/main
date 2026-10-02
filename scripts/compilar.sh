@@ -16,6 +16,9 @@ TMP="$OUT/.tmp"
 mkdir -p "$TMP"
 cd "$DIR" || exit 1
 
+# Usar siempre MacTeX (no otras distribuciones como TinyTeX, que no traen todos los paquetes)
+[ -d /Library/TeX/texbin ] && export PATH="/Library/TeX/texbin:$PATH"
+
 latexmk -pdf -f -synctex=1 -interaction=nonstopmode -file-line-error -outdir="$TMP" "$BASE.tex"
 
 # El registro siempre se copia, para que VS Code muestre los errores en "Problemas"
