@@ -11,6 +11,8 @@ La carpeta raíz (`TCEE/`) contiene:
 - Compilación: `bash main/scripts/compilar.sh <ruta>/Tema-X/main` (envuelve `latexmk -pdf -f …`).
   Compila en `.build/.tmp` y solo copia el PDF a `.build/` si se genera: con un error grave se conserva el último PDF correcto.
   `-f` es intencionado: muchos temas tienen errores menores y el PDF debe salir igual.
+  Si compila, el PDF se copia también a iCloud (`OPO - TCEE/PDF temas/Tema-X.pdf`, configurable en `~/.tcee_carpeta_pdf`).
+  Los PDF nunca se suben a GitHub. Para compilar todos: `bash main/scripts/compilar_todo.sh [3.A.43 …]`.
   El estado de cada tema está en `main/ESTADO_COMPILACION.md`.
 - Las ecuaciones se escriben con `\eqblock{<matemática en aligned>}{<pie>}`. El pie debe nombrar el modelo
   ("… Modelo de SOLOW"): el análisis de relaciones entre temas depende de ello.

@@ -66,6 +66,14 @@
         "problemMatcher": []
       },
       {
+        "label": "Compilar todos los temas (PDF a iCloud)",
+        "type": "shell",
+        "command": "bash main/scripts/compilar_todo.sh",
+        "options": { "cwd": "${workspaceFolder}" },
+        "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
+        "problemMatcher": []
+      },
+      {
         "label": "Descargar temas que falten",
         "type": "shell",
         "command": "bash main/scripts/clonar_temas.sh",

@@ -8,6 +8,7 @@ Repositorio para todo lo que no es un tema: la configuración del editor, los sc
 | Espacio de trabajo de VS Code | `TCEE.code-workspace` |
 | Descargar todos los temas | `scripts/clonar_temas.sh` |
 | Sincronizar todo con GitHub | `scripts/sincronizar_todo.sh` |
+| Compilar un tema / todos (PDF también a iCloud) | `scripts/compilar.sh` · `scripts/compilar_todo.sh` |
 | Atajos de escritura (`eqb`, `img`, `rec`…) | `config/tcee.code-snippets` |
 | Lista de temas | `config/temas.txt` |
 | Estado de compilación de cada tema | [ESTADO_COMPILACION.md](ESTADO_COMPILACION.md) |

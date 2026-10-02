@@ -26,6 +26,21 @@ if [ -f "$TMP/$BASE.pdf" ]; then
   [ -f "$TMP/$BASE.synctex.gz" ] && cp "$TMP/$BASE.synctex.gz" "$OUT/$BASE.synctex.gz"
   echo ""
   echo "PDF actualizado."
+
+  # Copia del PDF a iCloud (para leerlo desde el iPad). No se sube a GitHub.
+  # Carpeta por defecto: iCloud Drive › OPO - TCEE › PDF temas
+  # Para cambiarla, escribe otra ruta en el fichero ~/.tcee_carpeta_pdf
+  ICLOUD="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
+  PDFDIR="$ICLOUD/OPO - TCEE/PDF temas"
+  [ -f "$HOME/.tcee_carpeta_pdf" ] && PDFDIR="$(head -1 "$HOME/.tcee_carpeta_pdf")"
+  if [ -d "$ICLOUD" ] || [ -f "$HOME/.tcee_carpeta_pdf" ]; then
+    TEMA="$(basename "$DIR")"
+    if mkdir -p "$PDFDIR" && cp "$OUT/$BASE.pdf" "$PDFDIR/$TEMA.pdf"; then
+      echo "Copia en iCloud: $PDFDIR/$TEMA.pdf"
+    else
+      echo "Aviso: no se pudo copiar el PDF a $PDFDIR"
+    fi
+  fi
   exit 0
 else
   echo ""
