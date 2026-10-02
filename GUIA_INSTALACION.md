@@ -64,6 +64,8 @@ bash main/scripts/clonar_temas.sh
 Crea la carpeta **TCEE** en tu carpeta personal y descarga dentro `main` y los 107 temas. Al final dirá *Todo listo*.
 Puedes repetir el último comando cuando quieras: solo descarga lo que falte.
 
+**Acceso desde tu carpeta de la oposición**: en Finder, ve a tu carpeta personal, haz clic derecho sobre **TCEE** › *Crear alias* y arrastra el alias a *iCloud Drive › OPO - TCEE*. No muevas la carpeta TCEE dentro de iCloud: iCloud y Git se pisan y pueden dañar los temas.
+
 ## Paso 5 · Abrir el espacio de trabajo
 
 1. En VS Code: menú **File › Open Workspace from File…** (en español: *Archivo › Abrir área de trabajo desde archivo…*).
@@ -91,6 +93,9 @@ La primera vez que sincronices (paso 8) puede volver a pedirte autorización: ac
 3. **Ver el PDF**: `⌘ + ⌥ + V`. Se abre en una pestaña; arrástrala a la derecha para tenerla al lado del texto.
 4. **Saltar del PDF al texto**: doble clic sobre el PDF. **Del texto al PDF**: `⌘ + ⌥ + J`.
 5. Los cambios **se guardan solos**, compile o no el documento. Guardar y compilar son cosas independientes.
+
+**El PDF también va a iCloud** (para leerlo en el iPad): cada vez que un tema compila, se copia a *iCloud Drive › OPO - TCEE › PDF temas* con el nombre del tema (p. ej. `Tema-3.A.43.pdf`). Los PDF **no** se suben a GitHub.
+Para tener los 107 PDF de golpe: `⌘ + ⇧ + P` › **Ejecutar tarea** › **Compilar todos los temas (PDF a iCloud)** (tarda entre 10 y 30 minutos).
 
 **Qué pasa cuando la compilación falla** (igual que en Overleaf):
 - Con errores menores (un carácter raro, un `$` suelto…), el PDF se genera igualmente.
