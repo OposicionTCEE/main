@@ -4,11 +4,12 @@
 Espacio de trabajo para preparar la oposición a Técnico Comercial y Economista del Estado (TCEE).
 La carpeta raíz (`TCEE/`) contiene:
 - `main/` — este repositorio: configuración del entorno, scripts, análisis y todo lo que no es un tema.
-- `Tema-<ejercicio>.<parte>.<número>/` — un repositorio de GitHub por tema (organización `OposicionTCEE`).
-  Cada uno tiene `main.tex` (o `4_B_xx.tex` en 4.B.24–26) y sus figuras PNG.
+- `temario/` — repositorio con todos los temas: `Ejercicio-3/Parte-A/3.A.1/`, `Ejercicio-4/Parte-B/4.B.7/`, etc.
+  Cada carpeta de tema tiene `main.tex` (o `4_B_xx.tex` en 4.B.24–26) y sus figuras PNG.
+  Los antiguos repositorios `Tema-X.Y.Z` están archivados; su historial está dentro de `temario` (ver `main/HISTORIAL.md`).
 
 ## Cómo trabajar con los temas
-- Compilación: `bash main/scripts/compilar.sh <ruta>/Tema-X/main` (envuelve `latexmk -pdf -f …`).
+- Compilación: `bash main/scripts/compilar.sh temario/Ejercicio-3/Parte-A/3.A.43/main` (envuelve `latexmk -pdf -f …`).
   Compila en `.build/.tmp` y solo copia el PDF a `.build/` si se genera: con un error grave se conserva el último PDF correcto.
   `-f` es intencionado: muchos temas tienen errores menores y el PDF debe salir igual.
   Si compila, el PDF se copia también a iCloud (`OPO - TCEE/PDF temas/Tema-X.pdf`, configurable en `~/.tcee_carpeta_pdf`).
@@ -20,7 +21,8 @@ La carpeta raíz (`TCEE/`) contiene:
 - Autores en MAYÚSCULAS en el texto (SOLOW, MUNDELL-FLEMING), con año entre paréntesis.
 - No pegar nunca Markdown (`#`, `**`, `[Seguro]`) dentro de un `.tex`: rompe la compilación (ha pasado en 4.B.15 y 4.B.25).
 - Antes de modificar varios temas a la vez, enseñar al usuario qué se va a cambiar y esperar su visto bueno.
-- Para sincronizar con GitHub: `bash main/scripts/sincronizar_todo.sh` desde la carpeta TCEE.
+- Para sincronizar con GitHub (main + temario): `bash main/scripts/sincronizar_todo.sh` desde la carpeta TCEE.
+- Para ver o deshacer cambios antiguos de un tema: `main/HISTORIAL.md`.
   Si informa de un conflicto en un tema, resolverlo mostrando al usuario las dos versiones del fragmento y dejando que elija.
 
 ## Relaciones entre temas

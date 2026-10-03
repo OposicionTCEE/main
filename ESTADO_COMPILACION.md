@@ -1,6 +1,6 @@
 # Estado de compilación de los temas
 
-Prueba realizada el 02/10/2026 compilando los 107 temas con la misma receta que usará VS Code (`latexmk -pdf -f`, que genera el PDF aunque haya errores, igual que Overleaf).
+Prueba realizada el 02/10/2026 compilando los 107 temas que había entonces (4.B.3, 4.B.18 y 4.B.22, incorporados el 03/10, no están incluidos) con la misma receta que usará VS Code (`latexmk -pdf -f`, que genera el PDF aunque haya errores, igual que Overleaf).
 
 > [Probable] En tu Mac (MacTeX 2026) el recuento puede variar algo: la prueba se hizo con TeX Live 2023. Los 6 fallos graves son errores del texto, no del programa, y fallarán igual.
 

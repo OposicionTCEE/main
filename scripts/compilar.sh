@@ -37,7 +37,7 @@ if [ -f "$TMP/$BASE.pdf" ]; then
   PDFDIR="$ICLOUD/OPO - TCEE/PDF temas"
   [ -f "$HOME/.tcee_carpeta_pdf" ] && PDFDIR="$(head -1 "$HOME/.tcee_carpeta_pdf")"
   if [ -d "$ICLOUD" ] || [ -f "$HOME/.tcee_carpeta_pdf" ]; then
-    TEMA="$(basename "$DIR")"
+    TEMA="$(basename "$DIR")"; TEMA="Tema-${TEMA#Tema-}"
     if mkdir -p "$PDFDIR" && cp "$OUT/$BASE.pdf" "$PDFDIR/$TEMA.pdf"; then
       echo "Copia en iCloud: $PDFDIR/$TEMA.pdf"
     else

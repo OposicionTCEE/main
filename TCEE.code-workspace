@@ -74,9 +74,9 @@
         "problemMatcher": []
       },
       {
-        "label": "Descargar temas que falten",
+        "label": "Descargar el temario (si falta)",
         "type": "shell",
-        "command": "bash main/scripts/clonar_temas.sh",
+        "command": "bash main/scripts/descargar_temario.sh",
         "options": { "cwd": "${workspaceFolder}" },
         "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
         "problemMatcher": []
