@@ -1,0 +1,44 @@
+{
+  "name": "tcee-panel",
+  "displayName": "Panel TCEE",
+  "description": "Panel de trabajo para los temas de la oposición TCEE: acciones e índice del tema.",
+  "version": "0.1.0",
+  "publisher": "oposiciontcee",
+  "license": "UNLICENSED",
+  "repository": { "type": "git", "url": "https://github.com/OposicionTCEE/main" },
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other"],
+  "main": "./extension.js",
+  "activationEvents": ["onStartupFinished"],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        { "id": "tcee", "title": "TCEE", "icon": "media/tcee.svg" }
+      ]
+    },
+    "views": {
+      "tcee": [
+        { "id": "tcee.acciones", "name": "Acciones" },
+        { "id": "tcee.indice", "name": "Índice" }
+      ]
+    },
+    "commands": [
+      { "command": "tcee.compilar", "title": "Compilar tema", "category": "TCEE", "icon": "$(play)" },
+      { "command": "tcee.sincronizar", "title": "Sincronizar con GitHub", "category": "TCEE", "icon": "$(sync)" },
+      { "command": "tcee.fijar", "title": "Fijar este índice", "category": "TCEE", "icon": "$(pin)" },
+      { "command": "tcee.soltar", "title": "Soltar el índice (seguir al cursor)", "category": "TCEE", "icon": "$(pinned)" },
+      { "command": "tcee.refrescar", "title": "Actualizar índice", "category": "TCEE", "icon": "$(refresh)" },
+      { "command": "tcee.irA", "title": "Ir al epígrafe", "category": "TCEE" }
+    ],
+    "menus": {
+      "view/title": [
+        { "command": "tcee.fijar", "when": "view == tcee.indice && !tcee.fijado", "group": "navigation@1" },
+        { "command": "tcee.soltar", "when": "view == tcee.indice && tcee.fijado", "group": "navigation@1" },
+        { "command": "tcee.refrescar", "when": "view == tcee.indice", "group": "navigation@2" }
+      ],
+      "commandPalette": [
+        { "command": "tcee.irA", "when": "false" }
+      ]
+    }
+  }
+}

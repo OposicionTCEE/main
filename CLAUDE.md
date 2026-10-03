@@ -26,6 +26,11 @@ La carpeta raíz (`TCEE/`) contiene:
 - Para ver o deshacer cambios antiguos de un tema: `main/HISTORIAL.md`.
   Si informa de un conflicto en un tema, resolverlo mostrando al usuario las dos versiones del fragmento y dejando que elija.
 
+## Panel TCEE (extensión propia de VS Code)
+Código en `main/extension/` (JavaScript sin compilación: `extension.js` + `parser.js`). Tras cualquier cambio, volver a empaquetar
+con `npx @vscode/vsce package --skip-license -o tcee-panel.vsix` dentro de `main/extension/` y subir el `.vsix`;
+el usuario lo instala con la tarea *Instalar o actualizar el panel TCEE*. Probar `parser.js` contra los 110 temas antes de publicar.
+
 ## Relaciones entre temas
 `main/analisis/desarrollos.json` indica, para cada tema, qué modelos se DESARROLLAN matemáticamente y en qué epígrafes
 (`por_tema`) y en qué temas se desarrolla cada familia de modelos (`por_familia`).
