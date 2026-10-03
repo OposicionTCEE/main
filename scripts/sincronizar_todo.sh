@@ -1,13 +1,12 @@
 #!/bin/bash
-# Sincroniza con GitHub el repositorio main y todos los temas.
-# Para cada repositorio: guarda tus cambios (commit), trae lo que haya en GitHub y sube lo tuyo.
+# Sincroniza con GitHub los dos repositorios: main (herramientas) y temario (todos los temas).
+# Para cada uno: guarda tus cambios (commit), trae lo que haya en GitHub y sube lo tuyo.
 # Si no hay conexión, no hace nada y te lo dice: tus cambios siguen a salvo en tu Mac.
-# Si detecta un conflicto (el mismo fragmento cambiado en GitHub y en tu Mac), NO toca ese tema
-# y te lo indica al final para resolverlo con calma.
+# Si detecta un conflicto (el mismo fragmento cambiado en GitHub y en tu Mac), NO toca ese
+# repositorio y te lo indica al final para resolverlo con calma.
 
 MAIN_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 BASE="$(dirname "$MAIN_DIR")"
-LISTA="$MAIN_DIR/config/temas.txt"
 FECHA="$(date '+%Y-%m-%d %H:%M')"
 
 if ! git ls-remote -q https://github.com/OposicionTCEE/main.git >/dev/null 2>&1; then
@@ -17,6 +16,12 @@ fi
 
 subidos=(); actualizados=(); conflictos=(); errores=()
 
+# Lista legible de los temas cambiados (p. ej. "3.A.19 4.B.11") para el mensaje del commit
+temas_cambiados() {
+  git status --porcelain | sed -E 's/^...//; s/^"//; s/"$//' \
+    | grep -oE '[34]\.[AB]\.[0-9]+' | sort -u | tr '\n' ' ' | sed 's/ $//'
+}
+
 sincronizar() {
   local dir="$1" nombre="$2"
   [ -d "$dir/.git" ] || return 0
@@ -24,8 +29,9 @@ sincronizar() {
 
   # 1) Guardar los cambios locales
   if [ -n "$(git status --porcelain)" ]; then
+    local cuales; cuales="$(temas_cambiados)"
     git add -A
-    git commit -q -m "Cambios del $FECHA" || true
+    git commit -q -m "Cambios del $FECHA${cuales:+ ($cuales)}" || true
   fi
 
   # 2) Traer lo que haya en GitHub y colocar lo tuyo encima
@@ -48,29 +54,24 @@ sincronizar() {
 }
 
 sincronizar "$MAIN_DIR" "main"
-while IFS= read -r repo || [ -n "$repo" ]; do
-  [ -z "$repo" ] && continue
-  sincronizar "$BASE/$repo" "$repo"
-done < "$LISTA"
+sincronizar "$BASE/temario" "temario"
 
-# Instrucciones para Claude en la raíz del espacio de trabajo (remite a main/CLAUDE.md)
+# Instrucciones para Claude y atajos de escritura, siempre al día
 printf '@main/CLAUDE.md\n' > "$BASE/CLAUDE.md"
-
-# Mantener los atajos de escritura al día
 mkdir -p "$BASE/.vscode" && cp "$MAIN_DIR/config/tcee.code-snippets" "$BASE/.vscode/tcee.code-snippets"
 
 echo ""
 echo "Sincronización terminada ($FECHA)"
-echo "  Subidos a GitHub:        ${#subidos[@]} ${subidos[*]}"
-echo "  Actualizados desde GitHub: ${#actualizados[@]} ${actualizados[*]}"
+echo "  Subidos a GitHub:          ${subidos[*]:-nada}"
+echo "  Actualizados desde GitHub: ${actualizados[*]:-nada}"
 if [ ${#conflictos[@]} -gt 0 ]; then
   echo ""
   echo "  ATENCIÓN: conflicto en ${conflictos[*]}"
-  echo "  El mismo texto se cambió en GitHub y en tu Mac. No se ha tocado nada en esos temas."
-  echo "  Pídele a Claude: \"resuelve el conflicto de sincronización en <tema>\"."
+  echo "  El mismo texto se cambió en GitHub y en tu Mac. No se ha tocado nada en ese repositorio."
+  echo "  Pídele a Claude: \"resuelve el conflicto de sincronización\"."
 fi
 if [ ${#errores[@]} -gt 0 ]; then
   echo ""
   echo "  No se pudo sincronizar: ${errores[*]}"
-  echo "  Suele ser un problema de permisos o de inicio de sesión en GitHub (ver GUIA_INSTALACION.md, paso 6)."
+  echo "  Suele ser un problema de inicio de sesión en GitHub (ver GUIA_INSTALACION.md, paso 6)."
 fi

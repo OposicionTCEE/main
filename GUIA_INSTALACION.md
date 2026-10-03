@@ -58,10 +58,10 @@ En **Terminal**, pega estas líneas (una a una, o todas juntas):
 mkdir -p ~/TCEE
 cd ~/TCEE
 git clone https://github.com/OposicionTCEE/main.git
-bash main/scripts/clonar_temas.sh
+bash main/scripts/descargar_temario.sh
 ```
 
-Crea la carpeta **TCEE** en tu carpeta personal y descarga dentro `main` y los 107 temas. Al final dirá *Todo listo*.
+Crea la carpeta **TCEE** en tu carpeta personal y descarga dentro `main` (herramientas) y `temario` (los 110 temas, en carpetas por ejercicio y parte). Al final dirá *Todo listo*.
 Puedes repetir el último comando cuando quieras: solo descarga lo que falte.
 
 **Acceso desde tu carpeta de la oposición**: en Finder, ve a tu carpeta personal, haz clic derecho sobre **TCEE** › *Crear alias* y arrastra el alias a *iCloud Drive › OPO - TCEE*. No muevas la carpeta TCEE dentro de iCloud: iCloud y Git se pisan y pueden dañar los temas.
@@ -88,14 +88,14 @@ La primera vez que sincronices (paso 8) puede volver a pedirte autorización: ac
 
 ## Paso 7 · Escribir y compilar un tema
 
-1. En la barra izquierda, icono de **Explorador** (dos hojas). Abre, por ejemplo, `Tema-3.A.43 › main.tex`.
+1. En la barra izquierda, icono de **Explorador** (dos hojas). Abre, por ejemplo, `temario › Ejercicio-3 › Parte-A › 3.A.43 › main.tex`.
 2. **Compilar**: `⌘ + ⌥ + B` (o el icono **TeX** de la barra izquierda › *Build LaTeX project*). La primera vez tarda en torno a un minuto.
 3. **Ver el PDF**: `⌘ + ⌥ + V`. Se abre en una pestaña; arrástrala a la derecha para tenerla al lado del texto.
 4. **Saltar del PDF al texto**: doble clic sobre el PDF. **Del texto al PDF**: `⌘ + ⌥ + J`.
 5. Los cambios **se guardan solos**, compile o no el documento. Guardar y compilar son cosas independientes.
 
 **El PDF también va a iCloud** (para leerlo en el iPad): cada vez que un tema compila, se copia a *iCloud Drive › OPO - TCEE › PDF temas* con el nombre del tema (p. ej. `Tema-3.A.43.pdf`). Los PDF **no** se suben a GitHub.
-Para tener los 107 PDF de golpe: `⌘ + ⇧ + P` › **Ejecutar tarea** › **Compilar todos los temas (PDF a iCloud)** (tarda entre 10 y 30 minutos).
+Para tener todos los PDF de golpe: **Terminal › Ejecutar tarea…** › **Compilar todos los temas (PDF a iCloud)** (tarda entre 10 y 30 minutos).
 
 **Qué pasa cuando la compilación falla** (igual que en Overleaf):
 - Con errores menores (un carácter raro, un `$` suelto…), el PDF se genera igualmente.
@@ -119,15 +119,16 @@ Escribe el atajo y pulsa **Tab**; con Tab saltas de un hueco al siguiente.
 
 ## Paso 8 · Sincronizar con GitHub
 
-Un solo botón sube tus cambios y trae los que haya en GitHub, para los 107 temas a la vez:
+Un solo botón sube tus cambios y trae los que haya en GitHub, para todos los temas a la vez:
 
-1. `⌘ + ⇧ + P`, escribe **Ejecutar tarea** (o *Run Task*) e Intro.
+1. Menú de arriba **Terminal › Ejecutar tarea…** (o `⌘ + ⇧ + P` › **Tareas: Ejecutar tarea**).
+   No uses los comandos que empiezan por *Git:* (sincronizan un solo repositorio y pueden fallar).
 2. Elige **Sincronizar todos los temas con GitHub**.
 3. Al final verás un resumen: qué se ha subido, qué se ha actualizado y si hay algún problema.
 
 **Sin conexión**: trabaja con normalidad. Si lanzas la sincronización sin internet, te dirá que no ha hecho nada y tus cambios siguen en el Mac. Sincroniza cuando vuelvas a tener conexión.
 
-**Si te avisa de un conflicto** (el mismo texto se cambió en GitHub y en tu Mac): no se toca ese tema. Pídele a Claude *«resuelve el conflicto de sincronización en Tema-X»* y te enseñará las dos versiones para que elijas.
+**Si te avisa de un conflicto** (el mismo texto se cambió en GitHub y en tu Mac): no se toca nada. Pídele a Claude *«resuelve el conflicto de sincronización»* y te enseñará las dos versiones para que elijas.
 
 ### Rutina recomendada
 1. Al empezar (con conexión): **Sincronizar**.
@@ -156,4 +157,4 @@ Claude necesita internet; editar y compilar, no.
 | Git dice *Please tell me who you are* | Falta el paso 2.3. |
 | La sincronización dice *No se pudo sincronizar* | Inicia sesión en GitHub (paso 6) y vuelve a sincronizar. |
 | Un tema no genera PDF | Mira [ESTADO_COMPILACION.md](ESTADO_COMPILACION.md) o pídele a Claude que lo revise. |
-| No veo los atajos (`eqb`…) | Ejecuta la tarea **Descargar temas que falten** (los reinstala) y reabre VS Code. |
+| No veo los atajos (`eqb`…) | Ejecuta la tarea **Descargar el temario (si falta)** (los reinstala) y reabre VS Code. |
