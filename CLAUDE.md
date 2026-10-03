@@ -5,7 +5,8 @@ Espacio de trabajo para preparar la oposición a Técnico Comercial y Economista
 La carpeta raíz (`TCEE/`) contiene:
 - `main/` — este repositorio: configuración del entorno, scripts, análisis y todo lo que no es un tema.
 - `temario/` — repositorio con todos los temas: `Ejercicio-3/Parte-A/3.A.1/`, `Ejercicio-4/Parte-B/4.B.7/`, etc.
-  Cada carpeta de tema tiene `main.tex` (o `4_B_xx.tex` en 4.B.24–26) y sus figuras PNG.
+  Cada carpeta de tema tiene `main.tex`, la carpeta `Img/` con sus figuras (el preámbulo usa `\graphicspath{{Img/}}`)
+  y, si ha compilado, el PDF `X.Y.N.pdf` (no se sube a GitHub). Las figuras nuevas van siempre en `Img/`.
   Los antiguos repositorios `Tema-X.Y.Z` están archivados; su historial está dentro de `temario` (ver `main/HISTORIAL.md`).
 
 ## Cómo trabajar con los temas

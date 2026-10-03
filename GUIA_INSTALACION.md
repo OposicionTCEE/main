@@ -94,6 +94,8 @@ La primera vez que sincronices (paso 8) puede volver a pedirte autorización: ac
 4. **Saltar del PDF al texto**: doble clic sobre el PDF. **Del texto al PDF**: `⌘ + ⌥ + J`.
 5. Los cambios **se guardan solos**, compile o no el documento. Guardar y compilar son cosas independientes.
 
+**Dónde queda el PDF**: dentro de la carpeta del tema (`3.A.43 › 3.A.43.pdf`), junto a `main.tex` y la carpeta `Img` de las figuras. Las imágenes nuevas guárdalas siempre en `Img`.
+
 **El PDF también va a iCloud** (para leerlo en el iPad): cada vez que un tema compila, se copia a *iCloud Drive › OPO - TCEE › PDF temas* con el nombre del tema (p. ej. `Tema-3.A.43.pdf`). Los PDF **no** se suben a GitHub.
 Para tener todos los PDF de golpe: **Terminal › Ejecutar tarea…** › **Compilar todos los temas (PDF a iCloud)** (tarda entre 10 y 30 minutos).
 
