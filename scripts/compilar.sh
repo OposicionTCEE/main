@@ -27,8 +27,11 @@ latexmk -pdf -f -synctex=1 -interaction=nonstopmode -file-line-error -outdir="$T
 if [ -f "$TMP/$BASE.pdf" ]; then
   cp "$TMP/$BASE.pdf" "$OUT/$BASE.pdf"
   [ -f "$TMP/$BASE.synctex.gz" ] && cp "$TMP/$BASE.synctex.gz" "$OUT/$BASE.synctex.gz"
+  # Copia visible del PDF dentro de la carpeta del tema (p. ej. 3.A.43/3.A.43.pdf). No se sube a GitHub.
+  CODIGO="$(basename "$DIR")"; CODIGO="${CODIGO#Tema-}"
+  cp "$OUT/$BASE.pdf" "$DIR/$CODIGO.pdf"
   echo ""
-  echo "PDF actualizado."
+  echo "PDF actualizado: $DIR/$CODIGO.pdf"
 
   # Copia del PDF a iCloud (para leerlo desde el iPad). No se sube a GitHub.
   # Carpeta por defecto: iCloud Drive › OPO - TCEE › PDF temas
