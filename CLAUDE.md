@@ -35,12 +35,14 @@ que no figuran allí: no cuentan Introducción, Conclusión ni Preguntas Test. D
 Nueva nota (`inferencia.js`): añade `\textbf{NOTA (dd/mm/aaaa[, desde X.Y.N]):} texto` como párrafo final de `\modificaciones{…}` del tema destino
 (buscado tras `\begin{document}`: en el preámbulo está la definición de la macro).
 Panel Oposición (`panelOposicion.js` + `media/panel.js/.css`, pestaña webview): pestañas Calendario, Temas (`media/temas.js`: cartas por bloque de `config/bloques.json`, filtro de ejercicio y partes),
-Relaciones y Cante; se abre en una ventana aparte (`workbench.action.moveEditorToNewWindow`). Lo que abre (temas, líneas) va a la ventana principal:
+Relaciones, Cante y Test; se abre en una ventana aparte (`workbench.action.moveEditorToNewWindow`). Lo que abre (temas, líneas) va a la ventana principal:
 `tcee.irA(uri, linea, {principal:true})` usa el último grupo de editores de texto activo.
 Para ahorrar batería guarda por tema el texto y los pendientes y solo los recalcula si cambia el fichero, el documento abierto o `.build/estado`;
 `Progreso.todos()` se guarda 5 s. La transcripción del cante nunca se lanza sola (botón *Transcribir*). El plan semanal se eliminó (v0.11).
 Cante (`cante.js` + `media/cante.js`): graba con ffmpeg y transcribe con whisper.cpp en el Mac; fichas en el repositorio PRIVADO `progreso/cantes/`,
 audio solo en el Mac. Reglas en `main/CANTE.md` (mantener código y documento a la vez); instalación con `scripts/instalar_cante.sh`.
+Test (`testPanel.js` + `media/test.js`): banco en el repositorio `test` (`TCEE/test/preguntas.json`, un único fichero; mantener los `id`),
+respuestas en el repositorio PRIVADO `progreso/test/<Mac>.json`. Reglas en `main/TEST.md` (mantener código y documento a la vez).
 Acción Rehacer informes (`tcee.rehacerInformes`): ejecuta `scripts/armonizacion.js estado` y copia el encargo para Claude Code. El progreso guarda además minutos por día (`dias`) en el fichero de cada Mac.
 Calendario de vueltas (pestaña Calendario): reglas y razonamiento en `main/CALENDARIO.md` (mantener código y documento a la vez).
 `calendario.js` (generar semanas temático/correlativo/aleatorio, reparto diario, librar días, mover cante), `afinidad.js` (relaciones entre temas),

@@ -9,7 +9,7 @@ BASE="$(dirname "$MAIN_DIR")"                    # .../TCEE
 if [ -d "$BASE/temario/.git" ]; then
   echo "El temario ya está descargado en $BASE/temario"
 else
-  echo "Descargando el temario (110 temas)…"
+  echo "Descargando el temario…"
   git clone -q https://github.com/OposicionTCEE/temario.git "$BASE/temario" || {
     echo "No se pudo descargar. Comprueba la conexión y vuelve a ejecutar este comando."; exit 1; }
 fi
@@ -20,6 +20,12 @@ if [ ! -d "$BASE/progreso/.git" ]; then
   git clone -q https://github.com/OposicionTCEE/progreso.git "$BASE/progreso" || {
     echo "Aviso: no se pudo descargar «progreso». ¿Has creado el repositorio privado en GitHub (GUIA_INSTALACION, paso 11)?"
     echo "       El panel funciona igual y guarda el progreso en VS Code hasta que lo descargues."; }
+fi
+
+# Banco de preguntas del test (pestaña Test del Panel Oposición)
+if [ ! -d "$BASE/test/.git" ]; then
+  echo "Descargando el banco de preguntas del test…"
+  git clone -q https://github.com/OposicionTCEE/test.git "$BASE/test" || echo "Aviso: no se pudo descargar «test». Repite esta tarea más tarde."
 fi
 
 # Instrucciones para Claude en la raíz del espacio de trabajo (remite a main/CLAUDE.md)

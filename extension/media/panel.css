@@ -345,3 +345,81 @@ button.grande { font-size: 1.1em; padding: 8px 18px; }
 .tb-tiempo, .tb-ok { color: var(--apagado); font-size: .88em; font-variant-numeric: tabular-nums; }
 @media (max-width: 700px) { .tb-cab { grid-template-columns: 14px 10px 1fr; } .tb-cifras, .tb-barra { grid-column: 3; } .tb-resumen { margin-left: 0; } }
 @media (prefers-reduced-motion: reduce) { .tb-carta { transition: none; } .tb-carta:hover { transform: none; } }
+
+/* ---------------------------------------------------------------- Test */
+.ts { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(300px, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 980px) { .ts { grid-template-columns: 1fr; } }
+.ts-lado { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 92px; }
+.ts-modos { margin-bottom: 14px; flex-wrap: wrap; }
+.ts-opciones { display: flex; flex-direction: column; gap: 10px; }
+.ts-opciones p { margin: 0; }
+.ts-fila { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+.ts-fila input[type=number] { width: 70px; }
+.ts-bloques { display: flex; flex-direction: column; gap: 4px; max-height: 52vh; overflow-y: auto; padding-right: 4px; }
+.ts-bloques .tb-grupo { margin: 10px 0 4px; }
+.ts-bloque { --bv: color-mix(in srgb, var(--b) 78%, currentColor); border-left: 3px solid var(--bv); padding: 2px 8px; border-radius: 3px; }
+.ts-bloque .tb-punto { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--bv); margin: 0 2px; }
+.ts-bfila { display: flex; gap: 8px; align-items: center; }
+.ts-bfila label { flex: 1; cursor: pointer; }
+.ts-temas { display: flex; flex-direction: column; gap: 2px; padding: 2px 0 6px 30px; font-size: .95em; }
+.ts-mini { border: none; background: none; padding: 0 4px; color: var(--apagado); cursor: pointer; }
+.ts-est { --bv: color-mix(in srgb, var(--b) 78%, currentColor); display: grid; grid-template-columns: minmax(0, 1fr) 110px 42px; gap: 8px; align-items: center; margin: 4px 0; font-size: .92em; }
+.ts-est-n { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ts-apilada { display: flex; height: 7px; border-radius: 4px; background: var(--borde); overflow: hidden; }
+.ts-apilada .ok, .ts-leyenda i.ok { background: var(--vscode-charts-green, #3fa266); }
+.ts-apilada .ko, .ts-leyenda i.ko { background: var(--vscode-errorForeground, #e5534b); }
+.ts-leyenda i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; background: var(--borde); margin: 0 3px 0 8px; vertical-align: -1px; }
+.ts-ses td { font-size: .92em; }
+.ts-run { display: flex; flex-direction: column; gap: 14px; }
+.ts-barra { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; padding: 8px 0; border-bottom: 1px solid var(--borde); }
+.ts-reloj { margin-left: auto; font-variant-numeric: tabular-nums; font-size: 1.1em; }
+.ts-reloj.poco { color: var(--vscode-errorForeground, #e5534b); }
+.ts-confirma { display: inline-flex; gap: 8px; align-items: center; }
+.ts-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 22px; align-items: start; }
+@media (max-width: 900px) { .ts-cuerpo { grid-template-columns: 1fr; } }
+.ts-preg { --bv: color-mix(in srgb, var(--b) 78%, currentColor); max-width: 860px; }
+.ts-preg .tb-punto { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--bv); }
+.ts-preg .tb-cod { color: var(--bv); }
+.ts-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 0 0 8px; }
+.ts-origen { margin-left: auto; font-size: .9em; }
+.ts-enun { font-size: 1.12em; line-height: 1.55; margin-bottom: 14px; }
+.ts-img { max-width: 100%; border: 1px solid var(--borde); border-radius: 4px; margin: 0 0 12px; background: #fff; }
+.ts-ops { display: flex; flex-direction: column; gap: 8px; }
+.ts-op { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: start; text-align: left; width: 100%; padding: 10px 12px; border: 1px solid var(--borde);
+  border-radius: 6px; background: var(--vscode-editorWidget-background, var(--fondo)); color: var(--tinta); line-height: 1.45; }
+button.ts-op { cursor: pointer; }
+button.ts-op:hover:not([disabled]) { border-color: var(--acento); }
+.ts-letra { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--borde); font-weight: 600; }
+.ts-op.marcada { border-color: var(--acento); background: color-mix(in srgb, var(--acento) 14%, transparent); }
+.ts-op.marcada .ts-letra { background: var(--acento); color: #fff; border-color: transparent; }
+.ts-op.correcta { border-color: var(--vscode-charts-green, #3fa266); background: color-mix(in srgb, var(--vscode-charts-green, #3fa266) 14%, transparent); opacity: 1; }
+.ts-op.correcta .ts-letra { background: var(--vscode-charts-green, #3fa266); color: #fff; border-color: transparent; }
+.ts-op.erronea { border-color: var(--vscode-errorForeground, #e5534b); background: color-mix(in srgb, var(--vscode-errorForeground, #e5534b) 12%, transparent); opacity: 1; }
+.ts-op.erronea .ts-letra { background: var(--vscode-errorForeground, #e5534b); color: #fff; border-color: transparent; }
+.ts-op.apagada { opacity: .6; }
+.ts-veredicto { font-weight: 600; margin: 12px 0 0; }
+.ts-veredicto.ok, .ts-cifras .ok { color: var(--vscode-charts-green, #3fa266); }
+.ts-veredicto.ko, .ts-cifras .ko { color: var(--vscode-errorForeground, #e5534b); }
+.ts-just { margin-top: 8px; padding: 8px 12px; border-left: 3px solid var(--acento); background: color-mix(in srgb, var(--acento) 6%, transparent); }
+.ts-nav { display: flex; gap: 8px; align-items: center; margin-top: 16px; }
+.ts-esp { flex: 1; }
+.ts-atajos { font-size: .85em; margin-top: 10px; }
+.ts-mapa { display: grid; grid-template-columns: repeat(auto-fill, minmax(34px, 1fr)); gap: 5px; position: sticky; top: 92px; }
+.ts-mapa button { padding: 4px 0; font-size: .85em; font-variant-numeric: tabular-nums; }
+.ts-mapa button.resp { background: color-mix(in srgb, var(--acento) 22%, transparent); }
+.ts-mapa button.ok { background: color-mix(in srgb, var(--vscode-charts-green, #3fa266) 35%, transparent); }
+.ts-mapa button.ko { background: color-mix(in srgb, var(--vscode-errorForeground, #e5534b) 35%, transparent); }
+.ts-mapa button.blanco { background: color-mix(in srgb, var(--tinta) 12%, transparent); }
+.ts-mapa button.actual { outline: 2px solid var(--acento); outline-offset: 1px; }
+.ts-res { display: flex; flex-direction: column; gap: 16px; max-width: 980px; }
+.ts-grande { font-size: 56px; font-weight: 300; font-variant-numeric: tabular-nums; }
+.ts-cifras { display: flex; gap: 18px; flex-wrap: wrap; margin: 6px 0; }
+.ts-rev { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.ts-rev-item { border: 1px solid var(--borde); border-radius: 6px; }
+.ts-rev-item.ok { border-left: 3px solid var(--vscode-charts-green, #3fa266); }
+.ts-rev-item.ko { border-left: 3px solid var(--vscode-errorForeground, #e5534b); }
+.ts-rev-cab { display: grid; grid-template-columns: 18px 70px 1fr; gap: 8px; width: 100%; text-align: left; border: none; background: none; padding: 8px 10px; }
+.ts-rev-txt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--apagado); min-width: 0; }
+.ts-rev-txt .katex { font-size: 1em; }
+.ts-rev-det { padding: 4px 14px 12px; }
+@media (prefers-reduced-motion: reduce) { .ts-op { transition: none; } }

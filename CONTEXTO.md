@@ -23,7 +23,8 @@ Claude Code lee `CLAUDE.md` en cada sesión. Este documento completa ese fichero
 |---|---|---|
 | `main` | público | Entorno: scripts, panel, análisis, documentación |
 | `temario` | público | Los temas (`Ejercicio-X/Parte-Y/X.Y.N/main.tex` + `Img/`) |
-| `progreso` | **privado** | Tiempos y temas hechos (`equipos/`), plan semanal y calendarios (`calendarios/`) |
+| `test` | público | Banco de preguntas del test (`preguntas.json`, `img/`) |
+| `progreso` | **privado** | Tiempos y temas hechos (`equipos/`), calendarios (`calendarios/`), cantes (`cantes/`) y respuestas del test (`test/`) |
 
 Nada de `progreso` se copia nunca a `main` ni a `temario`.
 
@@ -51,6 +52,8 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
     sin tema abierto, la lista de modelos que conviene armonizar.
   - **Cante** (reglas en `CANTE.md`): cronómetro y grabación con un botón; al terminar se transcribe en el Mac (whisper.cpp)
     y, al pulsar *Transcribir* (no se hace sola, por la batería), la transcripción queda en `progreso/cantes/`. Historial con duración, palabras por minuto y texto por minutos.
+  - **Test** (reglas en `TEST.md`): practicar el primer ejercicio por tema o bloque, simulacro, repaso de falladas o aleatorio;
+    banco en el repositorio `test`, respuestas en `progreso/test/`. Pendiente: 3.A.33 y 3.B.40, 14 imágenes y 7 preguntas mal convertidas.
   - El **plan semanal** se eliminó en la v0.11 a petición del usuario (el calendario lo sustituye).
 - **Análisis**: `analisis/Modelos_temario_TCEE.xlsx`, `analisis/Desarrollos_modelos_TCEE.xlsx`, `analisis/desarrollos.json`
   y `analisis/armonizacion.json` (34 informes de armonización escritos por Claude; se actualizan con `scripts/armonizacion.js`).
