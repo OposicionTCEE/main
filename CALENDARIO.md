@@ -11,7 +11,12 @@ Código: `extension/calendario.js` (calendario) y `extension/afinidad.js` (relac
   El 4º se añadirá cuando esté su programa (`config/programa_4.json`).
 - Una **semana termina el día de cante**. Ese día se cantan sus temas, normalmente 5 en la 2ª vuelta.
 - Los días anteriores al cante, desde el día siguiente al cante anterior, son **días de estudio**, salvo el **día libre** semanal, que se elige al crear el calendario.
-- El programa del ejercicio está en `config/programa_3.json`: 45 temas de la Parte A y 45 de la Parte B, con su título.
+- El programa del ejercicio está en `config/programa_3.json`: 45 temas de la Parte A y 45 de la Parte B. Cada tema tiene:
+  - **título**;
+  - **resumen** (`corto`), como en el calendario de la preparadora, por ejemplo «Demanda del consumidor (III). Riesgo e incertidumbre»;
+  - **etiqueta breve** (`breve`), la que se ve en el calendario, por ejemplo «Consumidor III: riesgo»;
+  - **ámbitos temáticos** (`ambitos`): el primero es el principal (apartado 4).
+
   Un tema que no tenga carpeta en el temario (hoy, 3.A.14) entra igual en el calendario.
 
 ## 2. Qué se le puede pedir al crear un calendario
@@ -19,11 +24,11 @@ Código: `extension/calendario.js` (calendario) y `extension/afinidad.js` (relac
 | Opción | Qué hace |
 |---|---|
 | Temas por semana | Cuántos temas se cantan cada semana. La última semana lleva los que sobren. |
-| Modo **temático** | Agrupa los temas por afinidad (apartado 4), con total libertad respecto al orden del programa. |
+| Modo **temático** | Agrupa los temas por afinidad (apartado 4), con total libertad respecto al orden del programa, y encadena las semanas para que cada una guarde relación con la siguiente (apartado 5). |
 | Modo **correlativo** | Toda la Parte A por orden (A.1, A.2…) y después toda la Parte B, en bloques del tamaño elegido. No intercala. |
 | Modo **aleatorio** | Orden al azar. Cada variante se puede repetir porque lleva una «semilla» que la identifica. |
 | Intercalar A y B | En los modos temático y aleatorio, mezcla A y B **dentro de cada semana** (apartado 3). Si no se marca, primero van todas las semanas de la A y luego las de la B. |
-| Tener en cuenta los calendarios de referencia | En el modo temático, usa como una señal más la forma de agrupar de los calendarios marcados como referencia (p. ej. el de la preparadora). |
+| Empezar por | **Lo más básico**: la semana de temas más básicos del programa. **Un tema concreto**: el calendario empieza por la semana de ese tema, y ese tema es el primero que se estudia. **Un tema al azar**. Vale para los tres modos. En el correlativo, la parte del tema elegido empieza en él y da la vuelta (A.10 … A.45, A.1 … A.9) antes de pasar a la otra parte. |
 | Fecha del primer cante y día libre | Fijan las fechas. Cada semana siguiente canta 7 días después. |
 | Otra variante | Repite la generación con otra semilla y da otra agrupación igual de válida. |
 
@@ -40,14 +45,14 @@ La afinidad entre dos temas es un número de 0 a 1 que combina cinco señales:
 
 | Señal | Peso | Qué mide |
 |---|---|---|
-| **Referencia** | 0,30 | Los dos temas comparten semana en un calendario de referencia (el de la preparadora). Recoge un criterio pedagógico que los datos no ven. |
-| **Remisiones** | 0,20 | Un tema remite al otro en el texto («Ver Tema 3.A.44»), en cualquier sentido. 0,5 por remisión, con un máximo de 1. |
-| **Modelos** | 0,15 | Desarrollan matemáticamente los mismos modelos (`analisis/desarrollos.json`). 0,5 por modelo común, con un máximo de 1. |
-| **Léxico** | 0,25 | Hablan de lo mismo. Similitud de vocabulario (TF-IDF, coseno) entre el título y el subtítulo (×3), los epígrafes (×2) y el texto (×1). Se ignoran las palabras genéricas y las de la plantilla (Introducción, Relevancia…). Se escala para que el 1 % de parejas más parecidas valga 1. |
-| **Programa** | 0,10 | Cercanía en el programa: temas consecutivos de la misma parte valen 0,6, a dos de distancia 0,3, y las series de un mismo título («Análisis de mercados (I)…(IV)») valen 1. |
+| **Ámbitos** | 0,35 | Comparten ámbito temático (`ambitos` en el programa). Mismo ámbito principal vale 1; si el principal de uno es ámbito del otro, 0,6; si solo comparten un ámbito secundario, 0,3. |
+| **Programa** | 0,30 | Cercanía en el programa: temas consecutivos de la misma parte valen 0,6, a dos de distancia 0,3, y las series de un mismo título («Análisis de mercados (I)…(IV)») valen 1. |
+| **Léxico** | 0,15 | Hablan de lo mismo. Similitud de vocabulario (TF-IDF, coseno) entre el título y el subtítulo (×3), los epígrafes (×2) y el texto (×1). Se ignoran las palabras genéricas y las de la plantilla (Introducción, Relevancia…). Se escala para que el 1 % de parejas más parecidas valga 1. |
+| **Remisiones** | 0,10 | Un tema remite al otro en el texto («Ver Tema 3.A.44»), en cualquier sentido. 0,5 por remisión, con un máximo de 1. |
+| **Modelos** | 0,10 | Desarrollan matemáticamente los mismos modelos (`analisis/desarrollos.json`). 0,5 por modelo común, con un máximo de 1. |
 
-Si no hay calendarios de referencia, o no se marca esa opción, el peso de la referencia se reparte proporcionalmente entre las otras cuatro señales.
 Las señales se recalculan cada vez que se crea un calendario, así que siguen los cambios del temario.
+El calendario de la preparadora **no se usa** al generar: sirvió para fijar los ámbitos y los pesos (apartado 11).
 
 ## 5. Modo temático: el algoritmo
 
@@ -56,13 +61,21 @@ Las señales se recalculan cada vez que se crea un calendario, así que siguen l
    Así se conservan las cuotas A/B. Se acepta el cambio si mejora la agrupación. Al principio también se acepta alguno que empeora, cada vez menos, para no quedarse en una solución mediocre (*recocido simulado*).
 3. **Qué se considera «mejor»**: para cada tema se calcula su **encaje**, la afinidad media con sus compañeros de semana, y se suma el logaritmo de (0,05 + encaje) de todos los temas.
    El logaritmo castiga mucho dejar un tema **huérfano** en una semana que no le corresponde. Es preferible que todos encajen razonablemente a que unas semanas sean perfectas y otras un cajón de sastre.
-4. **Orden de las semanas**: de lo más básico a lo más avanzado, según la posición media en el programa.
-   Al intercalar, cuenta la posición de los temas de la Parte A (la teoría de base, como en el calendario de la preparadora), y la semana incompleta va al final.
-   Si no se intercala, primero van las semanas de la A y luego las de la B; la semana incompleta de cada parte, si la hay, va al final de esa parte.
-   Dentro de la semana, primero los temas A y luego los B, por número.
+4. **Orden de las semanas: encadenadas por relación.**
+   - La **relación entre dos semanas** es la afinidad media entre los temas de una y los de la otra.
+   - Se empieza por la semana elegida en «Empezar por» (apartado 2). Con «lo más básico», es la de menor posición media en el programa; al intercalar, cuenta la Parte A.
+   - Después, cada semana va seguida de la más relacionada con ella entre las que quedan.
+   - Al final, la cadena se mejora invirtiendo tramos mientras aumente la relación total entre semanas consecutivas (*2-opt*).
+   - La semana incompleta, si la hay, va al final.
+   - Si no se intercala, primero van todas las semanas de una parte (la del tema de inicio; si no hay tema elegido, la A) y luego las de la otra. La primera semana de la segunda parte es la más relacionada con la última de la primera.
+   - Dentro de la semana, primero los temas A y luego los B, por número, salvo el tema de inicio elegido, que va el primero.
 5. **Series en orden**: en los temas con el mismo título numerado («Teoría de la demanda del consumidor (I), (II), (III)»), el (I) nunca va en una semana posterior al (II), y así sucesivamente.
    Si ocurre, se intercambian sus puestos. Las series largas, de más de 4 temas (como «Unión Europea (I)…(VII)»), no se fuerzan: cada tema es un ámbito distinto.
-6. **Nombre del bloque**: el título del tema A más central de la semana (el de mayor afinidad con los demás), junto con el del tema B más central.
+   El tema de inicio elegido nunca se mueve.
+6. **Nombre del bloque**: se forma con los ámbitos de sus temas.
+   - Cada tema suma 1 a su ámbito principal y 0,5 a cada secundario.
+   - Siempre se nombra el ámbito con más peso. El segundo, si suma al menos 1, y el tercero, si suma al menos 1,5.
+   - Por ejemplo, «Agregados macroeconómicos, balanza de pagos».
 7. **Reproducible**: con las mismas opciones, la misma semilla y el mismo temario, sale el mismo calendario.
 
 ## 6. Reparto de los temas entre los días de estudio
@@ -87,8 +100,7 @@ Las señales se recalculan cada vez que se crea un calendario, así que siguen l
 ## 8. Dónde se guarda
 
 - Cada calendario es un fichero en el repositorio **privado** `progreso`, en la carpeta `calendarios/<id>.json`. Se sincroniza con el botón de siempre.
-- El de la preparadora está importado como `calendarios/preparadora-2a-vuelta-3.json`, marcado como **referencia**.
-  Su agrupación original se guarda aparte (`referenciaSemanas`), para que los ajustes del día a día no cambien la señal de referencia.
+- El de la preparadora está importado como `calendarios/preparadora-2a-vuelta-3.json`. Se puede ver y usar como cualquier otro, pero no interviene en la generación.
 - Contenido de cada fichero: opciones de creación, semanas (fecha de cante, temas, bloque, orden manual), día libre, días librados, días de estudio extra y temas cantados con su fecha.
 
 ## 9. Cómo comprobar o rehacer un calendario sin Claude
@@ -98,22 +110,43 @@ Las señales se recalculan cada vez que se crea un calendario, así que siguen l
 2. Para revisar por qué dos temas están juntos, consulta las señales del apartado 4:
    - remisiones: busca «Ver Tema» en los dos temas;
    - modelos: `analisis/desarrollos.json`;
-   - programa: si los números son consecutivos o forman una serie.
+   - programa: si los números son consecutivos o forman una serie;
+   - ámbitos: `config/programa_3.json`.
 3. Para cambiar el criterio (por ejemplo, dar más peso a los modelos), cambia los pesos en `extension/afinidad.js` y en la tabla del apartado 4, y vuelve a empaquetar el panel (ver `CLAUDE.md`).
 
-## 10. Las dos propuestas iniciales (4 de octubre de 2026)
+## 10. Propuesta inicial (4 de octubre de 2026)
 
-Con el temario de esa fecha se generaron dos calendarios temáticos de la 2ª vuelta, con 5 temas por semana, intercalados, primer cante el 7 de octubre y sábado libre. Ambos están en `progreso/calendarios`.
+Con el temario de esa fecha se generó la propuesta de la 2ª vuelta: 5 temas por semana, intercalados, empezando por lo más básico, primer cante el 7 de octubre y sábado libre.
+Está en `progreso/calendarios/propuesta-2a-vuelta-3.json`.
 
-| Calendario | Encaje medio* | Temas huérfanos* | Parejas de la preparadora que conserva |
-|---|---|---|---|
-| Preparadora | 0,183 | 9 | 180 de 180 |
-| Propuesta «preparadora + temario» (con referencia) | 0,199 | 9 | 128 de 180 |
-| Propuesta «solo temario» (sin referencia) | 0,243 | 0 | 34 de 180 |
+| Calendario | Encaje medio* | Temas huérfanos* | Relación entre semanas consecutivas* | Parejas de la preparadora que conserva |
+|---|---|---|---|---|
+| Preparadora | 0,225 | 13 | 0,172 | 180 de 180 |
+| Propuesta | 0,335 | 3 | 0,184 | 45 de 180 |
 
-\* Medidos solo con las señales del temario (sin la de referencia). Por eso favorecen a la propuesta «solo temario», que se optimiza con esa misma medida: no son una prueba de que sea mejor.
-Un tema es «huérfano» si su afinidad media con los compañeros de semana es menor que 0,08.
+\* Medidos con la afinidad del apartado 4. La propuesta se optimiza con esa misma medida, así que la tabla dice que es coherente con las reglas, no que sea mejor para estudiar.
+Un tema es «huérfano» si su afinidad media con los compañeros de semana es menor que 0,1.
 
-Lectura: la propuesta «solo temario» agrupa mejor por contenido, pero comete errores pedagógicos que la preparadora no comete. Por ejemplo, junta la demanda del consumidor (A.8, A.9) con temas de la Unión Europea por coincidencias de vocabulario.
-La propuesta mixta conserva el 70 % del criterio de la preparadora y cambia lo que el temario respalda con claridad. Por ejemplo, crisis financieras y pánicos bancarios van junto con renta fija y regulación, y los tres temas de política fiscal (A.38–A.40) van juntos.
-Con la versión de las reglas que haya en cada momento, las cifras pueden variar: rehacer la comparación es parte de revisar un calendario.
+## 11. Qué se aprendió del calendario de la preparadora
+
+El calendario de la preparadora sirvió para fijar las reglas una vez, de modo que después se apliquen solas.
+
+1. **Ámbitos temáticos.** Cada tema recibió uno o varios ámbitos (23 en total, por ejemplo «Comercio internacional», «Finanzas e instrumentos financieros», «Unión Europea»).
+   Se definieron con el programa, el contenido de los temas y los bloques de la preparadora. Su nombre se usa para titular las semanas.
+2. **Pesos.** Se comparó, para cada pareja de temas, si la preparadora los pone en la misma semana con lo que dice cada señal.
+   La medida es el AUC: 0,5 es azar y 1 es acierto pleno.
+   - **Temas de la misma parte** (A con A, B con B): sus agrupaciones se explican bien.
+     Por separado: ámbitos 0,78, programa 0,76, léxico 0,73, remisiones 0,59, modelos 0,52.
+     El ajuste estadístico (regresión logística con pesos no negativos) da sobre todo ámbitos y programa.
+     Los pesos elegidos (apartado 4) reproducen su criterio casi igual de bien: AUC 0,80, frente a 0,80 del ajuste puro.
+     Se mantiene un 10 % para remisiones y otro 10 % para modelos, porque son la información propia de tu temario.
+   - **Temas A con temas B**: sus emparejamientos apenas se explican por el contenido (la mejor señal, los ámbitos, da AUC 0,57).
+     Parece que junta A y B sobre todo para avanzar a la vez en las dos partes, no por afinidad temática.
+     Con los pesos elegidos, el calendario empareja A y B por ámbitos compartidos (AUC 0,61 frente a su criterio), que es más coherente con lo que pediste.
+3. **Orden de las series.** El (I) siempre va antes que el (II), como hace ella. Las series largas, como la Unión Europea, no se fuerzan.
+
+## 12. Cómo añadir un programa nuevo (por ejemplo, el 4º ejercicio)
+
+1. Crear `config/programa_4.json` con la misma estructura que el del 3º. Para cada tema hacen falta `codigo`, `parte`, `titulo`, `subtitulo`, `corto`, `breve` y `ambitos`, y además la lista de `ambitos` con sus nombres.
+2. Los ámbitos y las etiquetas son lo único que requiere criterio. Se pueden escribir a mano, o pedírselo a Claude: *«etiqueta el programa del 4º ejercicio siguiendo CALENDARIO.md, apartado 12»*.
+3. Comprobar con «Nuevo calendario › Vista previa» que las semanas tienen sentido. Si un tema queda mal, normalmente basta con corregir sus ámbitos.

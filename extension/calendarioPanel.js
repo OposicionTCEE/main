@@ -48,20 +48,22 @@ function crearCalendarios({ ctx, progreso, raiz, desarrollos }) {
   }
 
   /** Afinidad del ejercicio con el temario actual (cacheTemas: {código: {texto}}) */
-  function afinidad(ejercicio, cacheTemas, conReferencia) {
+  function afinidad(ejercicio, cacheTemas) {
     const prog = programa(ejercicio);
     if (!prog) return null;
     const temas = prog.temas.map((t) => ({ ...t, texto: cacheTemas[t.codigo] ? cacheTemas[t.codigo].texto : null }));
-    const refs = conReferencia ? Object.values(todos()).filter((c) => c.referencia && c.ejercicio === ejercicio)
-      .map((c) => c.referenciaSemanas || c.semanas.map((s) => s.temas)) : [];
-    return { af: AF.calcular(temas, desarrollos(), refs), prog };
+    return { af: AF.calcular(temas, desarrollos()), prog };
   }
+  /** Ámbitos temáticos del programa: {ambitos: {código: [...]}, nombres: {ámbito: nombre}} */
+  const taxonomia = (prog) => ({ ambitos: Object.fromEntries(prog.temas.map((t) => [t.codigo, t.ambitos || []])), nombres: prog.ambitos || {} });
+  /** Etiquetas de cada tema para la vista: breve (en el calendario), corto (resumen) y título */
+  const etiquetas = (prog) => Object.fromEntries(prog.temas.map((t) => [t.codigo, { breve: t.breve || t.corto || t.titulo, corto: t.corto || t.titulo, titulo: t.titulo || t.corto }]));
 
   function generar(op, cacheTemas) {
-    const { af, prog } = afinidad(op.ejercicio, cacheTemas, op.referencia) || {};
+    const { af, prog } = afinidad(op.ejercicio, cacheTemas) || {};
     if (!prog) throw new Error(`Falta el programa del ${op.ejercicio}º ejercicio (main/config/programa_${op.ejercicio}.json).`);
     const titulos = Object.fromEntries(prog.temas.map((t) => [t.codigo, t.titulo || t.corto]));
-    return C.crear(prog.temas.map((t) => t.codigo), op, af, titulos);
+    return C.crear(prog.temas.map((t) => t.codigo), op, af, titulos, taxonomia(prog));
   }
 
   /** Datos para pintar el calendario activo: días con su tipo y los temas que tocan */
@@ -70,10 +72,11 @@ function crearCalendarios({ ctx, progreso, raiz, desarrollos }) {
     const cal = activo();
     const lista = Object.values(t).map((c) => ({ id: c.id, nombre: c.nombre, referencia: !!c.referencia, ejercicio: c.ejercicio }))
       .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
-    const base = { lista, hoy: hoyIso(), nombresDia: NOMBRES_DIA };
+    const prog3 = programa('3');
+    const base = { lista, hoy: hoyIso(), nombresDia: NOMBRES_DIA, programa: prog3 ? prog3.temas.map((t) => ({ codigo: t.codigo, breve: t.breve || t.corto })) : [] };
     if (!cal) return { ...base, cal: null };
     const prog = programa(cal.ejercicio) || { temas: [] };
-    const titulos = Object.fromEntries(prog.temas.map((x) => [x.codigo, x.titulo || x.corto]));
+    const titulos = etiquetas(prog);
     const pesos = {};
     prog.temas.forEach((x) => { if (cacheTemas[x.codigo]) pesos[x.codigo] = minutos[x.codigo] || 0; });
     const dias = {};
@@ -102,8 +105,7 @@ function crearCalendarios({ ctx, progreso, raiz, desarrollos }) {
     if (m.tipo === 'calPrevia') {
       const cal = generar(m.opciones, cacheTemas);
       const prog = programa(m.opciones.ejercicio);
-      const titulos = Object.fromEntries(prog.temas.map((x) => [x.codigo, x.titulo || x.corto]));
-      return { ok: true, previa: { semanas: cal.semanas.map((s) => ({ cante: s.cante, bloque: s.bloque, temas: s.temas })), titulos } };
+      return { ok: true, previa: { semanas: cal.semanas.map((s) => ({ cante: s.cante, bloque: s.bloque, temas: s.temas })), titulos: etiquetas(prog) } };
     }
     if (m.tipo === 'calCrear') {
       const cal = generar(m.opciones, cacheTemas);

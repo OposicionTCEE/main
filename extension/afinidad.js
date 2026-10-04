@@ -3,8 +3,8 @@
 'use strict';
 const { indiceTema, sinComentario } = require('./parser');
 
-// Peso de cada señal en la afinidad final (suman 1). Si no hay calendarios de referencia, su peso se reparte entre las demás.
-const PESOS = { referencia: 0.30, remisiones: 0.20, modelos: 0.15, lexico: 0.25, programa: 0.10 };
+// Peso de cada señal en la afinidad final (suman 1). Ajustados con el calendario de la preparadora (ver CALENDARIO.md, apartado 4).
+let PESOS = { ambitos: 0.35, programa: 0.30, lexico: 0.15, remisiones: 0.10, modelos: 0.10 };
 
 const VACIAS = new Set(('de la el en los las del por con para una uno unos unas que como mas sus ese esa este esta esto son ser sobre '
   + 'entre sin nos les hay muy pero tambien cuando donde desde hasta ver tema caso casos tipo tipos forma formas parte partes '
@@ -31,22 +31,24 @@ function remisiones(codigo, texto) {
 const baseSerie = (t) => norm(t.split(':')[0]).replace(/\((i|ii|iii|iv|v|vi|vii|viii|ix|x)\)/g, '').replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
 
 /**
- * temas: [{codigo, parte: 'A'|'B', titulo, subtitulo, texto|null}]
- * desarrollos: {por_tema: {codigo: [{familia}]}} · referencias: [[[códigos de una semana], …], …] (calendarios de referencia)
+ * temas: [{codigo, parte: 'A'|'B', titulo, subtitulo, ambitos: [principal, …], texto|null}]
+ * desarrollos: {por_tema: {codigo: [{familia}]}} · pesos: opcional, para probar otros pesos
  * Devuelve {codigos, idx, m: matriz n×n de afinidad 0..1, senales: {nombre: matriz}}
  */
-function calcular(temas, desarrollos, referencias = []) {
+function calcular(temas, desarrollos, pesosProbar) {
   const n = temas.length;
   const idx = Object.fromEntries(temas.map((t, i) => [t.codigo, i]));
   const vacia = () => Array.from({ length: n }, () => new Float64Array(n));
-  const S = { referencia: vacia(), remisiones: vacia(), modelos: vacia(), lexico: vacia(), programa: vacia() };
+  const S = { ambitos: vacia(), remisiones: vacia(), modelos: vacia(), lexico: vacia(), programa: vacia() };
   const sim = (M, i, j, v) => { if (i !== j && v > M[i][j]) { M[i][j] = v; M[j][i] = v; } };
 
-  // 1. Calendarios de referencia (p. ej. el de la preparadora): mismos temas en la misma semana
-  const nRef = referencias.length;
-  for (const cal of referencias) for (const sem of cal) {
-    const is = sem.map((c) => idx[c]).filter((i) => i != null);
-    for (const i of is) for (const j of is) if (i !== j) { S.referencia[i][j] += 1 / nRef; }
+  // 1. Ámbitos temáticos (config/programa_N.json): mismo ámbito principal = 1; el principal de uno es ámbito del otro = 0,6;
+  //    comparten algún ámbito secundario = 0,3
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+    const a = temas[i].ambitos || [], b = temas[j].ambitos || [];
+    if (!a.length || !b.length) continue;
+    const v = a[0] === b[0] ? 1 : (b.includes(a[0]) || a.includes(b[0])) ? 0.6 : a.some((x) => b.includes(x)) ? 0.3 : 0;
+    sim(S.ambitos, i, j, v);
   }
 
   // 2. Remisiones explícitas entre temas («Ver Tema …»), en cualquiera de los dos sentidos
@@ -107,8 +109,7 @@ function calcular(temas, desarrollos, referencias = []) {
     sim(S.programa, i, j, v);
   }
 
-  const pesos = { ...PESOS };
-  if (!nRef) { const r = pesos.referencia; pesos.referencia = 0; const resto = 1 - r; Object.keys(pesos).forEach((k) => { pesos[k] /= resto; }); }
+  const pesos = { ...(pesosProbar || PESOS) };
   const m = vacia();
   for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
     if (i === j) continue;

@@ -40,7 +40,7 @@ de menos a más avanzado según horas/semana, retoques fijando temas a semanas; 
 Calendario de vueltas (pestaña Calendario): reglas y razonamiento en `main/CALENDARIO.md` (mantener código y documento a la vez).
 `calendario.js` (generar semanas temático/correlativo/aleatorio, reparto diario, librar días, mover cante), `afinidad.js` (relaciones entre temas),
 `calendarioPanel.js` (guardar y aplicar cambios) y `media/calendario.js` (vista mensual). Programa del ejercicio en `config/programa_3.json`.
-Los calendarios se guardan en el repositorio PRIVADO `progreso/calendarios/` (el de la preparadora, marcado `referencia`). 3º y 4º ejercicio nunca se mezclan.
+Los calendarios se guardan en el repositorio PRIVADO `progreso/calendarios/`. La generación usa solo las reglas (ámbitos y etiquetas de `config/programa_3.json` + pesos de `afinidad.js`); el calendario de la preparadora solo sirvió para fijarlas. 3º y 4º ejercicio nunca se mezclan.
 
 ## Relaciones entre temas
 `main/analisis/desarrollos.json` indica, para cada tema, qué modelos se DESARROLLAN matemáticamente y en qué epígrafes

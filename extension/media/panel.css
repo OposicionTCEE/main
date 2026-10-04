@@ -117,8 +117,14 @@ button.primario:hover { background: var(--vscode-button-hoverBackground); }
 .cal-cante { font-weight: 700; color: color-mix(in srgb, var(--cante) 75%, var(--tinta)); }
 .cal-cantados { display: flex; flex-wrap: wrap; gap: 3px; }
 
-.chip { display: flex; justify-content: space-between; gap: 4px; font-size: .9em; padding: 1px 5px; border-radius: 3px;
-  font-variant-numeric: tabular-nums; border-left: 3px solid; }
+.chip { display: block; font-size: .88em; padding: 2px 5px 3px; border-radius: 3px; min-width: 0;
+  font-variant-numeric: tabular-nums; border-left: 3px solid; line-height: 1.25; }
+.chip b { font-weight: 600; }
+.chip small { float: right; color: var(--apagado); margin-left: 4px; }
+.chip .breve { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.previa-temas { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.previa-temas .chip b { margin-right: 4px; }
+.previa-temas .chip .breve { display: inline; }
 .chip small { color: var(--apagado); }
 .chip.pA { border-color: var(--ca); background: color-mix(in srgb, var(--ca) 18%, transparent); }
 .chip.pB { border-color: var(--cb); background: color-mix(in srgb, var(--cb) 18%, transparent); }
