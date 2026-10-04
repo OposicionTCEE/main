@@ -61,7 +61,7 @@ git clone https://github.com/OposicionTCEE/main.git
 bash main/scripts/descargar_temario.sh
 ```
 
-Crea la carpeta **TCEE** en tu carpeta personal y descarga dentro `main` (herramientas) y `temario` (los 110 temas, en carpetas por ejercicio y parte). Al final dirá *Todo listo*.
+Crea la carpeta **TCEE** en tu carpeta personal y descarga dentro `main` (herramientas) y `temario` (todos los temas, en carpetas por ejercicio y parte). Al final dirá *Todo listo*.
 Puedes repetir el último comando cuando quieras: solo descarga lo que falte.
 
 **Acceso desde tu carpeta de la oposición**: en Finder, ve a tu carpeta personal, haz clic derecho sobre **TCEE** › *Crear alias* y arrastra el alias a *iCloud Drive › OPO - TCEE*. No muevas la carpeta TCEE dentro de iCloud: iCloud y Git se pisan y pueden dañar los temas.
@@ -187,11 +187,12 @@ El panel propio de la oposición: icono **TCEE** en la **barra lateral derecha**
 - **Panel Oposición** (en Acciones): se abre como una pestaña. El primer apartado es el **Calendario** de vueltas
   (vista mensual; pulsa un día para librarlo, estudiar en tu día libre o mover el cante; a la derecha, los temas de la semana con su
   orden de estudio, el botón para mover un tema a otra semana y *Traer un tema a esta semana*; *Nuevo calendario* crea otro
-  en modo temático, correlativo o aleatorio, y eliges por qué tema empezar; *Eliminar calendario* borra el que estás viendo). Reglas en [CALENDARIO.md](CALENDARIO.md). Además, cuatro apartados:
-  *Temas* (los 110 con tiempo restante, % y casilla de hecho; ordena pulsando en las columnas), *Plan semanal* (reparto automático
-  según tus horas por semana, de menos a más avanzado; ◀ ▶ mueve un tema de semana y lo fija 📌, ✕ lo suelta; abajo, si cumpliste las
-  semanas anteriores), *Relaciones del tema* (modelos del tema abierto y en qué otros temas y epígrafes se desarrollan) y
-  *Mapa de relaciones* (red de temas unidos por modelos compartidos; puedes resaltar un modelo).
+  en modo temático, correlativo o aleatorio, y eliges por qué tema empezar; *Eliminar calendario* borra el que estás viendo). Reglas en [CALENDARIO.md](CALENDARIO.md). Además:
+  *Temas* (todos, con tiempo restante, % y casilla de hecho; ordena pulsando en las columnas) y
+  *Relaciones*: a la izquierda, el mapa de temas unidos por los modelos que comparten (el tema abierto y sus asociados, resaltados;
+  pulsa un nodo para abrir el tema). A la derecha, con un tema abierto, elige uno de sus modelos compartidos y verás un resumen de
+  cómo lo desarrolla cada otro tema (contexto, supuestos, ecuaciones, desarrollo, implicaciones) y los posibles errores del tuyo con
+  enlace a la línea; sin tema abierto, *Qué armonizar* ordena los modelos que más conviene revisar. Detalles en [RELACIONES.md](RELACIONES.md).
 - **Abajo, Índice**: el título de la ventana es el título del tema. Todos los epígrafes (hasta los paragraphs) aparecen desplegados.
   Numeración desde Introducción = 1 hasta la Conclusión, y después los anexos (A1, A2…).
   Pulsa un epígrafe para saltar a él. Los epígrafes sin contenido llevan ○ y la palabra *vacío*.

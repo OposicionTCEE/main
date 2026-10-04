@@ -1,16 +1,16 @@
-// Panel Oposición: pestaña con el calendario de vueltas, el tiempo restante de todos los temas, el plan semanal y las relaciones entre temas
+// Panel Oposición: pestaña con el calendario de vueltas, el tiempo restante de todos los temas y las relaciones entre temas
 'use strict';
 const vscode = require('vscode');
 const fs = require('fs');
 const path = require('path');
 const { codigoTema, tituloTema, indiceTema } = require('./parser');
 const G = require('./progreso');
-const P = require('./plan');
 const { crearCalendarios } = require('./calendarioPanel');
+const { crearRelaciones } = require('./relacionesPanel');
 
 function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
   let panel = null;
-  let cache = null;          // {codigo: {uri, titulo, completo}} de los 110 temas
+  let cache = null;          // {codigo: {uri, titulo, completo}} de todos los temas
   let espera = null, ocupado = false, pendiente = false;
   const raiz = () => vscode.workspace.workspaceFolders[0].uri.fsPath;
 
@@ -18,6 +18,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     try { return JSON.parse(fs.readFileSync(path.join(raiz(), 'main', 'analisis', 'desarrollos.json'), 'utf8')); } catch (e) { return { por_tema: {}, por_familia: {} }; }
   };
   const calendarios = crearCalendarios({ ctx: context, progreso, raiz, desarrollos });
+  const relaciones = crearRelaciones({ raiz, desarrollos });
   const minutosDe = () => Object.fromEntries(Object.values(cache || {}).map((t) => [t.codigo, t.minutos]));
 
   async function temas() {
@@ -34,29 +35,6 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     lista.sort((a, b) => a.codigo.localeCompare(b.codigo, 'es', { numeric: true }));
     cache = Object.fromEntries(lista.map((t) => [t.codigo, t]));
     return lista;
-  }
-
-  function relaciones(abierto, dev, nombres) {
-    if (!abierto) return { abierto: null, modelos: [] };
-    // un mismo modelo puede aparecer varias veces (distintas formas): se agrupa por familia
-    const grupos = new Map();
-    for (const m of (dev.por_tema || {})[abierto] || []) {
-      const g = grupos.get(m.familia);
-      if (!g) grupos.set(m.familia, { ...m });
-      else g.epigrafes = [...new Set([...g.epigrafes.split(' | '), ...m.epigrafes.split(' | ')])].join(' | ');
-    }
-    const propios = [...grupos.values()];
-    return {
-      abierto, titulo: nombres[abierto] || abierto,
-      modelos: propios.map((m) => ({
-        familia: m.familia, area: m.area, grado: m.grado, epigrafes: m.epigrafes, forma: m.forma,
-        otros: ((dev.por_familia || {})[m.familia] || []).filter((c) => c !== abierto).map((c) => {
-          const xs = ((dev.por_tema || {})[c] || []).filter((y) => y.familia === m.familia);
-          const epis = [...new Set(xs.flatMap((y) => (y.epigrafes || '').split(' | ')).filter(Boolean))].join(' | ');
-          return { codigo: c, titulo: nombres[c] || c, epigrafes: epis, grado: xs.map((y) => y.grado).includes('Completo') ? 'Completo' : (xs[0] || {}).grado || '' };
-        }).filter((o, i, arr) => arr.findIndex((z) => z.codigo === o.codigo) === i),
-      })),
-    };
   }
 
   function mapa(lista, dev) {
@@ -80,26 +58,12 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     const lista = await temas();
     const dev = desarrollos();
     const nombres = Object.fromEntries(lista.map((t) => [t.codigo, t.titulo]));
-    const plan = progreso.leerPlan();
-    const lunes = P.lunesDe();
-    const semanas = P.planificar(lista, plan, lunes);
-    if (!plan.historial[lunes]) { plan.historial[lunes] = P.foto(semanas, lunes); progreso.guardarPlan(plan); }
     const hechos = new Set(lista.filter((t) => t.hecho).map((t) => t.codigo));
-    const historial = Object.entries(plan.historial).filter(([l]) => l < lunes).sort().reverse().slice(0, 8)
-      .map(([l, cods]) => ({ lunes: l, planificados: cods, hechos: cods.filter((c) => hechos.has(c)) }));
-    const dias = progreso.dias();
-    const estaSemana = Object.entries(dias).filter(([f]) => f >= lunes).reduce((s, [, m]) => s + m, 0);
     const abierto = temaMostrado() ? codigoTema(temaMostrado().fsPath) : null;
     return {
       temas: lista.map(({ codigo, titulo, completo, parte, minutos, pct, hecho }) => ({ codigo, titulo, completo, parte, minutos, pct, hecho, tiempo: G.formatoTiempo(minutos) })),
       total: { tiempo: G.formatoTiempo(lista.reduce((s, t) => s + t.minutos, 0)), hechos: hechos.size, n: lista.length },
-      plan: {
-        horasSemana: plan.horasSemana, lunes, estaSemana: G.formatoTiempo(estaSemana),
-        semanas: semanas.map((s) => ({ ...s, total: G.formatoTiempo(s.total), cap: G.formatoTiempo(s.capacidad), lleno: s.total / s.capacidad,
-          temas: s.temas.map((t) => ({ ...t, titulo: nombres[t.codigo], tiempo: G.formatoTiempo(t.minutos) })) })),
-        historial, nombres,
-      },
-      relaciones: relaciones(abierto, dev, nombres),
+      relaciones: { ...relaciones.vista(cache, abierto, dev), nombres },
       calendario: calendarios.vista(cache, minutosDe()),
       mapa: mapa(lista, dev),
     };
@@ -146,11 +110,15 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     }
     if (m.tipo === 'abrir') return irA(m.codigo, m.epigrafe);
     if (m.tipo === 'hecho') { progreso.marcar(m.codigo, !!m.valor); alMarcar(); return; }
-    const plan = progreso.leerPlan();
-    if (m.tipo === 'horas') { const h = Number(m.valor); if (h > 0 && h <= 100) { plan.horasSemana = h; progreso.guardarPlan(plan); refrescar(); } }
-    if (m.tipo === 'fijar') {
-      if (m.lunes) plan.fijados[m.codigo] = m.lunes; else delete plan.fijados[m.codigo];
-      progreso.guardarPlan(plan); refrescar();
+    if (m.tipo === 'relDetalle') {
+      if (!cache) await temas();
+      const nombres = Object.fromEntries(Object.values(cache).map((t) => [t.codigo, t.titulo]));
+      panel.webview.postMessage({ tipo: 'relDetalle', detalle: relaciones.detalle(m.familia, cache, desarrollos(), nombres) });
+      return;
+    }
+    if (m.tipo === 'abrirLinea') {
+      if (!cache) await temas();
+      const t = cache[m.codigo]; if (t) vscode.commands.executeCommand('tcee.irA', t.uri, Math.max(0, m.linea));
     }
   }
 
@@ -158,11 +126,13 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     const nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
     const url = (f) => webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', f));
     return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; font-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="${url('panel.css')}"><title>Panel Oposición</title></head>
-<body><div id="app"><p class="vacio">Calculando los 110 temas…</p></div>
+<link rel="stylesheet" href="${url('katex/katex.min.css')}"><link rel="stylesheet" href="${url('panel.css')}"><title>Panel Oposición</title></head>
+<body><div id="app"><p class="vacio">Calculando los temas…</p></div>
+<script nonce="${nonce}" src="${url('katex/katex.min.js')}"></script>
 <script nonce="${nonce}" src="${url('calendario.js')}"></script>
+<script nonce="${nonce}" src="${url('relaciones.js')}"></script>
 <script nonce="${nonce}" src="${url('panel.js')}"></script></body></html>`;
   }
 

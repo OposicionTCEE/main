@@ -15,7 +15,7 @@ Claude Code lee `CLAUDE.md` en cada sesión. Este documento completa ese fichero
   2. Ejecutar la tarea **Instalar o actualizar el panel TCEE**.
   3. **Desarrollador: Recargar ventana**.
 
-  Las pruebas se hacen con scripts de Node que cargan los módulos puros: `parser.js`, `progreso.js`, `inferencia.js`, `afinidad.js`, `calendario.js`, `plan.js`.
+  Las pruebas se hacen con scripts de Node que cargan los módulos puros: `parser.js`, `progreso.js`, `inferencia.js`, `afinidad.js`, `calendario.js`, `desarrollos.js`.
 
 ## Repositorios (organización OposicionTCEE)
 
@@ -45,10 +45,13 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
     - librar días y mover el cante;
     - recolocar un tema, traer un tema, ampliar o reorganizar el calendario;
     - eliminar calendarios.
-  - **Temas**: tabla de los 110 con tiempo restante y casilla de hecho.
-  - **Plan semanal** por horas.
-  - **Relaciones del tema** y **mapa de relaciones** (de `analisis/desarrollos.json`).
-- **Análisis**: `analisis/Modelos_temario_TCEE.xlsx`, `analisis/Desarrollos_modelos_TCEE.xlsx` y `analisis/desarrollos.json`.
+  - **Temas**: tabla de todos los temas con tiempo restante y casilla de hecho.
+  - **Relaciones** (reglas en `RELACIONES.md`): mapa de temas unidos por modelos (resalta el tema abierto y sus asociados) y panel con
+    los modelos que comparte el tema abierto, fichas resumidas de los otros temas para comparar (ecuaciones con KaTeX) y,
+    sin tema abierto, la lista de modelos que conviene armonizar.
+  - El **plan semanal** se eliminó en la v0.11 a petición del usuario (el calendario lo sustituye).
+- **Análisis**: `analisis/Modelos_temario_TCEE.xlsx`, `analisis/Desarrollos_modelos_TCEE.xlsx`, `analisis/desarrollos.json`
+  y `analisis/armonizacion.json` (34 informes de armonización escritos por Claude; se actualizan con `scripts/armonizacion.js`).
 - **Programa del 3er ejercicio**: `config/programa_3.json`. Cada tema tiene título, resumen, etiqueta breve y ámbitos.
 
 ## Decisiones tomadas con el usuario (no reabrir sin motivo nuevo)
@@ -67,10 +70,15 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
 1. **Acción «Cante»**: registrar el tema que se canta cada semana con la preparadora. Está por definir con el usuario.
 2. **4º ejercicio**:
    - falta su programa (crear `config/programa_4.json` siguiendo `CALENDARIO.md`, apartado 12);
-   - en `temario` no hay Parte A, y de la Parte B faltan 4.B.1, 4.B.2 y 4.B.4 a 4.B.6.
-3. **Limpieza de Markdown y OCR pegados**: hay unas 986 etiquetas `[Seguro]/[Probable]/[Suposición]` en 14 temas, `**` en 9, `�` en 35 y `#` sueltos en 20. Hay que enseñar los cambios al usuario antes de aplicarlos.
-4. **Temas que no generan PDF**: 3.A.9, 3.B.13, 3.B.18, 3.B.43, 4.B.15 y 4.B.25 (ver `ESTADO_COMPILACION.md`).
-5. **Imágenes referenciadas que faltan** (probablemente solo estaban en Overleaf):
+   - el 4 de octubre de 2026 el usuario añadió 4.A.1 a 4.A.30 y 4.B.1, 4.B.2 y 4.B.4 a 4.B.6 como esqueletos (145 carpetas en total);
+     **4.A.11 es una copia exacta de 4.A.1** (mismo título «Fuentes Estadísticas españolas»): preguntar al usuario;
+   - cuando tengan desarrollos, rehacer `analisis/desarrollos.json` para que entren en Relaciones.
+3. **Posibles errores en los desarrollos de modelos** (`analisis/armonizacion.json`): 76 confirmados por verificación independiente
+   y 1 dudoso, en 38 temas. Se ven en la pestaña Relaciones con enlace a la línea. No corregir ningún tema sin enseñar antes el cambio
+   al usuario y esperar su visto bueno; tras corregir, actualizar los informes (`RELACIONES.md`, apartado 4).
+4. **Limpieza de Markdown y OCR pegados**: hay unas 986 etiquetas `[Seguro]/[Probable]/[Suposición]` en 14 temas, `**` en 9, `�` en 35 y `#` sueltos en 20. Hay que enseñar los cambios al usuario antes de aplicarlos.
+5. **Temas que no generan PDF**: 3.A.9, 3.B.13, 3.B.18, 3.B.43, 4.B.15 y 4.B.25 (ver `ESTADO_COMPILACION.md`).
+6. **Imágenes referenciadas que faltan** (probablemente solo estaban en Overleaf):
    - 3.A.11: Esquema_TiempoProduccion.png
    - 3.A.24: FlowANDstock.png
    - 3.A.29: ACFyPACF.png, Equilibrio_MF.png, JuegosRepetidos_Dilema.png, ProcesoEstacionario.png
@@ -78,6 +86,6 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
    - 3.A.35: MGS_CI.png
    - 3.B.6: IndicePrecios_DIXIT_STIGLITZ.png
    - 3.B.26: Fig6.png
-6. **Archivar los repositorios antiguos `Tema-*`** de GitHub. Hay que pedir confirmación al usuario antes.
-7. Revisar con el usuario las semanas más débiles de la propuesta de la 2ª vuelta (`progreso/calendarios/propuesta-2a-vuelta-3.json`), por ejemplo las semanas 5 y 18.
-8. La carpeta `~/TCEE/_antiguos` del Mac se puede borrar cuando el usuario quiera.
+7. **Archivar los repositorios antiguos `Tema-*`** de GitHub. Hay que pedir confirmación al usuario antes.
+8. Revisar con el usuario las semanas más débiles de la propuesta de la 2ª vuelta (`progreso/calendarios/propuesta-2a-vuelta-3.json`), por ejemplo las semanas 5 y 18.
+9. La carpeta `~/TCEE/_antiguos` del Mac se puede borrar cuando el usuario quiera.
