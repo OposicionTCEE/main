@@ -34,8 +34,10 @@ Tiempo restante (`progreso.js`): reglas en `main/PROGRESO.md` (mantener código 
 que no figuran allí: no cuentan Introducción, Conclusión ni Preguntas Test. Datos en el repositorio PRIVADO `progreso`; no copiarlos a `main` ni a `temario`.
 Nueva nota (`inferencia.js`): añade `\textbf{NOTA (dd/mm/aaaa[, desde X.Y.N]):} texto` como párrafo final de `\modificaciones{…}` del tema destino
 (buscado tras `\begin{document}`: en el preámbulo está la definición de la macro).
-Panel Oposición (`panelOposicion.js` + `media/panel.js/.css`, pestaña webview): pestañas Calendario, Temas (tabla de todos los temas)
-y Relaciones; se abre en una ventana aparte (`workbench.action.moveEditorToNewWindow`). El plan semanal se eliminó (v0.11).
+Panel Oposición (`panelOposicion.js` + `media/panel.js/.css`, pestaña webview): pestañas Calendario, Temas (tabla de todos los temas),
+Relaciones y Cante; se abre en una ventana aparte (`workbench.action.moveEditorToNewWindow`). El plan semanal se eliminó (v0.11).
+Cante (`cante.js` + `media/cante.js`): graba con ffmpeg y transcribe con whisper.cpp en el Mac; fichas en el repositorio PRIVADO `progreso/cantes/`,
+audio solo en el Mac. Reglas en `main/CANTE.md` (mantener código y documento a la vez); instalación con `scripts/instalar_cante.sh`.
 Acción Rehacer informes (`tcee.rehacerInformes`): ejecuta `scripts/armonizacion.js estado` y copia el encargo para Claude Code. El progreso guarda además minutos por día (`dias`) en el fichero de cada Mac.
 Calendario de vueltas (pestaña Calendario): reglas y razonamiento en `main/CALENDARIO.md` (mantener código y documento a la vez).
 `calendario.js` (generar semanas temático/correlativo/aleatorio, reparto diario, librar días, mover cante), `afinidad.js` (relaciones entre temas),

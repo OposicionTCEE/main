@@ -269,3 +269,42 @@ button.sug small { display: block; color: var(--apagado); }
 .rel-propio { margin-top: 14px; }
 .rel-propio summary { cursor: pointer; color: var(--apagado); }
 pre.tex { white-space: pre-wrap; font-size: .85em; background: color-mix(in srgb, var(--tinta) 5%, transparent); padding: 6px; border-radius: 4px; }
+
+/* ---------------------------------------------------------------- Cante */
+.cante { display: grid; grid-template-columns: minmax(340px, 1fr) minmax(0, 1.25fr); gap: 22px; align-items: start; }
+@media (max-width: 980px) { .cante { grid-template-columns: 1fr; } }
+.cante-izq { display: flex; flex-direction: column; gap: 16px; }
+.cante-dcha { position: sticky; top: 92px; max-height: calc(100vh - 110px); overflow-y: auto; }
+.cante-tarjeta { border: 1px solid var(--borde); border-radius: 8px; padding: 12px 16px; }
+.cante-tarjeta h3, .cante-detalle h3 { margin: 0 0 10px; font-size: 1.05em; }
+.cante-campo { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; color: var(--apagado); font-size: .92em; }
+.cante-campo select, .cante-campo input { font: inherit; color: var(--vscode-input-foreground, var(--tinta)); background: var(--vscode-input-background, var(--fondo));
+  border: 1px solid var(--borde); border-radius: 3px; padding: 4px 6px; }
+.cante-fila { display: grid; grid-template-columns: 170px 1fr; gap: 12px; }
+button.grande { font-size: 1.1em; padding: 8px 18px; }
+.pct.ancho { width: 100%; height: 6px; margin: 0; display: block; }
+.cante-lista tr[data-ver] { cursor: pointer; }
+.cante-lista tr.sel td { background: color-mix(in srgb, var(--acento) 14%, transparent); }
+.cante-lista td.pasado, .cante-reloj.pasado { color: var(--vscode-errorForeground, #f14c4c); }
+.etiqueta { font-size: .8em; color: var(--apagado); border: 1px solid var(--borde); border-radius: 8px; padding: 0 6px; margin-left: 4px; }
+.etiqueta.mal { color: var(--vscode-errorForeground, #f14c4c); border-color: currentColor; }
+.cante-vacio { padding: 30px 0; text-align: center; }
+.cante-botones { display: flex; gap: 8px; flex-wrap: wrap; }
+.cante-texto { line-height: 1.6; margin-top: 12px; }
+.cante-texto p { display: grid; grid-template-columns: 52px 1fr; gap: 10px; margin: 0 0 12px; }
+.cante-t { color: var(--apagado); font-variant-numeric: tabular-nums; font-size: .88em; padding-top: 2px; }
+.cante-grabando { max-width: 640px; margin: 40px auto; text-align: center; display: flex; flex-direction: column; gap: 18px; align-items: center; }
+.cante-grabando > * { margin: 0; }
+.cante-tema { font-size: 1.05em; }
+.punto-rec { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--vscode-errorForeground, #f14c4c); margin-right: 4px; animation: latido 1.2s infinite; }
+@keyframes latido { 50% { opacity: .25; } }
+.cante-reloj { font-size: 88px; font-weight: 300; font-variant-numeric: tabular-nums; letter-spacing: 2px; line-height: 1; }
+.cante-objetivo { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+#c-prog.pasado { background: var(--vscode-errorForeground, #f14c4c); }
+.cante-nivel { display: flex; align-items: center; gap: 10px; font-size: .9em; }
+.medidor { width: 180px; height: 6px; border-radius: 3px; background: var(--borde); overflow: hidden; }
+.medidor span { display: block; height: 100%; width: 0; background: var(--vscode-charts-green, #89d185); transition: width .3s; }
+.cante-silencio { color: var(--vscode-errorForeground, #f14c4c); }
+.aviso-instalar { border-color: var(--acento); }
+@media (prefers-reduced-motion: reduce) { .punto-rec { animation: none; } .medidor span { transition: none; } }
+.cante-lista td, .cante-lista th { font-size: .95em; } .cante-lista .nowrap { white-space: nowrap; }
