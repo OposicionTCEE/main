@@ -35,7 +35,8 @@ que no figuran allí: no cuentan Introducción, Conclusión ni Preguntas Test. D
 Nueva nota (`inferencia.js`): añade `\textbf{NOTA (dd/mm/aaaa[, desde X.Y.N]):} texto` como párrafo final de `\modificaciones{…}` del tema destino
 (buscado tras `\begin{document}`: en el preámbulo está la definición de la macro).
 Panel Oposición (`panelOposicion.js` + `media/panel.js/.css`, pestaña webview): pestañas Calendario, Temas (tabla de todos los temas)
-y Relaciones. El plan semanal se eliminó (v0.11). El progreso guarda además minutos por día (`dias`) en el fichero de cada Mac.
+y Relaciones; se abre en una ventana aparte (`workbench.action.moveEditorToNewWindow`). El plan semanal se eliminó (v0.11).
+Acción Rehacer informes (`tcee.rehacerInformes`): ejecuta `scripts/armonizacion.js estado` y copia el encargo para Claude Code. El progreso guarda además minutos por día (`dias`) en el fichero de cada Mac.
 Calendario de vueltas (pestaña Calendario): reglas y razonamiento en `main/CALENDARIO.md` (mantener código y documento a la vez).
 `calendario.js` (generar semanas temático/correlativo/aleatorio, reparto diario, librar días, mover cante), `afinidad.js` (relaciones entre temas),
 `calendarioPanel.js` (guardar y aplicar cambios) y `media/calendario.js` (vista mensual). Programa del ejercicio en `config/programa_3.json`.

@@ -34,7 +34,7 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
   - sincronización de los tres repositorios (`scripts/sincronizar_todo.sh`);
   - historial y cómo deshacer cambios (`HISTORIAL.md`).
 - **Panel TCEE** (extensión propia, barra lateral derecha):
-  - **Acciones**: Compilar, Sincronizar, Nueva nota y Panel Oposición. En la cabecera, *Tiempo restante (%)* y el botón ✓ *Hecho*.
+  - **Acciones**: Compilar, Sincronizar, Nueva nota, Panel Oposición (se abre en una ventana aparte) y Rehacer informes (estado de `armonizacion.json` y encargo copiado para Claude Code). En la cabecera, *Tiempo restante (%)* y el botón ✓ *Hecho*.
   - **Índice** del tema con todos los niveles, *paragraph* incluidos, y ○ en los epígrafes vacíos.
   - **Nueva nota**: deduce el tema de destino y escribe la nota en `\modificaciones`.
   - **Tiempo restante y progreso**: reglas en `PROGRESO.md`.
