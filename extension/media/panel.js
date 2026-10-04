@@ -1,4 +1,4 @@
-// Panel Oposición (lado de la página). Recibe los datos de la extensión y pinta tres pestañas (calendario.js y relaciones.js aparte).
+// Panel Oposición (lado de la página). Recibe los datos de la extensión y pinta cuatro pestañas (calendario.js, relaciones.js y cante.js aparte).
 (function () {
   'use strict';
   const vscode = acquireVsCodeApi();
@@ -19,6 +19,9 @@
     if (m.tipo === 'previa' && window.TCEE_CAL) window.TCEE_CAL.previa(m.previa);
     if (m.tipo === 'traer' && window.TCEE_CAL) window.TCEE_CAL.traer(m.traer);
     if (m.tipo === 'relDetalle' && window.TCEE_REL) window.TCEE_REL.detalle(m.detalle);
+    if (m.tipo === 'canteEstado' && window.TCEE_CANTE && estado.pestana === 'cante') window.TCEE_CANTE.estado(m.estado);
+    if (m.tipo === 'canteDetalle' && window.TCEE_CANTE) window.TCEE_CANTE.detalle(m.detalle);
+    if (m.tipo === 'canteMicros' && window.TCEE_CANTE) window.TCEE_CANTE.micros(m.micros);
     if (m.tipo === 'aviso') { aviso(m.texto, m.error); if (m.error && window.TCEE_CAL) window.TCEE_CAL.fallo(); }
   });
 
@@ -32,7 +35,7 @@
 
   function pintar() {
     if (!D) return;
-    const pest = [['calendario', 'Calendario'], ['temas', 'Temas'], ['relaciones', 'Relaciones']];
+    const pest = [['calendario', 'Calendario'], ['temas', 'Temas'], ['relaciones', 'Relaciones'], ['cante', D.cante && D.cante.grabando ? '● Cante' : 'Cante']];
     app.innerHTML = `
       <header>
         <div class="resumen"><strong>Tiempo restante del temario: ${esc(D.total.tiempo)}</strong>
@@ -44,7 +47,8 @@
     const cuerpo = document.getElementById('cuerpo');
     const pCalendario = (el) => { window.TCEE_CAL.pintar(el, D, { estado, guardar, enviar, repintar: pintar }); enlaces(el); };
     const pRelaciones = (el) => { window.TCEE_REL.pintar(el, D, { estado, guardar, enviar, repintar: pintar }); enlaces(el); };
-    ({ calendario: pCalendario, temas: pTemas, relaciones: pRelaciones })[estado.pestana in { calendario: 1, temas: 1, relaciones: 1 } ? estado.pestana : 'calendario'](cuerpo);
+    const pCante = (el) => window.TCEE_CANTE.pintar(el, D, { estado, guardar, enviar, repintar: pintar });
+    ({ calendario: pCalendario, temas: pTemas, relaciones: pRelaciones, cante: pCante })[estado.pestana in { calendario: 1, temas: 1, relaciones: 1, cante: 1 } ? estado.pestana : 'calendario'](cuerpo);
   }
 
   // ------------------------------------------------------------------ Temas

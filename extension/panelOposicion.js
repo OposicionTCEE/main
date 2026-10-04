@@ -7,6 +7,7 @@ const { codigoTema, tituloTema, indiceTema } = require('./parser');
 const G = require('./progreso');
 const { crearCalendarios } = require('./calendarioPanel');
 const { crearRelaciones } = require('./relacionesPanel');
+const { crearCante } = require('./cante');
 
 function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
   let panel = null;
@@ -19,6 +20,18 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
   };
   const calendarios = crearCalendarios({ ctx: context, progreso, raiz, desarrollos });
   const relaciones = crearRelaciones({ raiz, desarrollos });
+  // Cante: grabación y transcripción (main/CANTE.md). alCambiar(ligero): solo el estado en vivo (nivel, % transcrito) o todo el panel
+  const cante = crearCante({
+    raiz, progreso,
+    avisar: (texto, error) => { if (panel) panel.webview.postMessage({ tipo: 'aviso', texto, error: !!error }); else (error ? vscode.window.showWarningMessage : vscode.window.showInformationMessage)(texto); },
+    alCambiar: (ligero) => { if (!panel) return; if (ligero) panel.webview.postMessage({ tipo: 'canteEstado', estado: cante.estado() }); else enviar(); },
+  });
+  setTimeout(() => { try { cante.retomar(); } catch (e) { /* sin carpeta aún */ } }, 5000);
+  let latido = null;   // mientras se graba, el nivel del micrófono se envía cada medio segundo
+  const vigilarGrabacion = () => {
+    const g = panel && cante.estado().grabando;
+    if (g && !latido) latido = setInterval(() => { if (!panel) { clearInterval(latido); latido = null; return; } const e = cante.estado(); panel.webview.postMessage({ tipo: 'canteEstado', estado: e }); if (!e.grabando) { clearInterval(latido); latido = null; } }, 500);
+  };
   const minutosDe = () => Object.fromEntries(Object.values(cache || {}).map((t) => [t.codigo, t.minutos]));
 
   async function temas() {
@@ -60,11 +73,14 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     const nombres = Object.fromEntries(lista.map((t) => [t.codigo, t.titulo]));
     const hechos = new Set(lista.filter((t) => t.hecho).map((t) => t.codigo));
     const abierto = temaMostrado() ? codigoTema(temaMostrado().fsPath) : null;
+    const cal = calendarios.vista(cache, minutosDe());
     return {
       temas: lista.map(({ codigo, titulo, completo, parte, minutos, pct, hecho }) => ({ codigo, titulo, completo, parte, minutos, pct, hecho, tiempo: G.formatoTiempo(minutos) })),
       total: { tiempo: G.formatoTiempo(lista.reduce((s, t) => s + t.minutos, 0)), hechos: hechos.size, n: lista.length },
       relaciones: { ...relaciones.vista(cache, abierto, dev), nombres },
-      calendario: calendarios.vista(cache, minutosDe()),
+      calendario: cal,
+      cante: { ...cante.estado(), lista: cante.lista(), abierto, semana: ((cal.cal && cal.cal.semanas) || []).filter((s) => s.estado === 'en curso').flatMap((s) => s.orden),
+        objetivo: context.globalState.get('tcee.canteObjetivo', 30), micro: context.globalState.get('tcee.canteMicro', '') },
       mapa: mapa(lista, dev),
     };
   }
@@ -73,7 +89,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     if (!panel) return;
     if (ocupado) { pendiente = true; return; }
     ocupado = true;
-    try { panel.webview.postMessage({ tipo: 'datos', datos: await datos() }); }
+    try { panel.webview.postMessage({ tipo: 'datos', datos: await datos() }); vigilarGrabacion(); }
     catch (e) { panel.webview.postMessage({ tipo: 'error', texto: String(e && e.message || e) }); }
     ocupado = false;
     if (pendiente) { pendiente = false; refrescar(); }
@@ -116,10 +132,46 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
       panel.webview.postMessage({ tipo: 'relDetalle', detalle: relaciones.detalle(m.familia, cache, desarrollos(), nombres) });
       return;
     }
+    if (m.tipo && m.tipo.startsWith('cante')) return mensajeCante(m);
     if (m.tipo === 'abrirLinea') {
       if (!cache) await temas();
       const t = cache[m.codigo]; if (t) vscode.commands.executeCommand('tcee.irA', t.uri, Math.max(0, m.linea));
     }
+  }
+
+  async function mensajeCante(m) {
+    try {
+      if (m.tipo === 'canteEmpezar') {
+        if (!cache) await temas();
+        const t = cache[m.codigo];
+        if (!t) throw new Error('Elige un tema.');
+        context.globalState.update('tcee.canteObjetivo', Number(m.objetivo) || 0);
+        if (m.micro) context.globalState.update('tcee.canteMicro', m.micro);
+        await cante.empezar({ codigo: t.codigo, titulo: t.completo || t.titulo, objetivo: (Number(m.objetivo) || 0) * 60, micro: m.micro, texto: t.texto });
+      } else if (m.tipo === 'canteTerminar') {
+        await cante.terminar(false);
+      } else if (m.tipo === 'canteDescartar') {
+        const r = await vscode.window.showWarningMessage('¿Descartar este cante? Se borra la grabación y no se transcribe.', { modal: true }, 'Descartar');
+        if (r) await cante.terminar(true);
+      } else if (m.tipo === 'canteVer') {
+        panel.webview.postMessage({ tipo: 'canteDetalle', detalle: cante.leer(m.id) });
+      } else if (m.tipo === 'canteEliminar') {
+        const r = await vscode.window.showWarningMessage('¿Eliminar este cante? Se borran la transcripción y el audio.', { modal: true }, 'Eliminar');
+        if (r) { cante.eliminar(m.id); panel.webview.postMessage({ tipo: 'canteDetalle', detalle: null }); }
+      } else if (m.tipo === 'canteAudio') {
+        const f = cante.rutaAudio(m.id);
+        if (f) vscode.env.openExternal(vscode.Uri.file(f)); else vscode.window.showWarningMessage('No encuentro el audio de este cante en este Mac (los audios no se sincronizan por GitHub).');
+      } else if (m.tipo === 'canteReintentar') {
+        cante.encolar(m.id);
+      } else if (m.tipo === 'canteMicros') {
+        panel.webview.postMessage({ tipo: 'canteMicros', micros: await cante.microfonos() });
+      } else if (m.tipo === 'canteInstalar') {
+        const t = (await vscode.tasks.fetchTasks()).find((x) => x.name === 'Instalar herramientas de cante');
+        if (t) vscode.tasks.executeTask(t); else vscode.window.showWarningMessage('No encuentro la tarea «Instalar herramientas de cante». Sincroniza y vuelve a abrir el espacio de trabajo TCEE.');
+      } else if (m.tipo === 'canteCopiar') {
+        const f = cante.leer(m.id); if (f && f.texto) { await vscode.env.clipboard.writeText(f.texto); panel.webview.postMessage({ tipo: 'aviso', texto: 'Transcripción copiada.' }); }
+      }
+    } catch (e) { panel.webview.postMessage({ tipo: 'aviso', texto: String(e.message || e), error: true }); }
   }
 
   function html(webview) {
@@ -133,6 +185,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
 <script nonce="${nonce}" src="${url('katex/katex.min.js')}"></script>
 <script nonce="${nonce}" src="${url('calendario.js')}"></script>
 <script nonce="${nonce}" src="${url('relaciones.js')}"></script>
+<script nonce="${nonce}" src="${url('cante.js')}"></script>
 <script nonce="${nonce}" src="${url('panel.js')}"></script></body></html>`;
   }
 
