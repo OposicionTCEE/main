@@ -299,7 +299,10 @@ function activate(context) {
   if (!indice.actual) indice.refrescar();
 
   let espera = null;
+  // último grupo de editores de texto usado (en la ventana principal: el Panel Oposición no es un editor de texto)
+  let ultimaColumna = vscode.window.activeTextEditor && vscode.window.activeTextEditor.viewColumn;
   context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor((ed) => { if (ed && ed.viewColumn) ultimaColumna = ed.viewColumn; }),
     vscode.window.onDidChangeActiveTextEditor(alCambiarEditor),
     vscode.workspace.onDidChangeTextDocument((e) => {
       const m = indice.mostrado;
@@ -312,10 +315,13 @@ function activate(context) {
       if (m && d.uri.toString() === m.toString()) indice.refrescar();
     }),
 
-    vscode.commands.registerCommand('tcee.irA', async (uri, linea) => {
+    // opciones.principal: desde el Panel Oposición (que vive en otra ventana) se abre en el último grupo de editores de texto
+    // que usaste, es decir, en la ventana principal, y no como pestaña nueva junto al panel
+    vscode.commands.registerCommand('tcee.irA', async (uri, linea, opciones) => {
       const doc = await vscode.workspace.openTextDocument(uri);
       const visible = vscode.window.visibleTextEditors.find((e) => e.document.uri.toString() === uri.toString());
-      const ed = await vscode.window.showTextDocument(doc, { viewColumn: visible ? visible.viewColumn : undefined, preserveFocus: false });
+      const columna = opciones && opciones.principal ? (ultimaColumna || vscode.ViewColumn.One) : (visible ? visible.viewColumn : undefined);
+      const ed = await vscode.window.showTextDocument(doc, { viewColumn: columna, preserveFocus: false, preview: false });
       const pos = new vscode.Position(linea, 0);
       ed.selection = new vscode.Selection(pos, pos);
       ed.revealRange(new vscode.Range(pos, pos), vscode.TextEditorRevealType.AtTop);

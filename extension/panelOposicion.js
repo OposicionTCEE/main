@@ -139,7 +139,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
       const n = plano.find((x) => norm(x.titulo) === buscado) || plano.find((x) => norm(x.titulo).includes(buscado) || buscado.includes(norm(x.titulo)));
       if (n) linea = n.linea;
     }
-    vscode.commands.executeCommand('tcee.irA', t.uri, linea);
+    vscode.commands.executeCommand('tcee.irA', t.uri, linea, { principal: true });
   }
 
   async function alMensaje(m) {
@@ -165,7 +165,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     if (m.tipo && m.tipo.startsWith('cante')) return mensajeCante(m);
     if (m.tipo === 'abrirLinea') {
       if (!cache) await temas();
-      const t = cache[m.codigo]; if (t) vscode.commands.executeCommand('tcee.irA', t.uri, Math.max(0, m.linea));
+      const t = cache[m.codigo]; if (t) vscode.commands.executeCommand('tcee.irA', t.uri, Math.max(0, m.linea), { principal: true });
     }
   }
 
