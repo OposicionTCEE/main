@@ -26,7 +26,7 @@ Código: `extension/calendario.js` (calendario) y `extension/afinidad.js` (relac
 | Temas por semana | Cuántos temas se cantan cada semana. La última semana lleva los que sobren. |
 | Modo **temático** | Agrupa los temas por afinidad (apartado 4), con total libertad respecto al orden del programa, y encadena las semanas para que cada una guarde relación con la siguiente (apartado 5). |
 | Modo **correlativo** | Toda la Parte A por orden (A.1, A.2…) y después toda la Parte B, en bloques del tamaño elegido. No intercala. |
-| Modo **aleatorio** | Orden al azar. Cada variante se puede repetir porque lleva una «semilla» que la identifica. |
+| Modo **aleatorio** | Orden al azar. Cada propuesta usa una «semilla» nueva sorteada (no 1, 2, 3…), así que nunca empieza igual; la semilla queda guardada en el calendario y permite reproducirlo. |
 | Intercalar A y B | En los modos temático y aleatorio, mezcla A y B **dentro de cada semana** (apartado 3). Si no se marca, primero van todas las semanas de la A y luego las de la B. |
 | Empezar por | **Lo más básico**: la semana de temas más básicos del programa. **Un tema concreto**: el calendario empieza por la semana de ese tema, y ese tema es el primero que se estudia. **Un tema al azar**. Vale para los tres modos. En el correlativo, la parte del tema elegido empieza en él y da la vuelta (A.10 … A.45, A.1 … A.9) antes de pasar a la otra parte. |
 | Fecha del primer cante y día libre | Fijan las fechas. Cada semana siguiente canta 7 días después. |

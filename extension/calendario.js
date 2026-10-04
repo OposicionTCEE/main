@@ -3,7 +3,15 @@
 'use strict';
 
 // ------------------------------------------------------------------ utilidades
-function azar(semilla) { let s = (semilla >>> 0) || 1; return () => { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
+// Generador reproducible a partir de la semilla. La semilla se mezcla antes (con semillas pequeñas, 1, 2, 3…, el xorshift
+// daba primeros números casi iguales y el modo aleatorio repetía los mismos temas al principio) y se descartan los primeros valores.
+function azar(semilla) {
+  let s = (semilla >>> 0) || 1;
+  s = Math.imul(s ^ (s >>> 16), 0x45d9f3b) >>> 0; s = Math.imul(s ^ (s >>> 16), 0x45d9f3b) >>> 0; s = (s ^ (s >>> 16)) >>> 0 || 0x9e3779b9;
+  const f = () => { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
+  for (let i = 0; i < 20; i++) f();
+  return f;
+}
 const num = (c) => Number(c.split('.')[2]);
 const parte = (c) => c.split('.')[1];
 const porPrograma = (a, b) => parte(a).localeCompare(parte(b)) || num(a) - num(b);
