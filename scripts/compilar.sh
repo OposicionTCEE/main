@@ -19,10 +19,14 @@ cd "$DIR" || exit 1
 # Usar siempre MacTeX (no otras distribuciones como TinyTeX, que no traen todos los paquetes)
 [ -d /Library/TeX/texbin ] && export PATH="/Library/TeX/texbin:$PATH"
 
+rm -f "$TMP/$BASE.pdf"   # para saber con certeza si esta compilación ha generado PDF
 latexmk -pdf -f -synctex=1 -interaction=nonstopmode -file-line-error -outdir="$TMP" "$BASE.tex"
 
 # El registro siempre se copia, para que VS Code muestre los errores en "Problemas"
 [ -f "$TMP/$BASE.log" ] && cp "$TMP/$BASE.log" "$OUT/$BASE.log"
+
+# Estado de la última compilación (lo lee el panel TCEE para el tiempo restante)
+if [ -f "$TMP/$BASE.pdf" ]; then echo ok > "$OUT/estado"; else echo error > "$OUT/estado"; fi
 
 if [ -f "$TMP/$BASE.pdf" ]; then
   cp "$TMP/$BASE.pdf" "$OUT/$BASE.pdf"

@@ -177,6 +177,8 @@ El panel propio de la oposición: icono **TCEE** en la **barra lateral derecha**
 
 **Qué hace**
 - **Arriba, Acciones**: *Compilar tema* (el que se ve en el índice) y *Sincronizar con GitHub*.
+  En la cabecera, fija: **Tiempo restante: 3 h 20 min (62 %)** del tema del índice, y al lado el botón **✓** para marcarlo como *hecho*
+  (listo para pasar a estudiar con esquema). Vuelve a pulsarlo para desmarcarlo. En «…» de esa cabecera: *de dónde sale el tiempo*.
 - **Abajo, Índice**: el título de la ventana es el título del tema. Todos los epígrafes (hasta los paragraphs) aparecen desplegados.
   Numeración desde Introducción = 1 hasta la Conclusión, y después los anexos (A1, A2…).
   Pulsa un epígrafe para saltar a él. Los epígrafes sin contenido llevan ○ y la palabra *vacío*.
@@ -184,3 +186,16 @@ El panel propio de la oposición: icono **TCEE** en la **barra lateral derecha**
   Con el botón 📌 (arriba a la derecha del índice) lo fijas a ese tema aunque escribas en otro; vuelve a pulsarlo para soltarlo.
 
 Las pestañas de los temas se llaman por su código (**3.A.19**) en lugar de *main.tex*.
+
+## Paso 11 · Tiempo restante y progreso (repositorio privado)
+
+El panel calcula el tiempo que le queda a cada tema con: epígrafes vacíos, notas pendientes en `\modificaciones`, OJO,
+si el tema no genera PDF y errores tipo OCR o Markdown pegado (`#`, `**`, `�`, `[Seguro]`…).
+Mide tu ritmo **solo**: cuenta el tiempo mientras escribes en un tema y se para tras 5 minutos sin teclear.
+
+Tus tiempos y los temas marcados como hechos se guardan en un repositorio **privado** (solo lo ves tú). Crearlo, una vez:
+1. Entra en <https://github.com/organizations/OposicionTCEE/repositories/new>.
+2. *Repository name*: `progreso` · marca **Private** · marca **Add a README file** · **Create repository**.
+3. En VS Code: **Terminal › Ejecutar tarea… › Descargar el temario (si falta)**. Descargará la carpeta `progreso`.
+
+A partir de ahí, *Sincronizar* sube y baja también el progreso. Hasta que exista la carpeta, el panel guarda los datos en VS Code y no se pierden.

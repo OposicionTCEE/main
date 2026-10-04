@@ -132,4 +132,4 @@ function indiceTema(texto) {
   return raiz.hijos;
 }
 
-module.exports = { codigoTema, tituloTema, indiceTema, limpiar };
+module.exports = { codigoTema, tituloTema, indiceTema, limpiar, sinComentario };
