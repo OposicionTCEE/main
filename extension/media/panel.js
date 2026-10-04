@@ -17,6 +17,7 @@
     if (m.tipo === 'datos') { D = m.datos; pintar(); }
     if (m.tipo === 'error') app.innerHTML = `<p class="vacio">No se pudo calcular el panel: ${esc(m.texto)}</p>`;
     if (m.tipo === 'previa' && window.TCEE_CAL) window.TCEE_CAL.previa(m.previa);
+    if (m.tipo === 'traer' && window.TCEE_CAL) window.TCEE_CAL.traer(m.traer);
     if (m.tipo === 'aviso') { aviso(m.texto, m.error); if (m.error && window.TCEE_CAL) window.TCEE_CAL.fallo(); }
   });
 

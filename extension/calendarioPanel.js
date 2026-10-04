@@ -90,12 +90,14 @@ function crearCalendarios({ ctx, progreso, raiz, desarrollos }) {
         else if (!(d in rep.dias)) tipo = 'libre';
         dias[d] = { tipo, semana: w, temas: rep.dias[d] || [], estudioExtra: !!(cal.estudio || {})[d] };
       }
-      const cantados = s.temas.filter((c) => (cal.cantados || {})[c]).length;
+      // estado de la semana: trabajada (su cante ya pasó: sus temas se dan por trabajados), en curso o por venir
+      const hoy = hoyIso();
+      const estado = s.cante < hoy ? 'trabajada' : inicio <= hoy ? 'en curso' : 'por venir';
       return { n: w + 1, cante: s.cante, inicio, temas: s.temas, orden: s.orden && s.orden.length === s.temas.length ? s.orden : s.temas,
-        bloque: s.bloque, cantados, sinDias: rep.sinDias, sobrecarga: s.temas.length > cal.opciones.temasSemana };
+        bloque: s.bloque, estado, sinDias: rep.sinDias, sobrecarga: s.temas.length > cal.opciones.temasSemana };
     });
     return { ...base, activo: cal.id, titulos, cal: { id: cal.id, nombre: cal.nombre, ejercicio: cal.ejercicio, referencia: !!cal.referencia,
-      opciones: cal.opciones, diaLibre: cal.diaLibre, cantados: cal.cantados || {}, semanas }, dias,
+      opciones: cal.opciones, diaLibre: cal.diaLibre, semanas }, dias,
       sinCarpeta: prog.temas.filter((x) => !cacheTemas[x.codigo]).map((x) => x.codigo),
       sobrecarga: C.sobrecargadas(cal, hoyIso()).map((x) => x.w) };
   }
@@ -126,7 +128,7 @@ function crearCalendarios({ ctx, progreso, raiz, desarrollos }) {
     Object.keys(cacheTemas).forEach((c) => { pesos[c] = minutos[c] || 0; });
     const hoy = hoyIso();
     // afinidad del temario actual: solo hace falta para recolocar y ampliar (tarda un par de segundos)
-    const af = ['calPasar', 'calLibrar', 'calAmpliar'].includes(m.tipo) && (m.modo === 'recolocar' || m.accion === 'recolocar' || m.tipo === 'calAmpliar')
+    const af = ['calTraerSug', 'calTraer', 'calAmpliar'].includes(m.tipo) || m.modo === 'recolocar' || m.accion === 'recolocar'
       ? (afinidad(cal.ejercicio, cacheTemas) || {}).af : null;
     const prog = programa(cal.ejercicio) || { temas: [] };
     const nombreSemana = (w) => `semana ${w + 1}${cal.semanas[w] && cal.semanas[w].bloque ? ` (${cal.semanas[w].bloque})` : ''}`;
@@ -136,7 +138,13 @@ function crearCalendarios({ ctx, progreso, raiz, desarrollos }) {
       case 'calAmpliar': r = C.ampliar(cal, m.modo, af, Object.fromEntries(prog.temas.map((t) => [t.codigo, t.titulo || t.corto])), taxonomia(prog), hoy, Date.now() % 100000); break;
       case 'calEstudiar': C.estudiar(cal, m.dia); break;
       case 'calCante': r = C.moverCante(cal, m.semana, m.dia); break;
-      case 'calCantado': if (m.valor) cal.cantados[m.codigo] = hoyIso(); else delete cal.cantados[m.codigo]; break;
+      case 'calTraerSug': {
+        const sg = C.sugerirTraer(cal, m.semana, af, pesos, hoy, 3);
+        const et = etiquetas(prog);
+        const pon = (x) => ({ ...x, semanaDesde: x.desde + 1, breve: (et[x.codigo] || {}).breve || x.codigo, corto: (et[x.codigo] || {}).corto || x.codigo });
+        return { ok: true, traer: { semana: m.semana, mejores: sg.mejores.map(pon), todos: sg.todos.map(pon) } };
+      }
+      case 'calTraer': r = C.traer(cal, m.semana, m.codigo, af); if (r.ok) r.aviso = `${m.codigo} se trae a la semana ${m.semana + 1} desde la ${r.desde + 1}.`; break;
       case 'calOrden': C.reordenar(cal, m.semana, m.codigo, m.dir); break;
       case 'calPasar':
         if (m.modo === 'recolocar') { r = C.recolocar(cal, m.semana, m.codigo, af, pesos, hoy); if (r.destino != null) r.aviso = `${m.codigo} pasa a la ${nombreSemana(r.destino)}.`; }
@@ -146,7 +154,7 @@ function crearCalendarios({ ctx, progreso, raiz, desarrollos }) {
     }
     if (r.ok === false) return { ok: false, aviso: r.motivo };
     // los nombres de bloque siguen a los temas que tiene cada semana (salvo en calendarios importados, que conservan los suyos)
-    if (['calLibrar', 'calPasar', 'calAmpliar'].includes(m.tipo) && cal.opciones.modo !== 'manual') {
+    if (['calLibrar', 'calPasar', 'calAmpliar', 'calTraer'].includes(m.tipo) && cal.opciones.modo !== 'manual') {
       const tax = taxonomia(prog);
       cal.semanas.forEach((s) => { s.bloque = C.bloque(s.temas, tax); });
     }

@@ -364,6 +364,49 @@ function recolocar(cal, w, codigo, af, pesos = {}, hoy = '0000-00-00') {
   return { ok: true, destino: mejor };
 }
 
+/**
+ * Sugerencias para traer un tema a la semana w desde semanas que aún no han empezado (la inversa de recolocar).
+ * Puntuación de cada tema candidato:
+ *   afinidad media con los temas de la semana w − 0,5 × afinidad media con su semana actual (cuesta sacarlo de donde encaja bien)
+ *   − 0,15 por cada tema que w tendría por encima de los previstos − 0,2 × exceso de carga de trabajo de w − 0,005 por semana de distancia.
+ * Devuelve las n mejores: [{codigo, desde, puntos}] y, aparte, todos los candidatos ordenados.
+ */
+function sugerirTraer(cal, w, af, pesos = {}, hoy = '0000-00-00', n = 3) {
+  const k = cal.opciones.temasSemana;
+  const enCurso = semanaEnCurso(cal, hoy);
+  const s = cal.semanas[w];
+  if (!s || (enCurso >= 0 && w < enCurso) || enCurso < 0) return { mejores: [], todos: [] };
+  const todos = cal.semanas.flatMap((x) => x.temas);
+  const cargaMedia = k * (todos.reduce((t, c) => t + pesoTema(pesos, c), 0) / Math.max(1, todos.length));
+  const carga0 = s.temas.reduce((t, c) => t + pesoTema(pesos, c), 0);
+  const cand = [];
+  cal.semanas.forEach((x, v) => {
+    if (v === w || v <= enCurso) return;
+    for (const c of x.temas) {
+      const puntos = (af ? afMedia(af, c, s.temas) - 0.5 * afMedia(af, c, x.temas) : 0)
+        - 0.15 * Math.max(0, s.temas.length + 1 - k) - 0.2 * Math.max(0, (carga0 + pesoTema(pesos, c)) / cargaMedia - 1) - 0.005 * Math.abs(v - w);
+      cand.push({ codigo: c, desde: v, puntos });
+    }
+  });
+  cand.sort((a, b) => b.puntos - a.puntos);
+  return { mejores: cand.slice(0, n), todos: cand };
+}
+
+/** Trae el tema a la semana w (sale de la suya). Se estudia justo después del tema de w con el que más relación tiene. */
+function traer(cal, w, codigo, af) {
+  const desde = cal.semanas.findIndex((x) => x.temas.includes(codigo));
+  if (desde < 0 || desde === w || !cal.semanas[w]) return { ok: false, motivo: 'Ese tema ya no está disponible.' };
+  const o = cal.semanas[desde];
+  o.temas = o.temas.filter((c) => c !== codigo); if (o.orden) o.orden = o.orden.filter((c) => c !== codigo);
+  const d = cal.semanas[w];
+  const orden = d.orden && d.orden.length === d.temas.length ? [...d.orden] : [...d.temas];
+  let tras = -1, tv = -1;
+  orden.forEach((c, i) => { const v = af && af.idx[c] != null && af.idx[codigo] != null ? af.m[af.idx[codigo]][af.idx[c]] : 0; if (v > tv) { tv = v; tras = i; } });
+  orden.splice(tras + 1, 0, codigo);
+  d.temas.push(codigo); d.orden = orden;
+  return { ok: true, desde };
+}
+
 /** Semanas por venir (después de la semana en curso) con más temas de los previstos */
 function sobrecargadas(cal, hoy) {
   const k = cal.opciones.temasSemana, ini = semanaEnCurso(cal, hoy) + 1;
@@ -466,4 +509,4 @@ function semanaDe(cal, dia) {
   return cal.semanas.findIndex((s) => dia <= s.cante);
 }
 
-module.exports = { recolocar, sobrecargadas, ampliar, semanaEnCurso, inicioSemana, ordenarSeries, cuotas, correlativo, aleatorio, tematico, bloque, valorar, crear, diasEstudio, repartir, pasarSiguiente, moverCante, semanaDe, librar, estudiar, reordenar, masDias, diaSemana };
+module.exports = { sugerirTraer, traer, recolocar, sobrecargadas, ampliar, semanaEnCurso, inicioSemana, ordenarSeries, cuotas, correlativo, aleatorio, tematico, bloque, valorar, crear, diasEstudio, repartir, pasarSiguiente, moverCante, semanaDe, librar, estudiar, reordenar, masDias, diaSemana };

@@ -139,6 +139,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
       let r;
       try { r = calendarios.mensaje(m, cache, minutosDe()); } catch (e) { r = { ok: false, aviso: String(e && e.message || e) }; }
       if (r.previa) { panel.webview.postMessage({ tipo: 'previa', previa: r.previa }); return; }
+      if (r.traer) { panel.webview.postMessage({ tipo: 'traer', traer: r.traer }); return; }
       if (r.aviso) panel.webview.postMessage({ tipo: 'aviso', texto: r.aviso, error: r.ok === false });
       if (r.ok !== false) enviar();
       return;

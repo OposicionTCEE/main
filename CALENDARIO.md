@@ -49,9 +49,16 @@ La afinidad entre dos temas es un número de 0 a 1 que combina cinco señales:
 | **Programa** | 0,30 | Cercanía en el programa: temas consecutivos de la misma parte valen 0,6, a dos de distancia 0,3, y las series de un mismo título («Análisis de mercados (I)…(IV)») valen 1. |
 | **Léxico** | 0,15 | Hablan de lo mismo. Similitud de vocabulario (TF-IDF, coseno) entre el título y el subtítulo (×3), los epígrafes (×2) y el texto (×1). Se ignoran las palabras genéricas y las de la plantilla (Introducción, Relevancia…). Se escala para que el 1 % de parejas más parecidas valga 1. |
 | **Remisiones** | 0,10 | Un tema remite al otro en el texto («Ver Tema 3.A.44»), en cualquier sentido. 0,5 por remisión, con un máximo de 1. |
-| **Modelos** | 0,10 | Desarrollan matemáticamente los mismos modelos (`analisis/desarrollos.json`). 0,5 por modelo común, con un máximo de 1. |
+| **Modelos** | 0,10 | Desarrollan matemáticamente los mismos modelos. Se usan los del análisis revisado (`analisis/desarrollos.json`) y, además, los que se nombran en los pies de las ecuaciones (`\eqblock{…}{… Modelo de SOLOW}`) del texto actual. 0,5 por modelo común, con un máximo de 1. |
 
-Las señales se recalculan cada vez que se crea un calendario, así que siguen los cambios del temario.
+**Qué se recalcula cuando cambia el contenido de los temas:**
+
+| Qué | Cuándo se recalcula |
+|---|---|
+| Léxico, remisiones y modelos (los de los pies de ecuación) | Cada vez que se crea un calendario, se recoloca o trae un tema, o se reorganiza o amplía el calendario. Se leen los temas tal como estén en ese momento. |
+| Tiempo restante (peso de cada tema en el reparto diario y en la carga semanal) | Siempre, al instante. |
+| Ámbitos y pesos de las señales | Nunca de forma automática: son el criterio. Se cambian a mano (apartados 11 y 12). |
+| Agrupación de un calendario ya creado | No se mueve sola, para no cambiarte el plan sin avisar. Para rehacerla con el contenido actual: «Reorganizar semanas por venir». |
 El calendario de la preparadora **no se usa** al generar: sirvió para fijar los ámbitos y los pesos (apartado 11).
 
 ## 5. Modo temático: el algoritmo
@@ -96,7 +103,9 @@ El calendario de la preparadora **no se usa** al generar: sirvió para fijar los
 | Cambiar el orden de estudio dentro de la semana | Un tema se estudia antes o después que otro. |
 | Un tema sale de su semana | «A la semana siguiente» (la absorbe) o «Donde mejor encaje» (ver «Recolocar»). |
 | Varias semanas sobrecargadas | Si **dos o más semanas por venir** tienen más temas de los previstos, el calendario recomienda ampliarse (ver «Ampliar»). |
-| Cantar | Cada tema tiene su marca de **cantado**. Una semana está cumplida cuando todos sus temas están cantados. «Cantado» es independiente de «hecho» (listo para estudiar sobre esquema). |
+| Traer un tema a una semana | «Traer un tema a esta semana» propone los 3 temas de semanas por venir que mejor encajan en ella (ver «Traer»). También se puede elegir cualquier otro de la lista. |
+| Rehacer lo que queda | «Reorganizar semanas por venir» rehace por temática todas las semanas que aún no han empezado, con el contenido actual de los temas. Es lo mismo que la reorganización completa de «Ampliar». |
+| Semanas trabajadas | No se marca nada: los temas de una semana cuyo día de cante ya ha pasado se dan por **trabajados** (la semana aparece atenuada). El cante con la preparadora (un tema por semana) irá en otra acción del panel. |
 
 **Recolocar.** El tema sale de su semana y va a la semana por venir con mejor puntuación. Puede ser cualquier semana posterior a la semana en curso, salvo la suya; también una anterior a la suya, si aún no ha empezado. La puntuación es:
 - \+ afinidad media del tema con los temas de esa semana;
@@ -105,6 +114,15 @@ El calendario de la preparadora **no se usa** al generar: sirvió para fijar los
 - − 0,005 por cada semana de distancia, para desempatar a favor de la más cercana.
 
 Dentro de esa semana, el tema se estudia justo después del tema con el que más relación tiene. Solo si no queda ninguna semana posterior se añade una al final.
+
+**Traer.** Es lo contrario de recolocar. Se puede traer un tema a la semana en curso o a una por venir, desde cualquier semana que aún no haya empezado. Para cada tema candidato se calcula esta puntuación:
+- \+ afinidad media con los temas de la semana de destino;
+- − 0,5 × afinidad media con su semana actual (cuesta sacarlo de donde encaja bien);
+- − 0,15 por cada tema que la semana de destino tendría por encima de los previstos;
+- − 0,2 × exceso de carga de trabajo de la semana de destino;
+- − 0,005 por cada semana de distancia.
+
+Se proponen los 3 temas con mejor puntuación. El tema traído se estudia justo después del tema de la semana con el que más relación tiene.
 
 **Ampliar.** Cuando hay dos o más semanas sobrecargadas, el calendario ofrece dos opciones:
 - **Añadir semanas con los temas que sobran** (reorganización parcial): de cada semana sobrecargada sale el tema que peor encaja en ella (menor afinidad media con sus compañeros), hasta dejarla con los temas previstos. Esos temas forman semanas nuevas al final, agrupadas por afinidad y de tamaño equilibrado.
@@ -116,7 +134,7 @@ En los dos casos, la semana en curso y las pasadas no se tocan, y las semanas nu
 
 - Cada calendario es un fichero en el repositorio **privado** `progreso`, en la carpeta `calendarios/<id>.json`. Se sincroniza con el botón de siempre.
 - El de la preparadora está importado como `calendarios/preparadora-2a-vuelta-3.json`. Se puede ver y usar como cualquier otro, pero no interviene en la generación.
-- Contenido de cada fichero: opciones de creación, semanas (fecha de cante, temas, bloque, orden manual), día libre, días librados, días de estudio extra y temas cantados con su fecha.
+- Contenido de cada fichero: opciones de creación, semanas (fecha de cante, temas, bloque, orden manual), día libre, días librados y días de estudio extra.
 - **Eliminar un calendario** (botón «Eliminar calendario», con confirmación) borra su fichero. Tras sincronizar desaparece también de GitHub. Si hiciera falta recuperarlo, sigue en el historial del repositorio `progreso`.
 
 ## 9. Cómo comprobar o rehacer un calendario sin Claude

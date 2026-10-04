@@ -193,3 +193,15 @@ i.mini.ok { outline: 1.5px solid var(--tinta); text-decoration: line-through; }
 .cal-sobrecarga p { margin: 0; }
 .cal-confirmar { display: inline-flex; align-items: center; gap: 6px; }
 button.peligro { background: var(--vscode-errorForeground, #f14c4c); color: #fff; border-color: transparent; }
+
+.cal-dia.trabajada .chip, .cal-dia.trabajada .cal-cante, .cal-dia.trabajada i.mini { opacity: .55; }
+.cal-muestra.trabajada { background: color-mix(in srgb, var(--tinta) 4%, var(--fondo)); opacity: .55; }
+.cal-estado { color: var(--apagado); }
+.cal-estado.e-en-curso { color: var(--acento); font-weight: 600; }
+.cal-temas li { grid-template-columns: 3.2em 1fr; }
+.cal-sugerencias { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+button.sug { text-align: left; display: block; border-left: 3px solid; padding: 5px 9px; }
+button.sug.pA { border-left-color: var(--ca); } button.sug.pB { border-left-color: var(--cb); }
+button.sug small { display: block; color: var(--apagado); }
+.cal-otro { display: flex; flex-direction: column; gap: 4px; color: var(--apagado); }
+.cal-otro select { background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, var(--borde)); padding: 4px; font: inherit; }
