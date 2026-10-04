@@ -1,8 +1,8 @@
-// Panel Oposición (lado de la página). Recibe los datos de la extensión y pinta cuatro pestañas.
+// Panel Oposición (lado de la página). Recibe los datos de la extensión y pinta cinco pestañas (el calendario está en calendario.js).
 (function () {
   'use strict';
   const vscode = acquireVsCodeApi();
-  const estado = Object.assign({ pestana: 'temas', orden: 'codigo', asc: true, filtro: '', familia: '', aislados: false }, vscode.getState() || {});
+  const estado = Object.assign({ pestana: 'calendario', orden: 'codigo', asc: true, filtro: '', familia: '', aislados: false }, vscode.getState() || {});
   let D = null;
   const app = document.getElementById('app');
   const guardar = () => vscode.setState(estado);
@@ -16,11 +16,21 @@
     const m = e.data;
     if (m.tipo === 'datos') { D = m.datos; pintar(); }
     if (m.tipo === 'error') app.innerHTML = `<p class="vacio">No se pudo calcular el panel: ${esc(m.texto)}</p>`;
+    if (m.tipo === 'previa' && window.TCEE_CAL) window.TCEE_CAL.previa(m.previa);
+    if (m.tipo === 'aviso') { aviso(m.texto, m.error); if (m.error && window.TCEE_CAL) window.TCEE_CAL.fallo(); }
   });
+
+  /** Mensaje breve abajo a la derecha (se va solo) */
+  function aviso(texto, error) {
+    const a = document.createElement('div');
+    a.className = `aviso${error ? ' error' : ''}`; a.setAttribute('role', 'status'); a.textContent = texto;
+    document.body.appendChild(a);
+    setTimeout(() => a.remove(), 6000);
+  }
 
   function pintar() {
     if (!D) return;
-    const pest = [['temas', 'Temas'], ['plan', 'Plan semanal'], ['relaciones', 'Relaciones del tema'], ['mapa', 'Mapa de relaciones']];
+    const pest = [['calendario', 'Calendario'], ['temas', 'Temas'], ['plan', 'Plan semanal'], ['relaciones', 'Relaciones del tema'], ['mapa', 'Mapa de relaciones']];
     app.innerHTML = `
       <header>
         <div class="resumen"><strong>Tiempo restante del temario: ${esc(D.total.tiempo)}</strong>
@@ -30,7 +40,8 @@
       <main id="cuerpo"></main>`;
     app.querySelectorAll('[data-pest]').forEach((b) => b.onclick = () => { estado.pestana = b.dataset.pest; guardar(); pintar(); });
     const cuerpo = document.getElementById('cuerpo');
-    ({ temas: pTemas, plan: pPlan, relaciones: pRelaciones, mapa: pMapa })[estado.pestana](cuerpo);
+    const pCalendario = (el) => { window.TCEE_CAL.pintar(el, D, { estado, guardar, enviar, repintar: pintar }); enlaces(el); };
+    ({ calendario: pCalendario, temas: pTemas, plan: pPlan, relaciones: pRelaciones, mapa: pMapa })[estado.pestana in { calendario: 1, temas: 1, plan: 1, relaciones: 1, mapa: 1 } ? estado.pestana : 'calendario'](cuerpo);
   }
 
   // ------------------------------------------------------------------ Temas

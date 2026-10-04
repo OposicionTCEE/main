@@ -1,0 +1,640 @@
+{
+ "ejercicio": "3",
+ "partes": {
+  "A": "Parte A",
+  "B": "Parte B"
+ },
+ "temas": [
+  {
+   "codigo": "3.A.1",
+   "parte": "A",
+   "titulo": "Objeto y método de la ciencia económica",
+   "subtitulo": "Cuestiones y debates actuales, con especial referencia a la economía conductual",
+   "corto": "Objeto y métodos de la ciencia económica. Economía conductual"
+  },
+  {
+   "codigo": "3.A.2",
+   "parte": "A",
+   "titulo": "Los economistas clásicos y MARX",
+   "subtitulo": "",
+   "corto": "Los economistas clásicos y Marx"
+  },
+  {
+   "codigo": "3.A.3",
+   "parte": "A",
+   "titulo": "Los economistas neoclásicos",
+   "subtitulo": "",
+   "corto": "Los economistas neoclásicos"
+  },
+  {
+   "codigo": "3.A.4",
+   "parte": "A",
+   "titulo": "El pensamiento económico de KEYNES",
+   "subtitulo": "Formalización y comparación con el modelo neoclásico. Referencia a la economía post-keynesiana y el desequilibrio",
+   "corto": "El pensamiento económico de Keynes"
+  },
+  {
+   "codigo": "3.A.5",
+   "parte": "A",
+   "titulo": "La síntesis neoclásica.",
+   "subtitulo": "El monetarismo",
+   "corto": "La síntesis neoclásica. El monetarismo"
+  },
+  {
+   "codigo": "3.A.6",
+   "parte": "A",
+   "titulo": "La nueva macroeconomía clásica",
+   "subtitulo": "La hipótesis de las expectativas racionales; la crítica de Lucas; el surgimiento de los modelos dinámicos estocásticos de equilibrio general",
+   "corto": "La nueva macroeconomía clásica. Expectativas racionales; crítica de Lucas; DSGE"
+  },
+  {
+   "codigo": "3.A.7",
+   "parte": "A",
+   "titulo": "La nueva economía Keynesiana",
+   "subtitulo": "Primera y segunda generación",
+   "corto": "La nueva economía keynesiana"
+  },
+  {
+   "codigo": "3.A.8",
+   "parte": "A",
+   "titulo": "Teoría de la demanda del consumidor (I)",
+   "subtitulo": "Axiomas sobre preferencias, función de utilidad y función de demanda marshalliana. La Teoría de la prefrencia revelada. Precios hedónicos",
+   "corto": "Demanda del consumidor (I). Preferencias, utilidad, demanda marshalliana"
+  },
+  {
+   "codigo": "3.A.9",
+   "parte": "A",
+   "titulo": "Teoría de la demanda del consumidor (II)",
+   "subtitulo": "Dualidad e integrabilidad de las preferencias. Sistemas de demanda utilizados en estudios empíricos. Medidas de cambio en el binestar",
+   "corto": "Demanda del consumidor (II). Dualidad, sistemas de demanda, bienestar"
+  },
+  {
+   "codigo": "3.A.10",
+   "parte": "A",
+   "titulo": "Teoría de la demanda del consumidor (III)",
+   "subtitulo": "Elección del consumidor en situaciones de riesgo e incertidumbre",
+   "corto": "Demanda del consumidor (III). Riesgo e incertidumbre"
+  },
+  {
+   "codigo": "3.A.11",
+   "parte": "A",
+   "titulo": "Teoría de la Producción (I)",
+   "subtitulo": "Caracterización de la tecnología de la empresa a corto y largo plazo. El conjunto de posibilidades de producción. La función de producción. Rendimientos locales y globales a escala. Elasticidad de sustitución. Producción conjunta.",
+   "corto": "Teoría de la producción"
+  },
+  {
+   "codigo": "3.A.12",
+   "parte": "A",
+   "titulo": "Teoría de los costes.",
+   "subtitulo": "Análisis de dualidad en el ámbito de la empresa. Aplicaciones empíricas.",
+   "corto": "Teoría de los costes. Dualidad"
+  },
+  {
+   "codigo": "3.A.13",
+   "parte": "A",
+   "titulo": "Economía de la información.",
+   "subtitulo": "Teoría de la agencia: selección adversa y riesgo moral.",
+   "corto": "Economía de la información y teoría de la agencia"
+  },
+  {
+   "codigo": "3.A.14",
+   "parte": "A",
+   "titulo": "Teoría de juegos",
+   "subtitulo": "Subastas",
+   "corto": "Teoría de juegos. Subastas",
+   "nota": "Sin carpeta en el temario: título tomado del calendario de la preparadora"
+  },
+  {
+   "codigo": "3.A.15",
+   "parte": "A",
+   "titulo": "La empresa: el tamaño eficiente y sus límites.",
+   "subtitulo": "Mención especial de la economía de los costes de transacción. La Teoría de la Organización Industrial: barreras a la entrada y mercados impugnables.",
+   "corto": "La empresa: tamaño eficiente. Costes de transacción. Organización Industrial"
+  },
+  {
+   "codigo": "3.A.16",
+   "parte": "A",
+   "titulo": "Análisis de mercados (I)",
+   "subtitulo": "El modelo de competencia perfecta. Análisis de equilibrio parcial: corto y largo plazo; dinámicas de ajuste y estabilidad del equilibrio. Análisis de eficiencia y bienestar.",
+   "corto": "Análisis de mercados (I). Competencia perfecta"
+  },
+  {
+   "codigo": "3.A.17",
+   "parte": "A",
+   "titulo": "Análisis de mercados (II)",
+   "subtitulo": "Teoría del monopolio. Discriminación de precios. Monopolio natural. Producción conjunta. Análisis de eficiencia y bienestar. Monopsonio. Monopolio bilateral.",
+   "corto": "Análisis de mercados (II). Monopolio"
+  },
+  {
+   "codigo": "3.A.18",
+   "parte": "A",
+   "titulo": "Análisis de mercados (III)",
+   "subtitulo": "Diferenciación de productos: la teoría de la competencia monopolística y otros desarrollos.",
+   "corto": "Análisis de mercados (III). Competencia monopolística"
+  },
+  {
+   "codigo": "3.A.19",
+   "parte": "A",
+   "titulo": "Análisis de mercados (IV)",
+   "subtitulo": "Diferenciación de productos: la teoría de la competencia monopolística y otros desarrollos",
+   "corto": "Análisis de mercados (IV). Oligopolio"
+  },
+  {
+   "codigo": "3.A.20",
+   "parte": "A",
+   "titulo": "Regulación y Poder de mercado",
+   "subtitulo": "",
+   "corto": "Poder de mercado y regulación óptima"
+  },
+  {
+   "codigo": "3.A.21",
+   "parte": "A",
+   "titulo": "La Teoría del Equilibrio General",
+   "subtitulo": "",
+   "corto": "La teoría del equilibrio general"
+  },
+  {
+   "codigo": "3.A.22",
+   "parte": "A",
+   "titulo": "Economía del Bienestar (I)",
+   "subtitulo": "Los Teoremas Fundamentales del bienestar. Óptimo económico y Second-Best",
+   "corto": "Economía del bienestar (I). Teoremas fundamentales. Second-best"
+  },
+  {
+   "codigo": "3.A.23",
+   "parte": "A",
+   "titulo": "Economía del Bienestar (II)",
+   "subtitulo": "Fallos de mercado: externalidades y bienes públicos. Intervención y fallos del sector público",
+   "corto": "Economía del bienestar (II). Externalidades y bienes públicos"
+  },
+  {
+   "codigo": "3.A.24",
+   "parte": "A",
+   "titulo": "Economía del Bienestar (III)",
+   "subtitulo": "Las funciones de bienestar social. Teoría de la elección colectiva. El teorema de imposibilidad de ARROW y desarrollos posteriores.",
+   "corto": "Economía del bienestar (III). Elección colectiva. Arrow"
+  },
+  {
+   "codigo": "3.A.25",
+   "parte": "A",
+   "titulo": "La teoría neoclásica del mercado de trabajo",
+   "subtitulo": "Análisis inter-temporal de la oferta de trabajo. Teoría del capital humano. Función de ingresos de capital humano y evidencia empírica",
+   "corto": "Teoría neoclásica del mercado de trabajo. Capital humano"
+  },
+  {
+   "codigo": "3.A.26",
+   "parte": "A",
+   "titulo": "Extensiones a la Teoría del Mercado de Trabajo",
+   "subtitulo": "Desempleo friccional. La Curva de Beveridge. El modelo de búsqueda y emparejamiento de Diamond, Mortensen y Pissarides. Costes de ajuste y dinámica de la demanda de trabajo.",
+   "corto": "Desempleo friccional. Beveridge, Diamond-Mortensen-Pissarides"
+  },
+  {
+   "codigo": "3.A.27",
+   "parte": "A",
+   "titulo": "Determinación de salarios",
+   "subtitulo": "Modelos de negociación, salarios de eficiencia y contratos implícitos.",
+   "corto": "Determinación de salarios. Negociación, salarios de eficiencia"
+  },
+  {
+   "codigo": "3.A.28",
+   "parte": "A",
+   "titulo": "La tasa natural de paro y de la NAIRU",
+   "subtitulo": "La persistencia del desempleo",
+   "corto": "Tasa natural de paro y NAIRU"
+  },
+  {
+   "codigo": "3.A.29",
+   "parte": "A",
+   "titulo": "Modelización dinámica de las tomas de decisiones",
+   "subtitulo": "Modelos de horizonte infinito y modelos de generaciones solapadas",
+   "corto": "Modelización dinámica. Horizonte infinito y generaciones solapadas"
+  },
+  {
+   "codigo": "3.A.30",
+   "parte": "A",
+   "titulo": "Magnitudes macroeconómicas y contabilidad nacional",
+   "subtitulo": "",
+   "corto": "Magnitudes macroeconómicas y contabilidad nacional"
+  },
+  {
+   "codigo": "3.A.31",
+   "parte": "A",
+   "titulo": "Análisis de las tablas Input-Output",
+   "subtitulo": "",
+   "corto": "Análisis de las tablas input-output"
+  },
+  {
+   "codigo": "3.A.32",
+   "parte": "A",
+   "titulo": "El modelo de oferta y demanda agregada.",
+   "subtitulo": "Determinación de renta e inflación en una economía abierta. Análisis de las políticas monetaria y fiscal, y de los shocks y políticas de oferta",
+   "corto": "Oferta y demanda agregada. Políticas monetaria y fiscal en economía abierta"
+  },
+  {
+   "codigo": "3.A.33",
+   "parte": "A",
+   "titulo": "Teorías de la demanda de consumo corriente.",
+   "subtitulo": "Ciclo vital y renta permanente. La demanda de bienes de consumo duradero. Evidencia empírica e implicaciones de política económica",
+   "corto": "Demanda de consumo. Ciclo vital y renta permanente"
+  },
+  {
+   "codigo": "3.A.34",
+   "parte": "A",
+   "titulo": "Teorías de la inversión en bienes de equipo.",
+   "subtitulo": "Incertidumbre e irreversibilidad de la inversión. Implicaciones de política económica",
+   "corto": "Teorías de la inversión en bienes de equipo"
+  },
+  {
+   "codigo": "3.A.35",
+   "parte": "A",
+   "titulo": "Teorías de la demanda de dinero",
+   "subtitulo": "Implicaciones de Política Económica",
+   "corto": "Teorías de la demanda de dinero"
+  },
+  {
+   "codigo": "3.A.36",
+   "parte": "A",
+   "titulo": "Política Monetaria (I)",
+   "subtitulo": "El diseño y la instrumentación de la Política Monetaria",
+   "corto": "Política monetaria (I). Diseño e instrumentación"
+  },
+  {
+   "codigo": "3.A.37",
+   "parte": "A",
+   "titulo": "Política Monetaria (II)",
+   "subtitulo": "Los mecanismos de transmisión de la Política Monetaria convencional. Rigideces de precios, rigideces de salarios y fricciones financieras. Los mecanismos de transmisión de la Política Monetaria no convencional",
+   "corto": "Política monetaria (II). Mecanismos de transmisión"
+  },
+  {
+   "codigo": "3.A.38",
+   "parte": "A",
+   "titulo": "Política Fiscal",
+   "subtitulo": "Efectos sobre el crecimiento económico y el ahorro",
+   "corto": "Política fiscal: efectos sobre crecimiento y ahorro"
+  },
+  {
+   "codigo": "3.A.39",
+   "parte": "A",
+   "titulo": "Déficit Público",
+   "subtitulo": "Conceptos. Financiación y sus consecuencias macroeconómicas. Dominación monetaria y dominación fiscal. La dinámica de la deuda pública y su sostenibilidad",
+   "corto": "Déficit público. Dinámica de la deuda y sostenibilidad"
+  },
+  {
+   "codigo": "3.A.40",
+   "parte": "A",
+   "titulo": "Efectividad e interrelación de las Políticas Monetarias y Fiscales",
+   "subtitulo": "En las principales economías desarrollaas desde la Gran Recesión de 2008. El valor de los multiplicadores fiscales",
+   "corto": "Interrelación de políticas monetaria y fiscal desde 2008. Multiplicadores"
+  },
+  {
+   "codigo": "3.A.41",
+   "parte": "A",
+   "titulo": "La inflación",
+   "subtitulo": "Causas y efectos sobre la eficiencia económica y el bienestar. Hiperinflación y deflación",
+   "corto": "La inflación. Hiperinflación y deflación"
+  },
+  {
+   "codigo": "3.A.42",
+   "parte": "A",
+   "titulo": "Teorías de los ciclos económicos.",
+   "subtitulo": "Ciclos nominales y reales. El ciclo financiero y sus interrelaciones con el ciclo real",
+   "corto": "Teorías de los ciclos económicos. Ciclo financiero"
+  },
+  {
+   "codigo": "3.A.43",
+   "parte": "A",
+   "titulo": "Teorías del crecimiento económico (I)",
+   "subtitulo": "Acumulación de capital y progreso técnico exógeno. El modelo de SOLOW. El modelo de SOLOW aumentado con capital humano. El modelo de RAMSEY-CASS-KOOPMANS",
+   "corto": "Crecimiento económico (I). Solow, Ramsey-Cass-Koopmans"
+  },
+  {
+   "codigo": "3.A.44",
+   "parte": "A",
+   "titulo": "Teorías del crecimiento económico (II)",
+   "subtitulo": "Modelos de crecimiento endógeno: rendimientos crecientes, capital humano e innovación tecnológica",
+   "corto": "Crecimiento económico (II). Crecimiento endógeno"
+  },
+  {
+   "codigo": "3.A.45",
+   "parte": "A",
+   "titulo": "Teorías del crecimiento económico (III)",
+   "subtitulo": "Evidencia empírica sobre el crecimiento económica y la distribución de la renta entre los factores de producción. Contabilidad del crecimiento, con especial referencia a la productividad total de los factores. Convergencia económica internacional.",
+   "corto": "Evidencia empírica del crecimiento. PTF. Convergencia"
+  },
+  {
+   "codigo": "3.B.1",
+   "parte": "B",
+   "titulo": "La información financiera de las empresas",
+   "subtitulo": "Estados de situación y de circulación. Métodos de análisis económico y financiero de la empresa",
+   "corto": "Información financiera de las empresas. Análisis económico-financiero"
+  },
+  {
+   "codigo": "3.B.2",
+   "parte": "B",
+   "titulo": "La empresa y las decisiones de inversión",
+   "subtitulo": "Diferentes criterios de valoración de proyectos. Rentabilidad, riesgo y coste del capital",
+   "corto": "La empresa y las decisiones de inversión. Valoración de proyectos"
+  },
+  {
+   "codigo": "3.B.3",
+   "parte": "B",
+   "titulo": "La empresa y las decisiones de financiación",
+   "subtitulo": "Financiación propia frente a financiación ajena. Política de dividendos y estructura del capital",
+   "corto": "La empresa y las decisiones de financiación. Dividendos y estructura de capital"
+  },
+  {
+   "codigo": "3.B.4",
+   "parte": "B",
+   "titulo": "Análisis del crecimiento de la empresa",
+   "subtitulo": "Métodos de valoración de empresas. Especial referencia a los procesos de fusión, adquisición y alianzas estratégicas",
+   "corto": "Crecimiento de la empresa. Valoración. Fusiones y adquisiciones"
+  },
+  {
+   "codigo": "3.B.5",
+   "parte": "B",
+   "titulo": "Teoría del Comercio Internacional (I)",
+   "subtitulo": "La teoría ricardiana de la ventaja comparativa. Determinación de la relación real de intercambio. El modelo de factores específicos. El modelo Hecksher-Ohlin-Samuelson (H-O-S): Teoremas derivados del modelo y extensiones.",
+   "corto": "Teoría del comercio internacional (I). Ventaja comparativa. H-O-S"
+  },
+  {
+   "codigo": "3.B.6",
+   "parte": "B",
+   "titulo": "Teoría del Comercio Internacional (II)",
+   "subtitulo": "Nueva teoría del comercio internacional. Especial referencia a la competencia imperfecta, los rendimientos crecientes y la heterogeneidad empresarial.",
+   "corto": "Teoría del comercio internacional (II). Nueva teoría. Heterogeneidad empresarial"
+  },
+  {
+   "codigo": "3.B.7",
+   "parte": "B",
+   "titulo": "La Política Comercial (I)",
+   "subtitulo": "Instrumentos y efectos. Barreras arancelarias y no arancelarias. Otros instrumentos tradicionales.",
+   "corto": "Política comercial (I). Aranceles y barreras no arancelarias"
+  },
+  {
+   "codigo": "3.B.8",
+   "parte": "B",
+   "titulo": "La Política Comercial (II)",
+   "subtitulo": "La política comercial estratégica. La política de promoción exterior: justificación, instrumentos y objetivos.",
+   "corto": "Política comercial (II). Política comercial estratégica"
+  },
+  {
+   "codigo": "3.B.9",
+   "parte": "B",
+   "titulo": "Comercio internacional y crecimiento económico",
+   "subtitulo": "Especial referencia a los efectos del comercio sobre el crecimiento.",
+   "corto": "Comercio internacional y crecimiento económico"
+  },
+  {
+   "codigo": "3.B.10",
+   "parte": "B",
+   "titulo": "Teoría de la integración económica",
+   "subtitulo": "",
+   "corto": "Teoría de la integración económica"
+  },
+  {
+   "codigo": "3.B.11",
+   "parte": "B",
+   "titulo": "Balanza de Pagos",
+   "subtitulo": "Concepto, medición e interpretación",
+   "corto": "Balanza de pagos: concepto, medición e interpretación"
+  },
+  {
+   "codigo": "3.B.12",
+   "parte": "B",
+   "titulo": "Balanza de Pagos (II)",
+   "subtitulo": "Mecanismos de ajuste de la balanza de pagos. Especial referencia al enfoque inter-temporal de balanza de pagos. Análisis de sostenibilidad del déficit y de la deuda exterior",
+   "corto": "Mecanismos de ajuste de la balanza de pagos. Enfoque intertemporal"
+  },
+  {
+   "codigo": "3.B.13",
+   "parte": "B",
+   "titulo": "Mercado de divisas",
+   "subtitulo": "Operaciones e instrumentos",
+   "corto": "Mercados de divisas: operaciones e instrumentos"
+  },
+  {
+   "codigo": "3.B.14",
+   "parte": "B",
+   "titulo": "Teorías de la determinación del Tipo de Cambio",
+   "subtitulo": "",
+   "corto": "Teorías de la determinación del tipo de cambio"
+  },
+  {
+   "codigo": "3.B.15",
+   "parte": "B",
+   "titulo": "Análisis comparado de los distintos regímenes cambiarios",
+   "subtitulo": "Intervención y regulación de los mercados de cambio",
+   "corto": "Regímenes cambiarios. Intervención y regulación"
+  },
+  {
+   "codigo": "3.B.16",
+   "parte": "B",
+   "titulo": "Teoría de la integración monetaria",
+   "subtitulo": "",
+   "corto": "Teoría de la integración monetaria"
+  },
+  {
+   "codigo": "3.B.17",
+   "parte": "B",
+   "titulo": "Teorías explicativas de las crisis de balanza de pagos",
+   "subtitulo": "",
+   "corto": "Teorías explicativas de las crisis de balanza de pagos"
+  },
+  {
+   "codigo": "3.B.18",
+   "parte": "B",
+   "titulo": "Nueva globalización económica y financiera",
+   "subtitulo": "Determinantes y efectos de los movimientos internacionales de factores productivos: movilidad de trabajadores, inversión en cartera, e inversión directa internacional, con especial referencia a las cadenas globales de valor",
+   "corto": "Nueva globalización. Movimientos de factores. Cadenas globales de valor"
+  },
+  {
+   "codigo": "3.B.19",
+   "parte": "B",
+   "titulo": "Coordinación internacional de Políticas Económicas",
+   "subtitulo": "Aspectos teóricos y prácticos. El G-20, la OCDE y otros foros internacionales",
+   "corto": "Coordinación internacional de políticas. G-20, OCDE"
+  },
+  {
+   "codigo": "3.B.20",
+   "parte": "B",
+   "titulo": "Sistema económico internacional (I)",
+   "subtitulo": "Desde el siglo XIX hasta la ruptura del sistema de Bretton-Woods",
+   "corto": "Sistema económico internacional. Siglo XIX hasta Bretton-Woods"
+  },
+  {
+   "codigo": "3.B.21",
+   "parte": "B",
+   "titulo": "Sistema económico internacional (II)",
+   "subtitulo": "Desde la desaparición del sistema de Bretton-Woods",
+   "corto": "Sistema económico internacional desde Bretton-Woods"
+  },
+  {
+   "codigo": "3.B.22",
+   "parte": "B",
+   "titulo": "El Fondo Monetario Internacional",
+   "subtitulo": "Estructura y políticas. La prevención y solución de crisis",
+   "corto": "El Fondo Monetario Internacional"
+  },
+  {
+   "codigo": "3.B.23",
+   "parte": "B",
+   "titulo": "Análisis de los instrumentos financieros de renta variable",
+   "subtitulo": "Análisis fundamental. Teoría de la elección en cartera. El Modelo de valoración de los activos de capital (CAPM). Teoría de la valoración de activos por arbitraje (APT). Análisis téncnico",
+   "corto": "Instrumentos de renta variable. CAPM, APT"
+  },
+  {
+   "codigo": "3.B.24",
+   "parte": "B",
+   "titulo": "Análisis de los instrumentos financieros de renta fija",
+   "subtitulo": "Determinación del precio y rendimiento de los bonos. La estructura temporal de los tipos de interés. Valoración del riesgo y del rendimiento de los bonos: duración y convexidad",
+   "corto": "Instrumentos de renta fija. Duración y convexidad"
+  },
+  {
+   "codigo": "3.B.25",
+   "parte": "B",
+   "titulo": "Análisis de los instrumentos y de los mercados de derivados",
+   "subtitulo": "",
+   "corto": "Instrumentos y mercados de derivados"
+  },
+  {
+   "codigo": "3.B.26",
+   "parte": "B",
+   "titulo": "Crisis financieras y pánicos bancarios",
+   "subtitulo": "Especial referencia a la crisis financiera internacional iniciada en 2007-2008. Gestión de riesgos de las instituciones financieras",
+   "corto": "Crisis financieras y pánicos bancarios. Crisis 2007-2008"
+  },
+  {
+   "codigo": "3.B.27",
+   "parte": "B",
+   "titulo": "Regulación financiera y no-bancaria",
+   "subtitulo": "Fundamentos teóricos y evidencia empírica",
+   "corto": "Regulación financiera bancaria y no-bancaria"
+  },
+  {
+   "codigo": "3.B.28",
+   "parte": "B",
+   "titulo": "Economía de los países en desarrollo",
+   "subtitulo": "Teorías recientes del desarrollo económico. Evidencia empírica, con especial referencia a la aproximación experimental, e implicaciones para el diseño de políticas",
+   "corto": "Economía de los países en desarrollo"
+  },
+  {
+   "codigo": "3.B.29",
+   "parte": "B",
+   "titulo": "Financiación exterior del desarrollo económico",
+   "subtitulo": "El problema de la deuda externa. La ayuda al desarrollo",
+   "corto": "Financiación exterior del desarrollo. Deuda externa. Ayuda"
+  },
+  {
+   "codigo": "3.B.30",
+   "parte": "B",
+   "titulo": "El Grupo del Banco Mundial",
+   "subtitulo": "Los Bancos Regionales de Desarrollo y otras instituciones financieras multilaterales de desarrollo",
+   "corto": "Grupo Banco Mundial y bancos regionales de desarrollo"
+  },
+  {
+   "codigo": "3.B.31",
+   "parte": "B",
+   "titulo": "Cambio Climático y su impacto en la economía",
+   "subtitulo": "Evidencia y modelos integrados de evaluación. Acuerdos internacionales y principales medidas adoptadas para hacer frente al cambio climático",
+   "corto": "Cambio climático y economía. Modelos integrados"
+  },
+  {
+   "codigo": "3.B.32",
+   "parte": "B",
+   "titulo": "Perspectivas económicas mundiales",
+   "subtitulo": "Estructura sectorial y geográfica de los flujos comerciales y financieros internacionales. Las nuevas áreas emergentes",
+   "corto": "Perspectivas económicas mundiales. Flujos comerciales y financieros"
+  },
+  {
+   "codigo": "3.B.33",
+   "parte": "B",
+   "titulo": "La OMC",
+   "subtitulo": "Antecedentes y Organización actual. El GATT y los Acuerdos sobre el comercio de mercancías. Situación actual",
+   "corto": "La OMC (I). GATT y comercio de mercancías"
+  },
+  {
+   "codigo": "3.B.34",
+   "parte": "B",
+   "titulo": "La OMC (I)",
+   "subtitulo": "Acuerdos distintos de los de mercancías",
+   "corto": "La OMC (II). Acuerdos distintos de mercancías"
+  },
+  {
+   "codigo": "3.B.35",
+   "parte": "B",
+   "titulo": "Procesos de integración no comunitarios",
+   "subtitulo": "",
+   "corto": "Procesos de integración no comunitarios"
+  },
+  {
+   "codigo": "3.B.36",
+   "parte": "B",
+   "titulo": "Unión Europea (I)",
+   "subtitulo": "Tratados, orden jurídico e instituciones de la Unión Europea",
+   "corto": "Tratados, orden jurídico e instituciones de la UE"
+  },
+  {
+   "codigo": "3.B.37",
+   "parte": "B",
+   "titulo": "Unión Europea (II)",
+   "subtitulo": "Las finanzas de la Unión Europea y el presupuesto comunitario. El marco financiero plurianual actual",
+   "corto": "Finanzas de la UE y presupuesto comunitario. MFP"
+  },
+  {
+   "codigo": "3.B.38",
+   "parte": "B",
+   "titulo": "Unión Europea (III)",
+   "subtitulo": "La política agrícola de la Unión Europea. Problemas económicos y procesos de reforma. La política pesquera común",
+   "corto": "Política agrícola de la UE. Política pesquera común"
+  },
+  {
+   "codigo": "3.B.39",
+   "parte": "B",
+   "titulo": "Unión Europea (IV): El Mercado único de la UE",
+   "subtitulo": "El principio de libre circulación de mercancías, servicios, personas y capitales. La política de competencia",
+   "corto": "Mercado único de la UE. Libre circulación. Competencia"
+  },
+  {
+   "codigo": "3.B.40",
+   "parte": "B",
+   "titulo": "Unión Europea (V): Cohesión Económico y Social en la UE",
+   "subtitulo": "Política regional e instrumentos presupuestarios y financieros. Política social y de empleo. El proceso de convergencia real en la Unión Europea",
+   "corto": "Cohesión Económica y Social en la UE. Política regional"
+  },
+  {
+   "codigo": "3.B.41",
+   "parte": "B",
+   "titulo": "Unión Europea (VI): Política Comercial de la UE",
+   "subtitulo": "",
+   "corto": "Política comercial de la UE"
+  },
+  {
+   "codigo": "3.B.42",
+   "parte": "B",
+   "titulo": "Unión Europea (VII): Relaciones económicas exteriores de la UE",
+   "subtitulo": "La política de cooperación al desarrollo de la Unión Europea",
+   "corto": "Relaciones económicas exteriores de la UE. Cooperación al desarrollo"
+  },
+  {
+   "codigo": "3.B.43",
+   "parte": "B",
+   "titulo": "El origen del euro",
+   "subtitulo": "Funcionamiento y evolución del Sistema Monetario Europeo. Los criterios de convergencia nominal. El Sistema Europeo de Bancos Centrales: objetivos e instrumentos. La política monetaria en la Eurozona desde 2009",
+   "corto": "Origen del euro. SME. SEBC. Política monetaria en la Eurozona"
+  },
+  {
+   "codigo": "3.B.44",
+   "parte": "B",
+   "titulo": "Unión Bancaria",
+   "subtitulo": "Pilares y Código normativo único. La Únion de Mercados de Capitales",
+   "corto": "Unión Bancaria. Unión de Mercados de Capitales"
+  },
+  {
+   "codigo": "3.B.45",
+   "parte": "B",
+   "titulo": "La gobernanza económica de la Unión Europea y de la zona euro",
+   "subtitulo": "El Semestre Europeo. Las reglas fiscales y el Procedimiento de Desequilibrios Macroeconómicos. El Mecanismo Europeo de Estabilidad. La respuesta común de política fiscal a partir de la Covid-19",
+   "corto": "Gobernanza económica de la UE y zona euro. Semestre Europeo. MEDE"
+  }
+ ]
+}
