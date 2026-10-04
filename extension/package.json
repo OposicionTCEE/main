@@ -2,7 +2,7 @@
   "name": "tcee-panel",
   "displayName": "Panel TCEE",
   "description": "Panel de trabajo para los temas de la oposición TCEE: acciones e índice del tema.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "oposiciontcee",
   "license": "UNLICENSED",
   "repository": { "type": "git", "url": "https://github.com/OposicionTCEE/main" },
