@@ -79,7 +79,7 @@
         const pasado = f.objetivo && f.duracion > f.objetivo;
         const ppm = f.palabras && f.duracion ? Math.round(f.palabras / (f.duracion / 60)) : '';
         return `<tr class="${ctx.estado.canteVer === f.id ? 'sel' : ''}" data-ver="${esc(f.id)}">
-          <td class="nowrap">${esc(fechaCorta(f.fecha))}</td><td><strong>${esc(f.codigo)}</strong> ${ESTADOS[f.estado] ? `<span class="etiqueta ${f.estado === 'error' ? 'mal' : ''}">${esc(ESTADOS[f.estado])}</span>` : ''}${(f.estado === 'pendiente' || f.estado === 'error') && !enMarcha(f.id) ? ` <button class="mini-b" data-transcribir="${esc(f.id)}">Transcribir</button>` : enMarcha(f.id) ? ' <span class="etiqueta">en cola</span>' : ''}</td>
+          <td class="nowrap">${esc(fechaCorta(f.fecha))}</td><td><strong>${esc(f.codigo)}</strong> ${ESTADOS[f.estado] ? `<span class="etiqueta ${f.estado === 'error' ? 'mal' : ''}">${esc(ESTADOS[f.estado])}</span>` : ''}${enMarcha(f.id) ? ' <span class="etiqueta">transcribiendo</span>' : ''}</td>
           <td class="num ${pasado ? 'pasado' : ''}">${esc(reloj(f.duracion))}${f.objetivo ? ` <span class="apagado">/ ${esc(reloj(f.objetivo))}</span>` : ''}</td>
           <td class="num">${ppm}</td></tr>`;
       }).join('')}</tbody></table></section>`;
@@ -165,7 +165,6 @@
     if (tema) tema.onchange = () => { ctx.estado.canteTema = tema.value; ctx.guardar(); };
     if (obj) obj.oninput = () => { ctx.estado.canteObjetivo = obj.value; ctx.guardar(); };
     if (mic) mic.onchange = () => { ctx.estado.canteMicro = mic.value; ctx.guardar(); };
-    el.querySelectorAll('[data-transcribir]').forEach((b) => b.onclick = (ev) => { ev.stopPropagation(); b.disabled = true; ctx.enviar({ tipo: 'canteReintentar', id: b.dataset.transcribir }); });
     el.querySelectorAll('[data-ver]').forEach((tr) => tr.onclick = () => { ctx.estado.canteVer = tr.dataset.ver; ctx.guardar(); ctx.enviar({ tipo: 'canteVer', id: tr.dataset.ver }); });
     el.querySelectorAll('[data-c]').forEach((b) => b.onclick = () => {
       const a = b.dataset.c, id = detalle && detalle.id;

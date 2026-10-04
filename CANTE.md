@@ -38,7 +38,7 @@ ffmpeg -f avfoundation -i :<micrófono> -af ebur128=framelog=info -ac 1 -ar 1600
 
 ## 3. Transcripción
 
-- **Cuándo:** solo al pulsar *Transcribir* (en la fila del historial o en el detalle del cante). No se hace sola al terminar porque el Mac trabaja a tope varios minutos y gasta batería: decisión del usuario (4 de octubre de 2026).
+- **Cuándo:** solo al pulsar *Transcribir* en el detalle del cante (al pulsarlo en el historial). No se hace sola al terminar porque el Mac trabaja a tope varios minutos y gasta batería: decisión del usuario (4 de octubre de 2026).
   Va en segundo plano y de una en una (en cola); se puede seguir trabajando o cerrar la pestaña. *Cancelar* la detiene y el cante vuelve a quedar pendiente.
   Al abrir VS Code tampoco se retoman solas las pendientes.
 - **Orden de whisper:**
@@ -83,7 +83,7 @@ Estados: `pendiente` (por transcribir), `transcrito`, `error`.
 - **Historial:** fecha, tema, duración frente al objetivo y palabras por minuto. Al pulsar un cante se ve a la derecha su transcripción, en párrafos de un minuto con su marca de tiempo. Botones:
   - *Escuchar audio*;
   - *Copiar texto*;
-  - *Transcribir*, si está pendiente o falló (también en la fila del historial);
+  - *Transcribir*, si está pendiente o falló; solo aparece al abrir el cante desde el historial;
   - *Eliminar*, que borra la ficha y el audio.
 
 ## 6. Ideas para más adelante (no hechas)
