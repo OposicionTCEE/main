@@ -76,6 +76,7 @@ function crearCante({ raiz, progreso, avisar, alCambiar }) {
   const dirAudio = () => carpetaAudio(raiz());
   const marca = () => path.join(dirAudio(), 'grabando.json');   // grabación en curso (sobrevive a recargar la ventana)
   let transcribiendo = null;   // {id, pct}
+  let proceso = null, cancelado = false;   // programa que corre ahora en la transcripción (para poder cancelarla)
   const cola = [];
 
   // ---------------------------------------------------------------- grabación
@@ -104,9 +105,10 @@ function crearCante({ raiz, progreso, avisar, alCambiar }) {
     const duracion = Math.round(cortada ? bytes / BYTES_SEG : ((fin || Date.now()) - m.inicio) / 1000);
     guardarFicha({ id: m.id, codigo: m.codigo, titulo: m.titulo, fecha: new Date(m.inicio).toISOString(), duracion, objetivo: m.objetivo,
       micro: m.micro, audio: path.basename(m.wav), pista: m.pista, estado: 'pendiente', ...(cortada ? { cortada: true } : {}) });
-    if (cortada) avisar(`La grabación del cante de ${m.codigo} se cortó (¿se apagó el Mac?). Se transcribe lo grabado (${Math.round(duracion / 60) || "menos de 1"} min).`, true);
-    encolar(m.id);
+    // no se transcribe sola: consume mucha batería unos minutos; se lanza con «Transcribir» cuando convenga
+    if (cortada) avisar(`La grabación del cante de ${m.codigo} se cortó (¿se apagó el Mac?). Se ha guardado lo grabado (${Math.round(duracion / 60) || 'menos de 1'} min): pulsa «Transcribir» cuando quieras.`, true);
     alCambiar();
+    return m.id;
   }
 
   async function empezar({ codigo, titulo, objetivo, micro, texto }) {
@@ -149,7 +151,7 @@ function crearCante({ raiz, progreso, avisar, alCambiar }) {
     if (vivo(m.pid)) { try { process.kill(m.pid, 'SIGINT'); } catch (e) { /* ya parado */ } }
     for (let i = 0; i < 50 && vivo(m.pid); i++) await new Promise((r) => setTimeout(r, 100));
     if (vivo(m.pid)) { try { process.kill(m.pid, 'SIGKILL'); } catch (e) { /* ya parado */ } }
-    cerrar(m, { fin, descartar });
+    return cerrar(m, { fin, descartar });
   }
 
   // ---------------------------------------------------------------- fichas (progreso/cantes/<id>.json)
@@ -184,6 +186,7 @@ function crearCante({ raiz, progreso, avisar, alCambiar }) {
     const h = herramientas();
     if (h.falta.length) { avisar(`No puedo transcribir: falta ${h.falta.join(', ')}. Pulsa «Instalar herramientas de cante».`, true); return; }
     transcribiendo = { id, pct: 0, codigo: f.codigo };
+    cancelado = false;
     alCambiar();
     const wav = path.join(dirAudio(), f.audio);
     const limpio = path.join(os.tmpdir(), `tcee-${id}.wav`);
@@ -211,8 +214,11 @@ function crearCante({ raiz, progreso, avisar, alCambiar }) {
       guardarFicha({ ...leer(id), audio: path.basename(m4a), estado: 'transcrito', modelo: MODELO, segmentos, texto: segmentos.map((s) => s.texto).join(' ') });
       avisar(`Transcripción lista: cante de ${f.codigo}.`);
     } catch (e) {
-      guardarFicha({ ...leer(id), estado: 'error', error: String(e.message || e).slice(0, 400) });
-      avisar(`No se pudo transcribir el cante de ${f.codigo}: ${e.message || e}`, true);
+      if (cancelado) { guardarFicha({ ...leer(id), estado: 'pendiente' }); avisar(`Transcripción del cante de ${f.codigo} cancelada. Queda pendiente.`); }
+      else {
+        guardarFicha({ ...leer(id), estado: 'error', error: String(e.message || e).slice(0, 400) });
+        avisar(`No se pudo transcribir el cante de ${f.codigo}: ${e.message || e}`, true);
+      }
     } finally {
       for (const x of [limpio, `${base}.json`]) { try { fs.unlinkSync(x); } catch (e) { /* no estaba */ } }
       transcribiendo = null;
@@ -223,19 +229,28 @@ function crearCante({ raiz, progreso, avisar, alCambiar }) {
 
   function correr(prog, args, alLinea) {
     return new Promise((ok, mal) => {
+      if (cancelado) { mal(new Error('cancelado')); return; }
       const p = spawn(prog, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+      proceso = p;
       let cola_ = '', ultimo = '';
       const leerSalida = (d) => { cola_ += d.toString(); const ls = cola_.split(/\r|\n/); cola_ = ls.pop(); ls.forEach((l) => { if (l.trim()) ultimo = l; if (alLinea) alLinea(l); }); };
       p.stdout.on('data', leerSalida); p.stderr.on('data', leerSalida);
       p.on('error', mal);
-      p.on('close', (c) => (c === 0 ? ok() : mal(new Error(`${path.basename(prog)} terminó con error (${c}): ${ultimo.slice(0, 200)}`))));
+      p.on('close', (c) => { proceso = null; return c === 0 ? ok() : mal(new Error(`${path.basename(prog)} terminó con error (${c}): ${ultimo.slice(0, 200)}`)); });
     });
   }
 
-  /** Al abrir VS Code: cantes que quedaron sin transcribir (la ventana se cerró a mitad) */
+  /** Para la transcripción en curso y vacía la cola (los cantes quedan pendientes) */
+  function cancelar() {
+    cola.length = 0;
+    if (!transcribiendo) { alCambiar(); return; }
+    cancelado = true;
+    if (proceso) { try { proceso.kill('SIGTERM'); } catch (e) { /* ya terminó */ } }
+  }
+
+  /** Al abrir VS Code: cierra una grabación que se cortó mientras estaba cerrado. Los pendientes NO se transcriben solos */
   function retomar() {
-    enCurso();   // cierra una grabación que se cortó mientras VS Code estaba cerrado
-    for (const f of lista()) if (f.estado === 'pendiente') encolar(f.id);
+    enCurso();
   }
 
   /** Estado para la página: grabación en curso (con nivel del micrófono), transcripción en curso, herramientas */
@@ -252,7 +267,7 @@ function crearCante({ raiz, progreso, avisar, alCambiar }) {
   }
 
   return { herramientas, microfonos: async () => { const h = herramientas(); return h.ffmpeg ? microfonos(h.ffmpeg) : []; },
-    empezar, terminar, lista, leer, eliminar, rutaAudio, encolar, retomar, estado };
+    empezar, terminar, lista, leer, eliminar, rutaAudio, encolar, cancelar, retomar, estado };
 }
 
 module.exports = { crearCante, herramientas, elegirMicro, pista, nivel, ALUCINACIONES };

@@ -34,15 +34,37 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
   };
   const minutosDe = () => Object.fromEntries(Object.values(cache || {}).map((t) => [t.codigo, t.minutos]));
 
+  // Para no releer los 145 temas en cada refresco: lista de ficheros guardada (se rehace si se crea o borra un tema)
+  // y, por tema, texto y pendientes guardados mientras no cambien el fichero, el documento abierto ni su última compilación
+  let uris = null;
+  const porTema = new Map();
+  const vigiaTemas = vscode.workspace.createFileSystemWatcher('**/temario/Ejercicio-*/Parte-*/*/main.tex', false, true, false);
+  vigiaTemas.onDidCreate(() => { uris = null; }); vigiaTemas.onDidDelete(() => { uris = null; });
+  context.subscriptions.push(vigiaTemas);
+  const marcaDe = (u) => {
+    const doc = vscode.workspace.textDocuments.find((d) => d.uri.toString() === u.toString());
+    let m = '', e = '';
+    try { m = fs.statSync(u.fsPath).mtimeMs; } catch (x) { /* sin fichero */ }
+    try { e = fs.statSync(path.join(path.dirname(u.fsPath), '.build', 'estado')).mtimeMs; } catch (x) { /* sin compilar */ }
+    return `${doc ? `v${doc.version}` : m}|${e}`;
+  };
+
   async function temas() {
-    const uris = await vscode.workspace.findFiles('temario/Ejercicio-*/Parte-*/*/main.tex');
+    if (!uris) uris = await vscode.workspace.findFiles('temario/Ejercicio-*/Parte-*/*/main.tex');
     const lista = [];
     for (const u of uris) {
       const codigo = codigoTema(u.fsPath);
       if (!codigo) continue;
-      const texto = await textoDe(u);
-      const t = tituloTema(texto) || {};
-      const { e } = progreso.calcular(codigo, u, texto);
+      const marca = marcaDe(u);
+      let c = porTema.get(codigo);
+      if (!c || c.marca !== marca) {
+        const texto = await textoDe(u);
+        const { p } = progreso.calcular(codigo, u, texto);
+        c = { marca, texto, t: tituloTema(texto) || {}, p };
+        porTema.set(codigo, c);
+      }
+      const { texto, t } = c;
+      const { e } = progreso.estimar(codigo, c.p);
       lista.push({ codigo, uri: u, texto, titulo: t.corto || codigo, completo: t.completo || '', parte: codigo.slice(0, 3), minutos: e.minutos, pct: e.pct, hecho: e.hecho });
     }
     lista.sort((a, b) => a.codigo.localeCompare(b.codigo, 'es', { numeric: true }));
@@ -149,7 +171,8 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
         if (m.micro) context.globalState.update('tcee.canteMicro', m.micro);
         await cante.empezar({ codigo: t.codigo, titulo: t.completo || t.titulo, objetivo: (Number(m.objetivo) || 0) * 60, micro: m.micro, texto: t.texto });
       } else if (m.tipo === 'canteTerminar') {
-        await cante.terminar(false);
+        const id = await cante.terminar(false);
+        if (id) { panel.webview.postMessage({ tipo: 'canteSeleccionar', id }); panel.webview.postMessage({ tipo: 'canteDetalle', detalle: cante.leer(id) }); }
       } else if (m.tipo === 'canteDescartar') {
         const r = await vscode.window.showWarningMessage('¿Descartar este cante? Se borra la grabación y no se transcribe.', { modal: true }, 'Descartar');
         if (r) await cante.terminar(true);
@@ -163,6 +186,8 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
         if (f) vscode.env.openExternal(vscode.Uri.file(f)); else vscode.window.showWarningMessage('No encuentro el audio de este cante en este Mac (los audios no se sincronizan por GitHub).');
       } else if (m.tipo === 'canteReintentar') {
         cante.encolar(m.id);
+      } else if (m.tipo === 'canteCancelar') {
+        cante.cancelar();
       } else if (m.tipo === 'canteMicros') {
         panel.webview.postMessage({ tipo: 'canteMicros', micros: await cante.microfonos() });
       } else if (m.tipo === 'canteInstalar') {

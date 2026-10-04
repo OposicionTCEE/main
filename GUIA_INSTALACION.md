@@ -196,7 +196,7 @@ El panel propio de la oposición: icono **TCEE** en la **barra lateral derecha**
   cómo lo desarrolla cada otro tema (contexto, supuestos, ecuaciones, desarrollo, implicaciones) y los posibles errores del tuyo con
   enlace a la línea; sin tema abierto, *Qué armonizar* ordena los modelos que más conviene revisar. Detalles en [RELACIONES.md](RELACIONES.md).
   *Cante*: eliges tema, tiempo objetivo y micrófono, y *Empezar cante* arranca a la vez el cronómetro y la grabación; *Terminar* la para
-  y la transcribe en tu Mac (tarda unos minutos, en segundo plano). En el historial lees cada transcripción, escuchas el audio o lo eliminas.
+  y la guarda; cuando te venga bien (mejor con el cargador), pulsa *Transcribir*: tarda unos minutos, en segundo plano, y se puede cancelar. En el historial lees cada transcripción, escuchas el audio o lo eliminas.
   La primera vez hay que pulsar *Instalar herramientas de cante* (unos 2 GB; puede pedir la contraseña del Mac) y, al grabar,
   permitir que Visual Studio Code use el micrófono. Detalles en [CANTE.md](CANTE.md).
 - **Abajo, Índice**: el título de la ventana es el título del tema. Todos los epígrafes (hasta los paragraphs) aparecen desplegados.

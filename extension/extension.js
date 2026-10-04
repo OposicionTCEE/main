@@ -59,6 +59,7 @@ class Progreso {
     return r;
   }
   guardar(silencio) {
+    this._todos = null;
     this.ctx.globalState.update('tcee.progreso', this.mio);
     if (!this.hayCarpeta()) return;
     try {
@@ -67,7 +68,14 @@ class Progreso {
     } catch (e) { /* se reintenta en el siguiente guardado */ }
     if (!silencio) this.avisar();
   }
+  /** Progreso de todos los Mac combinado. Se guarda 5 s para no releer los ficheros de los otros Mac en cada tema */
   todos() {
+    if (this._todos && Date.now() - this._todos.t < 5000) return this._todos.v;
+    const v = this.leerTodos();
+    this._todos = { t: Date.now(), v };
+    return v;
+  }
+  leerTodos() {
     const lista = [this.mio];
     if (this.hayCarpeta()) {
       const d = path.join(this.dir, 'equipos');
@@ -83,10 +91,14 @@ class Progreso {
   calcular(codigo, uri, texto) {
     const estado = (() => { try { return fs.readFileSync(path.join(path.dirname(uri.fsPath), '.build', 'estado'), 'utf8').trim(); } catch (e) { return null; } })();
     const p = G.pendientes(texto, estado);
+    return { p, ...this.estimar(codigo, p) };
+  }
+  /** Estimación a partir de los pendientes ya calculados (el Panel Oposición los guarda mientras el tema no cambie) */
+  estimar(codigo, p) {
     const comb = this.todos();
     if (!comb.temas[codigo] || comb.temas[codigo].base == null) { this.tema(codigo).base = p.otros; this.guardar(true); }
     const datos = this.todos();
-    return { p, e: G.estimar(p, datos.temas[codigo], datos.ritmo), ritmo: G.ritmo(datos.ritmo) };
+    return { e: G.estimar(p, datos.temas[codigo], datos.ritmo), ritmo: G.ritmo(datos.ritmo) };
   }
   hecho(codigo) { const t = this.todos().temas[codigo]; return !!(t && t.hecho && t.hecho.valor); }
   marcar(codigo, valor) { this.tema(codigo).hecho = { valor, fecha: new Date().toISOString() }; this.guardar(); }

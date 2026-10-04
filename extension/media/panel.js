@@ -21,6 +21,7 @@
     if (m.tipo === 'relDetalle' && window.TCEE_REL) window.TCEE_REL.detalle(m.detalle);
     if (m.tipo === 'canteEstado' && window.TCEE_CANTE && estado.pestana === 'cante') window.TCEE_CANTE.estado(m.estado);
     if (m.tipo === 'canteDetalle' && window.TCEE_CANTE) window.TCEE_CANTE.detalle(m.detalle);
+    if (m.tipo === 'canteSeleccionar' && window.TCEE_CANTE) window.TCEE_CANTE.seleccionar(m.id);
     if (m.tipo === 'canteMicros' && window.TCEE_CANTE) window.TCEE_CANTE.micros(m.micros);
     if (m.tipo === 'aviso') { aviso(m.texto, m.error); if (m.error && window.TCEE_CAL) window.TCEE_CAL.fallo(); }
   });

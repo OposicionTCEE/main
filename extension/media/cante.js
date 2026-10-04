@@ -9,6 +9,7 @@
   const fecha = (iso) => new Date(iso).toLocaleString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   const fechaCorta = (iso) => { const d = new Date(iso); return `${d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} ${d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`; };
   const ESTADOS = { pendiente: 'por transcribir', transcrito: '', error: 'error al transcribir', 'sin audio': 'sin audio' };
+  const enMarcha = (id) => !!(C && ((C.transcribiendo && C.transcribiendo.id === id) || C.cola.includes(id)));
 
   let D = null, C = null, ctx = null, el = null, tic = null, micros = null, detalle = null, silencio = 0;
 
@@ -59,7 +60,7 @@
         <label class="cante-campo">Micrófono<select id="c-mic"><option value="">Automático${micros && micros.length ? '' : ' (buscando…)'}</option>${microOpts}</select></label>
       </div>
       <p><button class="primario grande" data-c="empezar">● Empezar cante</button></p>
-      <p class="apagado">Al pulsar arrancan a la vez el cronómetro y la grabación. No verás el texto mientras hablas: se transcribe al terminar.</p></section>`;
+      <p class="apagado">Al pulsar arrancan a la vez el cronómetro y la grabación. No verás el texto mientras hablas. Al terminar, el cante se guarda y lo transcribes con <em>Transcribir</em> cuando te venga bien.</p></section>`;
   }
 
   function proceso() {
@@ -67,7 +68,8 @@
     if (!t && !C.cola.length) return '';
     return `<section class="cante-tarjeta"><p><strong>Transcribiendo${t ? ` el cante de ${esc(t.codigo)}` : ''}…</strong> <span id="c-pct">${t ? t.pct : 0} %</span></p>
       <span class="pct ancho"><span id="c-barra" style="width:${t ? t.pct : 0}%"></span></span>
-      <p class="apagado">Se hace en segundo plano: puedes seguir trabajando o cerrar esta pestaña.${C.cola.length ? ` Después: ${C.cola.length} más.` : ''}</p></section>`;
+      <p class="apagado">Se hace en segundo plano: puedes seguir trabajando o cerrar esta pestaña.${C.cola.length ? ` Después: ${C.cola.length} más.` : ''}</p>
+      <p><button data-c="cancelar">Cancelar</button> <span class="apagado">El cante queda pendiente y puedes transcribirlo más tarde.</span></p></section>`;
   }
 
   function historial() {
@@ -77,7 +79,7 @@
         const pasado = f.objetivo && f.duracion > f.objetivo;
         const ppm = f.palabras && f.duracion ? Math.round(f.palabras / (f.duracion / 60)) : '';
         return `<tr class="${ctx.estado.canteVer === f.id ? 'sel' : ''}" data-ver="${esc(f.id)}">
-          <td class="nowrap">${esc(fechaCorta(f.fecha))}</td><td><strong>${esc(f.codigo)}</strong> ${ESTADOS[f.estado] ? `<span class="etiqueta ${f.estado === 'error' ? 'mal' : ''}">${esc(ESTADOS[f.estado])}</span>` : ''}</td>
+          <td class="nowrap">${esc(fechaCorta(f.fecha))}</td><td><strong>${esc(f.codigo)}</strong> ${ESTADOS[f.estado] ? `<span class="etiqueta ${f.estado === 'error' ? 'mal' : ''}">${esc(ESTADOS[f.estado])}</span>` : ''}${(f.estado === 'pendiente' || f.estado === 'error') && !enMarcha(f.id) ? ` <button class="mini-b" data-transcribir="${esc(f.id)}">Transcribir</button>` : enMarcha(f.id) ? ' <span class="etiqueta">en cola</span>' : ''}</td>
           <td class="num ${pasado ? 'pasado' : ''}">${esc(reloj(f.duracion))}${f.objetivo ? ` <span class="apagado">/ ${esc(reloj(f.objetivo))}</span>` : ''}</td>
           <td class="num">${ppm}</td></tr>`;
       }).join('')}</tbody></table></section>`;
@@ -97,10 +99,11 @@
       <p class="cante-botones">
         <button class="primario" data-c="audio">Escuchar audio</button>
         ${f.texto ? '<button class="" data-c="copiar">Copiar texto</button>' : ''}
-        ${f.estado === 'error' || f.estado === 'pendiente' ? '<button class="" data-c="reintentar">Transcribir</button>' : ''}
+        ${(f.estado === 'error' || f.estado === 'pendiente') && !enMarcha(f.id) ? '<button class="primario" data-c="reintentar">Transcribir</button>' : ''}
         <button class="peligro" data-c="eliminar">Eliminar</button></p>
       ${f.estado === 'error' ? `<p class="rel-div es-error">${esc(f.error || 'Error al transcribir.')}</p>` : ''}
-      ${f.estado === 'pendiente' ? '<p class="apagado">Pendiente de transcribir.</p>' : ''}
+      ${f.estado === 'pendiente' && !enMarcha(f.id) ? '<p class="apagado">Pendiente de transcribir. Tarda unos minutos y el Mac trabaja a tope (gasta batería): mejor con el cargador puesto.</p>' : ''}
+      ${enMarcha(f.id) ? '<p class="apagado">Transcribiendo…</p>' : ''}
       ${parrafos.length ? `<div class="cante-texto">${parrafos.map((p) => `<p><span class="cante-t">${esc(reloj(p.t))}</span>${esc(p.texto)}</p>`).join('')}</div>`
         : f.estado === 'transcrito' ? '<p class="apagado">La transcripción está vacía: no se reconoció voz en la grabación.</p>' : ''}
     </div>`;
@@ -162,6 +165,7 @@
     if (tema) tema.onchange = () => { ctx.estado.canteTema = tema.value; ctx.guardar(); };
     if (obj) obj.oninput = () => { ctx.estado.canteObjetivo = obj.value; ctx.guardar(); };
     if (mic) mic.onchange = () => { ctx.estado.canteMicro = mic.value; ctx.guardar(); };
+    el.querySelectorAll('[data-transcribir]').forEach((b) => b.onclick = (ev) => { ev.stopPropagation(); b.disabled = true; ctx.enviar({ tipo: 'canteReintentar', id: b.dataset.transcribir }); });
     el.querySelectorAll('[data-ver]').forEach((tr) => tr.onclick = () => { ctx.estado.canteVer = tr.dataset.ver; ctx.guardar(); ctx.enviar({ tipo: 'canteVer', id: tr.dataset.ver }); });
     el.querySelectorAll('[data-c]').forEach((b) => b.onclick = () => {
       const a = b.dataset.c, id = detalle && detalle.id;
@@ -171,7 +175,8 @@
       if (a === 'instalar') ctx.enviar({ tipo: 'canteInstalar' });
       if (a === 'audio') ctx.enviar({ tipo: 'canteAudio', id });
       if (a === 'copiar') ctx.enviar({ tipo: 'canteCopiar', id });
-      if (a === 'reintentar') ctx.enviar({ tipo: 'canteReintentar', id });
+      if (a === 'reintentar') { b.disabled = true; ctx.enviar({ tipo: 'canteReintentar', id }); }
+      if (a === 'cancelar') { b.disabled = true; ctx.enviar({ tipo: 'canteCancelar' }); }
       if (a === 'eliminar') ctx.enviar({ tipo: 'canteEliminar', id });
     });
   }
@@ -179,6 +184,7 @@
   window.TCEE_CANTE = {
     pintar,
     estado,
+    seleccionar(id) { if (ctx) { ctx.estado.canteVer = id; ctx.guardar(); } },
     detalle(d) { detalle = d; if (!d) { ctx.estado.canteVer = null; ctx.guardar(); } if (el && C && !C.grabando) render(); },
     micros(l) { micros = l || []; if (el && C && !C.grabando) render(); },
   };

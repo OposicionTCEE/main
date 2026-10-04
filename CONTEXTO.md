@@ -50,7 +50,7 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
     los modelos que comparte el tema abierto, fichas resumidas de los otros temas para comparar (ecuaciones con KaTeX) y,
     sin tema abierto, la lista de modelos que conviene armonizar.
   - **Cante** (reglas en `CANTE.md`): cronómetro y grabación con un botón; al terminar se transcribe en el Mac (whisper.cpp)
-    y la transcripción queda en `progreso/cantes/`. Historial con duración, palabras por minuto y texto por minutos.
+    y, al pulsar *Transcribir* (no se hace sola, por la batería), la transcripción queda en `progreso/cantes/`. Historial con duración, palabras por minuto y texto por minutos.
   - El **plan semanal** se eliminó en la v0.11 a petición del usuario (el calendario lo sustituye).
 - **Análisis**: `analisis/Modelos_temario_TCEE.xlsx`, `analisis/Desarrollos_modelos_TCEE.xlsx`, `analisis/desarrollos.json`
   y `analisis/armonizacion.json` (34 informes de armonización escritos por Claude; se actualizan con `scripts/armonizacion.js`).
