@@ -179,6 +179,11 @@ El panel propio de la oposición: icono **TCEE** en la **barra lateral derecha**
 - **Arriba, Acciones**: *Compilar tema* (el que se ve en el índice) y *Sincronizar con GitHub*.
   En la cabecera, fija: **Tiempo restante: 3 h 20 min (62 %)** del tema del índice, y al lado el botón **✓** para marcarlo como *hecho*
   (listo para pasar a estudiar con esquema). Vuelve a pulsarlo para desmarcarlo. En «…» de esa cabecera: *de dónde sale el tiempo*.
+  Las reglas completas están en [PROGRESO.md](PROGRESO.md).
+- **Nueva nota** (en Acciones): 1) escribe la nota; 2) elige el tema de destino: el panel **sugiere** los más probables
+  (por el código si lo escribes, p. ej. `3B29`; por los modelos, el título, los epígrafes y el texto de cada tema) e **Intro** acepta el primero;
+  también puedes escribir para buscar; 3) si tienes otro tema abierto, di si la nota **viene de él** o no tiene relación.
+  Se añade al final de `\modificaciones` del tema destino como `NOTA (04/10/2026, desde 3.A.18): …` y cuenta como nota pendiente.
 - **Abajo, Índice**: el título de la ventana es el título del tema. Todos los epígrafes (hasta los paragraphs) aparecen desplegados.
   Numeración desde Introducción = 1 hasta la Conclusión, y después los anexos (A1, A2…).
   Pulsa un epígrafe para saltar a él. Los epígrafes sin contenido llevan ○ y la palabra *vacío*.
