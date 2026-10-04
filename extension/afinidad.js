@@ -30,6 +30,39 @@ function remisiones(codigo, texto) {
 /** Título sin el número de la serie: «Análisis de mercados (III)» → «analisis de mercados» */
 const baseSerie = (t) => norm(t.split(':')[0]).replace(/\((i|ii|iii|iv|v|vi|vii|viii|ix|x)\)/g, '').replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
 
+// ---- detección de modelos en los pies de \eqblock{…}{pie}
+const normM = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\\[a-z]+\*?/g, ' ').replace(/[^a-z0-9+]+/g, ' ').trim();
+let clavesCache = null;
+/** Variantes de nombre de cada familia de modelos: el nombre, sin paréntesis, cada parte separada por «/» y la sigla entre paréntesis */
+function clavesModelos(desarrollos) {
+  if (clavesCache && clavesCache.d === desarrollos) return clavesCache.k;
+  const k = Object.keys((desarrollos && desarrollos.por_familia) || {}).map((f) => {
+    const vs = new Set(); const add = (x) => { x = normM(x); if (x.length >= 4) vs.add(x); };
+    add(f); add(f.replace(/\(.*?\)/g, ''));
+    f.split('/').forEach((p) => { add(p); add(p.replace(/\(.*?\)/g, '')); });
+    const sig = (f.match(/\((.*?)\)/) || [])[1]; if (sig && sig.length <= 12) add(sig);
+    return { f, vs: [...vs] };
+  });
+  clavesCache = { d: desarrollos, k };
+  return k;
+}
+/** Familias de modelos nombradas en los pies de las ecuaciones del tema */
+function modelosEnPies(texto, desarrollos) {
+  const pies = [];
+  const rx = /\\eqblock\s*\{/g; let m;
+  const cierre = (i) => { let p = 0; for (let j = i; j < texto.length; j++) { const c = texto[j]; if (c === '\\') { j++; continue; } if (c === '{') p++; else if (c === '}' && --p === 0) return j; } return texto.length; };
+  while ((m = rx.exec(texto))) {
+    const f1 = cierre(m.index + m[0].length - 1);
+    let k = f1 + 1; while (/\s/.test(texto[k] || '')) k++;
+    if (texto[k] !== '{') { rx.lastIndex = f1; continue; }
+    const f2 = cierre(k);
+    pies.push(` ${normM(texto.slice(k + 1, f2))} `);
+    rx.lastIndex = f2;
+  }
+  if (!pies.length) return [];
+  return clavesModelos(desarrollos).filter((c) => pies.some((p) => c.vs.some((v) => p.includes(` ${v} `) || p.includes(` ${v}`)))).map((c) => c.f);
+}
+
 /**
  * temas: [{codigo, parte: 'A'|'B', titulo, subtitulo, ambitos: [principal, …], texto|null}]
  * desarrollos: {por_tema: {codigo: [{familia}]}} · pesos: opcional, para probar otros pesos
@@ -60,8 +93,13 @@ function calcular(temas, desarrollos, pesosProbar) {
     }
   });
 
-  // 3. Modelos desarrollados en común (analisis/desarrollos.json)
-  const fam = temas.map((t) => new Set(((desarrollos && desarrollos.por_tema) || {})[t.codigo]?.map((x) => x.familia) || []));
+  // 3. Modelos desarrollados en común: los del análisis revisado (analisis/desarrollos.json) más los que se detectan ahora
+  //    en los pies de \eqblock del texto actual (el pie debe nombrar el modelo: «… Modelo de SOLOW»). Así un desarrollo nuevo cuenta enseguida.
+  const fam = temas.map((t) => {
+    const f = new Set(((desarrollos && desarrollos.por_tema) || {})[t.codigo]?.map((x) => x.familia) || []);
+    if (t.texto) modelosEnPies(t.texto, desarrollos).forEach((x) => f.add(x));
+    return f;
+  });
   for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
     let c = 0; fam[i].forEach((f) => { if (fam[j].has(f)) c++; });
     if (c) sim(S.modelos, i, j, Math.min(1, c / 2));
@@ -119,4 +157,4 @@ function calcular(temas, desarrollos, pesosProbar) {
   return { codigos: temas.map((t) => t.codigo), idx, m, senales: S, pesos };
 }
 
-module.exports = { calcular, PESOS, remisiones, palabras };
+module.exports = { calcular, PESOS, remisiones, palabras, modelosEnPies };

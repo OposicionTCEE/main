@@ -51,6 +51,8 @@
       ${V && V.cal ? (ctx.estado.calBorrar === V.cal.id
         ? `<span class="cal-confirmar">¿Eliminar «${esc(V.cal.nombre)}»? <button class="peligro" data-cal-borrar-si>Eliminar definitivamente</button><button data-cal-borrar-no>Cancelar</button></span>`
         : '<button data-cal-borrar>Eliminar calendario</button>') : ''}
+      ${V && V.cal ? (ctx.estado.calReorg ? `<span class="cal-confirmar">¿Rehacer por temática todas las semanas por venir? <button class="primario" data-cal-reorg-si>Reorganizar</button><button data-cal-reorg-no>Cancelar</button></span>`
+        : '<button data-cal-reorg title="Rehace las semanas que aún no han empezado con el contenido actual de los temas">Reorganizar semanas por venir</button>') : ''}
       ${V && V.cal ? `<span class="cal-nav"><button data-cal-mes="-1" aria-label="Mes anterior">‹</button><strong>${esc(mesTitulo(a, m - 1))}</strong><button data-cal-mes="1" aria-label="Mes siguiente">›</button><button data-cal-hoy>Hoy</button></span>` : ''}
     </div>`;
   }
@@ -79,14 +81,15 @@
       const k = iso(d), info = V.dias[k], fuera = d.getMonth() !== m - 1;
       const sem = info ? info.semana : null;
       const cls = ['cal-dia', fuera ? 'fuera' : '', info ? `t-${info.tipo}` : 'sin', k === V.hoy ? 'hoy' : '', k === ctx.estado.calDia ? 'elegido' : '',
-        sem != null ? `banda${sem % 2}` : '', sem === ctx.estado.calSemana ? 'semana-elegida' : ''].filter(Boolean).join(' ');
+        sem != null ? `banda${sem % 2}` : '', sem === ctx.estado.calSemana ? 'semana-elegida' : '',
+        sem != null && V.cal.semanas[sem].estado === 'trabajada' ? 'trabajada' : ''].filter(Boolean).join(' ');
       let dentro = '';
       if (info && info.tipo === 'cante') {
         const s = V.cal.semanas[sem];
         dentro = `<span class="cal-cante">Cante S${s.n}</span>
-          <span class="cal-cantados">${s.temas.map((c) => `<i class="mini p${parteDe(c)} ${V.cal.cantados[c] ? 'ok' : ''}" title="${esc(c)} ${esc(et(V.titulos, c).corto)}">${esc(sinEj(c))}</i>`).join('')}</span>`;
+          <span class="cal-cantados">${s.temas.map((c) => `<i class="mini p${parteDe(c)}" title="${esc(c)} ${esc(et(V.titulos, c).corto)}">${esc(sinEj(c))}</i>`).join('')}</span>`;
       } else if (info && info.tipo === 'estudio') {
-        dentro = info.temas.map((t) => `<span class="chip p${parteDe(t.codigo)} ${V.cal.cantados[t.codigo] ? 'ok' : ''}" title="${esc(t.codigo)} ${esc(et(V.titulos, t.codigo).corto)}${PARTE_TXT[t.parte] ? ` (${PARTE_TXT[t.parte]}: ${Math.round(t.fraccion * 100)} % del tema)` : ''}"><b>${esc(sinEj(t.codigo))}</b> <span class="breve">${esc(et(V.titulos, t.codigo).breve)}</span>${t.parte !== 'entero' ? `<small>${Math.round(t.fraccion * 100)} %</small>` : ''}</span>`).join('');
+        dentro = info.temas.map((t) => `<span class="chip p${parteDe(t.codigo)}" title="${esc(t.codigo)} ${esc(et(V.titulos, t.codigo).corto)}${PARTE_TXT[t.parte] ? ` (${PARTE_TXT[t.parte]}: ${Math.round(t.fraccion * 100)} % del tema)` : ''}"><b>${esc(sinEj(t.codigo))}</b> <span class="breve">${esc(et(V.titulos, t.codigo).breve)}</span>${t.parte !== 'entero' ? `<small>${Math.round(t.fraccion * 100)} %</small>` : ''}</span>`).join('');
       } else if (info && info.tipo === 'libre') dentro = '<span class="cal-etq">Libre</span>';
       else if (info && info.tipo === 'librado') dentro = '<span class="cal-etq">Librado</span>';
       const primeraSem = info && V.cal.semanas[sem].inicio === k;
@@ -94,7 +97,7 @@
         <span class="cal-num">${d.getDate()}${primeraSem ? `<em>S${sem + 1}</em>` : ''}</span>${dentro}</div>`;
     }
     return `<div class="cal-rejilla">${cab}${celdas}</div>
-      <p class="cal-leyenda"><i class="mini pA"></i>Parte A <i class="mini pB"></i>Parte B <i class="mini ok pA"></i>cantado <span class="cal-muestra t-libre"></span>libre <span class="cal-muestra banda0"></span><span class="cal-muestra banda1"></span>semanas alternas. El % es la parte del tema que toca ese día.</p>`;
+      <p class="cal-leyenda"><i class="mini pA"></i>Parte A <i class="mini pB"></i>Parte B <span class="cal-muestra trabajada"></span>semana trabajada <span class="cal-muestra t-libre"></span>libre <span class="cal-muestra banda0"></span><span class="cal-muestra banda1"></span>semanas alternas. El % es la parte del tema que toca ese día.</p>`;
   }
 
   // ------------------------------------------------------------ detalle de la semana
@@ -108,12 +111,12 @@
         <div><h3>Semana ${s.n}</h3><p>${esc(s.bloque || 'Sin bloque temático')}</p></div>
         <button data-cal-semana="${w + 1}" ${w === V.cal.semanas.length - 1 ? 'disabled' : ''} aria-label="Semana siguiente">›</button>
       </header>
-      <p class="cal-cuando">Cante el ${esc(largo(s.cante))}. ${s.cantados} de ${s.temas.length} cantados.</p>
+      <p class="cal-cuando">Cante el ${esc(largo(s.cante))}. <span class="cal-estado e-${s.estado.replace(' ', '-')}">${{ trabajada: 'Semana trabajada', 'en curso': 'Semana en curso', 'por venir': 'Por venir' }[s.estado]}</span></p>
       ${s.sobrecarga ? `<p class="cal-aviso">Esta semana tiene ${s.temas.length} temas (lo previsto son ${total}).</p>` : ''}
       ${s.sinDias.length ? '<p class="cal-aviso">No queda ningún día de estudio en esta semana: libera algún día o pasa temas a la siguiente.</p>' : ''}
       <ol class="cal-temas">${s.orden.map((c, i) => `
-        <li class="p${parteDe(c)} ${V.cal.cantados[c] ? 'ok' : ''}">
-          <label class="cal-check"><input type="checkbox" data-cal-cantado="${esc(c)}" ${V.cal.cantados[c] ? 'checked' : ''}> <span class="cod">${esc(sinEj(c))}</span></label>
+        <li class="p${parteDe(c)}">
+          <span class="cod">${esc(sinEj(c))}</span>
           <a data-abrir="${esc(c)}" class="cal-titulo" title="${esc(et(V.titulos, c).titulo)}: abrir el tema">${esc(et(V.titulos, c).corto)}</a>
           <span class="cal-acc">
             <button data-cal-orden="${esc(c)}" data-dir="-1" ${i === 0 ? 'disabled' : ''} title="Estudiarlo antes">↑</button>
@@ -122,7 +125,22 @@
           </span>
         </li>`).join('')}</ol>
       <div class="cal-elegir" data-cal-eleccion hidden></div>
+      ${s.estado !== 'trabajada' ? `<div class="cal-botones"><button data-cal-traer>Traer un tema a esta semana</button></div>` : ''}
+      ${traerCaja(V, w)}
     </section>`;
+  }
+
+  // ------------------------------------------------------------ traer un tema de semanas por venir
+  function traerCaja(V, w) {
+    const T = ctx.estado.calTraer;
+    if (!T || T.semana !== w) return '';
+    if (T.cargando) return '<div class="cal-elegir"><p class="apagado">Buscando los temas que mejor encajan…</p></div>';
+    if (!T.mejores.length) return '<div class="cal-elegir"><p>No hay temas en semanas por venir que se puedan traer.</p><div class="cal-botones"><button data-cal-traer-no>Cerrar</button></div></div>';
+    return `<div class="cal-elegir"><p>Temas que mejor encajan en esta semana:</p>
+      <div class="cal-sugerencias">${T.mejores.map((x) => `<button class="sug p${parteDe(x.codigo)}" data-cal-traer-tema="${esc(x.codigo)}" title="${esc(x.corto)}">
+        <b>${esc(sinEj(x.codigo))}</b> ${esc(x.breve)}<small>ahora en la semana ${x.semanaDesde}</small></button>`).join('')}</div>
+      <label class="cal-otro">O elige otro <select data-cal-traer-otro><option value="">—</option>${T.todos.map((x) => `<option value="${esc(x.codigo)}">${esc(sinEj(x.codigo))} ${esc(x.breve)} (semana ${x.semanaDesde})</option>`).join('')}</select></label>
+      <div class="cal-botones"><button data-cal-traer-no>Cancelar</button></div></div>`;
   }
 
   // ------------------------------------------------------------ detalle del día elegido
@@ -220,7 +238,11 @@
       c.onclick = elegir; c.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); elegir(); } };
     });
     q('[data-cal-semana]', (b) => { b.onclick = () => { st.calSemana = Number(b.dataset.calSemana); st.calDia = null; const s = V.cal.semanas[st.calSemana]; st.calMes = s.cante.slice(0, 7); rep(); }; });
-    q('[data-cal-cantado]', (c) => { c.onchange = () => ctx.enviar({ tipo: 'calCantado', codigo: c.dataset.calCantado, valor: c.checked }); });
+    q('[data-cal-traer]', (b) => { b.onclick = () => { st.calTraer = { semana: st.calSemana, cargando: true }; rep(); ctx.enviar({ tipo: 'calTraerSug', semana: st.calSemana }); }; });
+    q('[data-cal-traer-no]', (b) => { b.onclick = () => { st.calTraer = null; rep(); }; });
+    const traerTema = (codigo) => { const w = st.calTraer.semana; st.calTraer = null; ctx.guardar(); ctx.enviar({ tipo: 'calTraer', semana: w, codigo }); };
+    q('[data-cal-traer-tema]', (b) => { b.onclick = () => traerTema(b.dataset.calTraerTema); });
+    q('[data-cal-traer-otro]', (x) => { x.onchange = () => { if (x.value) traerTema(x.value); }; });
     q('[data-cal-orden]', (b) => { b.onclick = () => ctx.enviar({ tipo: 'calOrden', semana: st.calSemana, codigo: b.dataset.calOrden, dir: Number(b.dataset.dir) }); });
     q('[data-cal-pasar]', (b) => { b.onclick = () => {
       const caja = el.querySelector('[data-cal-eleccion]');
@@ -233,6 +255,9 @@
     q('[data-cal-borrar]', (b) => { b.onclick = () => { st.calBorrar = V.cal.id; rep(); }; });
     q('[data-cal-borrar-no]', (b) => { b.onclick = () => { st.calBorrar = null; rep(); }; });
     q('[data-cal-borrar-si]', (b) => { b.onclick = () => { const id = st.calBorrar; st.calBorrar = null; st.calMes = null; st.calSemana = null; st.calDia = null; ctx.guardar(); ctx.enviar({ tipo: 'calBorrar', id }); }; });
+    q('[data-cal-reorg]', (b) => { b.onclick = () => { st.calReorg = true; rep(); }; });
+    q('[data-cal-reorg-no]', (b) => { b.onclick = () => { st.calReorg = false; rep(); }; });
+    q('[data-cal-reorg-si]', (b) => { b.onclick = () => { st.calReorg = false; ctx.guardar(); ctx.enviar({ tipo: 'calAmpliar', modo: 'completo' }); }; });
     q('[data-cal-ampliar]', (b) => { b.onclick = () => { b.disabled = true; b.textContent = 'Reorganizando…'; ctx.enviar({ tipo: 'calAmpliar', modo: b.dataset.calAmpliar }); }; });
     q('[data-cal-librar]', (b) => { b.onclick = () => ctx.enviar({ tipo: 'calLibrar', dia: st.calDia, accion: b.dataset.calLibrar }); });
     q('[data-cal-estudiar]', (b) => { b.onclick = () => ctx.enviar({ tipo: 'calEstudiar', dia: st.calDia }); });
@@ -268,6 +293,7 @@
   window.TCEE_CAL = {
     pintar,
     previa(p) { if (!ctx) return; ctx.estado.calPrevia = p; ctx.estado.calCalculando = false; ctx.repintar(); },
+    traer(t) { if (!ctx || !ctx.estado.calTraer || ctx.estado.calTraer.semana !== t.semana) return; ctx.estado.calTraer = { ...t, cargando: false }; ctx.repintar(); },
     fallo() { if (!ctx || !ctx.estado.calCalculando) return; ctx.estado.calCalculando = false; ctx.repintar(); },
   };
 })();

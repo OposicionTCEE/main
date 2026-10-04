@@ -42,6 +42,8 @@ Calendario de vueltas (pestaña Calendario): reglas y razonamiento en `main/CALE
 `calendarioPanel.js` (guardar y aplicar cambios) y `media/calendario.js` (vista mensual). Programa del ejercicio en `config/programa_3.json`.
 Los calendarios se guardan en el repositorio PRIVADO `progreso/calendarios/`. La generación usa solo las reglas (ámbitos y etiquetas de `config/programa_3.json` + pesos de `afinidad.js`); el calendario de la preparadora solo sirvió para fijarlas. 3º y 4º ejercicio nunca se mezclan.
 
+Historia del proyecto, decisiones tomadas y tareas pendientes: `main/CONTEXTO.md` (leerlo al empezar una tarea nueva).
+
 ## Relaciones entre temas
 `main/analisis/desarrollos.json` indica, para cada tema, qué modelos se DESARROLLAN matemáticamente y en qué epígrafes
 (`por_tema`) y en qué temas se desarrolla cada familia de modelos (`por_familia`).

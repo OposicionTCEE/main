@@ -186,7 +186,7 @@ El panel propio de la oposición: icono **TCEE** en la **barra lateral derecha**
   Se añade al final de `\modificaciones` del tema destino como `NOTA (04/10/2026, desde 3.A.18): …` y cuenta como nota pendiente.
 - **Panel Oposición** (en Acciones): se abre como una pestaña. El primer apartado es el **Calendario** de vueltas
   (vista mensual; pulsa un día para librarlo, estudiar en tu día libre o mover el cante; a la derecha, los temas de la semana con su
-  casilla de *cantado*, el orden de estudio y el botón para pasar un tema a la semana siguiente; *Nuevo calendario* crea otro
+  orden de estudio, el botón para mover un tema a otra semana y *Traer un tema a esta semana*; *Nuevo calendario* crea otro
   en modo temático, correlativo o aleatorio, y eliges por qué tema empezar; *Eliminar calendario* borra el que estás viendo). Reglas en [CALENDARIO.md](CALENDARIO.md). Además, cuatro apartados:
   *Temas* (los 110 con tiempo restante, % y casilla de hecho; ordena pulsando en las columnas), *Plan semanal* (reparto automático
   según tus horas por semana, de menos a más avanzado; ◀ ▶ mueve un tema de semana y lo fija 📌, ✕ lo suelta; abajo, si cumpliste las
