@@ -1,6 +1,6 @@
 #!/bin/bash
-# Sincroniza con GitHub los repositorios: main (herramientas), temario (todos los temas)
-# y progreso (privado: tiempo de trabajo y temas hechos del panel TCEE).
+# Sincroniza con GitHub los repositorios: main (herramientas), temario (todos los temas),
+# progreso (privado: tiempo de trabajo, calendarios, cantes y respuestas del test) y test (banco de preguntas).
 # Para cada uno: guarda tus cambios (commit), trae lo que haya en GitHub y sube lo tuyo.
 # Si no hay conexión, no hace nada y te lo dice: tus cambios siguen a salvo en tu Mac.
 # Si detecta un conflicto (el mismo fragmento cambiado en GitHub y en tu Mac), NO toca ese
@@ -57,6 +57,9 @@ sincronizar() {
 sincronizar "$MAIN_DIR" "main"
 sincronizar "$BASE/temario" "temario"
 sincronizar "$BASE/progreso" "progreso"   # privado: tiempos y temas hechos del panel TCEE
+# banco de preguntas del test (pestaña Test del Panel Oposición): se descarga la primera vez
+if [ ! -d "$BASE/test/.git" ] && git clone -q https://github.com/OposicionTCEE/test.git "$BASE/test" 2>/dev/null; then actualizados+=("test (descargado)"); fi
+sincronizar "$BASE/test" "test"
 
 [ -d "$BASE/progreso/.git" ] || echo "Aviso: falta la carpeta progreso. Ejecuta la tarea «Descargar el temario (si falta)»."
 

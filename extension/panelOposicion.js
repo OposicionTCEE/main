@@ -8,6 +8,7 @@ const G = require('./progreso');
 const { crearCalendarios } = require('./calendarioPanel');
 const { crearRelaciones } = require('./relacionesPanel');
 const { crearCante } = require('./cante');
+const { crearTest } = require('./testPanel');
 
 function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
   let panel = null;
@@ -27,6 +28,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
   };
   const calendarios = crearCalendarios({ ctx: context, progreso, raiz, desarrollos });
   const relaciones = crearRelaciones({ raiz, desarrollos });
+  const test = crearTest({ raiz, progreso });
   // Cante: grabación y transcripción (main/CANTE.md). alCambiar(ligero): solo el estado en vivo (nivel, % transcrito) o todo el panel
   const cante = crearCante({
     raiz, progreso,
@@ -163,10 +165,26 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
       return;
     }
     if (m.tipo && m.tipo.startsWith('cante')) return mensajeCante(m);
+    if (m.tipo && m.tipo.startsWith('test')) return mensajeTest(m);
     if (m.tipo === 'abrirLinea') {
       if (!cache) await temas();
       const t = cache[m.codigo]; if (t) vscode.commands.executeCommand('tcee.irA', t.uri, Math.max(0, m.linea), { principal: true });
     }
+  }
+
+  /** Pestaña Test: el banco (≈700 KB) se manda solo al abrir la pestaña, no en cada refresco del panel */
+  function mensajeTest(m) {
+    const enviarHistorial = () => panel.webview.postMessage({ tipo: 'testHistorial', historial: test.historial() });
+    try {
+      if (m.tipo === 'testCargar') {
+        panel.webview.postMessage({ tipo: 'testDatos', banco: test.leerBanco(), historial: test.historial(),
+          imgBase: panel.webview.asWebviewUri(vscode.Uri.file(test.carpeta())).toString(), hayProgreso: progreso.hayCarpeta() });
+      } else if (m.tipo === 'testGuardar') { test.guardar(m.sesion); enviarHistorial(); }
+      else if (m.tipo === 'testBorrar') {
+        vscode.window.showWarningMessage('¿Borrar esta sesión del historial? Sus respuestas dejarán de contar en las estadísticas.', { modal: true }, 'Borrar')
+          .then((r) => { if (r) { test.borrar(m.id); enviarHistorial(); } });
+      }
+    } catch (e) { panel.webview.postMessage({ tipo: 'aviso', texto: String(e.message || e), error: true }); }
   }
 
   async function mensajeCante(m) {
@@ -211,7 +229,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     const nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
     const url = (f) => webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', f));
     return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; font-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; font-src ${webview.cspSource}; img-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="${url('katex/katex.min.css')}"><link rel="stylesheet" href="${url('panel.css')}"><title>Panel Oposición</title></head>
 <body><div id="app"><p class="vacio">Calculando los temas…</p></div>
@@ -220,6 +238,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
 <script nonce="${nonce}" src="${url('temas.js')}"></script>
 <script nonce="${nonce}" src="${url('relaciones.js')}"></script>
 <script nonce="${nonce}" src="${url('cante.js')}"></script>
+<script nonce="${nonce}" src="${url('test.js')}"></script>
 <script nonce="${nonce}" src="${url('panel.js')}"></script></body></html>`;
   }
 
@@ -227,7 +246,8 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     async abrir() {
       if (panel) { panel.reveal(); refrescar(); return; }
       panel = vscode.window.createWebviewPanel('tceeOposicion', 'Panel Oposición', vscode.ViewColumn.Active, {
-        enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')],
+        enableScripts: true, retainContextWhenHidden: true,
+        localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media'), vscode.Uri.file(test.carpeta())],
       });
       panel.iconPath = vscode.Uri.joinPath(context.extensionUri, 'media', 'tcee.svg');
       panel.webview.html = html(panel.webview);

@@ -200,6 +200,9 @@ El panel propio de la oposición: icono **TCEE** en la **barra lateral derecha**
   y la guarda; cuando te venga bien (mejor con el cargador), pulsa *Transcribir*: tarda unos minutos, en segundo plano, y se puede cancelar. En el historial lees cada transcripción, escuchas el audio o lo eliminas.
   La primera vez hay que pulsar *Instalar herramientas de cante* (unos 2 GB; puede pedir la contraseña del Mac) y, al grabar,
   permitir que Visual Studio Code use el micrófono. Detalles en [CANTE.md](CANTE.md).
+  *Test*: practica el primer ejercicio por tema o bloque, con simulacros (examen oficial o mezclado, con tiempo), repasando las falladas
+  o al azar; corrección al momento o al final, con la penalización del examen (error −1/3). Guarda tus respuestas y muestra tu acierto por bloque.
+  El banco de preguntas se descarga al pulsar *Sincronizar*. Detalles en [TEST.md](TEST.md).
 - **Abajo, Índice**: el título de la ventana es el título del tema. Todos los epígrafes (hasta los paragraphs) aparecen desplegados.
   Numeración desde Introducción = 1 hasta la Conclusión, y después los anexos (A1, A2…).
   Pulsa un epígrafe para saltar a él. Los epígrafes sin contenido llevan ○ y la palabra *vacío*.
