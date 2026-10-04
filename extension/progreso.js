@@ -6,6 +6,12 @@ const { indiceTema, sinComentario } = require('./parser');
 const PESOS = { vacio: 1, nota: 0.5, ojo: 0.3, sinPdf: 1, ocr: 0.02, ocrMax: 2 };
 // Ritmo inicial supuesto (minutos por unidad) y cuántas unidades "pesa" esa suposición frente a tus datos reales
 const RITMO_INICIAL = 30, PESO_INICIAL = 10;
+// Introducción y Conclusión no cuentan como trabajo pendiente
+const NO_CUENTAN = /^(Introducci|Conclusi)/i;
+// Temas "esqueleto" (casi sin desarrollar): un tema desarrollado tiene ~24 epígrafes finales en el cuerpo (mediana del temario)
+// y ninguno tiene menos de ~2.300 palabras en el cuerpo. Por debajo de 2.000 palabras se añaden los epígrafes que faltan,
+// en proporción a lo que falta por escribir. Así un tema vacío, sin epígrafes, no aparece como casi terminado.
+const EPIGRAFES_TIPICOS = 24, PALABRAS_ESQUELETO = 2000;
 
 /** Posición [inicio, fin) del contenido de \macro{…} (llaves equilibradas), o null */
 function bloque(texto, macro) {
@@ -56,13 +62,28 @@ function pendientes(texto, estadoPdf) {
 
   let vacios = 0, llenos = 0;
   const hojas = (ns) => ns.forEach((n) => { if (n.hijos.length) hojas(n.hijos); else if (n.vacio) vacios++; else llenos++; });
-  hojas(indiceTema(texto));
+  const indice = indiceTema(texto);
+  const cuerpoIdx = indice.filter((n) => !NO_CUENTAN.test(n.titulo));
+  hojas(cuerpoIdx);
+
+  // palabras del cuerpo (sin Introducción, Conclusión ni \modificaciones): solo para detectar temas esqueleto
+  const todas = texto.split('\n');
+  let palabras = 0;
+  cuerpoIdx.forEach((n) => {
+    const k = indice.indexOf(n);
+    const fin = k + 1 < indice.length ? indice[k + 1].linea : todas.length;
+    let t = todas.slice(n.linea, fin).map(sinComentario).join('\n');
+    const bm = bloque(t, 'modificaciones'); if (bm) t = t.slice(0, bm[0]) + t.slice(bm[2] + 1);
+    palabras += (t.replace(/\\[a-zA-Z]+\*?/g, ' ').match(/[A-Za-zÁÉÍÓÚáéíóúñÑüÜ]{3,}/g) || []).length;
+  });
+  const faltan = Math.round(Math.max(0, EPIGRAFES_TIPICOS - vacios - llenos)
+    * Math.max(0, 1 - palabras / PALABRAS_ESQUELETO) * 10) / 10;
 
   const ojo = (resto.match(/\bOJO\b/g) || []).length;
   const ocr = contarOcr(resto);
   const sinPdf = estadoPdf === 'error' ? 1 : 0;
   const otros = notas * PESOS.nota + ojo * PESOS.ojo + sinPdf * PESOS.sinPdf + Math.min(PESOS.ocrMax, ocr * PESOS.ocr);
-  return { vacios, llenos, notas, ojo, sinPdf, ocr, otros, unidades: vacios * PESOS.vacio + otros };
+  return { vacios, faltan, llenos, palabras, notas, ojo, sinPdf, ocr, otros, unidades: (vacios + faltan) * PESOS.vacio + otros };
 }
 
 /** Une los ficheros de progreso de todos los equipos (cada Mac escribe solo el suyo: sin conflictos al sincronizar) */

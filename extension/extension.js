@@ -237,7 +237,9 @@ function activate(context) {
       vscode.window.showInformationMessage(
         `${ultimo.codigo}: ${G.formatoTiempo(e.minutos)} (${e.pct} %)${e.hecho ? ' · marcado como hecho' : ''}`,
         { modal: true, detail:
-          `Epígrafes vacíos: ${p.vacios} de ${p.vacios + p.llenos}\nNotas pendientes: ${p.notas}\nOJO: ${p.ojo}\n`
+          `Epígrafes vacíos: ${p.vacios} de ${p.vacios + p.llenos} (sin contar Introducción ni Conclusión)\n`
+          + (p.faltan ? `Tema casi sin desarrollar: se suman ${p.faltan} epígrafes que faltan\n` : '')
+          + `Notas pendientes: ${p.notas}\nOJO: ${p.ojo}\n`
           + `Errores OCR/Markdown: ${p.ocr}\nSin PDF en la última compilación: ${p.sinPdf ? 'sí' : 'no'}\n\n`
           + `Tu ritmo: ${ritmo.toFixed(0)} min por unidad de trabajo`
           + (progreso.hayCarpeta() ? '' : '\n\nAviso: falta la carpeta «progreso» (tarea «Descargar el temario»). Mientras, se guarda en VS Code.') }

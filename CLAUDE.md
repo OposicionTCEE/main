@@ -31,7 +31,7 @@ Código en `main/extension/` (JavaScript sin compilación: `extension.js` + `par
 con `npx @vscode/vsce package --skip-license -o tcee-panel.vsix` dentro de `main/extension/` y subir el `.vsix`;
 el usuario lo instala con la tarea *Instalar o actualizar el panel TCEE*. Probar `parser.js` contra los 110 temas antes de publicar.
 Tiempo restante (`progreso.js`): unidades = vacío 1 · nota 0,5 · OJO 0,3 · sin PDF 1 · error OCR 0,02 (tope 2); minutos = unidades × ritmo
-aprendido. Datos en el repositorio PRIVADO `progreso` (carpeta `TCEE/progreso/equipos/<equipo>.json`, uno por Mac). No copiar esos datos a `main` ni a `temario`, que son públicos.
+aprendido. No cuentan Introducción ni Conclusión; en temas esqueleto (<2.000 palabras en el cuerpo) se suman los epígrafes que faltan hasta 24. Datos en el repositorio PRIVADO `progreso` (carpeta `TCEE/progreso/equipos/<equipo>.json`, uno por Mac). No copiar esos datos a `main` ni a `temario`, que son públicos.
 
 ## Relaciones entre temas
 `main/analisis/desarrollos.json` indica, para cada tema, qué modelos se DESARROLLAN matemáticamente y en qué epígrafes
