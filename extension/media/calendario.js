@@ -31,7 +31,7 @@
       const w = cal.semanas.findIndex((s) => V.hoy <= s.cante);
       st.calSemana = w >= 0 ? w : 0;
     }
-    el.innerHTML = `${barra(V)}
+    el.innerHTML = `${barra(V)}${aviso(V)}
       <div class="cal-cuerpo">
         <div class="cal-mes">${mes(V)}</div>
         <aside class="cal-lado">${detalleSemana(V)}${detalleDia(V)}</aside>
@@ -48,8 +48,24 @@
         <select data-cal-activar>${lista.length ? lista.map((c) => `<option value="${esc(c.id)}" ${V.activo === c.id ? 'selected' : ''}>${esc(c.nombre)}</option>`).join('') : '<option>—</option>'}</select>
       </label>
       <button data-cal-nuevo>Nuevo calendario</button>
+      ${V && V.cal ? (ctx.estado.calBorrar === V.cal.id
+        ? `<span class="cal-confirmar">¿Eliminar «${esc(V.cal.nombre)}»? <button class="peligro" data-cal-borrar-si>Eliminar definitivamente</button><button data-cal-borrar-no>Cancelar</button></span>`
+        : '<button data-cal-borrar>Eliminar calendario</button>') : ''}
       ${V && V.cal ? `<span class="cal-nav"><button data-cal-mes="-1" aria-label="Mes anterior">‹</button><strong>${esc(mesTitulo(a, m - 1))}</strong><button data-cal-mes="1" aria-label="Mes siguiente">›</button><button data-cal-hoy>Hoy</button></span>` : ''}
     </div>`;
+  }
+
+  // ------------------------------------------------------------ aviso de semanas sobrecargadas
+  function aviso(V) {
+    const sc = (V && V.sobrecarga) || [];
+    if (sc.length < 2) return '';
+    const k = V.cal.opciones.temasSemana;
+    return `<div class="cal-sobrecarga" role="status">
+      <p><strong>${sc.length} semanas por venir tienen más de ${k} temas</strong> (${sc.map((w) => `semana ${w + 1}`).join(', ')}). Te recomiendo ampliar el calendario.</p>
+      <div class="cal-botones">
+        <button data-cal-ampliar="parcial" title="Los temas que peor encajan en cada semana sobrecargada forman semanas nuevas al final">Añadir semanas con los temas que sobran</button>
+        <button data-cal-ampliar="completo" title="Rehace todas las semanas por venir por temática, con las semanas que hagan falta; la semana en curso no se toca">Reorganizar todas las semanas por venir</button>
+      </div></div>`;
   }
 
   // ------------------------------------------------------------ vista mensual
@@ -102,7 +118,7 @@
           <span class="cal-acc">
             <button data-cal-orden="${esc(c)}" data-dir="-1" ${i === 0 ? 'disabled' : ''} title="Estudiarlo antes">↑</button>
             <button data-cal-orden="${esc(c)}" data-dir="1" ${i === s.orden.length - 1 ? 'disabled' : ''} title="Estudiarlo después">↓</button>
-            <button data-cal-pasar="${esc(c)}" title="Pasarlo a la semana siguiente">A la semana siguiente</button>
+            <button data-cal-pasar="${esc(c)}" title="Pasarlo a la semana siguiente o a la que mejor encaje">Mover a otra semana</button>
           </span>
         </li>`).join('')}</ol>
       <div class="cal-elegir" data-cal-eleccion hidden></div>
@@ -120,7 +136,7 @@
         <div class="cal-botones">
           <button data-cal-librar="repartir">Repartir sus temas en la semana</button>
           <button data-cal-librar="absorber" title="La semana siguiente tendrá más temas; el resto del calendario no se mueve">Pasarlos a la semana siguiente</button>
-          <button data-cal-librar="desplazar" title="Todo el calendario corre un puesto">Pasarlos y desplazar el calendario</button>
+          <button data-cal-librar="recolocar" title="Cada tema va a la semana por venir donde mejor encaja por contenido y carga de trabajo">Recolocarlos donde mejor encajen</button>
         </div>`;
     } else if (info.tipo === 'libre') acciones = '<div class="cal-botones"><button data-cal-estudiar>Estudiar este día</button></div>';
     else if (info.tipo === 'librado') acciones = '<div class="cal-botones"><button data-cal-estudiar>Volver a estudiar este día</button></div>';
@@ -209,11 +225,15 @@
     q('[data-cal-pasar]', (b) => { b.onclick = () => {
       const caja = el.querySelector('[data-cal-eleccion]');
       caja.hidden = false;
-      caja.innerHTML = `<p>${esc(sinEj(b.dataset.calPasar))} pasa a la semana siguiente. ¿Y el resto del calendario?</p>
-        <div class="cal-botones"><button data-modo="absorber">La semana siguiente lo absorbe</button><button data-modo="desplazar">Desplazar todo el calendario</button><button data-modo="">Cancelar</button></div>`;
+      caja.innerHTML = `<p>¿Dónde va ${esc(sinEj(b.dataset.calPasar))}?</p>
+        <div class="cal-botones"><button data-modo="absorber">A la semana siguiente</button><button data-modo="recolocar" title="A la semana por venir donde mejor encaja por contenido y carga de trabajo">Donde mejor encaje</button><button data-modo="">Cancelar</button></div>`;
       caja.querySelectorAll('[data-modo]').forEach((x) => { x.onclick = () => { caja.hidden = true; if (x.dataset.modo) ctx.enviar({ tipo: 'calPasar', semana: st.calSemana, codigo: b.dataset.calPasar, modo: x.dataset.modo }); }; });
       caja.querySelector('button').focus();
     }; });
+    q('[data-cal-borrar]', (b) => { b.onclick = () => { st.calBorrar = V.cal.id; rep(); }; });
+    q('[data-cal-borrar-no]', (b) => { b.onclick = () => { st.calBorrar = null; rep(); }; });
+    q('[data-cal-borrar-si]', (b) => { b.onclick = () => { const id = st.calBorrar; st.calBorrar = null; st.calMes = null; st.calSemana = null; st.calDia = null; ctx.guardar(); ctx.enviar({ tipo: 'calBorrar', id }); }; });
+    q('[data-cal-ampliar]', (b) => { b.onclick = () => { b.disabled = true; b.textContent = 'Reorganizando…'; ctx.enviar({ tipo: 'calAmpliar', modo: b.dataset.calAmpliar }); }; });
     q('[data-cal-librar]', (b) => { b.onclick = () => ctx.enviar({ tipo: 'calLibrar', dia: st.calDia, accion: b.dataset.calLibrar }); });
     q('[data-cal-estudiar]', (b) => { b.onclick = () => ctx.enviar({ tipo: 'calEstudiar', dia: st.calDia }); });
     q('[data-cal-cante]', (b) => { b.onclick = () => ctx.enviar({ tipo: 'calCante', semana: Number(b.dataset.calCante), dia: st.calDia }); });

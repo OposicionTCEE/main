@@ -96,7 +96,8 @@ function tematico(codigos, k, intercalar, semilla, af, titulos = {}, inicio = nu
  * Orden de las semanas: cada semana va seguida de la que más relación guarda con ella (afinidad media entre sus temas),
  * empezando por la semana elegida:
  *   inicio.tipo 'basico' (por defecto) → la semana más básica (menor posición media en el programa; al intercalar cuenta la Parte A);
- *   'tema' → la semana que contiene inicio.tema;   'azar' → una semana al azar (reproducible con la semilla).
+ *   'tema' → la semana que contiene inicio.tema;   'azar' → una semana al azar (reproducible con la semilla);
+ *   'tras' → la más relacionada con inicio.previa (temas de la semana anterior; se usa al reorganizar).
  * Primero se encadena de forma voraz (siempre la más relacionada de las que quedan) y luego se mejora la cadena invirtiendo tramos (2-opt).
  * La semana incompleta va siempre al final. Sin intercalar, primero todas las semanas de una parte (la del tema de inicio) y luego las de la otra.
  */
@@ -125,6 +126,7 @@ function encadenar(semanas, k, intercalar, inicio, af, r, nA, nB) {
   const elegir = (lista) => {
     if (tipo === 'tema' && inicio.tema) { const w = lista.find((s) => s.includes(inicio.tema)); if (w) return w; }
     if (tipo === 'azar') return lista[Math.floor(r() * lista.length)];
+    if (tipo === 'tras' && inicio.previa) return lista.reduce((a, b) => (W(inicio.previa, b) > W(inicio.previa, a) ? b : a)); // la más relacionada con la semana anterior
     return lista.reduce((a, b) => (pos(b) < pos(a) ? b : a));
   };
   const ordenar = (lista, previa) => {
@@ -307,26 +309,109 @@ function repartir(cal, w, pesos = {}) {
 }
 
 // ------------------------------------------------------------------ 3. Ajustes sobre la marcha
-/** Mueve un tema de la semana w a la siguiente. modo: 'absorber' (la siguiente tiene uno más) | 'desplazar' (todo el calendario corre un puesto) */
-function pasarSiguiente(cal, w, codigo, modo) {
+/** Mueve un tema de la semana w a la siguiente, que lo absorbe (tendrá un tema más) */
+function pasarSiguiente(cal, w, codigo) {
   const s = cal.semanas[w];
   if (!s || !s.temas.includes(codigo)) return cal; // ya no está en esa semana (p. ej. doble clic): no se duplica
   s.temas = s.temas.filter((c) => c !== codigo); if (s.orden) s.orden = s.orden.filter((c) => c !== codigo);
   if (w + 1 >= cal.semanas.length) cal.semanas.push({ cante: masDias(s.cante, 7), temas: [], bloque: '', orden: null });
   const sig = cal.semanas[w + 1];
   sig.temas.unshift(codigo); if (sig.orden) sig.orden.unshift(codigo);
-  if (modo === 'desplazar') {
-    const k = cal.opciones.temasSemana;
-    for (let v = w + 1; v < cal.semanas.length; v++) {
-      const sv = cal.semanas[v];
-      while (sv.temas.length > k) {
-        const ult = sv.temas.pop(); if (sv.orden) sv.orden = sv.orden.filter((c) => c !== ult);
-        if (v + 1 >= cal.semanas.length) cal.semanas.push({ cante: masDias(sv.cante, 7), temas: [], bloque: '', orden: null });
-        const sn = cal.semanas[v + 1]; sn.temas.unshift(ult); if (sn.orden) sn.orden.unshift(ult);
+  return cal;
+}
+
+// ------------------------------------------------------------------ Recolocar y ampliar (ver CALENDARIO.md, apartado 7)
+/** Peso de trabajo de un tema: 1 (estudio) + 1 por cada 5 h de tiempo restante (tope +2); sin dato = 3 */
+const pesoTema = (pesos, c) => (pesos[c] == null ? 3 : 1 + Math.min(2, pesos[c] / 300));
+/** Semana en curso: la primera cuyo cante es hoy o después (-1 si el calendario ya terminó) */
+const semanaEnCurso = (cal, hoy) => cal.semanas.findIndex((s) => s.cante >= hoy);
+/** Afinidad media de un tema con los de una lista */
+const afMedia = (af, c, lista) => { const o = lista.filter((x) => x !== c && af.idx[x] != null); if (!o.length || af.idx[c] == null) return 0;
+  return o.reduce((t, x) => t + af.m[af.idx[c]][af.idx[x]], 0) / o.length; };
+
+/**
+ * Recoloca un tema de la semana w en la semana por venir donde mejor encaje (cualquiera posterior a la semana en curso,
+ * salvo la suya; puede ser anterior a la suya si aún no ha empezado). Puntuación de cada semana candidata:
+ *   afinidad media con sus temas − 0,15 por cada tema por encima de los previstos − 0,2 × exceso de carga de trabajo
+ *   (carga = suma de pesos de sus temas frente a la carga media prevista por semana) − 0,005 por semana de distancia.
+ * Dentro de la semana elegida, el tema se estudia justo después del tema con el que más relación tiene.
+ * Si no hay ninguna semana candidata, se añade una al final.
+ */
+function recolocar(cal, w, codigo, af, pesos = {}, hoy = '0000-00-00') {
+  const s = cal.semanas[w];
+  if (!s || !s.temas.includes(codigo)) return { ok: true, destino: null };
+  const k = cal.opciones.temasSemana;
+  s.temas = s.temas.filter((c) => c !== codigo); if (s.orden) s.orden = s.orden.filter((c) => c !== codigo);
+  const enCurso = semanaEnCurso(cal, hoy);
+  const todos = cal.semanas.flatMap((x) => x.temas);
+  const cargaMedia = k * (todos.reduce((t, c) => t + pesoTema(pesos, c), 0) / Math.max(1, todos.length));
+  let mejor = -1, mejorV = -Infinity;
+  for (let v = enCurso < 0 ? cal.semanas.length : enCurso + 1; v < cal.semanas.length; v++) { // calendario terminado: ninguna
+    if (v === w) continue;
+    const t = cal.semanas[v].temas;
+    const carga = t.reduce((x, c) => x + pesoTema(pesos, c), 0) + pesoTema(pesos, codigo);
+    const val = (af ? afMedia(af, codigo, t) : 0) - 0.15 * Math.max(0, t.length + 1 - k)
+      - 0.2 * Math.max(0, carga / cargaMedia - 1) - 0.005 * Math.abs(v - w);
+    if (val > mejorV) { mejorV = val; mejor = v; }
+  }
+  if (mejor < 0) { cal.semanas.push({ cante: masDias(cal.semanas[cal.semanas.length - 1].cante, 7), temas: [], bloque: '', orden: null }); mejor = cal.semanas.length - 1; }
+  const d = cal.semanas[mejor];
+  const orden = d.orden && d.orden.length === d.temas.length ? [...d.orden] : [...d.temas];
+  let tras = -1, tv = -1;
+  orden.forEach((c, i) => { const v = af && af.idx[c] != null && af.idx[codigo] != null ? af.m[af.idx[codigo]][af.idx[c]] : 0; if (v > tv) { tv = v; tras = i; } });
+  orden.splice(tras + 1, 0, codigo);
+  d.temas.push(codigo); d.orden = orden;
+  return { ok: true, destino: mejor };
+}
+
+/** Semanas por venir (después de la semana en curso) con más temas de los previstos */
+function sobrecargadas(cal, hoy) {
+  const k = cal.opciones.temasSemana, ini = semanaEnCurso(cal, hoy) + 1;
+  return cal.semanas.map((s, w) => ({ w, n: s.temas.length })).filter((x) => x.w >= Math.max(ini, 1) && x.n > k);
+}
+
+/**
+ * Ampliar el calendario cuando hay demasiadas semanas sobrecargadas.
+ *  modo 'parcial'  → de cada semana sobrecargada salen los temas que menos encajan en ella (hasta dejarla en lo previsto)
+ *                    y forman una o varias semanas nuevas al final, agrupados por afinidad y de tamaño equilibrado.
+ *  modo 'completo' → todas las semanas por venir se rehacen en modo temático con los temas que quedan
+ *                    (las que hagan falta), encadenadas a partir de la semana en curso. La semana en curso y las pasadas no se tocan.
+ * Las semanas nuevas siguen el ritmo semanal desde el último cante que se conserva.
+ */
+function ampliar(cal, modo, af, titulos, tax, hoy, semilla = 1) {
+  const k = cal.opciones.temasSemana;
+  const enCurso = semanaEnCurso(cal, hoy);
+  const fijas = enCurso < 0 ? cal.semanas.length : enCurso + 1; // semanas que no se tocan (pasadas y en curso)
+  if (fijas >= cal.semanas.length) return { ok: false, motivo: 'No quedan semanas por venir que reorganizar.' };
+  const nueva = (cante, temas) => ({ cante, temas, bloque: bloque(temas, tax), orden: null });
+  if (modo === 'parcial') {
+    const sobran = [];
+    for (let v = fijas; v < cal.semanas.length; v++) {
+      const s = cal.semanas[v];
+      while (s.temas.length > k) {
+        const peor = s.temas.reduce((a, c) => (afMedia(af, c, s.temas) < afMedia(af, a, s.temas) ? c : a));
+        s.temas = s.temas.filter((c) => c !== peor); if (s.orden) s.orden = s.orden.filter((c) => c !== peor);
+        sobran.push(peor);
       }
     }
+    if (!sobran.length) return { ok: false, motivo: 'No hay semanas con más temas de los previstos.' };
+    // semanas nuevas equilibradas: con 6 temas que sobran y 5 por semana, dos semanas de 3 (no una de 5 y otra de 1)
+    const kk = Math.ceil(sobran.length / Math.ceil(sobran.length / k));
+    const grupos = sobran.length <= k ? [sobran] : tematico(sobran, kk, cal.opciones.intercalar !== false, semilla, af, titulos, null, 20000).semanas;
+    let cante = cal.semanas[cal.semanas.length - 1].cante;
+    for (const g of grupos) { cante = masDias(cante, 7); cal.semanas.push(nueva(cante, [...g])); }
+    return { ok: true, nuevas: grupos.length };
   }
-  return cal;
+  // completo
+  const resto = cal.semanas.slice(fijas).flatMap((s) => s.temas);
+  const previa = fijas > 0 ? cal.semanas[fijas - 1].temas : null;
+  const hechas = tematico(resto, k, cal.opciones.intercalar !== false, semilla, af, titulos,
+    previa ? { tipo: 'tras', previa } : { tipo: 'basico' }, 80000).semanas;
+  let cante = fijas > 0 ? cal.semanas[fijas - 1].cante : masDias(cal.semanas[0].cante, -7);
+  const antes = cal.semanas.length - fijas;
+  cal.semanas = cal.semanas.slice(0, fijas);
+  for (const g of hechas) { cante = masDias(cante, 7); cal.semanas.push(nueva(cante, g)); }
+  return { ok: true, nuevas: hechas.length - antes };
 }
 
 /** Cambia el día de cante de la semana w (debe quedar después del cante anterior y antes del siguiente) */
@@ -340,9 +425,10 @@ function moverCante(cal, w, nuevo) {
 /**
  * Librar un día de estudio. accion:
  *  'repartir'  → sus temas se reparten entre los demás días de la misma semana (el reparto se recalcula solo);
- *  'absorber' / 'desplazar' → los temas que se estudiaban sobre todo ese día pasan a la semana siguiente (ver pasarSiguiente).
+ *  'absorber'  → los temas que se estudiaban sobre todo ese día pasan a la semana siguiente (ver pasarSiguiente);
+ *  'recolocar' → esos temas van a la semana posterior donde mejor encajen (ver recolocar).
  */
-function librar(cal, dia, accion, pesos = {}) {
+function librar(cal, dia, accion, pesos = {}, af = null, hoy = '0000-00-00') {
   const w = semanaDe(cal, dia);
   if (w < 0) return { ok: false, motivo: 'Ese día está fuera del calendario.' };
   let mover = [];
@@ -351,8 +437,10 @@ function librar(cal, dia, accion, pesos = {}) {
     mover = rep.filter((x) => x.fraccion >= 0.5).map((x) => x.codigo);
   }
   cal.librados = cal.librados || {}; cal.librados[dia] = true; // «librado» manda sobre «estudio»: al deshacerlo se recupera lo anterior
-  for (const c of mover.reverse()) pasarSiguiente(cal, w, c, accion);
-  return { ok: true, movidos: mover.reverse() };
+  const destinos = {};
+  if (accion === 'recolocar') for (const c of mover) destinos[c] = recolocar(cal, w, c, af, pesos, hoy).destino;
+  else for (const c of [...mover].reverse()) pasarSiguiente(cal, w, c);
+  return { ok: true, movidos: mover, destinos };
 }
 
 /** Deshace un día librado, o hace que un día libre habitual sea de estudio */
@@ -378,4 +466,4 @@ function semanaDe(cal, dia) {
   return cal.semanas.findIndex((s) => dia <= s.cante);
 }
 
-module.exports = { inicioSemana, ordenarSeries, cuotas, correlativo, aleatorio, tematico, bloque, valorar, crear, diasEstudio, repartir, pasarSiguiente, moverCante, semanaDe, librar, estudiar, reordenar, masDias, diaSemana };
+module.exports = { recolocar, sobrecargadas, ampliar, semanaEnCurso, inicioSemana, ordenarSeries, cuotas, correlativo, aleatorio, tematico, bloque, valorar, crear, diasEstudio, repartir, pasarSiguiente, moverCante, semanaDe, librar, estudiar, reordenar, masDias, diaSemana };
