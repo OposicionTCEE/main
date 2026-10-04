@@ -34,7 +34,7 @@ Tiempo restante (`progreso.js`): reglas en `main/PROGRESO.md` (mantener código 
 que no figuran allí: no cuentan Introducción, Conclusión ni Preguntas Test. Datos en el repositorio PRIVADO `progreso`; no copiarlos a `main` ni a `temario`.
 Nueva nota (`inferencia.js`): añade `\textbf{NOTA (dd/mm/aaaa[, desde X.Y.N]):} texto` como párrafo final de `\modificaciones{…}` del tema destino
 (buscado tras `\begin{document}`: en el preámbulo está la definición de la macro).
-Panel Oposición (`panelOposicion.js` + `media/panel.js/.css`, pestaña webview): pestañas Calendario, Temas (tabla de todos los temas),
+Panel Oposición (`panelOposicion.js` + `media/panel.js/.css`, pestaña webview): pestañas Calendario, Temas (`media/temas.js`: cartas por bloque de `config/bloques.json`, filtro de ejercicio y partes),
 Relaciones y Cante; se abre en una ventana aparte (`workbench.action.moveEditorToNewWindow`).
 Para ahorrar batería guarda por tema el texto y los pendientes y solo los recalcula si cambia el fichero, el documento abierto o `.build/estado`;
 `Progreso.todos()` se guarda 5 s. La transcripción del cante nunca se lanza sola (botón *Transcribir*). El plan semanal se eliminó (v0.11).

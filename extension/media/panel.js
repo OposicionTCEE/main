@@ -1,4 +1,4 @@
-// Panel Oposición (lado de la página). Recibe los datos de la extensión y pinta cuatro pestañas (calendario.js, relaciones.js y cante.js aparte).
+// Panel Oposición (lado de la página). Recibe los datos de la extensión y pinta cuatro pestañas (calendario.js, temas.js, relaciones.js y cante.js aparte).
 (function () {
   'use strict';
   const vscode = acquireVsCodeApi();
@@ -52,35 +52,8 @@
     ({ calendario: pCalendario, temas: pTemas, relaciones: pRelaciones, cante: pCante })[estado.pestana in { calendario: 1, temas: 1, relaciones: 1, cante: 1 } ? estado.pestana : 'calendario'](cuerpo);
   }
 
-  // ------------------------------------------------------------------ Temas
-  function pTemas(el) {
-    const cols = [['codigo', 'Código'], ['titulo', 'Tema'], ['minutos', 'Tiempo restante'], ['pct', '%'], ['hecho', 'Hecho']];
-    const f = estado.filtro.toLowerCase();
-    const filas = D.temas.filter((t) => !f || `${t.codigo} ${t.titulo} ${t.completo}`.toLowerCase().includes(f))
-      .sort((a, b) => {
-        const k = estado.orden;
-        const r = k === 'codigo' ? porCodigo(a.codigo, b.codigo) : k === 'titulo' ? a.titulo.localeCompare(b.titulo, 'es') : (a[k] - b[k]) || porCodigo(a.codigo, b.codigo);
-        return estado.asc ? r : -r;
-      });
-    el.innerHTML = `
-      <div class="barra"><input id="filtro" type="search" placeholder="Buscar por código o palabras del título…" value="${esc(estado.filtro)}"></div>
-      <table class="temas"><thead><tr>${cols.map(([k, t]) => `<th data-orden="${k}" class="${estado.orden === k ? (estado.asc ? 'asc' : 'desc') : ''}">${t}</th>`).join('')}</tr></thead>
-      <tbody>${filas.map((t) => `
-        <tr class="${t.hecho ? 'hecho' : ''}">
-          <td class="cod"><a data-abrir="${t.codigo}">${t.codigo}</a></td>
-          <td><a data-abrir="${t.codigo}" title="${esc(t.completo)}">${esc(t.titulo)}</a></td>
-          <td class="num">${t.hecho ? '—' : esc(t.tiempo)}</td>
-          <td class="num"><span class="pct"><span style="width:${t.pct}%"></span></span>${t.pct} %</td>
-          <td class="centro"><input type="checkbox" data-hecho="${t.codigo}" ${t.hecho ? 'checked' : ''} title="Listo para pasar a estudiar sobre esquema"></td>
-        </tr>`).join('')}</tbody></table>`;
-    const inp = el.querySelector('#filtro');
-    inp.oninput = () => { estado.filtro = inp.value; guardar(); pTemas(el); const i = el.querySelector('#filtro'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); };
-    el.querySelectorAll('[data-orden]').forEach((th) => th.onclick = () => {
-      const k = th.dataset.orden; estado.asc = estado.orden === k ? !estado.asc : true; estado.orden = k; guardar(); pTemas(el);
-    });
-    enlaces(el);
-    el.querySelectorAll('[data-hecho]').forEach((c) => c.onchange = () => enviar({ tipo: 'hecho', codigo: c.dataset.hecho, valor: c.checked }));
-  }
+  // ------------------------------------------------------------------ Temas (media/temas.js)
+  function pTemas(el) { window.TCEE_TEMAS.pintar(el, D, { estado, guardar, enviar }); }
 
   function enlaces(el) {
     el.querySelectorAll('[data-abrir]').forEach((a) => a.addEventListener('click', (ev) => {

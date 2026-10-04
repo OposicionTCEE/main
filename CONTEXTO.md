@@ -45,7 +45,7 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
     - librar días y mover el cante;
     - recolocar un tema, traer un tema, ampliar o reorganizar el calendario;
     - eliminar calendarios.
-  - **Temas**: tabla de todos los temas con tiempo restante y casilla de hecho.
+  - **Temas**: una carta por tema dentro de su bloque temático; se elige ejercicio (3º/4º) y partes (A, B o ambas). En el 4º, sin bloques aún, se agrupa por parte.
   - **Relaciones** (reglas en `RELACIONES.md`): mapa de temas unidos por modelos (resalta el tema abierto y sus asociados) y panel con
     los modelos que comparte el tema abierto, fichas resumidas de los otros temas para comparar (ecuaciones con KaTeX) y,
     sin tema abierto, la lista de modelos que conviene armonizar.
@@ -55,7 +55,7 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
 - **Análisis**: `analisis/Modelos_temario_TCEE.xlsx`, `analisis/Desarrollos_modelos_TCEE.xlsx`, `analisis/desarrollos.json`
   y `analisis/armonizacion.json` (34 informes de armonización escritos por Claude; se actualizan con `scripts/armonizacion.js`).
 - **Bloques del temario** (`config/bloques.json`): 14 bloques del 3er ejercicio en tres grupos (Microeconomía, Macroeconomía, Mixto), tomados de la app
-  «Oposición TCEE» con tres ajustes aprobados por el usuario (3.B.32, 3.A.32 y 3.B.29; ver `ajustes` en el fichero). Pendiente: usarlos en la pestaña Temas y en un widget nuevo.
+  «Oposición TCEE» con tres ajustes aprobados por el usuario (3.B.32, 3.A.32 y 3.B.29; ver `ajustes` en el fichero). Ya los usa la pestaña Temas; pendiente: un widget nuevo.
   Aviso al usuario sin resolver: el título de 3.B.34 dice «La OMC (I)» y debería ser «(II)».
 - **Programa del 3er ejercicio**: `config/programa_3.json`. Cada tema tiene título, resumen, etiqueta breve y ámbitos.
 
