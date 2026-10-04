@@ -18,6 +18,13 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
   const desarrollos = () => {
     try { return JSON.parse(fs.readFileSync(path.join(raiz(), 'main', 'analisis', 'desarrollos.json'), 'utf8')); } catch (e) { return { por_tema: {}, por_familia: {} }; }
   };
+  // bloques temáticos (config/bloques.json), releídos si cambia el fichero
+  let bloques = null, bloquesMtime = 0;
+  const leerBloques = () => {
+    const f = path.join(raiz(), 'main', 'config', 'bloques.json');
+    try { const m = fs.statSync(f).mtimeMs; if (!bloques || m !== bloquesMtime) { bloques = JSON.parse(fs.readFileSync(f, 'utf8')); bloquesMtime = m; } } catch (e) { bloques = { ejercicios: {} }; }
+    return bloques;
+  };
   const calendarios = crearCalendarios({ ctx: context, progreso, raiz, desarrollos });
   const relaciones = crearRelaciones({ raiz, desarrollos });
   // Cante: grabación y transcripción (main/CANTE.md). alCambiar(ligero): solo el estado en vivo (nivel, % transcrito) o todo el panel
@@ -101,6 +108,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
       total: { tiempo: G.formatoTiempo(lista.reduce((s, t) => s + t.minutos, 0)), hechos: hechos.size, n: lista.length },
       relaciones: { ...relaciones.vista(cache, abierto, dev), nombres },
       calendario: cal,
+      bloques: leerBloques(),
       cante: { ...cante.estado(), lista: cante.lista(), abierto, semana: ((cal.cal && cal.cal.semanas) || []).filter((s) => s.estado === 'en curso').flatMap((s) => s.orden),
         objetivo: context.globalState.get('tcee.canteObjetivo', 30), micro: context.globalState.get('tcee.canteMicro', '') },
       mapa: mapa(lista, dev),
@@ -209,6 +217,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
 <body><div id="app"><p class="vacio">Calculando los temas…</p></div>
 <script nonce="${nonce}" src="${url('katex/katex.min.js')}"></script>
 <script nonce="${nonce}" src="${url('calendario.js')}"></script>
+<script nonce="${nonce}" src="${url('temas.js')}"></script>
 <script nonce="${nonce}" src="${url('relaciones.js')}"></script>
 <script nonce="${nonce}" src="${url('cante.js')}"></script>
 <script nonce="${nonce}" src="${url('panel.js')}"></script></body></html>`;

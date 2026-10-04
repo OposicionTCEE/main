@@ -190,7 +190,8 @@ El panel propio de la oposición: icono **TCEE** en la **barra lateral derecha**
   (vista mensual; pulsa un día para librarlo, estudiar en tu día libre o mover el cante; a la derecha, los temas de la semana con su
   orden de estudio, el botón para mover un tema a otra semana y *Traer un tema a esta semana*; *Nuevo calendario* crea otro
   en modo temático, correlativo o aleatorio, y eliges por qué tema empezar; *Eliminar calendario* borra el que estás viendo). Reglas en [CALENDARIO.md](CALENDARIO.md). Además:
-  *Temas* (todos, con tiempo restante, % y casilla de hecho; ordena pulsando en las columnas) y
+  *Temas*: eliges 3º o 4º ejercicio y Parte A, B o las dos; cada tema es una carta (tiempo restante, %, casilla de hecho;
+  pulsa la carta para abrir el tema) dentro de su bloque temático (`config/bloques.json`; en el 4º, por partes). Los bloques se pliegan pulsando su cabecera. Y
   *Relaciones*: a la izquierda, el mapa de temas unidos por los modelos que comparten (el tema abierto y sus asociados, resaltados;
   pulsa un nodo para abrir el tema). A la derecha, con un tema abierto, elige uno de sus modelos compartidos y verás un resumen de
   cómo lo desarrolla cada otro tema (contexto, supuestos, ecuaciones, desarrollo, implicaciones) y los posibles errores del tuyo con
