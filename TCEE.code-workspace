@@ -95,6 +95,14 @@
         "problemMatcher": []
       },
       {
+        "label": "Archivar los repositorios antiguos de temas",
+        "type": "shell",
+        "command": "bash main/scripts/archivar_repos_antiguos.sh",
+        "options": { "cwd": "${workspaceFolder}" },
+        "presentation": { "reveal": "always", "panel": "dedicated", "clear": true, "focus": true },
+        "problemMatcher": []
+      },
+      {
         "label": "Descargar el temario (si falta)",
         "type": "shell",
         "command": "bash main/scripts/descargar_temario.sh",

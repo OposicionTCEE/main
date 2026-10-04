@@ -89,6 +89,8 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
    - 3.A.35: MGS_CI.png
    - 3.B.6: IndicePrecios_DIXIT_STIGLITZ.png
    - 3.B.26: Fig6.png
-7. **Archivar los repositorios antiguos `Tema-*`** de GitHub. Hay que pedir confirmación al usuario antes.
+7. **Archivar los repositorios antiguos `Tema-*`**: el usuario lo pidió el 04/10/2026. Esta sesión no puede cambiar ajustes de repositorios,
+   así que se hace en su Mac con la tarea *Archivar los repositorios antiguos de temas* (`scripts/archivar_repos_antiguos.sh`, con `gh`).
+   Solo archiva los 110 incorporados a `temario` con su historial y sin cambios posteriores. Comprobar con el usuario que terminó bien.
 8. Revisar con el usuario las semanas más débiles de la propuesta de la 2ª vuelta (`progreso/calendarios/propuesta-2a-vuelta-3.json`), por ejemplo las semanas 5 y 18.
 9. La carpeta `~/TCEE/_antiguos` del Mac se puede borrar cuando el usuario quiera.
