@@ -29,14 +29,13 @@ La carpeta raíz (`TCEE/`) contiene:
 ## Panel TCEE (extensión propia de VS Code)
 Código en `main/extension/` (JavaScript sin compilación: `extension.js` + `parser.js`). Tras cualquier cambio, volver a empaquetar
 con `npx @vscode/vsce package --skip-license -o tcee-panel.vsix` dentro de `main/extension/` y subir el `.vsix`;
-el usuario lo instala con la tarea *Instalar o actualizar el panel TCEE*. Probar `parser.js` contra los 110 temas antes de publicar.
+el usuario lo instala con la tarea *Instalar o actualizar el panel TCEE*. Probar `parser.js` contra todos los temas (145 carpetas en octubre de 2026) antes de publicar.
 Tiempo restante (`progreso.js`): reglas en `main/PROGRESO.md` (mantener código y documento a la vez). Ajustes propios de este temario
 que no figuran allí: no cuentan Introducción, Conclusión ni Preguntas Test. Datos en el repositorio PRIVADO `progreso`; no copiarlos a `main` ni a `temario`.
 Nueva nota (`inferencia.js`): añade `\textbf{NOTA (dd/mm/aaaa[, desde X.Y.N]):} texto` como párrafo final de `\modificaciones{…}` del tema destino
 (buscado tras `\begin{document}`: en el preámbulo está la definición de la macro).
-Panel Oposición (`panelOposicion.js` + `media/panel.js/.css`, pestaña webview): tabla de los 110 temas, plan semanal (`plan.js`: reparto automático
-de menos a más avanzado según horas/semana, retoques fijando temas a semanas; `progreso/plan.json`), relaciones del tema abierto y mapa global
-(ambos de `analisis/desarrollos.json`). El progreso guarda además minutos por día (`dias`) en el fichero de cada Mac.
+Panel Oposición (`panelOposicion.js` + `media/panel.js/.css`, pestaña webview): pestañas Calendario, Temas (tabla de todos los temas)
+y Relaciones. El plan semanal se eliminó (v0.11). El progreso guarda además minutos por día (`dias`) en el fichero de cada Mac.
 Calendario de vueltas (pestaña Calendario): reglas y razonamiento en `main/CALENDARIO.md` (mantener código y documento a la vez).
 `calendario.js` (generar semanas temático/correlativo/aleatorio, reparto diario, librar días, mover cante), `afinidad.js` (relaciones entre temas),
 `calendarioPanel.js` (guardar y aplicar cambios) y `media/calendario.js` (vista mensual). Programa del ejercicio en `config/programa_3.json`.
@@ -49,6 +48,10 @@ Historia del proyecto, decisiones tomadas y tareas pendientes: `main/CONTEXTO.md
 (`por_tema`) y en qué temas se desarrolla cada familia de modelos (`por_familia`).
 Úsalo cuando el usuario pregunte por relaciones, duplicidades o cómo homogeneizar la presentación de un modelo.
 El Excel equivalente con más detalle está en `main/analisis/Desarrollos_modelos_TCEE.xlsx`.
+`main/analisis/armonizacion.json`: informes de armonización de los modelos compartidos (enfoque, divergencias, posibles errores
+verificados, propuesta y resumen por tema), con la huella de cada desarrollo para detectar cambios. Los muestra la pestaña Relaciones
+(`desarrollos.js`, `relacionesPanel.js`, `media/relaciones.js`, KaTeX en `media/katex/`). Método, encargos y cómo actualizarlos
+(`scripts/armonizacion.js estado | preparar | unir`): `main/RELACIONES.md`. Los posibles errores NO se corrigen en los temas sin enseñárselos antes al usuario.
 
 ## Estilo de interacción (preferencias del usuario)
 1. No abrir nunca dando la razón; la primera frase cuestiona una asunción, señala un riesgo u omisión, o hace una pregunta que revele una falla.

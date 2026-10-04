@@ -58,18 +58,6 @@ class Progreso {
     lista.forEach((x) => Object.entries(x.dias || {}).forEach(([f, m]) => { r[f] = (r[f] || 0) + m; }));
     return r;
   }
-  /** Plan semanal (compartido entre Macs): {horasSemana, fijados: {código: lunes}, historial: {lunes: [códigos]}} */
-  leerPlan() {
-    const def = { horasSemana: 15, fijados: {}, historial: {} };
-    const enDisco = this.dir ? this.leer(path.join(this.dir, 'plan.json')) : null;
-    return { ...def, ...(enDisco || this.ctx.globalState.get('tcee.plan', {})) };
-  }
-  guardarPlan(plan) {
-    this.ctx.globalState.update('tcee.plan', plan);
-    if (this.hayCarpeta()) {
-      try { fs.writeFileSync(path.join(this.dir, 'plan.json'), JSON.stringify(plan, null, 1) + '\n'); } catch (e) { /* reintenta */ }
-    }
-  }
   guardar(silencio) {
     this.ctx.globalState.update('tcee.progreso', this.mio);
     if (!this.hayCarpeta()) return;
@@ -354,7 +342,7 @@ function activate(context) {
   );
   vscode.commands.executeCommand('setContext', 'tcee.fijado', false);
   // ---- Nueva nota: texto → tema de destino (sugerido por inferencia) → ¿viene del tema abierto?
-  let indiceNotas = null;           // índice de búsqueda de los 110 temas (se rehace si cambia algún tema)
+  let indiceNotas = null;           // índice de búsqueda de todos los temas (se rehace si cambia algún tema)
   const construirIndiceNotas = async () => {
     if (indiceNotas) return indiceNotas;
     const uris = await vscode.workspace.findFiles('temario/Ejercicio-*/Parte-*/*/main.tex');
