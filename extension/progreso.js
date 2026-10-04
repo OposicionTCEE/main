@@ -7,11 +7,11 @@ const PESOS = { vacio: 1, nota: 0.5, ojo: 0.3, sinPdf: 1, ocr: 0.02, ocrMax: 2 }
 // Ritmo inicial supuesto (minutos por unidad) y cuántas unidades "pesa" esa suposición frente a tus datos reales
 const RITMO_INICIAL = 30, PESO_INICIAL = 10;
 // Introducción y Conclusión no cuentan como trabajo pendiente
-const NO_CUENTAN = /^(Introducci|Conclusi)/i;
-// Temas "esqueleto" (casi sin desarrollar): un tema desarrollado tiene ~24 epígrafes finales en el cuerpo (mediana del temario)
-// y ninguno tiene menos de ~2.300 palabras en el cuerpo. Por debajo de 2.000 palabras se añaden los epígrafes que faltan,
-// en proporción a lo que falta por escribir. Así un tema vacío, sin epígrafes, no aparece como casi terminado.
-const EPIGRAFES_TIPICOS = 24, PALABRAS_ESQUELETO = 2000;
+const NO_CUENTAN = /^(Introducci|Conclusi|Preguntas\s+Test)/i;
+// Temas poco desarrollados: un tema tiene ~24 epígrafes finales en el cuerpo (mediana del temario). Si el cuerpo tiene menos
+// de PALABRAS_MINIMAS, lo que falta hasta ese mínimo se expresa en epígrafes (24 × fracción que falta) y se cuenta como pendiente,
+// descontando los epígrafes vacíos que ya se cuentan. Así un tema vacío o muy escueto no aparece como casi terminado.
+const EPIGRAFES_TIPICOS = 24, PALABRAS_MINIMAS = 5000;
 
 /** Posición [inicio, fin) del contenido de \macro{…} (llaves equilibradas), o null */
 function bloque(texto, macro) {
@@ -76,8 +76,7 @@ function pendientes(texto, estadoPdf) {
     const bm = bloque(t, 'modificaciones'); if (bm) t = t.slice(0, bm[0]) + t.slice(bm[2] + 1);
     palabras += (t.replace(/\\[a-zA-Z]+\*?/g, ' ').match(/[A-Za-zÁÉÍÓÚáéíóúñÑüÜ]{3,}/g) || []).length;
   });
-  const faltan = Math.round(Math.max(0, EPIGRAFES_TIPICOS - vacios - llenos)
-    * Math.max(0, 1 - palabras / PALABRAS_ESQUELETO) * 10) / 10;
+  const faltan = Math.round(Math.max(0, EPIGRAFES_TIPICOS * Math.max(0, 1 - palabras / PALABRAS_MINIMAS) - vacios) * 10) / 10;
 
   const ojo = (resto.match(/\bOJO\b/g) || []).length;
   const ocr = contarOcr(resto);
