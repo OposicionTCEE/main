@@ -15,6 +15,10 @@ En la cabecera de la ventana *Acciones*, para el tema que se muestra en el índi
 > **Tiempo restante: 3 h 20 min (62 %)**   ✓
 
 - El botón **✓ Hecho** marca el tema como hecho: pasa a **0 min (100 %)**, diga lo que diga el texto. Si se desmarca, vuelve al cálculo.
+  **Excepción: los errores de test.** Un error en una pregunta del tema es grave y cuenta aunque el tema esté hecho:
+  el tiempo restante pasa a ser solo el de esas preguntas, y el % = epígrafes con contenido / (epígrafes con contenido + unidades de test).
+  Dejan de contar cuando se acierta la pregunta (p. ej. en *Repaso de falladas* de la pestaña Test).
+- Si hay errores de test, la cabecera lo indica: *Tiempo restante: 1 h (80 %) · ✗ 2 errores de test*. También se ven en la carta del tema (pestaña Temas).
 - No se tiene en cuenta la fecha del examen.
 - No se muestran los indicadores por separado. El detalle está en «…» › *Ver de dónde sale el tiempo restante*.
 
@@ -29,6 +33,8 @@ Cada pendiente vale unas **unidades de trabajo**:
 | OJO | Cada «OJO» en el texto del tema, fuera de `\modificaciones` | 0,3 cada uno |
 | Sin PDF | La última compilación en ese Mac no generó PDF. Si el tema no se ha compilado nunca allí, no penaliza | 1 |
 | Errores OCR o Markdown pegado | `#` sin escapar (salvo en direcciones web y parámetros `#1`), `**`, `�`, caracteres de control o invisibles, etiquetas `[Seguro]`, `[Probable]` y `[Suposición]` | 0,02 cada uno, con un máximo de 2 por tema |
+| Pregunta de test **fallada** | Pregunta del banco (`TCEE/test`) de este tema cuya **última** respuesta, en cualquier Mac, fue un error | 1 cada una |
+| Pregunta de test **en blanco** | Ídem, cuya última respuesta quedó en blanco | 0,5 cada una |
 
 La longitud del tema **no** es un indicador de avance. Solo se usa para detectar temas poco desarrollados (regla 2).
 

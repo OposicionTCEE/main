@@ -11,7 +11,7 @@
   const barajar = (l) => { const a = [...l]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const MODOS = [['tema', 'Por tema o bloque'], ['simulacro', 'Simulacro de examen'], ['falladas', 'Repaso de falladas'], ['aleatorio', 'Aleatorio']];
 
-  let B = null, H = [], imgBase = '', hayProgreso = true, pedido = false;
+  let B = null, H = [], C = {}, imgBase = '', hayProgreso = true, pedido = false;
   let el = null, D = null, ctx = null, tic = null, confirmar = false, abiertas = {};
   const st = () => ctx.estado;
 
@@ -30,6 +30,20 @@
 
   /** Texto sin marcas de fórmula, para los resúmenes de una línea */
   const plano = (s) => (s || '').replace(/\\[()[\]]/g, '').replace(/\\(frac|cdot|text|mathrm)\b/g, ' ').replace(/\\([a-zA-Z]+)/g, '$1').replace(/[{}^_$]/g, '').replace(/\s+/g, ' ');
+
+  /** ¿Está la pregunta en su tema? (informe de Claude en main/analisis/cobertura.json; ver TEST.md) */
+  const COB = { cubierta: ['✓', 'Cubierta en el tema'], desapercibida: ['◐', 'Está en el tema, pero pasa desapercibida'], falta: ['✗', 'Falta en el tema'], contradice: ['⚠', 'El tema la contradice: posible error'] };
+  function cobertura(q) {
+    const c = C[q.id];
+    if (!c) return '';
+    const [ico, txt] = COB[c.estado] || ['?', c.estado];
+    return `<div class="ts-cob ${esc(c.estado)}"><strong>${ico} ${esc(txt)}</strong>${c.epigrafe ? ` · ${esc(c.epigrafe)}` : ''}
+      ${c.linea ? ` · <a data-linea="${esc(q.tema)}|${c.linea}">ir a la línea ${c.linea}</a>` : ''}
+      ${c.explicacion ? `<p>${tx(c.explicacion)}</p>` : ''}${c.propuesta ? `<p class="apagado">Propuesta: ${tx(c.propuesta)}</p>` : ''}</div>`;
+  }
+  const conectarLineas = () => el.querySelectorAll('[data-linea]').forEach((a) => a.onclick = () => {
+    const [codigo, linea] = a.dataset.linea.split('|'); ctx.enviar({ tipo: 'abrirLinea', codigo, linea: Number(linea) - 1 });
+  });
 
   // ------------------------------------------------------------ datos derivados
   const porId = () => (B._porId || (B._porId = Object.fromEntries(B.preguntas.map((q) => [q.id, q]))));
@@ -245,7 +259,7 @@
             return `<button class="ts-op ${cls}" data-op-id="${esc(o.id)}" ${visto ? 'disabled' : ''}><span class="ts-letra">${esc(o.id)}</span><span>${tx(o.text)}</span></button>`;
           }).join('')}</div>
           ${visto ? `<p class="ts-veredicto ${acierta(q, r) ? 'ok' : r.length ? 'ko' : ''}">${acierta(q, r) ? '✓ Correcta' : r.length ? `✗ Incorrecta: la respuesta es ${q.correctas.join(', ')}` : `En blanco: la respuesta es ${q.correctas.join(', ')}`}</p>
-            ${q.justificacion ? `<div class="ts-just">${tx(q.justificacion)}</div>` : ''}` : ''}
+            ${q.justificacion ? `<div class="ts-just">${tx(q.justificacion)}</div>` : ''}${cobertura(q)}` : ''}
           <div class="ts-nav">
             <button data-t="ant" ${run.i ? '' : 'disabled'}>← Anterior</button>
             ${visto ? '' : `<button data-t="blanco" ${r.length ? '' : 'disabled'}>Borrar respuesta</button>`}
@@ -268,6 +282,7 @@
     const on = (k, f) => { const x = el.querySelector(`[data-t=${k}]`); if (x) x.onclick = f; };
     on('ant', () => mover(-1)); on('sig', () => mover(1)); on('blanco', () => { delete run.resp[q.id]; guardarRun(); });
     on('comprobar', () => { run.comprobadas[q.id] = true; guardarRun(); });
+    conectarLineas();
     on('terminar', () => { confirmar = true; pintarExamen(run); }); on('fin-no', () => { confirmar = false; pintarExamen(run); }); on('fin-si', terminar);
   }
   const runActual = () => ctx && st().testRun && !st().testRun.fin ? st().testRun : null;
@@ -332,7 +347,7 @@
             ${abierta ? `<div class="ts-rev-det"><div class="ts-enun">${tx(q.enunciado)}</div>
               ${q.imagen && !q.imagen_falta ? `<img class="ts-img" src="${esc(`${imgBase}/${q.imagen}`)}" alt="">` : ''}
               <div class="ts-ops">${q.opciones.map((o) => `<div class="ts-op ${q.correctas.includes(o.id) ? 'correcta' : r.includes(o.id) ? 'erronea' : 'apagada'}"><span class="ts-letra">${esc(o.id)}</span><span>${tx(o.text)}${r.includes(o.id) ? ' <em class="apagado">(tu respuesta)</em>' : ''}</span></div>`).join('')}</div>
-              ${q.justificacion ? `<div class="ts-just">${tx(q.justificacion)}</div>` : ''}
+              ${q.justificacion ? `<div class="ts-just">${tx(q.justificacion)}</div>` : ''}${cobertura(q)}
               <p class="apagado">${esc(q.examen || '')}${q.numero ? ` · pregunta ${q.numero}` : ''} · <a data-abrir="${esc(q.tema)}">abrir el tema ${esc(q.tema)}</a></p></div>` : ''}</div>`;
         }).join('') || '<p class="apagado">Ninguna.</p>'}</div></section></div>`;
     el.querySelector('[data-t=nueva]').onclick = () => { st().testRun = null; ctx.guardar(); pintar(el, D, ctx); };
@@ -346,6 +361,7 @@
     el.querySelectorAll('[data-filtro]').forEach((b) => b.onclick = () => { st().testFiltroRes = b.dataset.filtro; ctx.guardar(); pintarResultado(run); });
     el.querySelectorAll('[data-rev]').forEach((b) => b.onclick = () => { const k = `r${b.dataset.rev}`; abiertas[k] = !abiertas[k]; pintarResultado(run); });
     el.querySelectorAll('[data-abrir]').forEach((a) => a.onclick = () => ctx.enviar({ tipo: 'abrir', codigo: a.dataset.abrir }));
+    conectarLineas();
   }
 
   // atajos de teclado durante una prueba
@@ -369,7 +385,7 @@
   window.TCEE_TEST = {
     pintar,
     recibir(m) {
-      if (m.tipo === 'testDatos') { B = m.banco || { vacio: true }; H = m.historial || []; imgBase = m.imgBase || ''; hayProgreso = m.hayProgreso !== false; }
+      if (m.tipo === 'testDatos') { B = m.banco || { vacio: true }; H = m.historial || []; C = m.cobertura || {}; imgBase = m.imgBase || ''; hayProgreso = m.hayProgreso !== false; }
       if (m.tipo === 'testHistorial') H = m.historial || [];
       if (el && el.isConnected && ctx && st().pestana === 'test') pintar(el, D, ctx);
     },
