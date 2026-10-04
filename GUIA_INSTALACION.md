@@ -160,3 +160,21 @@ Claude necesita internet; editar y compilar, no.
 | La sincronización dice *No se pudo sincronizar* | Inicia sesión en GitHub (paso 6) y vuelve a sincronizar. |
 | Un tema no genera PDF | Mira [ESTADO_COMPILACION.md](ESTADO_COMPILACION.md) o pídele a Claude que lo revise. |
 | No veo los atajos (`eqb`…) | Ejecuta la tarea **Descargar el temario (si falta)** (los reinstala) y reabre VS Code. |
+
+## Paso 10 · Panel TCEE
+
+El panel propio de la oposición: icono **TCEE** en la barra izquierda, con dos ventanas.
+
+**Instalarlo o actualizarlo** (una vez, y cada vez que Claude te diga que hay versión nueva):
+1. **Terminal › Ejecutar tarea… › Instalar o actualizar el panel TCEE**.
+2. Cuando ponga *Listo*: `⌘ + ⇧ + P` › **Recargar ventana** (*Developer: Reload Window*).
+
+**Qué hace**
+- **Arriba, Acciones**: *Compilar tema* (el que se ve en el índice) y *Sincronizar con GitHub*.
+- **Abajo, Índice**: el título de la ventana es el título del tema; debajo, en pequeño, el subtítulo.
+  Numeración desde Introducción = 1 hasta la Conclusión, y después los anexos (A1, A2…).
+  Pulsa un epígrafe para saltar a él. Los epígrafes sin contenido llevan ○ y la palabra *vacío*.
+- **Qué índice se muestra**: el del tema donde está el cursor. Si pasas al PDF o a otra pestaña, se queda el último tema.
+  Con el botón 📌 (arriba a la derecha del índice) lo fijas a ese tema aunque escribas en otro; vuelve a pulsarlo para soltarlo.
+
+Las pestañas de los temas se llaman por su código (**3.A.19**) en lugar de *main.tex*.
