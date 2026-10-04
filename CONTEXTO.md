@@ -54,6 +54,9 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
   - El **plan semanal** se eliminó en la v0.11 a petición del usuario (el calendario lo sustituye).
 - **Análisis**: `analisis/Modelos_temario_TCEE.xlsx`, `analisis/Desarrollos_modelos_TCEE.xlsx`, `analisis/desarrollos.json`
   y `analisis/armonizacion.json` (34 informes de armonización escritos por Claude; se actualizan con `scripts/armonizacion.js`).
+- **Bloques del temario** (`config/bloques.json`): 14 bloques del 3er ejercicio en tres grupos (Microeconomía, Macroeconomía, Mixto), tomados de la app
+  «Oposición TCEE» con tres ajustes aprobados por el usuario (3.B.32, 3.A.32 y 3.B.29; ver `ajustes` en el fichero). Pendiente: usarlos en la pestaña Temas y en un widget nuevo.
+  Aviso al usuario sin resolver: el título de 3.B.34 dice «La OMC (I)» y debería ser «(II)».
 - **Programa del 3er ejercicio**: `config/programa_3.json`. Cada tema tiene título, resumen, etiqueta breve y ámbitos.
 
 ## Decisiones tomadas con el usuario (no reabrir sin motivo nuevo)

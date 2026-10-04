@@ -1,0 +1,237 @@
+{
+ "descripcion": "Bloques temáticos del temario: agrupan temas afines para organizar el estudio. Independiente de las carpetas y de los .tex (ver CONTEXTO.md).",
+ "fuente": "Organización del temario de la app «Oposición TCEE» (Víctor Gutiérrez Marcos), copiada por el usuario el 04/10/2026, con los ajustes de abajo aprobados por él.",
+ "ajustes": [
+  {
+   "tema": "3.B.32",
+   "de": "Historia económica",
+   "a": "Economía abierta",
+   "motivo": "Trata la situación actual de los flujos comerciales y financieros, no historia."
+  },
+  {
+   "tema": "3.A.32",
+   "de": "Economía abierta",
+   "a": "Demanda Agregada y Oferta Agregada",
+   "motivo": "Es el modelo OA-DA; junto a sus piezas (mercado de trabajo, consumo, inversión)."
+  },
+  {
+   "tema": "3.B.29",
+   "de": "Economía abierta",
+   "a": "Crecimiento económico",
+   "motivo": "Financiación del desarrollo, junto a 3.B.28 (países en desarrollo)."
+  }
+ ],
+ "ejercicios": {
+  "3": {
+   "grupos": [
+    "Microeconomía",
+    "Macroeconomía",
+    "Mixto"
+   ],
+   "bloques": [
+    {
+     "id": "modelo-neoclasico-basico",
+     "nombre": "Modelo neoclásico básico",
+     "grupo": "Microeconomía",
+     "color": "#9FCF64",
+     "temas": [
+      "3.A.8",
+      "3.A.9",
+      "3.A.11",
+      "3.A.12",
+      "3.A.16",
+      "3.A.21"
+     ]
+    },
+    {
+     "id": "informacion-y-poder-de-mercado",
+     "nombre": "Información y poder de mercado",
+     "grupo": "Microeconomía",
+     "color": "#5CC93C",
+     "temas": [
+      "3.A.10",
+      "3.A.13",
+      "3.A.14",
+      "3.A.15",
+      "3.A.17",
+      "3.A.18",
+      "3.A.19"
+     ]
+    },
+    {
+     "id": "economia-del-bienestar-e-intervencion-del-sector-publico",
+     "nombre": "Economía del Bienestar e Intervención del Sector Público",
+     "grupo": "Microeconomía",
+     "color": "#43962C",
+     "temas": [
+      "3.A.20",
+      "3.A.22",
+      "3.A.23",
+      "3.A.24",
+      "3.B.31"
+     ]
+    },
+    {
+     "id": "comercio-internacional",
+     "nombre": "Comercio Internacional",
+     "grupo": "Microeconomía",
+     "color": "#B3FC5C",
+     "temas": [
+      "3.B.5",
+      "3.B.6",
+      "3.B.7",
+      "3.B.8",
+      "3.B.9",
+      "3.B.10"
+     ]
+    },
+    {
+     "id": "economia-corporativa-y-financiera",
+     "nombre": "Economía Corporativa y Financiera",
+     "grupo": "Microeconomía",
+     "color": "#B0F9A4",
+     "temas": [
+      "3.B.1",
+      "3.B.2",
+      "3.B.3",
+      "3.B.4",
+      "3.B.13",
+      "3.B.23",
+      "3.B.24",
+      "3.B.25",
+      "3.B.26",
+      "3.B.27"
+     ]
+    },
+    {
+     "id": "contabilidad-nacional",
+     "nombre": "Contabilidad Nacional",
+     "grupo": "Macroeconomía",
+     "color": "#F6CBCC",
+     "temas": [
+      "3.A.30",
+      "3.A.31",
+      "3.B.11"
+     ]
+    },
+    {
+     "id": "crecimiento-economico",
+     "nombre": "Crecimiento económico",
+     "grupo": "Macroeconomía",
+     "color": "#F09E70",
+     "temas": [
+      "3.A.29",
+      "3.A.43",
+      "3.A.44",
+      "3.A.45",
+      "3.B.28",
+      "3.B.29"
+     ]
+    },
+    {
+     "id": "ciclo-economico-y-politicas-de-demanda",
+     "nombre": "Ciclo económico y políticas de demanda",
+     "grupo": "Macroeconomía",
+     "color": "#F4C342",
+     "temas": [
+      "3.A.35",
+      "3.A.36",
+      "3.A.37",
+      "3.A.38",
+      "3.A.39",
+      "3.A.40",
+      "3.A.41",
+      "3.A.42"
+     ]
+    },
+    {
+     "id": "economia-abierta",
+     "nombre": "Economía abierta",
+     "grupo": "Macroeconomía",
+     "color": "#E93324",
+     "temas": [
+      "3.B.12",
+      "3.B.14",
+      "3.B.15",
+      "3.B.16",
+      "3.B.17",
+      "3.B.18",
+      "3.B.19",
+      "3.B.32"
+     ]
+    },
+    {
+     "id": "demanda-agregada-y-oferta-agregada",
+     "nombre": "Demanda Agregada y Oferta Agregada",
+     "grupo": "Macroeconomía",
+     "color": "#F09B98",
+     "temas": [
+      "3.A.25",
+      "3.A.26",
+      "3.A.27",
+      "3.A.28",
+      "3.A.32",
+      "3.A.33",
+      "3.A.34"
+     ]
+    },
+    {
+     "id": "historia-economica",
+     "nombre": "Historia económica",
+     "grupo": "Mixto",
+     "color": "#0B1E5B",
+     "temas": [
+      "3.B.20",
+      "3.B.21"
+     ]
+    },
+    {
+     "id": "organismos-internacionales",
+     "nombre": "Organismos internacionales",
+     "grupo": "Mixto",
+     "color": "#6A9ACF",
+     "temas": [
+      "3.B.22",
+      "3.B.30",
+      "3.B.33",
+      "3.B.34",
+      "3.B.35"
+     ]
+    },
+    {
+     "id": "union-europea",
+     "nombre": "Unión Europea",
+     "grupo": "Mixto",
+     "color": "#3E5FE0",
+     "temas": [
+      "3.B.36",
+      "3.B.37",
+      "3.B.38",
+      "3.B.39",
+      "3.B.40",
+      "3.B.41",
+      "3.B.42",
+      "3.B.43",
+      "3.B.44",
+      "3.B.45"
+     ]
+    },
+    {
+     "id": "historia-del-pensamiento-economico",
+     "nombre": "Historia del pensamiento económico",
+     "grupo": "Mixto",
+     "color": "#86C1F8",
+     "temas": [
+      "3.A.1",
+      "3.A.2",
+      "3.A.3",
+      "3.A.4",
+      "3.A.5",
+      "3.A.6",
+      "3.A.7"
+     ]
+    }
+   ]
+  }
+ }
+}
