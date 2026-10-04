@@ -66,7 +66,10 @@ class Indice {
   getTreeItem(n) {
     const t = new vscode.TreeItem(
       `${n.numero ? n.numero + '  ' : ''}${n.titulo}`,
-      n.hijos.length ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None
+      !n.hijos.length ? vscode.TreeItemCollapsibleState.None
+        // los epígrafes cuyos hijos son \paragraph empiezan plegados para que el índice no sea interminable
+        : n.hijos.every((h) => h.parrafo) ? vscode.TreeItemCollapsibleState.Collapsed
+        : vscode.TreeItemCollapsibleState.Expanded
     );
     if (n.vacio) { t.iconPath = new vscode.ThemeIcon('circle-large-outline'); t.description = 'vacío'; }
     t.tooltip = `${n.numero} ${n.titulo}${n.vacio ? '\n(sin contenido todavía)' : ''}\nLínea ${n.linea + 1}`;

@@ -1,7 +1,7 @@
 // Lectura del índice y del título de un tema (sin dependencias de VS Code, para poder probarlo aparte)
 'use strict';
 
-const NIVELES = { section: 1, subsection: 2, subsubsection: 3, anexo: 1 };
+const NIVELES = { section: 1, subsection: 2, subsubsection: 3, paragraph: 4, anexo: 1 };
 const RX_TEMA = /[\\/]temario[\\/]Ejercicio-\d[\\/]Parte-[AB][\\/]([34]\.[AB]\.\d+)[\\/]main\.tex$/;
 
 /** Código del tema (3.A.1) a partir de la ruta, o null si no es el main.tex de un tema */
@@ -88,7 +88,7 @@ function indiceTema(texto) {
     return lo;
   };
 
-  const rx = /\\(section|subsection|subsubsection|anexo)(\*?)\s*(?=\{)/g;
+  const rx = /\\(section|subsection|subsubsection|paragraph|anexo)(\*?)\s*(?=\{)/g;
   const encabezados = [];
   let m;
   while ((m = rx.exec(cuerpo))) {
@@ -101,24 +101,25 @@ function indiceTema(texto) {
   // numeración y árbol
   const raiz = { hijos: [], nivel: 0 };
   const pila = [raiz];
-  const cont = [0, 0, 0, 0];
+  const cont = [0, 0, 0, 0, 0];
   let anexos = 0, enAnexos = false;
   encabezados.forEach((e, k) => {
     const sig = k + 1 < encabezados.length ? encabezados[k + 1].pos : finDoc;
     let nivel = NIVELES[e.tipo];
     let numero = '';
     if (e.tipo === 'anexo') {
-      enAnexos = true; anexos++; numero = `A${anexos}`; cont[1] = cont[2] = cont[3] = 0;
+      enAnexos = true; anexos++; numero = `A${anexos}`; cont[1] = cont[2] = cont[3] = cont[4] = 0;
     } else if (!e.estrella) {
-      if (e.tipo === 'section') { if (enAnexos) enAnexos = false; cont[1]++; cont[2] = cont[3] = 0; }
-      else if (e.tipo === 'subsection') { cont[2]++; cont[3] = 0; }
-      else cont[3]++;
+      if (e.tipo === 'section') { if (enAnexos) enAnexos = false; cont[1]++; cont[2] = cont[3] = cont[4] = 0; }
+      else if (e.tipo === 'subsection') { cont[2]++; cont[3] = cont[4] = 0; }
+      else if (e.tipo === 'subsubsection') { cont[3]++; cont[4] = 0; }
+      else cont[4]++;
       const base = enAnexos ? `A${anexos}` : String(cont[1]);
-      numero = nivel === 1 ? base : nivel === 2 ? `${base}.${cont[2]}` : `${base}.${cont[2]}.${cont[3]}`;
+      numero = [base, cont[2], cont[3], cont[4]].slice(0, nivel).join('.'); // igual que LaTeX (secnumdepth 4)
       if (enAnexos) nivel += 1; // las subsecciones de un anexo cuelgan del anexo
     }
     const nodo = {
-      nivel, numero, titulo: e.titulo || '(sin título)', linea: lineaDe(e.pos),
+      nivel, numero, parrafo: e.tipo === 'paragraph', titulo: e.titulo || '(sin título)', linea: lineaDe(e.pos),
       propioVacio: !tieneContenido(cuerpo.slice(e.finTitulo, sig)), hijos: [],
     };
     while (pila.length > 1 && pila[pila.length - 1].nivel >= nivel) pila.pop();
