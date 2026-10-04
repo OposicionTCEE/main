@@ -184,7 +184,9 @@ El panel propio de la oposición: icono **TCEE** en la **barra lateral derecha**
   (por el código si lo escribes, p. ej. `3B29`; por los modelos, el título, los epígrafes y el texto de cada tema) e **Intro** acepta el primero;
   también puedes escribir para buscar; 3) si tienes otro tema abierto, di si la nota **viene de él** o no tiene relación.
   Se añade al final de `\modificaciones` del tema destino como `NOTA (04/10/2026, desde 3.A.18): …` y cuenta como nota pendiente.
-- **Panel Oposición** (en Acciones): se abre como una pestaña. El primer apartado es el **Calendario** de vueltas
+- **Rehacer informes** (en Acciones): comprueba qué informes de la pestaña Relaciones están desactualizados porque cambiaste un tema.
+  Si hay alguno, copia el encargo y abre Claude Code: pégalo (⌘V) y pulsa Intro. Consume uso de tu plan, más cuantos más modelos.
+- **Panel Oposición** (en Acciones): se abre siempre en una ventana aparte, que puedes llevar a otra pantalla. El primer apartado es el **Calendario** de vueltas
   (vista mensual; pulsa un día para librarlo, estudiar en tu día libre o mover el cante; a la derecha, los temas de la semana con su
   orden de estudio, el botón para mover un tema a otra semana y *Traer un tema a esta semana*; *Nuevo calendario* crea otro
   en modo temático, correlativo o aleatorio, y eliges por qué tema empezar; *Eliminar calendario* borra el que estás viendo). Reglas en [CALENDARIO.md](CALENDARIO.md). Además:

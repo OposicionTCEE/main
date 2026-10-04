@@ -87,7 +87,7 @@ puntos = 10 × prioridad (alta 3, media 2, baja 1; sin informe 2) + 3 × errores
 
 ## 4. Cómo actualizar los informes (con Claude Code, desde la carpeta TCEE)
 
-Cuando una ficha diga *cambiado*, o se añada un modelo compartido nuevo, pídele a Claude Code: «actualiza los informes de armonización siguiendo `main/RELACIONES.md`». Claude Code hará esto:
+Cuando una ficha diga *cambiado*, o se añada un modelo compartido nuevo, pulsa la acción **Rehacer informes** del Panel TCEE: comprueba qué modelos están desactualizados, copia el encargo y abre Claude Code. También puedes pedírselo directamente a Claude Code: «actualiza los informes de armonización siguiendo `main/RELACIONES.md`». Claude Code hará esto:
 
 1. `node main/scripts/armonizacion.js estado`: lista los modelos sin informe o con algún tema cambiado.
 2. `node main/scripts/armonizacion.js preparar --pendientes`, o con nombres de modelo entre comillas.

@@ -137,7 +137,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
   }
 
   return {
-    abrir() {
+    async abrir() {
       if (panel) { panel.reveal(); refrescar(); return; }
       panel = vscode.window.createWebviewPanel('tceeOposicion', 'Panel Oposición', vscode.ViewColumn.Active, {
         enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')],
@@ -146,6 +146,8 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
       panel.webview.html = html(panel.webview);
       panel.webview.onDidReceiveMessage(alMensaje);
       panel.onDidDispose(() => { panel = null; });
+      // siempre en una ventana aparte (ventanas auxiliares de VS Code, 1.85 o posterior)
+      try { await vscode.commands.executeCommand('workbench.action.moveEditorToNewWindow'); } catch (e) { /* se queda en la ventana principal */ }
     },
     refrescar,
     temaCambiado() { if (panel) refrescar(); },
