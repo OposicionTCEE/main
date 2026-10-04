@@ -1,0 +1,70 @@
+/* Panel Oposición: usa los colores del tema de VS Code (claro u oscuro) */
+:root {
+  --c3A: var(--vscode-charts-blue, #3794ff);
+  --c3B: var(--vscode-charts-green, #89d185);
+  --c4B: var(--vscode-charts-orange, #d18616);
+  --borde: var(--vscode-panel-border, rgba(128,128,128,.35));
+  --apagado: var(--vscode-descriptionForeground, #888);
+  --acento: var(--vscode-focusBorder, #007fd4);
+}
+body { font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); color: var(--vscode-foreground);
+  background: var(--vscode-editor-background); padding: 0 20px 40px; max-width: 1100px; }
+a { color: var(--vscode-textLink-foreground); cursor: pointer; text-decoration: none; }
+a:hover { text-decoration: underline; }
+header { position: sticky; top: 0; background: var(--vscode-editor-background); padding-top: 14px; z-index: 2; border-bottom: 1px solid var(--borde); }
+.resumen { display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; font-size: 1.1em; }
+.resumen span, .apagado { color: var(--apagado); }
+nav { display: flex; gap: 2px; margin-top: 10px; }
+.pest { background: none; border: none; border-bottom: 2px solid transparent; color: var(--apagado); padding: 6px 12px; cursor: pointer; font: inherit; }
+.pest:hover { color: var(--vscode-foreground); }
+.pest.activa { color: var(--vscode-foreground); border-bottom-color: var(--acento); }
+main { padding-top: 14px; }
+.barra { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+input[type=search], input[type=number], select { background: var(--vscode-input-background); color: var(--vscode-input-foreground);
+  border: 1px solid var(--vscode-input-border, var(--borde)); padding: 4px 6px; font: inherit; border-radius: 2px; }
+input[type=search] { width: min(420px, 100%); }
+input[type=number] { width: 60px; margin-left: 6px; }
+.ayuda { color: var(--apagado); margin: 4px 0 14px; }
+.vacio { color: var(--apagado); padding: 30px 0; }
+table.temas { border-collapse: collapse; width: 100%; }
+table.temas th { text-align: left; font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--borde); cursor: pointer; white-space: nowrap; user-select: none; }
+table.temas th.asc::after { content: ' ▲'; font-size: .8em; }
+table.temas th.desc::after { content: ' ▼'; font-size: .8em; }
+table.temas td { padding: 4px 8px; border-bottom: 1px solid var(--borde); }
+table.temas tr:hover td { background: var(--vscode-list-hoverBackground); }
+table.temas tr.hecho td { color: var(--apagado); }
+.cod { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.centro { text-align: center; }
+.pct { display: inline-block; width: 50px; height: 4px; background: var(--borde); border-radius: 2px; margin-right: 8px; vertical-align: middle; overflow: hidden; }
+.pct span { display: block; height: 100%; background: var(--acento); }
+section.semana, section.modelo { border: 1px solid var(--borde); border-radius: 4px; padding: 10px 14px; margin-bottom: 12px; }
+section.semana.actual { border-color: var(--acento); }
+section h3 { margin: 0 0 6px; font-size: 1em; }
+section ul { list-style: none; padding: 0; margin: 6px 0 0; }
+section li { padding: 3px 0; }
+.carga { height: 4px; background: var(--borde); border-radius: 2px; overflow: hidden; }
+.carga span { display: block; height: 100%; background: var(--acento); }
+.carga span.exceso { background: var(--vscode-errorForeground, #f14c4c); }
+.mover { float: right; }
+.mover button { background: none; border: 1px solid var(--borde); color: var(--vscode-foreground); border-radius: 2px; cursor: pointer; padding: 0 6px; margin-left: 2px; }
+.mover button:hover { border-color: var(--acento); }
+.historial li { padding: 3px 0; }
+.sem { font-weight: 600; }
+.epi { font-size: .92em; }
+h2 { font-size: 1.15em; margin: 4px 0; }
+.leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 4px 0 8px; vertical-align: -1px; }
+.leyenda .p3A { background: var(--c3A); } .leyenda .p3B { background: var(--c3B); } .leyenda .p4B { background: var(--c4B); }
+#mapa { width: 100%; height: auto; border: 1px solid var(--borde); border-radius: 4px; }
+#mapa line { stroke: var(--apagado); stroke-opacity: .35; }
+#mapa line.resaltada, #mapa line.vecina { stroke: var(--acento); stroke-opacity: .9; }
+#mapa line.tenue { stroke-opacity: .08; }
+#mapa .nodo { cursor: pointer; }
+#mapa .nodo circle { fill-opacity: .85; stroke: var(--vscode-editor-background); stroke-width: 1.5; }
+#mapa .nodo.p3A circle { fill: var(--c3A); } #mapa .nodo.p3B circle { fill: var(--c3B); } #mapa .nodo.p4B circle { fill: var(--c4B); }
+#mapa .nodo.hecho circle { stroke: var(--vscode-foreground); stroke-width: 3; }
+#mapa .nodo text { fill: var(--vscode-foreground); font-size: 11px; text-anchor: middle; pointer-events: none; }
+#mapa .nodo.tenue { opacity: .18; }
+#mapa .nodo.resaltado circle { stroke: var(--acento); stroke-width: 3; }
+#mapa.foco .nodo:not(.vecino) { opacity: .15; }
+#mapa.foco line:not(.vecina) { stroke-opacity: .04; }
