@@ -423,3 +423,4 @@ button.ts-op:hover:not([disabled]) { border-color: var(--acento); }
 .ts-rev-txt .katex { font-size: 1em; }
 .ts-rev-det { padding: 4px 14px 12px; }
 @media (prefers-reduced-motion: reduce) { .ts-op { transition: none; } }
+.tb-errtest { align-self: flex-start; font-size: .82em; color: var(--vscode-errorForeground, #e5534b); border: 1px solid currentColor; border-radius: 8px; padding: 0 6px; }

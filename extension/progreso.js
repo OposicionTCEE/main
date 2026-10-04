@@ -3,7 +3,7 @@
 const { indiceTema, sinComentario } = require('./parser');
 
 // Unidades de trabajo que vale cada pendiente
-const PESOS = { vacio: 1, nota: 0.5, ojo: 0.3, sinPdf: 1, ocr: 0.02, ocrMax: 2 };
+const PESOS = { vacio: 1, nota: 0.5, ojo: 0.3, sinPdf: 1, ocr: 0.02, ocrMax: 2, testError: 1, testBlanco: 0.5 };
 // Ritmo inicial supuesto (minutos por unidad) y cuántas unidades "pesa" esa suposición frente a tus datos reales
 const RITMO_INICIAL = 30, PESO_INICIAL = 10;
 // Introducción y Conclusión no cuentan como trabajo pendiente
@@ -108,14 +108,27 @@ function ritmo(r) {
   return (r.minutos + RITMO_INICIAL * PESO_INICIAL) / (r.unidades + PESO_INICIAL);
 }
 
-/** {minutos, pct, hecho} del tema */
-function estimar(p, datosTema, r) {
-  if (datosTema && datosTema.hecho && datosTema.hecho.valor) return { minutos: 0, pct: 100, hecho: true };
+/** Unidades por las preguntas de test del tema cuya última respuesta fue un error o quedó en blanco */
+const unidadesTest = (t) => (t ? (t.errores || 0) * PESOS.testError + (t.blancos || 0) * PESOS.testBlanco : 0);
+
+/**
+ * {minutos, pct, hecho, test} del tema. test = {errores, blancos} de sus preguntas de test (última respuesta).
+ * Un error de test es grave: cuenta como pendiente incluso en un tema marcado como hecho.
+ */
+function estimar(p, datosTema, r, test) {
+  const ut = unidadesTest(test);
+  if (datosTema && datosTema.hecho && datosTema.hecho.valor) {
+    if (!ut) return { minutos: 0, pct: 100, hecho: true, test: 0 };
+    const llenos = p.llenos * PESOS.vacio;
+    return { minutos: ut * ritmo(r), pct: llenos + ut > 0 ? Math.round((100 * llenos) / (llenos + ut)) : 0, hecho: true, test: ut };
+  }
   const base = datosTema && datosTema.base != null ? datosTema.base : p.otros;
   const hechas = p.llenos * PESOS.vacio + Math.max(0, base - p.otros);
-  const total = hechas + p.unidades;
+  const unidades = p.unidades + ut;
+  const total = hechas + unidades;
   return {
-    minutos: p.unidades * ritmo(r),
+    test: ut,
+    minutos: unidades * ritmo(r),
     pct: total > 0 ? Math.round((100 * hechas) / total) : 100,
     hecho: false,
   };
@@ -127,4 +140,4 @@ function formatoTiempo(min) {
   return h ? (r ? `${h} h ${r} min` : `${h} h`) : `${r} min`;
 }
 
-module.exports = { PESOS, pendientes, combinar, ritmo, estimar, formatoTiempo, contarNotas, contarOcr };
+module.exports = { PESOS, unidadesTest, pendientes, combinar, ritmo, estimar, formatoTiempo, contarNotas, contarOcr };

@@ -36,6 +36,10 @@ Mantener este documento y el código a la vez.
 - *Al momento*: se comprueba pregunta a pregunta. **Solo cuentan las preguntas comprobadas**: si terminas antes, las que no viste no son fallos.
 - *Al final*: como en el examen; las no contestadas cuentan en blanco.
 
+## Efecto en el progreso del tema
+
+Cada pregunta cuya última respuesta es un error suma 1 unidad de trabajo pendiente a su tema (en blanco, 0,5), incluso si el tema está marcado como hecho. Reglas en `PROGRESO.md`.
+
 ## Puntuación
 
 Según `puntuacion` del banco:

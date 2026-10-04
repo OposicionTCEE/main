@@ -37,14 +37,14 @@
     // resumen de lo que se ve
     const vistos = D.temas.filter((t) => visible(t.codigo));
     const pend = vistos.filter((t) => !t.hecho);
-    const resumen = `${vistos.length} temas · ${vistos.length - pend.length} hechos · ${horas(pend.reduce((s, t) => s + t.minutos, 0))} restantes`;
+    const resumen = `${vistos.length} temas · ${vistos.length - pend.length} hechos · ${horas(vistos.reduce((s, t) => s + t.minutos, 0))} restantes`;
 
     const bloqueHtml = (b) => {
       const codigos = b.temas.filter(visible);
       if (!codigos.length) return '';
       const temas = codigos.map((c) => porCod[c]).filter(Boolean);
       const hechos = temas.filter((t) => t.hecho).length;
-      const resta = temas.filter((t) => !t.hecho).reduce((s, t) => s + t.minutos, 0);
+      const resta = temas.reduce((s, t) => s + t.minutos, 0);   // los hechos valen 0 salvo errores de test
       const cerrado = !!st.temasCerrados[`${st.temasEj}:${b.id}`];
       return `<section class="tb-bloque" style="--b:${color(b.color)}">
         <button class="tb-cab" data-plegar="${esc(`${st.temasEj}:${b.id}`)}" aria-expanded="${!cerrado}">
@@ -58,11 +58,12 @@
 
     const carta = (c, t) => {
       if (!t) return `<div class="tb-carta falta"><div class="tb-fila"><span class="tb-cod">${esc(c)}</span></div><p class="tb-tit apagado">Sin carpeta en el temario</p></div>`;
-      return `<article class="tb-carta ${t.hecho ? 'hecho' : ''}" data-abrir="${esc(c)}" tabindex="0" title="${esc(t.completo || t.titulo)}">
+      return `<article class="tb-carta ${t.hecho && !t.minutos ? 'hecho' : ''}" data-abrir="${esc(c)}" tabindex="0" title="${esc(t.completo || t.titulo)}">
         <div class="tb-fila"><span class="tb-cod">${esc(c)}</span>
           <label class="tb-hecho" title="Listo para pasar a estudiar sobre esquema"><input type="checkbox" data-hecho="${esc(c)}" ${t.hecho ? 'checked' : ''}> Hecho</label></div>
         <p class="tb-tit">${esc(t.titulo)}</p>
-        <div class="tb-pie">${t.hecho ? '<span class="tb-ok">✓ Listo para estudiar</span>'
+        ${t.errTest ? `<span class="tb-errtest" title="Preguntas de test de este tema cuya última respuesta fue un error: cuentan como trabajo pendiente">✗ ${t.errTest} ${t.errTest === 1 ? 'error' : 'errores'} de test</span>` : ''}
+        <div class="tb-pie">${t.hecho && !t.minutos ? '<span class="tb-ok">✓ Listo para estudiar</span>'
           : `<span class="pct ancho"><span style="width:${t.pct}%"></span></span><span class="tb-tiempo">${esc(t.tiempo)} · ${t.pct} %</span>`}</div>
       </article>`;
     };

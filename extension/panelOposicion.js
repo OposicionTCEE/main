@@ -73,8 +73,8 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
         porTema.set(codigo, c);
       }
       const { texto, t } = c;
-      const { e } = progreso.estimar(codigo, c.p);
-      lista.push({ codigo, uri: u, texto, titulo: t.corto || codigo, completo: t.completo || '', parte: codigo.slice(0, 3), minutos: e.minutos, pct: e.pct, hecho: e.hecho });
+      const { e, test: tt } = progreso.estimar(codigo, c.p);
+      lista.push({ codigo, uri: u, texto, titulo: t.corto || codigo, completo: t.completo || '', parte: codigo.slice(0, 3), minutos: e.minutos, pct: e.pct, hecho: e.hecho, errTest: (tt && tt.errores) || 0 });
     }
     lista.sort((a, b) => a.codigo.localeCompare(b.codigo, 'es', { numeric: true }));
     cache = Object.fromEntries(lista.map((t) => [t.codigo, t]));
@@ -106,7 +106,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     const abierto = temaMostrado() ? codigoTema(temaMostrado().fsPath) : null;
     const cal = calendarios.vista(cache, minutosDe());
     return {
-      temas: lista.map(({ codigo, titulo, completo, parte, minutos, pct, hecho }) => ({ codigo, titulo, completo, parte, minutos, pct, hecho, tiempo: G.formatoTiempo(minutos) })),
+      temas: lista.map(({ codigo, titulo, completo, parte, minutos, pct, hecho, errTest }) => ({ codigo, titulo, completo, parte, minutos, pct, hecho, errTest, tiempo: G.formatoTiempo(minutos) })),
       total: { tiempo: G.formatoTiempo(lista.reduce((s, t) => s + t.minutos, 0)), hechos: hechos.size, n: lista.length },
       relaciones: { ...relaciones.vista(cache, abierto, dev), nombres },
       calendario: cal,
@@ -179,10 +179,10 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
       if (m.tipo === 'testCargar') {
         panel.webview.postMessage({ tipo: 'testDatos', banco: test.leerBanco(), historial: test.historial(),
           imgBase: panel.webview.asWebviewUri(vscode.Uri.file(test.carpeta())).toString(), hayProgreso: progreso.hayCarpeta() });
-      } else if (m.tipo === 'testGuardar') { test.guardar(m.sesion); enviarHistorial(); }
+      } else if (m.tipo === 'testGuardar') { test.guardar(m.sesion); enviarHistorial(); progreso.testCambiado(); alMarcar(); }
       else if (m.tipo === 'testBorrar') {
         vscode.window.showWarningMessage('¿Borrar esta sesión del historial? Sus respuestas dejarán de contar en las estadísticas.', { modal: true }, 'Borrar')
-          .then((r) => { if (r) { test.borrar(m.id); enviarHistorial(); } });
+          .then((r) => { if (r) { test.borrar(m.id); enviarHistorial(); progreso.testCambiado(); alMarcar(); } });
       }
     } catch (e) { panel.webview.postMessage({ tipo: 'aviso', texto: String(e.message || e), error: true }); }
   }

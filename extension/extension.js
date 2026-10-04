@@ -98,8 +98,36 @@ class Progreso {
     const comb = this.todos();
     if (!comb.temas[codigo] || comb.temas[codigo].base == null) { this.tema(codigo).base = p.otros; this.guardar(true); }
     const datos = this.todos();
-    return { e: G.estimar(p, datos.temas[codigo], datos.ritmo), ritmo: G.ritmo(datos.ritmo) };
+    const test = this.test()[codigo];
+    return { e: G.estimar(p, datos.temas[codigo], datos.ritmo, test), ritmo: G.ritmo(datos.ritmo), test };
   }
+  /**
+   * Preguntas de test por tema cuya ÚLTIMA respuesta (de cualquier Mac) fue error o blanco: {'3.A.8': {errores, blancos}}.
+   * Banco: TCEE/test/preguntas.json; respuestas: progreso/test/*.json (TEST.md). Se guarda 5 s, como todos().
+   */
+  test() {
+    if (this._test && Date.now() - this._test.t < 5000) return this._test.v;
+    const v = {};
+    try {
+      const raiz = path.dirname(this.dir);
+      const banco = this.leer(path.join(raiz, 'test', 'preguntas.json'));
+      const tema = Object.fromEntries(((banco && banco.preguntas) || []).map((q) => [q.id, q.tema]));
+      const d = path.join(this.dir, 'test');
+      const sesiones = (fs.existsSync(d) ? fs.readdirSync(d) : []).filter((f) => f.endsWith('.json'))
+        .flatMap((f) => ((this.leer(path.join(d, f)) || {}).sesiones || [])).sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''));
+      const ultima = {};
+      for (const s of sesiones) for (const r of s.respuestas || []) ultima[r.id] = r.ok;
+      for (const [id, ok] of Object.entries(ultima)) {
+        const c = tema[id]; if (!c || ok === true) continue;
+        const x = v[c] || (v[c] = { errores: 0, blancos: 0 });
+        if (ok === false) x.errores++; else x.blancos++;
+      }
+    } catch (e) { /* sin banco o sin respuestas: no cuenta */ }
+    this._test = { t: Date.now(), v };
+    return v;
+  }
+  /** Tras guardar una prueba de test: recalcular y avisar al panel */
+  testCambiado() { this._test = null; this.avisar(); }
   hecho(codigo) { const t = this.todos().temas[codigo]; return !!(t && t.hecho && t.hecho.valor); }
   marcar(codigo, valor) { this.tema(codigo).hecho = { valor, fecha: new Date().toISOString() }; this.guardar(); }
   sumar(codigo, minutos, unidades) {
@@ -217,7 +245,8 @@ function activate(context) {
     if (!codigo) { ultimo = null; vistaAcciones.title = 'Acciones'; vscode.commands.executeCommand('setContext', 'tcee.hayTema', false); return; }
     const r = progreso.calcular(codigo, uri, texto);
     ultimo = { codigo, ...r };
-    vistaAcciones.title = `Tiempo restante: ${G.formatoTiempo(r.e.minutos)} (${r.e.pct} %)`;
+    const err = (r.test && r.test.errores) || 0;
+    vistaAcciones.title = `Tiempo restante: ${G.formatoTiempo(r.e.minutos)} (${r.e.pct} %)${err ? ` · ✗ ${err} ${err === 1 ? 'error' : 'errores'} de test` : ''}`;
     vscode.commands.executeCommand('setContext', 'tcee.hayTema', true);
     vscode.commands.executeCommand('setContext', 'tcee.hecho', r.e.hecho);
   };
@@ -279,7 +308,9 @@ function activate(context) {
           `Epígrafes vacíos: ${p.vacios} de ${p.vacios + p.llenos} (sin contar Introducción, Conclusión ni Preguntas Test)\n`
           + (p.faltan ? `Tema poco desarrollado (${p.palabras} palabras en el cuerpo): se suman ${p.faltan} epígrafes\n` : '')
           + `Notas pendientes: ${p.notas}\nOJO: ${p.ojo}\n`
-          + `Errores OCR/Markdown: ${p.ocr}\nSin PDF en la última compilación: ${p.sinPdf ? 'sí' : 'no'}\n\n`
+          + `Errores OCR/Markdown: ${p.ocr}\nSin PDF en la última compilación: ${p.sinPdf ? 'sí' : 'no'}\n`
+          + `Test (última respuesta a cada pregunta): ${(ultimo.test || {}).errores || 0} errores y ${(ultimo.test || {}).blancos || 0} en blanco`
+          + `${e.hecho && e.test ? ' · cuentan aunque el tema esté hecho' : ''}\n\n`
           + `Tu ritmo: ${ritmo.toFixed(0)} min por unidad de trabajo`
           + (progreso.hayCarpeta() ? '' : '\n\nAviso: falta la carpeta «progreso» (tarea «Descargar el temario»). Mientras, se guarda en VS Code.') }
       );
