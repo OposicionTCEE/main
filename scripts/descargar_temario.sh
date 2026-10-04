@@ -14,6 +14,14 @@ else
     echo "No se pudo descargar. Comprueba la conexión y vuelve a ejecutar este comando."; exit 1; }
 fi
 
+# Progreso del panel TCEE (repositorio PRIVADO: tus tiempos y los temas marcados como hechos)
+if [ ! -d "$BASE/progreso/.git" ]; then
+  echo "Descargando tu progreso (repositorio privado)…"
+  git clone -q https://github.com/OposicionTCEE/progreso.git "$BASE/progreso" || {
+    echo "Aviso: no se pudo descargar «progreso». ¿Has creado el repositorio privado en GitHub (GUIA_INSTALACION, paso 11)?"
+    echo "       El panel funciona igual y guarda el progreso en VS Code hasta que lo descargues."; }
+fi
+
 # Instrucciones para Claude en la raíz del espacio de trabajo (remite a main/CLAUDE.md)
 printf '@main/CLAUDE.md\n' > "$BASE/CLAUDE.md"
 

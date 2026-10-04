@@ -1,5 +1,6 @@
 #!/bin/bash
-# Sincroniza con GitHub los dos repositorios: main (herramientas) y temario (todos los temas).
+# Sincroniza con GitHub los repositorios: main (herramientas), temario (todos los temas)
+# y progreso (privado: tiempo de trabajo y temas hechos del panel TCEE).
 # Para cada uno: guarda tus cambios (commit), trae lo que haya en GitHub y sube lo tuyo.
 # Si no hay conexión, no hace nada y te lo dice: tus cambios siguen a salvo en tu Mac.
 # Si detecta un conflicto (el mismo fragmento cambiado en GitHub y en tu Mac), NO toca ese
@@ -55,6 +56,9 @@ sincronizar() {
 
 sincronizar "$MAIN_DIR" "main"
 sincronizar "$BASE/temario" "temario"
+sincronizar "$BASE/progreso" "progreso"   # privado: tiempos y temas hechos del panel TCEE
+
+[ -d "$BASE/progreso/.git" ] || echo "Aviso: falta la carpeta progreso. Ejecuta la tarea «Descargar el temario (si falta)»."
 
 # Instrucciones para Claude y atajos de escritura, siempre al día
 printf '@main/CLAUDE.md\n' > "$BASE/CLAUDE.md"

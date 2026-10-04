@@ -16,6 +16,8 @@
       "editor.quickSuggestions": { "other": "on", "comments": "off", "strings": "off" }
     },
     "editor.minimap.enabled": false,
+    // Botones de las cabeceras del panel TCEE (✓ Hecho, 📌) siempre visibles
+    "workbench.view.alwaysShowHeaderActions": true,
     // Pestañas con el código del tema (3.A.19) en lugar de "main.tex"
     "workbench.editor.customLabels.enabled": true,
     "workbench.editor.customLabels.patterns": { "**/temario/**/main.tex": "${dirname}" },
