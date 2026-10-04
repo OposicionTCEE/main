@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const { codigoTema, tituloTema, indiceTema } = require('./parser');
 const G = require('./progreso');
+const I = require('./inferencia');
 
 // ---------------------------------------------------------------- Progreso (repositorio privado "progreso")
 // Cada Mac escribe solo su fichero progreso/equipos/<equipo>.json; el tiempo restante se calcula con todos.
@@ -98,7 +99,8 @@ class Acciones {
     };
     return [
       item('Compilar tema', 'play', 'tcee.compilar', 'Compila el tema que se muestra en el índice (⌘⌥B)'),
-      item('Sincronizar con GitHub', 'sync', 'tcee.sincronizar', 'Guarda, trae y sube los cambios de main y temario'),
+      item('Sincronizar con GitHub', 'sync', 'tcee.sincronizar', 'Guarda, trae y sube los cambios de main, temario y progreso'),
+      item('Nueva nota', 'note', 'tcee.nota', 'Añade una nota al final de \\modificaciones del tema que elijas'),
     ];
   }
 }
@@ -315,6 +317,89 @@ function activate(context) {
     })
   );
   vscode.commands.executeCommand('setContext', 'tcee.fijado', false);
+  // ---- Nueva nota: texto → tema de destino (sugerido por inferencia) → ¿viene del tema abierto?
+  let indiceNotas = null;           // índice de búsqueda de los 110 temas (se rehace si cambia algún tema)
+  const construirIndiceNotas = async () => {
+    if (indiceNotas) return indiceNotas;
+    const uris = await vscode.workspace.findFiles('temario/Ejercicio-*/Parte-*/*/main.tex');
+    const temas = [];
+    for (const u of uris) { const c = codigoTema(u.fsPath); if (c) temas.push({ codigo: c, uri: u, texto: await textoDe(u) }); }
+    let familias = {};
+    try {
+      const raiz = vscode.workspace.workspaceFolders[0].uri.fsPath;
+      familias = JSON.parse(fs.readFileSync(path.join(raiz, 'main', 'analisis', 'desarrollos.json'), 'utf8')).por_familia || {};
+    } catch (e) { /* sin modelos: se infiere con el resto de reglas */ }
+    indiceNotas = { ...I.construirIndice(temas, familias), uris: new Map(temas.map((t) => [t.codigo, t.uri])) };
+    return indiceNotas;
+  };
+  context.subscriptions.push(vscode.workspace.onDidSaveTextDocument((d) => { if (esTema(d)) indiceNotas = null; }));
+
+  context.subscriptions.push(vscode.commands.registerCommand('tcee.nota', async () => {
+    const abierto = indice.mostrado ? codigoTema(indice.mostrado.fsPath) : null;
+    const preparando = construirIndiceNotas();   // se prepara mientras escribes
+    const texto = await vscode.window.showInputBox({
+      title: 'Nueva nota (1/2)',
+      prompt: 'Escribe la nota. Si sabes el tema, puedes poner su código (p. ej. 3B29) y irá directo.',
+      ignoreFocusOut: true,
+    });
+    if (!texto || !texto.trim()) return;
+    const idx = await preparando;
+    const recientes = context.globalState.get('tcee.notaRecientes', []);
+    const sug = I.sugerir(idx, texto, { abierto, recientes });
+
+    // Paso 2: tema de destino (los sugeridos primero; escribe para buscar entre todos)
+    const top = sug.filter((x) => x.puntos > 0).slice(0, 5);
+    const resto = sug.filter((x) => !top.includes(x)).sort((a, b) => a.codigo.localeCompare(b.codigo, 'es', { numeric: true }));
+    const elemento = (x, sugerido) => ({
+      label: `${x.codigo}  ${x.titulo}`, codigo: x.codigo,
+      description: sugerido ? `$(sparkle) ${x.motivo}` : x.completo,
+    });
+    const items = [
+      { label: 'Sugeridos', kind: vscode.QuickPickItemKind.Separator },
+      ...top.map((x) => elemento(x, true)),
+      { label: 'Todos los temas', kind: vscode.QuickPickItemKind.Separator },
+      ...resto.map((x) => elemento(x, false)),
+    ];
+    const destino = await vscode.window.showQuickPick(items, {
+      title: 'Nueva nota (2/2): ¿a qué tema va?',
+      placeHolder: 'Intro acepta la primera sugerencia · escribe código o palabras para buscar',
+      matchOnDescription: true, ignoreFocusOut: true,
+    });
+    if (!destino || !destino.codigo) return;
+
+    // Paso 3 (solo si hay un tema abierto distinto del destino): ¿la nota viene de él?
+    let origen = null;
+    if (abierto && abierto !== destino.codigo) {
+      const vincular = context.globalState.get('tcee.notaVincular', true);
+      const si = { label: `$(link) Desde ${abierto}`, detail: 'La nota surge del tema que estás trabajando', v: true };
+      const no = { label: '$(circle-slash) Sin relación con el tema abierto', detail: 'Solo anotas algo que has leído o pensado', v: false };
+      const r = await vscode.window.showQuickPick(vincular ? [si, no] : [no, si], {
+        title: `Nota para ${destino.codigo}: ¿viene de ${abierto}?`, ignoreFocusOut: true,
+      });
+      if (!r) return;
+      origen = r.v ? abierto : null;
+      context.globalState.update('tcee.notaVincular', r.v);
+    }
+
+    // Escribir la nota al final de \modificaciones{…}
+    const uri = idx.uris.get(destino.codigo);
+    const doc = await vscode.workspace.openTextDocument(uri);
+    const actual = doc.getText();
+    const ins = I.insercion(actual, I.lineaNota(texto, origen));
+    const edit = new vscode.WorkspaceEdit();
+    edit.replace(uri, new vscode.Range(doc.positionAt(ins.desde), doc.positionAt(ins.hasta)), ins.insertar);
+    if (!(await vscode.workspace.applyEdit(edit))) { vscode.window.showErrorMessage(`No se pudo añadir la nota a ${destino.codigo}.`); return; }
+    await doc.save();
+    indiceNotas = null;
+    context.globalState.update('tcee.notaRecientes', [destino.codigo, ...recientes.filter((c) => c !== destino.codigo)].slice(0, 5));
+    if (indice.mostrado && indice.mostrado.toString() === uri.toString()) indice.refrescar();
+
+    const linea = doc.positionAt(ins.desde + ins.insertar.length - 2).line;
+    vscode.window.showInformationMessage(`Nota añadida a ${destino.codigo}${origen ? ` (desde ${origen})` : ''}.`, 'Ver').then((b) => {
+      if (b) vscode.commands.executeCommand('tcee.irA', uri, linea);
+    });
+  }));
+
   const vigia = vscode.workspace.createFileSystemWatcher('**/temario/**/.build/estado');
   context.subscriptions.push(vigia, vigia.onDidChange(() => indice.refrescar()), vigia.onDidCreate(() => indice.refrescar()));
 }
