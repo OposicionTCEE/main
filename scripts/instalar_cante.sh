@@ -36,7 +36,8 @@ fi
 
 echo
 echo "Micrófonos que ve el Mac:"
-"$(dirname "$BREW")/ffmpeg" -hide_banner -f avfoundation -list_devices true -i "" 2>&1 | sed -n '/audio devices/,$p' | grep '\]' | sed 's/.*\] /  • /' | tail -n +2
+"$(dirname "$BREW")/ffmpeg" -hide_banner -f avfoundation -list_devices true -i "" 2>&1 | sed -n '/audio devices/,$p' | grep -E '\] \[[0-9]+\] ' | sed -E 's/.*\] \[[0-9]+\] /  • /'
+# (ffmpeg añade siempre «Error opening input» tras listar: es normal y no se muestra)
 echo
 echo "✅ Todo listo. Vuelve a la pestaña Cante del Panel Oposición (si la tenías abierta, cambia de pestaña y vuelve)."
 echo "   La primera vez que grabes, macOS preguntará si Visual Studio Code puede usar el micrófono: pulsa Permitir."
