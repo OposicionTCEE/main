@@ -167,7 +167,13 @@ El panel propio de la oposición: icono **TCEE** en la barra izquierda, con dos 
 
 **Instalarlo o actualizarlo** (una vez, y cada vez que Claude te diga que hay versión nueva):
 1. **Terminal › Ejecutar tarea… › Instalar o actualizar el panel TCEE**.
-2. Cuando ponga *Listo*: `⌘ + ⇧ + P` › **Recargar ventana** (*Developer: Reload Window*).
+2. Cuando ponga *Listo*: `⌘ + ⇧ + P`, escribe `Recargar ventana` y elige **Desarrollador: Recargar ventana**.
+
+**Si no aparece el icono TCEE** (instalación a mano, no necesita la tarea):
+1. Icono de **Extensiones** (cuatro cuadrados) › botón **«…»** arriba del todo › **Instalar desde VSIX…**
+2. Elige `TCEE › main › extension › tcee-panel.vsix` › **Instalar**.
+3. `⌘ + ⇧ + P` › **Desarrollador: Recargar ventana**.
+4. Si sigue sin verse: clic derecho en la barra de iconos de la izquierda y comprueba que **TCEE** está marcado.
 
 **Qué hace**
 - **Arriba, Acciones**: *Compilar tema* (el que se ve en el índice) y *Sincronizar con GitHub*.

@@ -79,7 +79,7 @@
       {
         "label": "Instalar o actualizar el panel TCEE",
         "type": "shell",
-        "command": "CODE=\"$(command -v code || echo '/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code')\"; \"$CODE\" --install-extension main/extension/tcee-panel.vsix --force && echo 'Listo. Ahora: ⌘⇧P › Recargar ventana (Developer: Reload Window).'",
+        "command": "bash main/scripts/instalar_panel.sh",
         "options": { "cwd": "${workspaceFolder}" },
         "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
         "problemMatcher": []
