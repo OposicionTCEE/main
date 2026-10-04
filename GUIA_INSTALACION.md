@@ -184,6 +184,11 @@ El panel propio de la oposición: icono **TCEE** en la **barra lateral derecha**
   (por el código si lo escribes, p. ej. `3B29`; por los modelos, el título, los epígrafes y el texto de cada tema) e **Intro** acepta el primero;
   también puedes escribir para buscar; 3) si tienes otro tema abierto, di si la nota **viene de él** o no tiene relación.
   Se añade al final de `\modificaciones` del tema destino como `NOTA (04/10/2026, desde 3.A.18): …` y cuenta como nota pendiente.
+- **Panel Oposición** (en Acciones): se abre como una pestaña con cuatro apartados:
+  *Temas* (los 110 con tiempo restante, % y casilla de hecho; ordena pulsando en las columnas), *Plan semanal* (reparto automático
+  según tus horas por semana, de menos a más avanzado; ◀ ▶ mueve un tema de semana y lo fija 📌, ✕ lo suelta; abajo, si cumpliste las
+  semanas anteriores), *Relaciones del tema* (modelos del tema abierto y en qué otros temas y epígrafes se desarrollan) y
+  *Mapa de relaciones* (red de temas unidos por modelos compartidos; puedes resaltar un modelo).
 - **Abajo, Índice**: el título de la ventana es el título del tema. Todos los epígrafes (hasta los paragraphs) aparecen desplegados.
   Numeración desde Introducción = 1 hasta la Conclusión, y después los anexos (A1, A2…).
   Pulsa un epígrafe para saltar a él. Los epígrafes sin contenido llevan ○ y la palabra *vacío*.

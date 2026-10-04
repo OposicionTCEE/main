@@ -27,7 +27,8 @@ class Progreso {
   leer(f) { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return null; } }
   // une lo guardado en disco con lo guardado en VS Code (por si se trabajó sin la carpeta)
   fusionar(a, b) {
-    const r = { temas: { ...a.temas } };
+    const r = { temas: { ...a.temas }, dias: { ...(a.dias || {}) } };
+    for (const [f, d] of Object.entries(b.dias || {})) r.dias[f] = Math.max(r.dias[f] || 0, d);
     for (const [c, d] of Object.entries(b.temas || {})) {
       const x = r.temas[c] || {};
       r.temas[c] = {
@@ -40,13 +41,43 @@ class Progreso {
     return r;
   }
   tema(c) { return this.mio.temas[c] || (this.mio.temas[c] = { minutos: 0, unidades: 0 }); }
-  guardar() {
+  /** avisa a quien escuche (Panel Oposición) de que ha cambiado el progreso */
+  alCambiar(f) { (this.oyentes || (this.oyentes = [])).push(f); }
+  avisar() { (this.oyentes || []).forEach((f) => { try { f(); } catch (e) { /* nada */ } }); }
+  /** minutos trabajados por día, sumando todos los Mac: {'2026-10-04': 95, …} */
+  dias() {
+    const r = {};
+    const lista = [this.mio];
+    if (this.hayCarpeta()) {
+      try {
+        for (const f of fs.readdirSync(path.join(this.dir, 'equipos'))) {
+          if (f.endsWith('.json') && f !== `${this.equipo}.json`) { const x = this.leer(path.join(this.dir, 'equipos', f)); if (x) lista.push(x); }
+        }
+      } catch (e) { /* sin otros equipos */ }
+    }
+    lista.forEach((x) => Object.entries(x.dias || {}).forEach(([f, m]) => { r[f] = (r[f] || 0) + m; }));
+    return r;
+  }
+  /** Plan semanal (compartido entre Macs): {horasSemana, fijados: {código: lunes}, historial: {lunes: [códigos]}} */
+  leerPlan() {
+    const def = { horasSemana: 15, fijados: {}, historial: {} };
+    const enDisco = this.dir ? this.leer(path.join(this.dir, 'plan.json')) : null;
+    return { ...def, ...(enDisco || this.ctx.globalState.get('tcee.plan', {})) };
+  }
+  guardarPlan(plan) {
+    this.ctx.globalState.update('tcee.plan', plan);
+    if (this.hayCarpeta()) {
+      try { fs.writeFileSync(path.join(this.dir, 'plan.json'), JSON.stringify(plan, null, 1) + '\n'); } catch (e) { /* reintenta */ }
+    }
+  }
+  guardar(silencio) {
     this.ctx.globalState.update('tcee.progreso', this.mio);
     if (!this.hayCarpeta()) return;
     try {
       fs.mkdirSync(path.dirname(this.fichero()), { recursive: true });
       fs.writeFileSync(this.fichero(), JSON.stringify(this.mio, null, 1) + '\n');
     } catch (e) { /* se reintenta en el siguiente guardado */ }
+    if (!silencio) this.avisar();
   }
   todos() {
     const lista = [this.mio];
@@ -65,7 +96,7 @@ class Progreso {
     const estado = (() => { try { return fs.readFileSync(path.join(path.dirname(uri.fsPath), '.build', 'estado'), 'utf8').trim(); } catch (e) { return null; } })();
     const p = G.pendientes(texto, estado);
     const comb = this.todos();
-    if (!comb.temas[codigo] || comb.temas[codigo].base == null) { this.tema(codigo).base = p.otros; this.guardar(); }
+    if (!comb.temas[codigo] || comb.temas[codigo].base == null) { this.tema(codigo).base = p.otros; this.guardar(true); }
     const datos = this.todos();
     return { p, e: G.estimar(p, datos.temas[codigo], datos.ritmo), ritmo: G.ritmo(datos.ritmo) };
   }
@@ -75,6 +106,10 @@ class Progreso {
     const t = this.tema(codigo);
     t.minutos = Math.round(((t.minutos || 0) + minutos) * 10) / 10;
     t.unidades = Math.round(((t.unidades || 0) + unidades) * 100) / 100;
+    const hoy = new Date();
+    const f = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+    this.mio.dias = this.mio.dias || {};
+    this.mio.dias[f] = Math.round(((this.mio.dias[f] || 0) + minutos) * 10) / 10;
     this.guardar();
   }
 }
@@ -101,6 +136,7 @@ class Acciones {
       item('Compilar tema', 'play', 'tcee.compilar', 'Compila el tema que se muestra en el índice (⌘⌥B)'),
       item('Sincronizar con GitHub', 'sync', 'tcee.sincronizar', 'Guarda, trae y sube los cambios de main, temario y progreso'),
       item('Nueva nota', 'note', 'tcee.nota', 'Añade una nota al final de \\modificaciones del tema que elijas'),
+      item('Panel Oposición', 'dashboard', 'tcee.panelOposicion', 'Tiempo restante de todos los temas, plan semanal y relaciones entre temas'),
     ];
   }
 }
@@ -399,6 +435,15 @@ function activate(context) {
       if (b) vscode.commands.executeCommand('tcee.irA', uri, linea);
     });
   }));
+
+  // ---- Panel Oposición (pestaña): tiempo restante de todos los temas, plan semanal y relaciones
+  const panelOpo = require('./panelOposicion').crear(context, {
+    progreso, textoDe, temaMostrado: () => indice.mostrado,
+    alMarcar: () => indice.refrescar(),
+  });
+  context.subscriptions.push(vscode.commands.registerCommand('tcee.panelOposicion', () => panelOpo.abrir()));
+  const avisoEditor = vscode.window.onDidChangeActiveTextEditor(() => panelOpo.temaCambiado());
+  context.subscriptions.push(avisoEditor, vscode.workspace.onDidSaveTextDocument((d) => { if (esTema(d)) panelOpo.refrescar(); }));
 
   const vigia = vscode.workspace.createFileSystemWatcher('**/temario/**/.build/estado');
   context.subscriptions.push(vigia, vigia.onDidChange(() => indice.refrescar()), vigia.onDidCreate(() => indice.refrescar()));
