@@ -69,7 +69,7 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
 
 ## Pendiente
 
-1. **Cante**: la pestaña de práctica está hecha (v0.12, sin probar aún en el Mac del usuario). Ideas siguientes en `CANTE.md`, apartado 6;
+1. **Cante**: la pestaña de práctica está hecha (v0.13, sin probar aún en el Mac del usuario). Ideas siguientes en `CANTE.md`, apartado 6;
    registrar el cante con la preparadora sigue por definir.
 2. **4º ejercicio**:
    - falta su programa (crear `config/programa_4.json` siguiendo `CALENDARIO.md`, apartado 12);
