@@ -308,4 +308,3 @@ button.grande { font-size: 1.1em; padding: 8px 18px; }
 .aviso-instalar { border-color: var(--acento); }
 @media (prefers-reduced-motion: reduce) { .punto-rec { animation: none; } .medidor span { transition: none; } }
 .cante-lista td, .cante-lista th { font-size: .95em; } .cante-lista .nowrap { white-space: nowrap; }
-button.mini-b { padding: 0 7px; font-size: .85em; margin-left: 4px; }

@@ -156,10 +156,10 @@ function crearCante({ raiz, progreso, avisar, alCambiar }) {
 
   // ---------------------------------------------------------------- fichas (progreso/cantes/<id>.json)
   const fichero = (id) => path.join(dirTx(), `${id}.json`);
-  function guardarFicha(f) { fs.mkdirSync(dirTx(), { recursive: true }); fs.writeFileSync(fichero(f.id), JSON.stringify(f, null, 1) + '\n'); }
+  function guardarFicha(f) { if (!f || !f.id) return; fs.mkdirSync(dirTx(), { recursive: true }); fs.writeFileSync(fichero(f.id), JSON.stringify(f, null, 1) + '\n'); }
   function lista() {
     let fs_ = []; try { fs_ = fs.readdirSync(dirTx()).filter((f) => f.endsWith('.json')); } catch (e) { /* aún no hay cantes */ }
-    return fs_.map((f) => leerJson(path.join(dirTx(), f), null)).filter(Boolean)
+    return fs_.map((f) => leerJson(path.join(dirTx(), f), null)).filter((f) => f && f.id && f.fecha)
       .map(({ segmentos, texto, ...r }) => ({ ...r, palabras: texto ? texto.split(/\s+/).filter(Boolean).length : 0,
         audioExiste: existe(path.join(dirAudio(), r.audio || '')) || existe(path.join(dirAudio(), (r.audio || '').replace(/\.wav$/, '.m4a'))) }))
       .sort((a, b) => b.fecha.localeCompare(a.fecha));
@@ -211,6 +211,7 @@ function crearCante({ raiz, progreso, avisar, alCambiar }) {
       const m4a = wav.replace(/\.wav$/, '.m4a');
       await correr(h.ffmpeg, ['-hide_banner', '-nostdin', '-y', '-i', limpio, '-c:a', 'aac', '-b:a', '48k', m4a]);
       try { fs.unlinkSync(wav); } catch (e) { /* ya no está */ }
+      if (!leer(id)) { try { fs.unlinkSync(m4a); } catch (e) { /* no estaba */ } return; }   // se eliminó mientras se transcribía
       guardarFicha({ ...leer(id), audio: path.basename(m4a), estado: 'transcrito', modelo: MODELO, segmentos, texto: segmentos.map((s) => s.texto).join(' ') });
       avisar(`Transcripción lista: cante de ${f.codigo}.`);
     } catch (e) {
