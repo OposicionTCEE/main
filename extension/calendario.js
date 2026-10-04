@@ -53,7 +53,7 @@ function aleatorio(codigos, k, intercalar, semilla) {
  * Objetivo: maximizar la suma de afinidades entre los temas de cada semana.
  * Restricciones: tamaño de semana k; si se intercala, cuotas A/B por semana; si no, primero semanas solo A y luego solo B.
  */
-function tematico(codigos, k, intercalar, semilla, af, titulos = {}, iteraciones = 150000) {
+function tematico(codigos, k, intercalar, semilla, af, titulos = {}, inicio = null, iteraciones = 150000) {
   const r = azar(semilla);
   const M = af.m, I = af.idx;
   const A = codigos.filter((c) => parte(c) === 'A').sort(porPrograma), B = codigos.filter((c) => parte(c) === 'B').sort(porPrograma);
@@ -85,28 +85,74 @@ function tematico(codigos, k, intercalar, semilla, af, titulos = {}, iteraciones
     const delta = val(s1) + val(s2) - antes;
     if (!(delta >= 0 || r() < Math.exp(delta / T))) { s1[i1] = x; s2[i2] = y; }
   }
-  // orden de las semanas: de lo más básico a lo más avanzado (posición media en el programa)
-  // con intercalado, manda la Parte A (la teoría de base, como en el calendario de la preparadora); sin intercalar, la parte de la semana
-  const pos = (s) => { const base = intercalar && s.some((c) => parte(c) === 'A') ? s.filter((c) => parte(c) === 'A') : s;
-    return base.reduce((t, c) => t + num(c) / (parte(c) === 'A' ? A.length : B.length), 0) / base.length; };
-  if (intercalar) semanas.sort((a, b) => (a.length < k) - (b.length < k) || pos(a) - pos(b)); // la semana incompleta, al final
-  else {
-    // sin intercalar: primero las semanas de la A y luego las de la B; la semana incompleta de cada parte, al final de esa parte
-    const ord = (a, b) => (a.length < k) - (b.length < k) || pos(a) - pos(b);
-    semanas = [...semanas.filter((s) => parte(s[0]) === 'A').sort(ord), ...semanas.filter((s) => parte(s[0]) === 'B').sort(ord)];
-  }
-  ordenarSeries(semanas, titulos);
+  semanas = encadenar(semanas, k, intercalar, inicio, af, r, A.length, B.length);
+  ordenarSeries(semanas, titulos, inicio && inicio.tema);
   // dentro de la semana: A antes que B y por número, como en el programa
   semanas.forEach((s) => s.sort(porPrograma));
   return { semanas, valor: semanas.reduce((t, s) => t + val(s), 0) };
 }
 
 /**
+ * Orden de las semanas: cada semana va seguida de la que más relación guarda con ella (afinidad media entre sus temas),
+ * empezando por la semana elegida:
+ *   inicio.tipo 'basico' (por defecto) → la semana más básica (menor posición media en el programa; al intercalar cuenta la Parte A);
+ *   'tema' → la semana que contiene inicio.tema;   'azar' → una semana al azar (reproducible con la semilla).
+ * Primero se encadena de forma voraz (siempre la más relacionada de las que quedan) y luego se mejora la cadena invirtiendo tramos (2-opt).
+ * La semana incompleta va siempre al final. Sin intercalar, primero todas las semanas de una parte (la del tema de inicio) y luego las de la otra.
+ */
+function encadenar(semanas, k, intercalar, inicio, af, r, nA, nB) {
+  const M = af.m, I = af.idx;
+  const W = (a, b) => { let t = 0; for (const x of a) for (const y of b) t += M[I[x]][I[y]]; return t / (a.length * b.length); };
+  const pos = (s) => { const base = intercalar && s.some((c) => parte(c) === 'A') ? s.filter((c) => parte(c) === 'A') : s;
+    return base.reduce((t, c) => t + num(c) / (parte(c) === 'A' ? nA : nB), 0) / base.length; };
+  const tipo = (inicio && inicio.tipo) || 'basico';
+  const cadena = (lista, primera) => {
+    if (lista.length <= 2) return primera ? [primera, ...lista.filter((x) => x !== primera)] : lista;
+    const resto = lista.filter((x) => x !== primera), c = [primera];
+    while (resto.length) { const u = c[c.length - 1]; let mj = 0; resto.forEach((x, j) => { if (W(u, x) > W(u, resto[mj])) mj = j; }); c.push(resto.splice(mj, 1)[0]); }
+    // 2-opt sobre un camino abierto con la primera semana fija
+    let mejora = true;
+    while (mejora) {
+      mejora = false;
+      for (let i = 1; i < c.length - 1; i++) for (let j = i + 1; j < c.length; j++) {
+        const antes = W(c[i - 1], c[i]) + (j + 1 < c.length ? W(c[j], c[j + 1]) : 0);
+        const despues = W(c[i - 1], c[j]) + (j + 1 < c.length ? W(c[i], c[j + 1]) : 0);
+        if (despues > antes + 1e-9) { c.splice(i, j - i + 1, ...c.slice(i, j + 1).reverse()); mejora = true; }
+      }
+    }
+    return c;
+  };
+  const elegir = (lista) => {
+    if (tipo === 'tema' && inicio.tema) { const w = lista.find((s) => s.includes(inicio.tema)); if (w) return w; }
+    if (tipo === 'azar') return lista[Math.floor(r() * lista.length)];
+    return lista.reduce((a, b) => (pos(b) < pos(a) ? b : a));
+  };
+  const ordenar = (lista, previa) => {
+    const llenas = lista.filter((s) => s.length === k), cortas = lista.filter((s) => s.length < k);
+    if (!llenas.length) return cortas;
+    let primera = elegir(llenas);
+    if (previa && !(tipo === 'tema' && llenas.some((s) => s.includes(inicio.tema)))) primera = llenas.reduce((a, b) => (W(previa, b) > W(previa, a) ? b : a));
+    return [...cadena(llenas, primera), ...cortas];
+  };
+  if (intercalar) {
+    const c = ordenar(semanas.filter((s) => s.length === k));
+    return [...c, ...semanas.filter((s) => s.length < k)];
+  }
+  const pA = semanas.filter((s) => parte(s[0]) === 'A'), pB = semanas.filter((s) => parte(s[0]) === 'B');
+  const primeroB = tipo === 'tema' && inicio.tema && parte(inicio.tema) === 'B';
+  const [p1, p2] = primeroB ? [pB, pA] : [pA, pB];
+  const c1 = ordenar(p1);
+  const c2 = ordenar(p2, c1[c1.length - 1]);
+  return [...c1, ...c2];
+}
+
+/**
  * Orden pedagógico de las series: en temas con el mismo título y numeración (I), (II)… («Análisis de mercados (I)…(IV)»),
  * el (I) nunca va en una semana posterior al (II). Si pasa, se intercambian sus puestos (misma parte: las cuotas no cambian).
  * Las series largas (más de 4 temas, como «Unión Europea (I)…(VII)») no se ordenan: cada tema es un ámbito distinto.
+ * El tema de inicio elegido por el usuario (fijo) no se mueve.
  */
-function ordenarSeries(semanas, titulos) {
+function ordenarSeries(semanas, titulos, fijo = null) {
   const serie = (c) => {
     const t = (titulos[c] || '').split(':')[0].normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     if (!/\((i|ii|iii|iv|v|vi|vii|viii)\)/.test(t)) return null;
@@ -120,7 +166,7 @@ function ordenarSeries(semanas, titulos) {
     const pos = donde(); let cambio = false;
     const cods = Object.keys(pos).sort(porPrograma);
     buscar: for (const x of cods) for (const y of cods) {
-      if (num(x) >= num(y) || parte(x) !== parte(y)) continue;
+      if (num(x) >= num(y) || parte(x) !== parte(y) || x === fijo || y === fijo) continue; // el tema de inicio elegido no se mueve
       const sx = serieCorta(x); if (!sx || sx !== serieCorta(y)) continue;
       if (pos[x][0] > pos[y][0]) {
         const [wx, ix] = pos[x], [wy, iy] = pos[y];
@@ -132,15 +178,19 @@ function ordenarSeries(semanas, titulos) {
   return semanas;
 }
 
-/** Nombre del bloque temático: los títulos de los temas más «centrales» de la semana (el de A y el de B) */
-function bloque(semana, af, titulos) {
-  const M = af.m, I = af.idx;
-  const central = (cs) => cs.map((c) => [c, cs.reduce((t, d) => t + (d === c ? 0 : M[I[c]][I[d]]), 0) + semana.reduce((t, d) => t + (d === c ? 0 : M[I[c]][I[d]]), 0)])
-    .sort((a, b) => b[1] - a[1])[0];
-  const limpio = (c) => (titulos[c] || c).replace(/\s*\((I|II|III|IV|V|VI|VII|VIII)\)\s*/g, ' ').replace(/[.:].*$/, '').trim();
-  const a = semana.filter((c) => parte(c) === 'A'), b = semana.filter((c) => parte(c) === 'B');
-  const nombres = [a.length ? limpio(central(a)[0]) : null, b.length ? limpio(central(b)[0]) : null].filter(Boolean);
-  return [...new Set(nombres)].join(' · ');
+/**
+ * Nombre del bloque temático de una semana, a partir de los ámbitos de sus temas (config/programa_N.json):
+ * cada tema suma 1 a su ámbito principal y 0,5 a los secundarios; se nombran los ámbitos con más peso
+ * (el segundo si suma al menos 1 y el tercero si suma al menos 1,5), por ejemplo «Mercados y competencia, comercio internacional».
+ */
+function bloque(semana, tax) {
+  if (!tax || !tax.ambitos) return '';
+  const peso = {};
+  semana.forEach((c) => (tax.ambitos[c] || []).forEach((a, i) => { peso[a] = (peso[a] || 0) + (i === 0 ? 1 : 0.5); }));
+  const orden = Object.entries(peso).sort((a, b) => b[1] - a[1]);
+  const elegidos = orden.filter(([, v], i) => i === 0 || (i === 1 && v >= 1) || (i === 2 && v >= 1.5)).map(([a]) => tax.nombres[a] || a);
+  const propio = /^(Unión Europea|UE)\b/; // los nombres propios no pasan a minúscula
+  return elegidos.map((n, i) => (i === 0 || propio.test(n) ? n : n.charAt(0).toLowerCase() + n.slice(1))).join(', ');
 }
 
 /** Suma de afinidades dentro de las semanas (para comparar calendarios) */
@@ -158,12 +208,32 @@ function valorar(semanas, af) {
  * opciones: {nombre, ejercicio, temasSemana, modo: 'tematico'|'correlativo'|'aleatorio', intercalar, semilla,
  *            primerCante: 'YYYY-MM-DD', diaLibre: 0..6 (0 = lunes)}
  */
-function crear(codigos, opciones, af, titulos) {
+function crear(codigos, opciones, af, titulos, tax) {
   const k = opciones.temasSemana;
+  // tema de inicio: 'basico' (lo de siempre), 'tema' (uno elegido) o 'azar' (uno cualquiera, reproducible con la semilla)
+  const inicio = { tipo: 'basico', ...(opciones.inicio || {}) };
+  if (inicio.tipo === 'tema' && !codigos.includes(inicio.tema)) inicio.tipo = 'basico';
   let semanas;
-  if (opciones.modo === 'correlativo') semanas = correlativo(codigos, k);
-  else if (opciones.modo === 'aleatorio') semanas = aleatorio(codigos, k, opciones.intercalar, opciones.semilla);
-  else semanas = tematico(codigos, k, opciones.intercalar, opciones.semilla, af, titulos).semanas;
+  if (opciones.modo === 'correlativo') {
+    // correlativo desde un tema: esa parte empieza en él y da la vuelta (A.10 … A.45, A.1 … A.9) y después la otra parte
+    let l = [...codigos].sort(porPrograma);
+    if (inicio.tipo !== 'basico') {
+      const t = inicio.tipo === 'tema' ? inicio.tema : l[Math.floor(azar(opciones.semilla)() * l.length)];
+      const mia = l.filter((c) => parte(c) === parte(t)), otra = l.filter((c) => parte(c) !== parte(t));
+      const i = mia.indexOf(t);
+      l = [...mia.slice(i), ...mia.slice(0, i), ...otra];
+    }
+    semanas = []; for (let i = 0; i < l.length; i += k) semanas.push(l.slice(i, i + k));
+  } else if (opciones.modo === 'aleatorio') {
+    semanas = aleatorio(codigos, k, opciones.intercalar, opciones.semilla);
+    if (inicio.tipo === 'tema') { // el tema elegido pasa a la primera semana (cambiándolo por uno de su misma parte)
+      const w = semanas.findIndex((s) => s.includes(inicio.tema));
+      if (w > 0) { const j = semanas[0].findIndex((c) => parte(c) === parte(inicio.tema)); const i = semanas[w].indexOf(inicio.tema);
+        if (j >= 0) [semanas[0][j], semanas[w][i]] = [semanas[w][i], semanas[0][j]]; else { semanas[w].splice(i, 1); semanas[0].push(inicio.tema); } }
+    }
+  } else semanas = tematico(codigos, k, opciones.intercalar, opciones.semilla, af, titulos, inicio).semanas;
+  // en la primera semana, el tema de inicio elegido se estudia el primero
+  if (inicio.tipo === 'tema' && semanas[0].includes(inicio.tema)) semanas[0] = [inicio.tema, ...semanas[0].filter((c) => c !== inicio.tema)];
   return {
     version: 1,
     nombre: opciones.nombre,
@@ -173,7 +243,7 @@ function crear(codigos, opciones, af, titulos) {
     semanas: semanas.map((temas, w) => ({
       cante: masDias(opciones.primerCante, 7 * w),
       temas,
-      bloque: opciones.modo === 'tematico' && af ? bloque(temas, af, titulos) : '',
+      bloque: bloque(temas, tax),
       orden: null,           // orden manual de estudio dentro de la semana (null = el de la lista)
     })),
     inicio: masDias(opciones.primerCante, -6),

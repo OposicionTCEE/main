@@ -12,6 +12,8 @@
   const parteDe = (c) => c.split('.')[1];
   const sinEj = (c) => c.replace(/^[34]\./, '');
   const PARTE_TXT = { entero: '', empieza: 'empieza', sigue: 'continúa', termina: 'termina' };
+  // etiquetas de un tema: breve (en el calendario) y corto (resumen del contenido, como en el calendario de la preparadora)
+  const et = (T, c) => (T && T[c]) || { breve: c, corto: c, titulo: c };
 
   let ctx = null; // {enviar, estado, guardar, repintar}
 
@@ -43,7 +45,7 @@
     const [a, m] = (ctx.estado.calMes || '2026-01').split('-').map(Number);
     return `<div class="cal-barra">
       <label class="cal-sel">Calendario
-        <select data-cal-activar>${lista.length ? lista.map((c) => `<option value="${esc(c.id)}" ${V.activo === c.id ? 'selected' : ''}>${esc(c.nombre)}${c.referencia ? ' (referencia)' : ''}</option>`).join('') : '<option>—</option>'}</select>
+        <select data-cal-activar>${lista.length ? lista.map((c) => `<option value="${esc(c.id)}" ${V.activo === c.id ? 'selected' : ''}>${esc(c.nombre)}</option>`).join('') : '<option>—</option>'}</select>
       </label>
       <button data-cal-nuevo>Nuevo calendario</button>
       ${V && V.cal ? `<span class="cal-nav"><button data-cal-mes="-1" aria-label="Mes anterior">‹</button><strong>${esc(mesTitulo(a, m - 1))}</strong><button data-cal-mes="1" aria-label="Mes siguiente">›</button><button data-cal-hoy>Hoy</button></span>` : ''}
@@ -66,9 +68,9 @@
       if (info && info.tipo === 'cante') {
         const s = V.cal.semanas[sem];
         dentro = `<span class="cal-cante">Cante S${s.n}</span>
-          <span class="cal-cantados">${s.temas.map((c) => `<i class="mini p${parteDe(c)} ${V.cal.cantados[c] ? 'ok' : ''}" title="${esc(c)} ${esc(V.titulos[c] || '')}">${esc(sinEj(c))}</i>`).join('')}</span>`;
+          <span class="cal-cantados">${s.temas.map((c) => `<i class="mini p${parteDe(c)} ${V.cal.cantados[c] ? 'ok' : ''}" title="${esc(c)} ${esc(et(V.titulos, c).corto)}">${esc(sinEj(c))}</i>`).join('')}</span>`;
       } else if (info && info.tipo === 'estudio') {
-        dentro = info.temas.map((t) => `<span class="chip p${parteDe(t.codigo)} ${V.cal.cantados[t.codigo] ? 'ok' : ''}" title="${esc(t.codigo)} ${esc(V.titulos[t.codigo] || '')}${PARTE_TXT[t.parte] ? ` (${PARTE_TXT[t.parte]})` : ''}">${esc(sinEj(t.codigo))}${t.parte !== 'entero' ? `<small>${Math.round(t.fraccion * 100)} %</small>` : ''}</span>`).join('');
+        dentro = info.temas.map((t) => `<span class="chip p${parteDe(t.codigo)} ${V.cal.cantados[t.codigo] ? 'ok' : ''}" title="${esc(t.codigo)} ${esc(et(V.titulos, t.codigo).corto)}${PARTE_TXT[t.parte] ? ` (${PARTE_TXT[t.parte]}: ${Math.round(t.fraccion * 100)} % del tema)` : ''}"><b>${esc(sinEj(t.codigo))}</b> <span class="breve">${esc(et(V.titulos, t.codigo).breve)}</span>${t.parte !== 'entero' ? `<small>${Math.round(t.fraccion * 100)} %</small>` : ''}</span>`).join('');
       } else if (info && info.tipo === 'libre') dentro = '<span class="cal-etq">Libre</span>';
       else if (info && info.tipo === 'librado') dentro = '<span class="cal-etq">Librado</span>';
       const primeraSem = info && V.cal.semanas[sem].inicio === k;
@@ -96,7 +98,7 @@
       <ol class="cal-temas">${s.orden.map((c, i) => `
         <li class="p${parteDe(c)} ${V.cal.cantados[c] ? 'ok' : ''}">
           <label class="cal-check"><input type="checkbox" data-cal-cantado="${esc(c)}" ${V.cal.cantados[c] ? 'checked' : ''}> <span class="cod">${esc(sinEj(c))}</span></label>
-          <a data-abrir="${esc(c)}" class="cal-titulo" title="Abrir el tema">${esc(V.titulos[c] || c)}</a>
+          <a data-abrir="${esc(c)}" class="cal-titulo" title="${esc(et(V.titulos, c).titulo)}: abrir el tema">${esc(et(V.titulos, c).corto)}</a>
           <span class="cal-acc">
             <button data-cal-orden="${esc(c)}" data-dir="-1" ${i === 0 ? 'disabled' : ''} title="Estudiarlo antes">↑</button>
             <button data-cal-orden="${esc(c)}" data-dir="1" ${i === s.orden.length - 1 ? 'disabled' : ''} title="Estudiarlo después">↓</button>
@@ -128,7 +130,7 @@
       if (ant) acciones += `<button data-cal-cante="${info.semana - 1}">Retrasar aquí el cante de la semana ${ant.n} (era el ${esc(corto(ant.cante))})</button>`;
       acciones += '</div>';
     }
-    const temas = info.temas.length ? `<ul class="cal-hoy">${info.temas.map((t) => `<li class="p${parteDe(t.codigo)}"><a data-abrir="${esc(t.codigo)}">${esc(sinEj(t.codigo))} ${esc(V.titulos[t.codigo] || '')}</a>${PARTE_TXT[t.parte] ? ` <span class="apagado">(${PARTE_TXT[t.parte]})</span>` : ''}</li>`).join('')}</ul>` : '';
+    const temas = info.temas.length ? `<ul class="cal-hoy">${info.temas.map((t) => `<li class="p${parteDe(t.codigo)}"><a data-abrir="${esc(t.codigo)}">${esc(sinEj(t.codigo))} ${esc(et(V.titulos, t.codigo).corto)}</a>${PARTE_TXT[t.parte] ? ` <span class="apagado">(${PARTE_TXT[t.parte]})</span>` : ''}</li>`).join('')}</ul>` : '';
     const tipoTxt = { estudio: 'Día de estudio', libre: 'Día libre', librado: 'Día librado', cante: 'Día de cante' }[info.tipo];
     return `<section class="cal-diasel"><h3>${esc(largo(k))}</h3><p class="apagado">${tipoTxt}, semana ${s.n}</p>${temas}${acciones}</section>`;
   }
@@ -152,13 +154,19 @@
         <label class="radio"><input type="radio" name="modo" value="correlativo" ${o.modo === 'correlativo' ? 'checked' : ''}> Correlativo: toda la Parte A y después toda la B</label>
         <label class="radio"><input type="radio" name="modo" value="aleatorio" ${o.modo === 'aleatorio' ? 'checked' : ''}> Aleatorio</label>
         <label class="check"><input type="checkbox" name="intercalar" ${o.intercalar ? 'checked' : ''} ${o.modo === 'correlativo' ? 'disabled' : ''}> Intercalar Parte A y Parte B en cada semana</label>
-        <label class="check"><input type="checkbox" name="referencia" ${o.referencia ? 'checked' : ''} ${o.modo !== 'tematico' ? 'disabled' : ''}> Tener en cuenta el calendario de tu preparadora</label>
       </fieldset>
+      <div class="fila">
+        <label>Empezar por <select name="inicioTipo">
+          <option value="basico" ${o.inicioTipo === 'basico' ? 'selected' : ''}>Lo más básico</option>
+          <option value="tema" ${o.inicioTipo === 'tema' ? 'selected' : ''}>Un tema concreto</option>
+          <option value="azar" ${o.inicioTipo === 'azar' ? 'selected' : ''}>Un tema al azar</option></select></label>
+        <label>Tema de inicio <select name="inicioTema" ${o.inicioTipo === 'tema' ? '' : 'disabled'}>${(V && V.programa || []).map((t) => `<option value="${esc(t.codigo)}" ${o.inicioTema === t.codigo ? 'selected' : ''}>${esc(sinEj(t.codigo))} ${esc(t.breve)}</option>`).join('')}</select></label>
+      </div>
       <div class="fila">
         <label>Primer cante <input name="primerCante" type="date" value="${esc(o.primerCante)}" required></label>
         <label>Día libre <select name="diaLibre">${dias.map((d, i) => `<option value="${i}" ${Number(o.diaLibre) === i ? 'selected' : ''}>${d}</option>`).join('')}</select></label>
       </div>
-      ${previa ? `<div class="cal-previa"><h3>Vista previa</h3><ol>${previa.semanas.map((s) => `<li><span class="apagado">${esc(corto(s.cante))}</span> ${s.bloque ? `<strong>${esc(s.bloque)}</strong>` : ''}<br>${s.temas.map((c) => `<i class="mini p${parteDe(c)}" title="${esc(previa.titulos[c] || '')}">${esc(sinEj(c))}</i>`).join('')}</li>`).join('')}</ol></div>` : (st.calCalculando ? '<p class="apagado">Calculando…</p>' : '')}
+      ${previa ? `<div class="cal-previa"><h3>Vista previa</h3><ol>${previa.semanas.map((s) => `<li><span class="apagado">${esc(corto(s.cante))}</span> ${s.bloque ? `<strong>${esc(s.bloque)}</strong>` : ''}<br><span class="previa-temas">${s.temas.map((c) => `<span class="chip p${parteDe(c)}" title="${esc(et(previa.titulos, c).corto)}"><b>${esc(sinEj(c))}</b> <span class="breve">${esc(et(previa.titulos, c).breve)}</span></span>`).join('')}</span></li>`).join('')}</ol></div>` : (st.calCalculando ? '<p class="apagado">Calculando…</p>' : '')}
       <div class="cal-botones fin">
         <button type="button" data-cal-cancelar>Cancelar</button>
         <button type="button" data-cal-previa>${previa ? 'Otra variante' : 'Vista previa'}</button>
@@ -172,7 +180,8 @@
     const casilla = (n) => { const x = form.querySelector(`input[name=${n}]`); return x && x.disabled ? !!ctx.estado.calForm[n] : d.get(n) === 'on'; };
     return {
       nombre: d.get('nombre') || 'Calendario', ejercicio: String(d.get('ejercicio') || '3'), temasSemana: Number(d.get('temasSemana')) || 5,
-      modo: d.get('modo') || 'tematico', intercalar: casilla('intercalar'), referencia: casilla('referencia'),
+      modo: d.get('modo') || 'tematico', intercalar: casilla('intercalar'),
+      inicioTipo: d.get('inicioTipo') || 'basico', inicioTema: d.get('inicioTema') || ctx.estado.calForm.inicioTema || '3.A.1',
       primerCante: d.get('primerCante'), diaLibre: Number(d.get('diaLibre')), semilla: ctx.estado.calForm.semilla,
     };
   }
@@ -185,7 +194,7 @@
     q('[data-cal-activar]', (s) => { s.onchange = () => { st.calMes = null; st.calSemana = null; st.calDia = null; ctx.enviar({ tipo: 'calActivar', id: s.value }); }; });
     q('[data-cal-nuevo]', (b) => { b.onclick = () => {
       const prox = new Date(); prox.setDate(prox.getDate() + ((2 - ((prox.getDay() + 6) % 7) + 7) % 7 || 7)); // próximo miércoles
-      st.calForm = { nombre: 'Nueva vuelta, 3er ejercicio', temasSemana: 5, modo: 'tematico', intercalar: true, referencia: true, primerCante: iso(prox), diaLibre: 5, semilla: 1 };
+      st.calForm = { nombre: 'Nueva vuelta, 3er ejercicio', temasSemana: 5, modo: 'tematico', intercalar: true, inicioTipo: 'basico', inicioTema: '3.A.1', primerCante: iso(prox), diaLibre: 5, semilla: 1 };
       st.calPrevia = null; rep();
     }; });
     q('[data-cal-mes]', (b) => { b.onclick = () => { const [a, m] = st.calMes.split('-').map(Number); const d = new Date(a, m - 1 + Number(b.dataset.calMes), 1); st.calMes = iso(d).slice(0, 7); rep(); }; });
@@ -228,7 +237,13 @@
       const primero = form.querySelector('input[name=nombre]'); if (primero && !st.calPrevia) primero.focus();
     }
   }
-  function leerFormEstado() { const o = { ...ctx.estado.calForm }; if (o.modo === 'correlativo') o.intercalar = false; if (o.modo !== 'tematico') o.referencia = false; return o; }
+  function leerFormEstado() {
+    const o = { ...ctx.estado.calForm };
+    if (o.modo === 'correlativo') o.intercalar = false;
+    o.inicio = { tipo: o.inicioTipo || 'basico', tema: o.inicioTipo === 'tema' ? o.inicioTema : null };
+    delete o.inicioTipo; delete o.inicioTema;
+    return o;
+  }
 
   window.TCEE_CAL = {
     pintar,
