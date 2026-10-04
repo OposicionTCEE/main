@@ -1,6 +1,6 @@
 # Pestaña «Cante» del Panel Oposición
 
-Sirve para **practicar los cantes**: un botón arranca a la vez el cronómetro y la grabación. Al terminar, la exposición se transcribe y queda guardada.
+Sirve para **practicar los cantes**: un botón arranca a la vez el cronómetro y la grabación. Al terminar, la grabación queda guardada y se transcribe cuando el usuario pulsa *Transcribir*.
 Mientras hablas no se muestra el texto: es una decisión del usuario.
 
 Código:
@@ -28,16 +28,19 @@ ffmpeg -f avfoundation -i :<micrófono> -af ebur128=framelog=info -ac 1 -ar 1600
 - **Formato:** mono a 16 kHz, el que necesita whisper. `-flush_packets 1` escribe el audio en disco según llega; sin él, ffmpeg lo retiene y un corte lo perdería.
 - **Medidor de nivel:** el filtro `ebur128` escribe el nivel en un registro (`<id>.log`) que la extensión lee cada medio segundo.
   Si no llega sonido durante unos 8 segundos, se avisa: suele ser el permiso de micrófono.
+- Al pulsar *Terminar* se abre el detalle del cante recién grabado, con su botón *Transcribir*.
 - **ffmpeg corre independiente de VS Code.** La grabación sigue aunque se cierre la pestaña o se recargue la ventana. `grabando.json`, en la carpeta de audio, guarda el estado.
 - **Terminar** manda a ffmpeg la señal de parada ordenada (SIGINT), que cierra bien el fichero.
-- **Cortes:** si el Mac se apaga o ffmpeg muere, la próxima vez que se abra el panel la grabación se da por cortada. Se transcribe lo grabado y la ficha queda marcada `cortada`.
+- **Cortes:** si el Mac se apaga o ffmpeg muere, la próxima vez que se abra el panel la grabación se da por cortada. Lo grabado queda pendiente de transcribir y la ficha se marca `cortada`.
   Para distinguirlo de una grabación viva se mira también que el fichero haya crecido en los últimos 15 segundos, porque el número de proceso puede reutilizarse.
 - **Tope:** una grabación no pasa de 4 horas.
 - **Elección de micrófono:** el que se eligió la última vez. Si no, el integrado del Mac. Nunca, por defecto, el del iPhone ni micrófonos virtuales.
 
 ## 3. Transcripción
 
-- **Cuándo:** al terminar, en segundo plano y de una en una (en cola). Se puede seguir trabajando o cerrar la pestaña.
+- **Cuándo:** solo al pulsar *Transcribir* (en la fila del historial o en el detalle del cante). No se hace sola al terminar porque el Mac trabaja a tope varios minutos y gasta batería: decisión del usuario (4 de octubre de 2026).
+  Va en segundo plano y de una en una (en cola); se puede seguir trabajando o cerrar la pestaña. *Cancelar* la detiene y el cante vuelve a quedar pendiente.
+  Al abrir VS Code tampoco se retoman solas las pendientes.
 - **Orden de whisper:**
 
   ```
@@ -80,7 +83,7 @@ Estados: `pendiente` (por transcribir), `transcrito`, `error`.
 - **Historial:** fecha, tema, duración frente al objetivo y palabras por minuto. Al pulsar un cante se ve a la derecha su transcripción, en párrafos de un minuto con su marca de tiempo. Botones:
   - *Escuchar audio*;
   - *Copiar texto*;
-  - *Transcribir*, si quedó pendiente o falló;
+  - *Transcribir*, si está pendiente o falló (también en la fila del historial);
   - *Eliminar*, que borra la ficha y el audio.
 
 ## 6. Ideas para más adelante (no hechas)
