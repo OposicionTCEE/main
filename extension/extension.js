@@ -165,7 +165,7 @@ class Acciones {
       item('Sincronizar con GitHub', 'sync', 'tcee.sincronizar', 'Guarda, trae y sube los cambios de main, temario y progreso'),
       item('Nueva nota', 'note', 'tcee.nota', 'Añade una nota al final de \\modificaciones del tema que elijas'),
       item('Panel Oposición', 'dashboard', 'tcee.panelOposicion', 'Calendario, tiempo restante de todos los temas y relaciones entre temas (se abre en una ventana aparte)'),
-      item('Rehacer informes', 'beaker', 'tcee.rehacerInformes', 'Comprueba qué informes de armonización (pestaña Relaciones) están desactualizados y prepara el encargo para Claude Code'),
+      item('Rehacer informes', 'beaker', 'tcee.rehacerInformes', 'Comprueba qué informes faltan o están desactualizados (armonización de modelos y cobertura de las preguntas de test falladas) y prepara el encargo para Claude Code'),
     ];
   }
 }
@@ -491,9 +491,9 @@ function activate(context) {
 }
 
 /** Ejecuta scripts/armonizacion.js con el Node que trae VS Code (no depende de que haya Node instalado) */
-function armonizacion(raiz, args) {
+function armonizacion(raiz, args, script = 'armonizacion.js') {
   const { execFile } = require('child_process');
-  return new Promise((ok, mal) => execFile(process.execPath, [path.join(raiz, 'main', 'scripts', 'armonizacion.js'), ...args],
+  return new Promise((ok, mal) => execFile(process.execPath, [path.join(raiz, 'main', 'scripts', script), ...args],
     { cwd: raiz, env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }, maxBuffer: 4 << 20 },
     (e, out, err) => (e ? mal(new Error((err || e.message).trim())) : ok(out))));
 }
@@ -501,20 +501,29 @@ function armonizacion(raiz, args) {
 async function rehacerInformes() {
   const raiz = vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0].uri.fsPath;
   if (!raiz) { vscode.window.showWarningMessage('Abre primero el espacio de trabajo TCEE.'); return; }
-  let salida;
+  let salida, salidaCob = '';
   try {
-    salida = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Comprobando los informes de armonización…' },
-      () => armonizacion(raiz, ['estado']));
+    salida = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Comprobando los informes…' },
+      async () => { try { salidaCob = await armonizacion(raiz, ['estado'], 'cobertura.js'); } catch (e) { /* sin banco de test */ } return armonizacion(raiz, ['estado']); });
   } catch (e) { vscode.window.showErrorMessage(`No he podido comprobar los informes: ${e.message}`); return; }
-  const pendientes = salida.split('\n').filter((l) => l.startsWith('  ')).map((l) => l.trim());
-  if (!pendientes.length) { vscode.window.showInformationMessage('Todos los informes de armonización están al día. No hay nada que rehacer.'); return; }
+  const lineas = (t) => t.split('\n').filter((l) => l.startsWith('  ')).map((l) => l.trim());
+  const pendientes = lineas(salida), pendCob = lineas(salidaCob);
+  if (!pendientes.length && !pendCob.length) { vscode.window.showInformationMessage('Los informes de armonización y de cobertura del test están al día. No hay nada que rehacer.'); return; }
   const modelos = pendientes.map((l) => l.split(' — ')[0]);
-  const encargo = `Actualiza los informes de armonización siguiendo main/RELACIONES.md (apartado 4), solo para estos modelos: ${modelos.join('; ')}. `
-    + 'Usa «node main/scripts/armonizacion.js preparar --pendientes», escribe los informes, haz la verificación independiente de los posibles errores '
-    + 'y termina con «node main/scripts/armonizacion.js unir». No modifiques ningún tema. Al acabar, dime qué ha cambiado y sincroniza con GitHub.';
+  const temasCob = pendCob.map((l) => l.split(' — ')[0]);
+  const encargo = [
+    modelos.length ? `Actualiza los informes de armonización siguiendo main/RELACIONES.md (apartado 4), solo para estos modelos: ${modelos.join('; ')}. `
+      + 'Usa «node main/scripts/armonizacion.js preparar --pendientes», escribe los informes, haz la verificación independiente de los posibles errores '
+      + 'y termina con «node main/scripts/armonizacion.js unir».' : '',
+    temasCob.length ? `Analiza la cobertura de las preguntas de test falladas siguiendo main/TEST.md (apartado «Cobertura») para los temas ${temasCob.join(', ')}: `
+      + '«node main/scripts/cobertura.js preparar --errores», escribe los informes y termina con «node main/scripts/cobertura.js unir».' : '',
+    'No modifiques ningún tema. Al acabar, dime qué ha cambiado y sincroniza con GitHub.',
+  ].filter(Boolean).join(' ');
+  const resumen = [pendientes.length ? `Armonización (pestaña Relaciones):\n${pendientes.join('\n')}` : '', pendCob.length ? `Cobertura del test (¿están las preguntas falladas en su tema?):\n${pendCob.join('\n')}` : ''].filter(Boolean).join('\n\n');
+  const n = modelos.length + temasCob.length;
   const elegido = await vscode.window.showInformationMessage(
-    `Hay ${modelos.length} ${modelos.length === 1 ? 'informe' : 'informes'} por rehacer`,
-    { modal: true, detail: `${pendientes.join('\n')}\n\nLos rehace Claude Code (consume uso de tu plan: cuantos más modelos, más). `
+    `Hay ${n} ${n === 1 ? 'informe' : 'informes'} por rehacer`,
+    { modal: true, detail: `${resumen}\n\nLos rehace Claude Code (consume uso de tu plan: cuantos más, más). `
       + 'Copiaré el encargo y abriré Claude Code: solo tendrás que pegarlo (⌘V) y pulsar Intro.' },
     'Copiar encargo y abrir Claude Code');
   if (!elegido) return;

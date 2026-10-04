@@ -424,3 +424,8 @@ button.ts-op:hover:not([disabled]) { border-color: var(--acento); }
 .ts-rev-det { padding: 4px 14px 12px; }
 @media (prefers-reduced-motion: reduce) { .ts-op { transition: none; } }
 .tb-errtest { align-self: flex-start; font-size: .82em; color: var(--vscode-errorForeground, #e5534b); border: 1px solid currentColor; border-radius: 8px; padding: 0 6px; }
+.ts-cob { margin-top: 10px; padding: 8px 12px; border-radius: 4px; border-left: 3px solid var(--apagado); background: color-mix(in srgb, var(--tinta) 5%, transparent); }
+.ts-cob p { margin: 4px 0 0; }
+.ts-cob.cubierta { border-left-color: var(--vscode-charts-green, #3fa266); }
+.ts-cob.desapercibida { border-left-color: var(--vscode-charts-yellow, #d4a72c); }
+.ts-cob.falta, .ts-cob.contradice { border-left-color: var(--vscode-errorForeground, #e5534b); }

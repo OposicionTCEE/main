@@ -45,7 +45,10 @@ function crearTest({ raiz, progreso }) {
     fs.writeFileSync(f, JSON.stringify(mio, null, 1) + '\n');
   }
 
-  return { leerBanco, historial, guardar, borrar, carpeta: () => path.join(raiz(), 'test') };
+  /** Informes de cobertura (main/analisis/cobertura.json): ¿está cada pregunta en su tema? */
+  const cobertura = () => (leer(path.join(raiz(), 'main', 'analisis', 'cobertura.json'), { preguntas: {} }).preguntas || {});
+
+  return { leerBanco, historial, guardar, borrar, cobertura, carpeta: () => path.join(raiz(), 'test') };
 }
 
 module.exports = { crearTest };

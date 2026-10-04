@@ -177,7 +177,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     const enviarHistorial = () => panel.webview.postMessage({ tipo: 'testHistorial', historial: test.historial() });
     try {
       if (m.tipo === 'testCargar') {
-        panel.webview.postMessage({ tipo: 'testDatos', banco: test.leerBanco(), historial: test.historial(),
+        panel.webview.postMessage({ tipo: 'testDatos', banco: test.leerBanco(), historial: test.historial(), cobertura: test.cobertura(),
           imgBase: panel.webview.asWebviewUri(vscode.Uri.file(test.carpeta())).toString(), hayProgreso: progreso.hayCarpeta() });
       } else if (m.tipo === 'testGuardar') { test.guardar(m.sesion); enviarHistorial(); progreso.testCambiado(); alMarcar(); }
       else if (m.tipo === 'testBorrar') {
