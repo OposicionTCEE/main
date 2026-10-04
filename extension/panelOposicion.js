@@ -1,4 +1,4 @@
-// Panel Oposición: pestaña con el tiempo restante de todos los temas, el plan semanal y las relaciones entre temas
+// Panel Oposición: pestaña con el calendario de vueltas, el tiempo restante de todos los temas, el plan semanal y las relaciones entre temas
 'use strict';
 const vscode = require('vscode');
 const fs = require('fs');
@@ -6,6 +6,7 @@ const path = require('path');
 const { codigoTema, tituloTema, indiceTema } = require('./parser');
 const G = require('./progreso');
 const P = require('./plan');
+const { crearCalendarios } = require('./calendarioPanel');
 
 function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
   let panel = null;
@@ -16,6 +17,8 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
   const desarrollos = () => {
     try { return JSON.parse(fs.readFileSync(path.join(raiz(), 'main', 'analisis', 'desarrollos.json'), 'utf8')); } catch (e) { return { por_tema: {}, por_familia: {} }; }
   };
+  const calendarios = crearCalendarios({ ctx: context, progreso, raiz, desarrollos });
+  const minutosDe = () => Object.fromEntries(Object.values(cache || {}).map((t) => [t.codigo, t.minutos]));
 
   async function temas() {
     const uris = await vscode.workspace.findFiles('temario/Ejercicio-*/Parte-*/*/main.tex');
@@ -97,6 +100,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
         historial, nombres,
       },
       relaciones: relaciones(abierto, dev, nombres),
+      calendario: calendarios.vista(cache, minutosDe()),
       mapa: mapa(lista, dev),
     };
   }
@@ -130,6 +134,15 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
 
   async function alMensaje(m) {
     if (m.tipo === 'listo') return enviar();
+    if (m.tipo && m.tipo.startsWith('cal')) {
+      if (!cache) await temas();
+      let r;
+      try { r = calendarios.mensaje(m, cache, minutosDe()); } catch (e) { r = { ok: false, aviso: String(e && e.message || e) }; }
+      if (r.previa) { panel.webview.postMessage({ tipo: 'previa', previa: r.previa }); return; }
+      if (r.aviso) panel.webview.postMessage({ tipo: 'aviso', texto: r.aviso, error: r.ok === false });
+      if (r.ok !== false) enviar();
+      return;
+    }
     if (m.tipo === 'abrir') return irA(m.codigo, m.epigrafe);
     if (m.tipo === 'hecho') { progreso.marcar(m.codigo, !!m.valor); alMarcar(); return; }
     const plan = progreso.leerPlan();
@@ -148,6 +161,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="${url('panel.css')}"><title>Panel Oposición</title></head>
 <body><div id="app"><p class="vacio">Calculando los 110 temas…</p></div>
+<script nonce="${nonce}" src="${url('calendario.js')}"></script>
 <script nonce="${nonce}" src="${url('panel.js')}"></script></body></html>`;
   }
 
