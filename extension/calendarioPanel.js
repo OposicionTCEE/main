@@ -96,7 +96,8 @@ function crearCalendarios({ ctx, progreso, raiz, desarrollos }) {
     });
     return { ...base, activo: cal.id, titulos, cal: { id: cal.id, nombre: cal.nombre, ejercicio: cal.ejercicio, referencia: !!cal.referencia,
       opciones: cal.opciones, diaLibre: cal.diaLibre, cantados: cal.cantados || {}, semanas }, dias,
-      sinCarpeta: prog.temas.filter((x) => !cacheTemas[x.codigo]).map((x) => x.codigo) };
+      sinCarpeta: prog.temas.filter((x) => !cacheTemas[x.codigo]).map((x) => x.codigo),
+      sobrecarga: C.sobrecargadas(cal, hoyIso()).map((x) => x.w) };
   }
 
   /** Aplica un mensaje de la página. Devuelve {ok, aviso?, previa?} */
@@ -112,26 +113,51 @@ function crearCalendarios({ ctx, progreso, raiz, desarrollos }) {
       guardar(cal); ctx.globalState.update('tcee.calActivo', cal.id);
       return { ok: true };
     }
-    if (m.tipo === 'calBorrar') { borrar(m.id); return { ok: true }; }
+    if (m.tipo === 'calBorrar') {
+      const c = todos()[m.id];
+      borrar(m.id);
+      return { ok: true, aviso: c ? `Calendario «${c.nombre}» eliminado.` : undefined };
+    }
 
     const cal = activo();
     if (!cal) return { ok: false, aviso: 'No hay ningún calendario.' };
     cal.librados = cal.librados || {}; cal.estudio = cal.estudio || {}; cal.cantados = cal.cantados || {};
     const pesos = {};
     Object.keys(cacheTemas).forEach((c) => { pesos[c] = minutos[c] || 0; });
+    const hoy = hoyIso();
+    // afinidad del temario actual: solo hace falta para recolocar y ampliar (tarda un par de segundos)
+    const af = ['calPasar', 'calLibrar', 'calAmpliar'].includes(m.tipo) && (m.modo === 'recolocar' || m.accion === 'recolocar' || m.tipo === 'calAmpliar')
+      ? (afinidad(cal.ejercicio, cacheTemas) || {}).af : null;
+    const prog = programa(cal.ejercicio) || { temas: [] };
+    const nombreSemana = (w) => `semana ${w + 1}${cal.semanas[w] && cal.semanas[w].bloque ? ` (${cal.semanas[w].bloque})` : ''}`;
     let r = { ok: true };
     switch (m.tipo) {
-      case 'calLibrar': r = C.librar(cal, m.dia, m.accion, pesos); break;
+      case 'calLibrar': r = C.librar(cal, m.dia, m.accion, pesos, af, hoy); break;
+      case 'calAmpliar': r = C.ampliar(cal, m.modo, af, Object.fromEntries(prog.temas.map((t) => [t.codigo, t.titulo || t.corto])), taxonomia(prog), hoy, Date.now() % 100000); break;
       case 'calEstudiar': C.estudiar(cal, m.dia); break;
       case 'calCante': r = C.moverCante(cal, m.semana, m.dia); break;
       case 'calCantado': if (m.valor) cal.cantados[m.codigo] = hoyIso(); else delete cal.cantados[m.codigo]; break;
       case 'calOrden': C.reordenar(cal, m.semana, m.codigo, m.dir); break;
-      case 'calPasar': C.pasarSiguiente(cal, m.semana, m.codigo, m.modo); break;
+      case 'calPasar':
+        if (m.modo === 'recolocar') { r = C.recolocar(cal, m.semana, m.codigo, af, pesos, hoy); if (r.destino != null) r.aviso = `${m.codigo} pasa a la ${nombreSemana(r.destino)}.`; }
+        else C.pasarSiguiente(cal, m.semana, m.codigo);
+        break;
       default: return { ok: false };
     }
     if (r.ok === false) return { ok: false, aviso: r.motivo };
+    // los nombres de bloque siguen a los temas que tiene cada semana (salvo en calendarios importados, que conservan los suyos)
+    if (['calLibrar', 'calPasar', 'calAmpliar'].includes(m.tipo) && cal.opciones.modo !== 'manual') {
+      const tax = taxonomia(prog);
+      cal.semanas.forEach((s) => { s.bloque = C.bloque(s.temas, tax); });
+    }
     guardar(cal);
-    if (m.tipo === 'calLibrar' && r.movidos && r.movidos.length) r.aviso = `Pasan a la semana siguiente: ${r.movidos.join(', ')}.`;
+    if (m.tipo === 'calLibrar' && r.movidos && r.movidos.length) {
+      r.aviso = m.accion === 'recolocar'
+        ? `Recolocados: ${r.movidos.map((c) => `${c} → ${nombreSemana(r.destinos[c])}`).join('; ')}.`
+        : `Pasan a la semana siguiente: ${r.movidos.join(', ')}.`;
+    }
+    if (m.tipo === 'calAmpliar') r.aviso = m.modo === 'completo'
+      ? `Semanas por venir reorganizadas${r.nuevas > 0 ? ` (${r.nuevas} más)` : ''}.` : `Añadida${r.nuevas > 1 ? 's' : ''} ${r.nuevas} semana${r.nuevas > 1 ? 's' : ''} al final con los temas que sobraban.`;
     return r;
   }
 

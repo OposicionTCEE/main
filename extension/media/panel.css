@@ -187,3 +187,9 @@ i.mini.ok { outline: 1.5px solid var(--tinta); text-decoration: line-through; }
   border: 1px solid var(--borde); box-shadow: 0 4px 14px rgba(0,0,0,.25); }
 .aviso.error { border-color: var(--vscode-errorForeground, #f14c4c); }
 @media (prefers-reduced-motion: no-preference) { .aviso { animation: entra .18s ease-out; } @keyframes entra { from { transform: translateY(8px); opacity: 0; } } }
+
+.cal-sobrecarga { border: 1px solid var(--vscode-editorWarning-foreground, #cca700); border-left-width: 4px; border-radius: 6px;
+  padding: 10px 14px; margin-bottom: 14px; background: color-mix(in srgb, var(--vscode-editorWarning-foreground, #cca700) 8%, transparent); }
+.cal-sobrecarga p { margin: 0; }
+.cal-confirmar { display: inline-flex; align-items: center; gap: 6px; }
+button.peligro { background: var(--vscode-errorForeground, #f14c4c); color: #fff; border-color: transparent; }

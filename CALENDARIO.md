@@ -90,18 +90,34 @@ El calendario de la preparadora **no se usa** al generar: sirvió para fijar los
 
 | Situación | Qué se puede hacer |
 |---|---|
-| Libras un día que tocaba estudiar | **Repartir en la semana**: sus temas se reparten entre los demás días de esa semana. **Pasar a la semana siguiente**: los temas que se estudiaban sobre todo ese día (al menos la mitad del tema) pasan a la semana siguiente. Cada vez se elige entre **absorber** (la semana siguiente tiene más temas y el resto del calendario no se mueve; si una semana queda sobrecargada se avisa) y **desplazar** (todo el calendario corre un puesto y, si hace falta, se añade una semana al final). |
+| Libras un día que tocaba estudiar | Tres opciones. **Repartir en la semana**: sus temas se reparten entre los demás días de esa semana. **Pasar a la semana siguiente**: los temas que se estudiaban sobre todo ese día (al menos la mitad del tema) pasan a la semana siguiente, que los absorbe. **Recolocar donde mejor encajen**: esos temas van a la semana por venir que mejor les corresponda (ver «Recolocar»). |
 | Quieres estudiar en tu día libre | Ese día pasa a ser de estudio y el reparto se recalcula. Un día librado también se puede deshacer. |
 | Cambia el día de cante de una semana | Pulsando un día: «Cantar aquí la semana N» (adelanta el cante) o «Retrasar aquí el cante de la semana N−1» (si el día es de la semana siguiente). Debe quedar entre el cante anterior y el siguiente. Los días de estudio de las dos semanas afectadas se ajustan solos. Si una semana se queda sin días de estudio, se avisa. |
 | Cambiar el orden de estudio dentro de la semana | Un tema se estudia antes o después que otro. |
-| Un tema salta a la semana siguiente | Igual que al librar un día: se elige absorber o desplazar. |
+| Un tema sale de su semana | «A la semana siguiente» (la absorbe) o «Donde mejor encaje» (ver «Recolocar»). |
+| Varias semanas sobrecargadas | Si **dos o más semanas por venir** tienen más temas de los previstos, el calendario recomienda ampliarse (ver «Ampliar»). |
 | Cantar | Cada tema tiene su marca de **cantado**. Una semana está cumplida cuando todos sus temas están cantados. «Cantado» es independiente de «hecho» (listo para estudiar sobre esquema). |
+
+**Recolocar.** El tema sale de su semana y va a la semana por venir con mejor puntuación. Puede ser cualquier semana posterior a la semana en curso, salvo la suya; también una anterior a la suya, si aún no ha empezado. La puntuación es:
+- \+ afinidad media del tema con los temas de esa semana;
+- − 0,15 por cada tema que la semana tendría por encima de los previstos;
+- − 0,2 × exceso de carga de trabajo. La carga es la suma de los pesos de sus temas (apartado 6), comparada con la carga media prevista por semana;
+- − 0,005 por cada semana de distancia, para desempatar a favor de la más cercana.
+
+Dentro de esa semana, el tema se estudia justo después del tema con el que más relación tiene. Solo si no queda ninguna semana posterior se añade una al final.
+
+**Ampliar.** Cuando hay dos o más semanas sobrecargadas, el calendario ofrece dos opciones:
+- **Añadir semanas con los temas que sobran** (reorganización parcial): de cada semana sobrecargada sale el tema que peor encaja en ella (menor afinidad media con sus compañeros), hasta dejarla con los temas previstos. Esos temas forman semanas nuevas al final, agrupadas por afinidad y de tamaño equilibrado.
+- **Reorganizar todas las semanas por venir** (reorganización completa): se rehacen en modo temático con todos sus temas y las semanas que hagan falta, encadenadas a partir de la semana en curso.
+
+En los dos casos, la semana en curso y las pasadas no se tocan, y las semanas nuevas siguen el ritmo semanal desde el último cante que se conserva.
 
 ## 8. Dónde se guarda
 
 - Cada calendario es un fichero en el repositorio **privado** `progreso`, en la carpeta `calendarios/<id>.json`. Se sincroniza con el botón de siempre.
 - El de la preparadora está importado como `calendarios/preparadora-2a-vuelta-3.json`. Se puede ver y usar como cualquier otro, pero no interviene en la generación.
 - Contenido de cada fichero: opciones de creación, semanas (fecha de cante, temas, bloque, orden manual), día libre, días librados, días de estudio extra y temas cantados con su fecha.
+- **Eliminar un calendario** (botón «Eliminar calendario», con confirmación) borra su fichero. Tras sincronizar desaparece también de GitHub. Si hiciera falta recuperarlo, sigue en el historial del repositorio `progreso`.
 
 ## 9. Cómo comprobar o rehacer un calendario sin Claude
 
