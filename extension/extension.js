@@ -237,8 +237,8 @@ function activate(context) {
       vscode.window.showInformationMessage(
         `${ultimo.codigo}: ${G.formatoTiempo(e.minutos)} (${e.pct} %)${e.hecho ? ' · marcado como hecho' : ''}`,
         { modal: true, detail:
-          `Epígrafes vacíos: ${p.vacios} de ${p.vacios + p.llenos} (sin contar Introducción ni Conclusión)\n`
-          + (p.faltan ? `Tema casi sin desarrollar: se suman ${p.faltan} epígrafes que faltan\n` : '')
+          `Epígrafes vacíos: ${p.vacios} de ${p.vacios + p.llenos} (sin contar Introducción, Conclusión ni Preguntas Test)\n`
+          + (p.faltan ? `Tema poco desarrollado (${p.palabras} palabras en el cuerpo): se suman ${p.faltan} epígrafes\n` : '')
           + `Notas pendientes: ${p.notas}\nOJO: ${p.ojo}\n`
           + `Errores OCR/Markdown: ${p.ocr}\nSin PDF en la última compilación: ${p.sinPdf ? 'sí' : 'no'}\n\n`
           + `Tu ritmo: ${ritmo.toFixed(0)} min por unidad de trabajo`
