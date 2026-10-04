@@ -55,22 +55,28 @@ class Indice {
     const codigo = codigoTema(uri.fsPath) || '';
     const titulo = tituloTema(texto);
     this.nodos = indiceTema(texto).map((n) => ({ ...n, uri }));
-    const pon = (lista) => lista.forEach((n) => { n.uri = uri; pon(n.hijos); });
+    // id estable por epígrafe (número + título): mantiene el estado plegado/desplegado entre ediciones
+    const usados = new Map();
+    const pon = (lista) => lista.forEach((n) => {
+      n.uri = uri;
+      const base = `${codigo}|${n.numero || '*'}|${n.titulo}`;
+      const k = (usados.get(base) || 0) + 1; usados.set(base, k);
+      n.id = k > 1 ? `${base}|${k}` : base;
+      pon(n.hijos);
+    });
     pon(this.nodos);
     this.view.title = (titulo && titulo.corto) || codigo || 'Índice';
     this.view.description = codigo + (this.fijado ? '  📌' : '');
-    this.view.message = (titulo && titulo.completo) || undefined;
+    this.view.message = undefined; // sin subtítulo: solo el título del tema
     this._ev.fire();
   }
 
   getTreeItem(n) {
     const t = new vscode.TreeItem(
       `${n.numero ? n.numero + '  ' : ''}${n.titulo}`,
-      !n.hijos.length ? vscode.TreeItemCollapsibleState.None
-        // los epígrafes cuyos hijos son \paragraph empiezan plegados para que el índice no sea interminable
-        : n.hijos.every((h) => h.parrafo) ? vscode.TreeItemCollapsibleState.Collapsed
-        : vscode.TreeItemCollapsibleState.Expanded
+      n.hijos.length ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None
     );
+    t.id = n.id;
     if (n.vacio) { t.iconPath = new vscode.ThemeIcon('circle-large-outline'); t.description = 'vacío'; }
     t.tooltip = `${n.numero} ${n.titulo}${n.vacio ? '\n(sin contenido todavía)' : ''}\nLínea ${n.linea + 1}`;
     t.command = { command: 'tcee.irA', title: 'Ir', arguments: [n.uri, n.linea] };

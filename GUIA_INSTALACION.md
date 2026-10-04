@@ -163,7 +163,7 @@ Claude necesita internet; editar y compilar, no.
 
 ## Paso 10 · Panel TCEE
 
-El panel propio de la oposición: icono **TCEE** en la barra izquierda, con dos ventanas.
+El panel propio de la oposición: icono **TCEE** en la **barra lateral derecha** (si está cerrada, ábrela con `⌥ + ⌘ + B` o con el botón de la barra lateral derecha arriba a la derecha), con dos ventanas: Acciones (1/3) e Índice (2/3).
 
 **Instalarlo o actualizarlo** (una vez, y cada vez que Claude te diga que hay versión nueva):
 1. **Terminal › Ejecutar tarea… › Instalar o actualizar el panel TCEE**.
@@ -173,11 +173,11 @@ El panel propio de la oposición: icono **TCEE** en la barra izquierda, con dos 
 1. Icono de **Extensiones** (cuatro cuadrados) › botón **«…»** arriba del todo › **Instalar desde VSIX…**
 2. Elige `TCEE › main › extension › tcee-panel.vsix` › **Instalar**.
 3. `⌘ + ⇧ + P` › **Desarrollador: Recargar ventana**.
-4. Si sigue sin verse: clic derecho en la barra de iconos de la izquierda y comprueba que **TCEE** está marcado.
+4. Si sigue sin verse: abre la barra lateral derecha (`⌥ + ⌘ + B`) y busca la pestaña **TCEE** arriba.
 
 **Qué hace**
 - **Arriba, Acciones**: *Compilar tema* (el que se ve en el índice) y *Sincronizar con GitHub*.
-- **Abajo, Índice**: el título de la ventana es el título del tema; debajo, en pequeño, el subtítulo.
+- **Abajo, Índice**: el título de la ventana es el título del tema. Todos los epígrafes (hasta los paragraphs) aparecen desplegados.
   Numeración desde Introducción = 1 hasta la Conclusión, y después los anexos (A1, A2…).
   Pulsa un epígrafe para saltar a él. Los epígrafes sin contenido llevan ○ y la palabra *vacío*.
 - **Qué índice se muestra**: el del tema donde está el cursor. Si pasas al PDF o a otra pestaña, se queda el último tema.
