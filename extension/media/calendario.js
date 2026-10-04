@@ -1,6 +1,8 @@
 // Calendario de vueltas (lado de la página). Vista mensual + detalle de la semana y del día + creación de calendarios.
 // Lo usa panel.js: window.TCEE_CAL.pintar(el, D, ctx)
 (function () {
+  // semilla distinta cada vez: cada propuesta (y cada «Otra propuesta») es un sorteo nuevo; queda guardada en el calendario para poder reproducirlo
+  const semillaNueva = () => 1 + Math.floor(Math.random() * 2147483646);
   'use strict';
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const f = (iso) => { const [a, m, d] = iso.split('-').map(Number); return new Date(a, m - 1, d); };
@@ -228,7 +230,7 @@
     q('[data-cal-activar]', (s) => { s.onchange = () => { st.calMes = null; st.calSemana = null; st.calDia = null; ctx.enviar({ tipo: 'calActivar', id: s.value }); }; });
     q('[data-cal-nuevo]', (b) => { b.onclick = () => {
       const prox = new Date(); prox.setDate(prox.getDate() + ((2 - ((prox.getDay() + 6) % 7) + 7) % 7 || 7)); // próximo miércoles
-      st.calForm = { nombre: 'Nueva vuelta, 3er ejercicio', temasSemana: 5, modo: 'tematico', intercalar: true, inicioTipo: 'basico', inicioTema: '3.A.1', primerCante: iso(prox), diaLibre: 5, semilla: 1 };
+      st.calForm = { nombre: 'Nueva vuelta, 3er ejercicio', temasSemana: 5, modo: 'tematico', intercalar: true, inicioTipo: 'basico', inicioTema: '3.A.1', primerCante: iso(prox), diaLibre: 5, semilla: semillaNueva() };
       st.calPrevia = null; rep();
     }; });
     q('[data-cal-mes]', (b) => { b.onclick = () => { const [a, m] = st.calMes.split('-').map(Number); const d = new Date(a, m - 1 + Number(b.dataset.calMes), 1); st.calMes = iso(d).slice(0, 7); rep(); }; });
@@ -269,13 +271,13 @@
       form.onchange = (e) => {
         actualizar();
         if (e.target.name === 'nombre') return;
-        st.calPrevia = null; st.calForm.semilla = 1; rep(); // otra configuración: la vista previa anterior ya no vale
+        st.calPrevia = null; st.calForm.semilla = semillaNueva(); rep(); // otra configuración: la vista previa anterior ya no vale
       };
       el.querySelector('[data-cal-cancelar]').onclick = () => { st.calForm = null; st.calPrevia = null; rep(); };
       el.querySelector('[data-cal-previa]').onclick = () => {
         actualizar();
         if (!/^\d{4}-\d{2}-\d{2}$/.test(st.calForm.primerCante || '')) { form.querySelector('input[name=primerCante]').reportValidity(); return; }
-        if (st.calPrevia) st.calForm.semilla = (st.calForm.semilla || 1) + 1;
+        if (st.calPrevia) st.calForm.semilla = semillaNueva();
         st.calCalculando = true; st.calPrevia = null; rep(); ctx.enviar({ tipo: 'calPrevia', opciones: leerFormEstado() });
       };
       form.onsubmit = (e) => { e.preventDefault(); actualizar(); ctx.enviar({ tipo: 'calCrear', opciones: leerFormEstado() }); st.calForm = null; st.calPrevia = null; st.calMes = null; st.calSemana = null; st.calDia = null; ctx.guardar(); };
