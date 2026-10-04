@@ -279,7 +279,8 @@
     ponerReloj(); tic = setInterval(ponerReloj, 1000);
     el.querySelectorAll('[data-op-id]').forEach((o) => o.onclick = () => marcar(o.dataset.opId));
     el.querySelectorAll('[data-ir]').forEach((o) => o.onclick = () => { run.i = Number(o.dataset.ir); confirmar = false; guardarRun(); });
-    const on = (k, f) => { const x = el.querySelector(`[data-t=${k}]`); if (x) x.onclick = f; };
+    // querySelectorAll: «Terminar» aparece dos veces (barra superior y, en la última pregunta, bajo la pregunta)
+    const on = (k, f) => el.querySelectorAll(`[data-t=${k}]`).forEach((x) => { x.onclick = f; });
     on('ant', () => mover(-1)); on('sig', () => mover(1)); on('blanco', () => { delete run.resp[q.id]; guardarRun(); });
     on('comprobar', () => { run.comprobadas[q.id] = true; guardarRun(); });
     conectarLineas();
