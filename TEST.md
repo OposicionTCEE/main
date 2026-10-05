@@ -114,26 +114,35 @@ Para cada pregunta, Claude lee la pregunta con su respuesta correcta y el tema e
    - No inventar líneas: la línea debe contener el contenido citado.
 4. `node main/scripts/cobertura.js unir`.
 
-## Pendiente: preguntas de la academia (carpeta Test-JC del Escritorio)
+## Preguntas de la academia (carpeta Test-JC del Escritorio)
 
-El usuario quiere hacerlo más adelante en una sesión de Claude en la nube. Ha decidido guardarlas en el repositorio **público** `test`.
-Se le advirtió de que es material de una academia, con derechos de autor, y lo mantuvo.
+El usuario decidió guardarlas en el repositorio **público** `test`. Se le advirtió de que es material de una academia, con derechos de autor, y lo mantuvo.
 
-Estado de la carpeta el 4 de octubre de 2026:
-- 68 PDF, pero unos 25 documentos reales: muchas copias («copia», «1», «2», «SOL 1»…).
-- Unas 1.270 páginas sin duplicados, de las que unas 740 están escaneadas, sin texto.
-- Varios ficheros no se abrían (iCloud sin descargar).
+**Cómo se trabaja.** Desde una sesión de Claude Code en la nube, sin acceso al Mac: el usuario adjunta los PDF en el chat.
+- Cada documento se guarda en `test/jc/<documento>.json`, en la rama `preguntas-jc`.
+- `test/jc/estado.json` lleva los documentos (hechos o pendientes), el gasto estimado y los criterios.
+- Una sesión nueva empieza leyendo ese fichero.
+- Solo al final, con todo revisado, las preguntas se fusionan en `preguntas.json`, con PR.
 
-Procedimiento:
-1. **Quitar duplicados:** mismo contenido o mismo nombre base. Quedarse con la versión con soluciones.
-2. **Extraer el texto:**
-   - páginas con texto: `pdftotext`;
-   - páginas escaneadas: convertirlas a imagen (`pdftoppm -r 150`) y leerlas como imagen.
-3. **Identificar la respuesta correcta:** en los «SOL / CON SOLUCIONES» suele ir resaltada o rodeada, así que hay que mirar la página como imagen.
-   Si no hay solución, la pregunta queda sin `correctas` y se marca para revisar; nunca se inventa.
-4. **Asignar el tema** del programa (`main/config/programa_3.json`).
-5. **Añadirlas a `test/preguntas.json`** con el mismo formato:
-   - `id` nuevo con prefijo `JC`;
-   - `examen`: nombre del documento;
-   - `origen: "academia"`.
-6. **Hacer antes una muestra de 2 documentos** y enseñársela al usuario.
+**Criterios acordados con el usuario (5 de octubre de 2026):**
+1. **Copias:** de cada documento se usa solo la versión con soluciones; las copias se descartan.
+2. **Tablas de respuestas a mano (azul):** son las respuestas del usuario, **no** la solución.
+3. **Soluciones de la academia:** el círculo rojo en la letra.
+   - Se comprueban con el cálculo.
+   - Los desarrollos a mano se resumen en 1-3 líneas en `justificacion`.
+4. **Sin solución fiable:** Claude la resuelve y pone `"solucion": "claude"`, `"revisar": true` y una justificación breve.
+5. **Varias opciones válidas:** si más de una opción cumple el enunciado, la pregunta pasa a `tipo: "multi"` con todas ellas. La justificación explica cada una (JC0107).
+6. **Temas:**
+   - consumo-ocio y oferta de trabajo → 3.A.25;
+   - consumo intertemporal → 3.A.33;
+   - preferencias, utilidad y demanda marshalliana → 3.A.8;
+   - efecto renta y sustitución (Slutsky, Hicks, Giffen) y medidas de bienestar → 3.A.9.
+7. **Erratas:** se corrigen las evidentes (ortografía, símbolos, decimales con coma), nunca los datos ni el sentido.
+8. **Formato:**
+   - `id`: `JC` + documento (2 cifras) + pregunta (2 cifras), p. ej. `JC0203`;
+   - `examen`: «<nombre del cuestionario> (academia)»;
+   - `fecha`: `null`;
+   - `origen`: `"academia"`.
+9. **Simulacro:** cada cuestionario se añade a `examenes` del banco para poder hacerlo entero como simulacro.
+10. **Comprobaciones antes de guardar:** las fórmulas se renderizan con KaTeX y las letras de `correctas` existen en `opciones`.
+
