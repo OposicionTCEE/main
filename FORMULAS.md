@@ -84,3 +84,29 @@ con el mensaje original de MathJax detrás, entre paréntesis (`explicarError` e
   - 3.A.27, línea 773: `\text{\text{…}}` (limitación de MathJax; en el PDF sale bien).
   No se corrigen en los temas sin el visto bueno del usuario.
 - Las órdenes propias definidas fuera del preámbulo del tema no se conocen.
+
+## Imágenes
+
+Al pasar el ratón por una línea con una imagen (`\imagenfit{Fig1.png}{pie}{fuente}`, `\includegraphics[…]{…}` o cualquier `{fichero.png}`)
+se ve la imagen, con su nombre y un enlace «Abrir la imagen». Código: `extension/imagenes.js` y el segundo proveedor de `activarFormulas`.
+
+- Se busca en `Img/` y en la carpeta del tema, sin distinguir mayúsculas (como el Mac), y probando `.png`, `.jpg`, `.jpeg` y `.pdf` si el nombre no lleva extensión.
+- Se ignoran `\href`, `\url` y cualquier dirección `://`.
+- Tamaño: el mismo límite de unos 100.000 caracteres que con las fórmulas. Las imágenes pequeñas van tal cual;
+  las grandes se reducen con `sips` (viene con macOS) a 700, 520, 380 o 260 píxeles hasta que caben
+  (JPEG si no tienen transparencia; PNG si la tienen, porque al pasar a JPEG el fondo transparente puede salir negro).
+  Las reducidas se guardan en el almacenamiento de la extensión y se reutilizan mientras la imagen no cambie (como mucho 400).
+  Si ni así cabe (≈1 % de las imágenes, fotos grandes con transparencia), se enlaza el fichero y la nota dice que se use «Abrir la imagen».
+
+Si no se puede mostrar, la ventanita lo explica:
+- la orden no está definida en el tema (errata como `\imagenit`): sugiere la orden parecida del preámbulo y avisa de que en el PDF no sale;
+- el fichero no existe con esa extensión pero sí con otra (`Fig6.png` ↔ `Fig6.jpeg`);
+- el fichero está en la carpeta `Img` de otro tema (al copiar epígrafes entre temas): dice de cuál;
+- si no, propone hasta tres nombres parecidos de la carpeta `Img`.
+
+En octubre de 2026 se encuentran 564 de 575 referencias a imágenes. Pendiente de que el usuario decida (no se corrige sin su visto bueno):
+- órdenes con errata: 3.B.15 líneas 770 (`\imeganfit`) y 1136 (`\imagenit`), 3.B.18 línea 1269 (`\imagefit`), 4.B.10 línea 1076 (`\imagenfi`);
+- en otro tema: 3.A.24:604 `FlowANDstock.png` y 3.A.35:1238 `MGS_CI.png` (en 3.A.29), 3.B.6:918 y 1081 `IndicePrecios_DIXIT_STIGLITZ.png` (en 3.A.18);
+- otra extensión: 3.B.26:1043 `Fig6.png` (existe `Fig6.jpeg`);
+- no están en ningún sitio: 3.A.11:972 `Esquema_TiempoProduccion.png`; 3.A.29:1492, 1512, 1581 y 1592
+  (`ProcesoEstacionario`, `ACFyPACF`, `Equilibrio_MF`, `JuegosRepetidos_Dilema`); 3.A.30:1169 `CuentaFinanciera.png`.

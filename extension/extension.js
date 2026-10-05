@@ -632,6 +632,40 @@ function activarFormulas(context) {
     },
   }));
 
+  // imágenes (\imagenfit{Fig1.png}{…}{…}, \includegraphics{…}) al pasar el ratón por su línea
+  const I = require('./imagenes');
+  const dirMini = path_.join(context.globalStorageUri.fsPath, 'miniaturas');
+  context.subscriptions.push(vscode.languages.registerHoverProvider({ language: 'latex' }, {
+    async provideHover(doc, pos) {
+      const texto = doc.getText();
+      const r = I.localizar(texto, doc.offsetAt(pos));
+      if (!r) return null;
+      const rango = new vscode.Range(doc.positionAt(r.inicioLinea), doc.positionAt(r.finLinea));
+      const md = new vscode.MarkdownString();
+      md.isTrusted = { enabledCommands: ['vscode.open'] };
+      // errata en el nombre de la orden (p. ej. \imagenit): LaTeX no la conoce y la imagen no sale en el PDF
+      if (!I.ordenDefinida(texto, r.orden)) {
+        const buenas = I.ordenesDeImagen(texto).map((o) => [o, I.distancia(o, r.orden)]).sort((a, b) => a[1] - b[1]);
+        md.appendMarkdown('**⚠ Orden desconocida**\n\n');
+        md.appendText(`La orden \\${r.orden} no está definida en este tema${buenas.length && buenas[0][1] <= 3 ? `: ¿errata de \\${buenas[0][0]}?` : '.'} En el PDF esta imagen no sale.`);
+        md.appendMarkdown('\n\n');
+      }
+      const f = I.resolver(path_.dirname(doc.uri.fsPath), r.nombre);
+      if (f.error) {
+        md.appendMarkdown('**⚠ No se puede mostrar la imagen**\n\n');
+        md.appendText(f.error);
+        return new vscode.Hover(md, rango);
+      }
+      let m;
+      try { m = await I.miniatura(f.fichero, dirMini); } catch (e) { m = { fichero: f.fichero }; }
+      const abrir = `command:vscode.open?${encodeURIComponent(JSON.stringify([vscode.Uri.file(f.fichero)]))}`;
+      md.appendMarkdown(`![${path_.basename(f.fichero)}](${m.uri || vscode.Uri.file(f.fichero).toString()})\n\n`);
+      md.appendMarkdown(`*${path_.basename(f.fichero)}* · [Abrir la imagen](${abrir})`);
+      if (!m.uri) md.appendMarkdown('\n\n*Imagen grande: si no se ve, pulsa «Abrir la imagen».*');
+      return new vscode.Hover(md, rango);
+    },
+  }));
+
   // panel que sigue al cursor (⌘⌥M)
   let panel = null, espera = null;
   const pintar = () => {
