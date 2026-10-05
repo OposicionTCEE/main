@@ -483,6 +483,8 @@ function activate(context) {
   context.subscriptions.push(vscode.commands.registerCommand('tcee.rehacerInformes', rehacerInformes));
 
   // ---- Panel Oposición (pestaña): calendario, tiempo restante de todos los temas y relaciones
+  activarFormulas(context);
+
   const panelOpo = require('./panelOposicion').crear(context, {
     progreso, textoDe, temaMostrado: () => indice.mostrado,
     alMarcar: () => indice.refrescar(),
@@ -570,6 +572,64 @@ async function envolver(macro) {
   }
   // appendText escapa la barra invertida; el texto seleccionado (aunque lleve $ o llaves) se inserta tal cual
   await ed.insertSnippet(new vscode.SnippetString().appendText(`\\${macro}{`).appendVariable('TM_SELECTED_TEXT', '').appendTabstop(0).appendText('}'));
+}
+
+// ---------------------------------------------------------------- Vista previa de fórmulas (formulas.js; reglas en main/FORMULAS.md)
+function activarFormulas(context) {
+  const F = require('./formulas');
+  const cache = new Map();
+  const color = () => ([vscode.ColorThemeKind.Light, vscode.ColorThemeKind.HighContrastLight].includes(vscode.window.activeColorTheme.kind) ? '#1f1f1f' : '#e6e6e6');
+  /** SVG de la fórmula en la posición, o {error}; null si no hay fórmula */
+  const svgEn = (doc, pos) => {
+    const texto = doc.getText();
+    const r = F.localizar(texto, doc.offsetAt(pos));
+    if (!r || !r.tex.trim()) return null;
+    const clave = `${color()}|${r.display}|${r.tex}`;
+    if (!cache.has(clave)) {
+      let v;
+      try { v = { svg: F.dibujar(r.tex, r.display, color(), 1.1, F.macros(texto, r.tex)) }; } catch (e) { v = { error: String(e.message || e) }; }
+      if (cache.size > 80) cache.delete(cache.keys().next().value);
+      cache.set(clave, v);
+    }
+    return { ...cache.get(clave), rango: new vscode.Range(doc.positionAt(r.inicio), doc.positionAt(r.fin)) };
+  };
+
+  // al pasar el ratón
+  context.subscriptions.push(vscode.languages.registerHoverProvider({ language: 'latex' }, {
+    provideHover(doc, pos) {
+      const r = svgEn(doc, pos);
+      if (!r) return null;
+      const md = new vscode.MarkdownString(r.svg
+        ? `![fórmula](data:image/svg+xml;base64,${Buffer.from(r.svg).toString('base64')})`
+        : `*No se puede dibujar esta fórmula:* ${r.error.replace(/[\\`*_[\]]/g, ' ')}`);
+      return new vscode.Hover(md, r.rango);
+    },
+  }));
+
+  // panel que sigue al cursor (⌘⌥M)
+  let panel = null, espera = null;
+  const pintar = () => {
+    const ed = vscode.window.activeTextEditor;
+    if (!panel || !ed || ed.document.languageId !== 'latex') return;
+    const r = svgEn(ed.document, ed.selection.active);
+    const fondo = 'var(--vscode-editor-background)', tinta = 'var(--vscode-foreground)';
+    const cuerpo = !r ? '<p class="nada">Coloca el cursor dentro de una fórmula (por ejemplo, dentro de un \\eqblock).</p>'
+      : r.svg ? `<div class="f">${r.svg}</div>` : `<p class="err">No se puede dibujar esta fórmula:<br>${r.error.replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]))}</p>`;
+    panel.webview.html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:;">
+<style>body{background:${fondo};color:${tinta};font-family:var(--vscode-font-family);padding:16px;overflow:auto}.f{overflow-x:auto}.nada{opacity:.6}.err{color:var(--vscode-errorForeground)}</style></head><body>${cuerpo}</body></html>`;
+  };
+  const programar = () => { clearTimeout(espera); espera = setTimeout(pintar, 200); };
+  context.subscriptions.push(
+    vscode.commands.registerCommand('tcee.vistaFormulas', () => {
+      if (panel) { panel.dispose(); return; }
+      panel = vscode.window.createWebviewPanel('tceeFormula', 'Fórmula', { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true }, { enableScripts: false });
+      panel.onDidDispose(() => { panel = null; });
+      pintar();
+    }),
+    vscode.window.onDidChangeTextEditorSelection((e) => { if (panel && e.textEditor.document.languageId === 'latex') programar(); }),
+    vscode.workspace.onDidChangeTextDocument((e) => { if (panel && vscode.window.activeTextEditor && e.document === vscode.window.activeTextEditor.document) programar(); }),
+    vscode.window.onDidChangeActiveColorTheme(() => { cache.clear(); programar(); }),
+  );
 }
 
 function deactivate() {}

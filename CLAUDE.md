@@ -43,8 +43,8 @@ Cante (`cante.js` + `media/cante.js`): graba con ffmpeg y transcribe con whisper
 audio solo en el Mac. Reglas en `main/CANTE.md` (mantener código y documento a la vez); instalación con `scripts/instalar_cante.sh`.
 Test (`testPanel.js` + `media/test.js`): banco en el repositorio `test` (`TCEE/test/preguntas.json`, un único fichero; mantener los `id`),
 respuestas en el repositorio PRIVADO `progreso/test/<Mac>.json`. Reglas en `main/TEST.md` (mantener código y documento a la vez).
-Atajos en `.tex`: ⌘B/⌘I (`tcee.negrita`/`tcee.cursiva`, envuelven o desenvuelven en `\textbf`/`\textit`); ⌘⌥M abre el panel de vista previa de fórmulas de LaTeX Workshop
-(la vista al pasar el ratón es de LaTeX Workshop, ajustes en `TCEE.code-workspace`).
+Atajos en `.tex`: ⌘B/⌘I (`tcee.negrita`/`tcee.cursiva`, envuelven o desenvuelven en `\textbf`/`\textit`); vista previa de fórmulas propia
+(`formulas.js` + MathJax en `lib/`: al pasar el ratón y ⌘⌥M; empareja bien los `aligned` anidados, a diferencia de LaTeX Workshop, cuya vista previa está apagada). Reglas en `main/FORMULAS.md`.
 Acción Rehacer informes (`tcee.rehacerInformes`): ejecuta `scripts/armonizacion.js estado` y copia el encargo para Claude Code. El progreso guarda además minutos por día (`dias`) en el fichero de cada Mac.
 Calendario de vueltas (pestaña Calendario): reglas y razonamiento en `main/CALENDARIO.md` (mantener código y documento a la vez).
 `calendario.js` (generar semanas temático/correlativo/aleatorio, reparto diario, librar días, mover cante), `afinidad.js` (relaciones entre temas),
