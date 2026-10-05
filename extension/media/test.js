@@ -279,11 +279,11 @@
     ponerReloj(); tic = setInterval(ponerReloj, 1000);
     el.querySelectorAll('[data-op-id]').forEach((o) => o.onclick = () => marcar(o.dataset.opId));
     el.querySelectorAll('[data-ir]').forEach((o) => o.onclick = () => { run.i = Number(o.dataset.ir); confirmar = false; guardarRun(); });
-    const on = (k, f) => { const x = el.querySelector(`[data-t=${k}]`); if (x) x.onclick = f; };
+    const on = (k, f) => el.querySelectorAll(`[data-t=${k}]`).forEach((x) => { x.onclick = f; });
     on('ant', () => mover(-1)); on('sig', () => mover(1)); on('blanco', () => { delete run.resp[q.id]; guardarRun(); });
     on('comprobar', () => { run.comprobadas[q.id] = true; guardarRun(); });
     conectarLineas();
-    on('terminar', () => { confirmar = true; pintarExamen(run); }); on('fin-no', () => { confirmar = false; pintarExamen(run); }); on('fin-si', terminar);
+    on('terminar', () => { confirmar = true; pintarExamen(run); const c = el.querySelector('.ts-confirma'); if (c) c.scrollIntoView({ block: 'nearest' }); }); on('fin-no', () => { confirmar = false; pintarExamen(run); }); on('fin-si', terminar);
   }
   const runActual = () => ctx && st().testRun && !st().testRun.fin ? st().testRun : null;
   function guardarRun() { ctx.guardar(); clearInterval(tic); pintarExamen(st().testRun); }
