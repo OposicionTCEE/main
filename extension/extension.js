@@ -635,6 +635,7 @@ function activarNotas(context) {
     estado.set(ed.document.uri.toString(), contraer);
   };
   // al abrir un tema, una vez: contraídas
+  let ajustando = false;
   const vistos = new Set();
   const alAbrir = (ed) => {
     if (!ed || ed.document.languageId !== 'latex' || ed.document.uri.scheme !== 'file') return;
@@ -655,15 +656,42 @@ function activarNotas(context) {
       const k = ed.document.uri.toString();
       return aplicar(ed, !(estado.get(k) ?? false));
     }),
-    // nueva nota ya escrita en varias líneas, para que se pueda contraer
+    // nueva nota ya escrita en varias líneas, para que se pueda contraer (VS Code añade la sangría de la línea actual)
     vscode.commands.registerCommand('tcee.nuevaNota', () => {
       const ed = vscode.window.activeTextEditor; if (!ed) return;
-      const linea = ed.document.lineAt(ed.selection.active.line).text, sangria = (linea.match(/^[ \t]*/) || [''])[0];
       const dentro = ed.document.getText(ed.selection);
-      const s = new vscode.SnippetString().appendText(`\\footnote{%\n${sangria}    `);
+      const s = new vscode.SnippetString().appendText('\\footnote{%\n    ');
       if (dentro) s.appendText(dentro); else s.appendTabstop(0);
-      s.appendText(`%\n${sangria}}`);
+      s.appendText('\n}');
       return ed.insertSnippet(s);
+    }),
+    // el % tras \footnote{ se pone y se quita solo (NOTAS.md, apartado «El % automático»):
+    //  - si la línea acaba en «\footnote{» y la nota sigue en la línea de abajo, se añade el % (si no, LaTeX vería un espacio tras el número);
+    //  - si tras «\footnote{%» hay texto en la misma línea (al juntar dos líneas), se quita (si no, ese texto quedaría como comentario).
+    vscode.workspace.onDidChangeTextDocument((e) => {
+      const ed = vscode.window.activeTextEditor;
+      if (ajustando || !ed || e.document !== ed.document || e.document.languageId !== 'latex' || !e.contentChanges.length) return;
+      const doc = e.document, lineas = new Set();
+      for (const ch of e.contentChanges) {
+        const n = (ch.text.match(/\n/g) || []).length;
+        for (let l = Math.max(0, ch.range.start.line - 1); l <= Math.min(doc.lineCount - 1, ch.range.start.line + n + 1); l++) lineas.add(l);
+      }
+      const cursores = new Set(ed.selections.map((x) => x.active.line));
+      const cambios = [];
+      for (const l of lineas) {
+        const t = doc.lineAt(l).text;
+        const a = t.match(/^(.*\\footnote\s*(?:\[[^\]]*\])?\{)[ \t]*$/);
+        if (a && !cursores.has(l) && l + 1 < doc.lineCount && !/(^|[^\\])%/.test(a[1])) {
+          cambios.push([new vscode.Range(l, a[1].length, l, t.length), '%']);
+          continue;
+        }
+        const b = t.match(/^(.*\\footnote\s*(?:\[[^\]]*\])?\{)(%[ \t]*)(?=[^\s%])/);
+        if (b && !/(^|[^\\])%/.test(b[1])) cambios.push([new vscode.Range(l, b[1].length, l, b[1].length + b[2].length), '']);
+      }
+      if (!cambios.length) return;
+      ajustando = true;
+      ed.edit((w) => cambios.forEach(([r, x]) => w.replace(r, x)), { undoStopBefore: false, undoStopAfter: false })
+        .then(() => { ajustando = false; }, () => { ajustando = false; });
     }),
   );
   alAbrir(vscode.window.activeTextEditor);
@@ -731,15 +759,12 @@ function activarEscritura(context) {
       if (mc) {
         const rango = new vscode.Range(pos.translate(0, -mc[1].length), pos);
         const vistos = new Set();
+        // solo la paleta (config/colores.json), cada color con su significado al lado, sin pasar el ratón
         const items = paleta().map((c, i) => {
-          vistos.add(c.color);
-          const it = new vscode.CompletionItem({ label: c.color, description: c.significado }, vscode.CompletionItemKind.Color);
-          it.documentation = c.hex; it.detail = c.hex; it.sortText = `0${i}`; it.range = rango; it.preselect = i === 0;
+          const it = new vscode.CompletionItem({ label: c.color, detail: `  → ${c.significado}` }, vscode.CompletionItemKind.Color);
+          it.documentation = c.hex; it.sortText = `0${i}`; it.range = rango; it.preselect = i === 0;
+          it.filterText = c.color;
           return it;
-        });
-        Object.entries(E.XCOLOR).filter(([c]) => !vistos.has(c)).forEach(([c, h]) => {
-          const it = new vscode.CompletionItem({ label: c, description: 'sin significado asignado' }, vscode.CompletionItemKind.Color);
-          it.documentation = h; it.detail = h; it.sortText = `1${c}`; it.range = rango; items.push(it);
         });
         return new vscode.CompletionList(items, false);
       }

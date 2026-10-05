@@ -43,7 +43,7 @@ Pasa a mayúsculas el texto (con acentos y ñ), pero no:
 - Sin selección y con espacio (o nada) a los dos lados: `$|$` con el cursor en medio.
 - Con texto pegado delante o detrás (`a|b`), o tras `\`: un solo `$`.
 - Si justo delante del cursor está el `$` de cierre: se pasa por encima.
-- Con selección: `$selección$`.
+- Con selección: `$selección$`. Si lo seleccionado ya es `$…$`, queda `$$…$$`.
 
 Va en la tecla ⇧4, que es el `$` en los teclados español e inglés.
 
@@ -53,19 +53,21 @@ Va en la tecla ⇧4, que es el `$` en los teclados español e inglés.
   con el cursor en el primer `{}`, y se abre la lista de colores con su significado.
 - En cuanto el color escrito (o elegido) es válido, el cursor salta al segundo `{}`.
   Válidos: los de la paleta y los que `xcolor` conoce sin opciones (red, blue, gray, orange, violet…).
-- Al pasar el ratón por el color se ve su significado. Si no es un color válido (por ejemplo `yellos`), avisa de que dará error.
+- La lista enseña solo los colores de la paleta, cada uno con su significado al lado.
+  Los demás colores de `xcolor` siguen valiendo si se escriben a mano.
+- Al pasar el ratón por el color también se ve su significado. Si no es un color válido (por ejemplo `yellos`), avisa de que dará error.
 - En el editor, el texto de cada `\textcolor` se ve en su color.
 
 Paleta (`config/colores.json`, se puede editar):
 
 | Color | Significado |
 |---|---|
-| magenta | Indicación para Claude: lo que quieres que haga en este punto |
-| red | Pendiente / OJO: nota tuya para completar o corregir |
-| blue | Revisar / preservar: no cambiar sin preguntarte |
-| orange | Duda: dato o afirmación por verificar |
-| green | Revisado y validado |
-| gray | Nota personal: no se recita en el examen |
+| magenta | Indicación para Claude |
+| red | Pendiente / OJO (nota tuya) |
+| blue | Revisar / preservar (no cambiar sin preguntar) |
+| orange | Duda: dato por verificar |
+
+Solo los colores recurrentes en la relación con Claude. Verde y gris se quitaron a petición del usuario.
 
 `red` conserva el uso que ya tenía en el temario: 220 marcas en 65 temas, del tipo «OJO», «Añadir…», «Poner título…».
 Por eso las indicaciones para Claude van en `magenta`. Si fueran en rojo, las notas antiguas se confundirían con órdenes.
@@ -73,8 +75,8 @@ Por eso las indicaciones para Claude van en `magenta`. Si fueran en rojo, las no
 ## \high → \hl{} (resaltado amarillo)
 
 - Al escribir `\hig…` o `\hl`, la sugerencia `\highlight` escribe `\hl{}`. En el editor, el texto de `\hl{…}` lleva fondo amarillo.
-- `\hl` es del paquete `soul`, que **no estaba** en ningún preámbulo (octubre de 2026).
-  `scripts/preambulo_resaltado.js aplicar` añade antes de `\begin{document}`:
+- `\hl` es del paquete `soul`. Se añadió a los 145 preámbulos el 5 de octubre de 2026, con el visto bueno del usuario.
+  Para temas nuevos, `scripts/preambulo_resaltado.js aplicar` lo añade antes de `\begin{document}`:
 
   ```
   \usepackage{soul}\sethlcolor{yellow}
@@ -82,4 +84,5 @@ Por eso las indicaciones para Claude van en `magenta`. Si fueran en rojo, las no
 
   Probado en 3.A.1 con acentos, ñ, `\textbf`, `\textit` y `$x^2$` dentro: corta bien las líneas y no añade errores.
 - Si se usa ⌃H en un tema sin el paquete, aparece un aviso.
+- Probado de nuevo tras añadirlo, en 3.A.1 y 3.B.14: mismo número de errores y de páginas que antes.
 - Límites de `soul`: dentro de `\hl{…}` no puede haber `\footnote`, `\eqblock` ni cambios de párrafo.

@@ -93,10 +93,6 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
    - no están en ningún sitio: 3.A.11 Esquema_TiempoProduccion.png; 3.A.29 ACFyPACF, Equilibrio_MF, JuegosRepetidos_Dilema y ProcesoEstacionario; 3.A.30 CuentaFinanciera.png;
    - órdenes con errata (la imagen no sale): 3.B.15 `\imeganfit` y `\imagenit`, 3.B.18 `\imagefit`, 4.B.10 `\imagenfi`;
    - fórmulas con errata (v0.24): 3.A.13:789 `\rigt.`, 3.A.20:794 `\\[0.5m]`.
-7. **Notas al pie contraíbles** (v0.26): falta el visto bueno del usuario para reescribir las notas antiguas con `scripts/notas_pie.js aplicar`
-   (≈2.900 notas en 106 temas; ver `NOTAS.md`). Hasta entonces solo se pliegan las 861 que ya estaban en varias líneas.
-8. **Resaltado `\hl`** (v0.27): falta el visto bueno para añadir `\usepackage{soul}\sethlcolor{yellow}` a los 145 preámbulos
-   (`scripts/preambulo_resaltado.js aplicar`). Erratas de color que no compilan: `\textcolor{yellos}` (3), `\textcolor{redç}` (1)
-   y 3 `\textcolor{\textbf{…}` sin color.
-9. Revisar con el usuario las semanas más débiles de la propuesta de la 2ª vuelta (`progreso/calendarios/propuesta-2a-vuelta-3.json`), por ejemplo las semanas 5 y 18.
-10. La carpeta `~/TCEE/_antiguos` del Mac se puede borrar cuando el usuario quiera.
+7. Erratas de color que no compilan: `\textcolor{yellos}` (3), `\textcolor{redç}` (1) y 3 `\textcolor{\textbf{…}` sin color.
+8. Revisar con el usuario las semanas más débiles de la propuesta de la 2ª vuelta (`progreso/calendarios/propuesta-2a-vuelta-3.json`), por ejemplo las semanas 5 y 18.
+9. La carpeta `~/TCEE/_antiguos` del Mac se puede borrar cuando el usuario quiera.

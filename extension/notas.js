@@ -62,8 +62,9 @@ function tramos(texto) {
 
 /**
  * Texto con las notas largas reescritas en varias líneas para poder contraerlas:
- *   texto.\footnote{Contenido largo…} resto   →   texto.\footnote{% ⏎ <sangría>    Contenido largo…% ⏎ <sangría>} resto
- * Los % hacen que LaTeX no vea los saltos de línea añadidos: el PDF sale igual.
+ *   texto.\footnote{Contenido largo…} resto   →   texto.\footnote{% ⏎ <sangría>    Contenido largo… ⏎ <sangría>} resto
+ * El % tras la { hace que LaTeX no vea el salto de línea del principio (sí se vería: un espacio tras el número de la nota).
+ * El del final no hace falta (espacio al final de la nota, invisible): el PDF sale igual.
  * Devuelve {texto, cambios: [{linea, añadidas}]} (línea original desde 0 tras la que se añaden líneas), para recolocar referencias a líneas.
  */
 function reescribir(texto, minimo = 80) {
@@ -83,12 +84,12 @@ function reescribir(texto, minimo = 80) {
     if (/^\s*%?[ \t]*\n[ \t]*\n/.test(contenido)) continue;   // empieza con una línea en blanco (cambio de párrafo): no se toca
     const lineaIni = texto.slice(texto.lastIndexOf('\n', n.inicio) + 1, n.inicio);
     const sangria = (lineaIni.match(/^[ \t]*/) || [''])[0];
-    const ultimaLinea = c.slice(c.lastIndexOf('\n') + 1);
-    const terminaEnComentario = /(^|[^\\])%/.test(ultimaLinea);
     // una línea en blanco al final de la nota es un cambio de párrafo (deja un poco de espacio en el PDF): se conserva
     const cola = (contenido.match(/\s*$/) || [''])[0];
     const parrafoFinal = /\n[ \t]*\n/.test(cola);
-    const nuevo = `{%\n${sangria}    ${c}${parrafoFinal ? '\n\n' : terminaEnComentario ? '\n' + sangria + '    %\n' : '%\n'}${sangria}}`;
+    // el salto de línea antes de la } no lleva %: LaTeX lo convierte en un espacio al final de la nota, que no se ve (comprobado);
+    // así, al añadir líneas al final de la nota no queda ningún % que pegue dos palabras
+    const nuevo = `{%\n${sangria}    ${c}${parrafoFinal ? '\n\n' : '\n'}${sangria}}`;
     out += texto.slice(ult, n.llave) + nuevo; ult = n.fin + 1;
     const viejas = (texto.slice(n.llave, n.fin + 1).match(/\n/g) || []).length, nuevas = (nuevo.match(/\n/g) || []).length;
     if (nuevas !== viejas) cambios.push({ linea: linea(n.fin), anadidas: nuevas - viejas, desde: linea(n.llave) });
