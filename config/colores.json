@@ -1,0 +1,25 @@
+{
+ "nota": "Significado de cada color de \\textcolor{color}{texto} en los temas. El Panel TCEE lo enseña en la lista de colores al escribir \\color. Claude lo usa para saber qué hacer con cada marca (ver CLAUDE.md). Reglas: main/ESCRITURA.md",
+ "colores": [
+  {
+   "color": "magenta",
+   "hex": "#d6336c",
+   "significado": "Indicación para Claude"
+  },
+  {
+   "color": "red",
+   "hex": "#e03131",
+   "significado": "Pendiente / OJO (nota tuya)"
+  },
+  {
+   "color": "blue",
+   "hex": "#1c7ed6",
+   "significado": "Revisar / preservar (no cambiar sin preguntar)"
+  },
+  {
+   "color": "orange",
+   "hex": "#f08c00",
+   "significado": "Duda: dato por verificar"
+  }
+ ]
+}

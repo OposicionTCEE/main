@@ -32,7 +32,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 1438,
+     "linea": 1481,
      "nota_verificacion": "El bloque con E^F, E^C y E_{t+1}=αE^F+βE^C (fundamentalistas/chartistas, De GRAUWE-GRIMALDI) lleva el mismo pie 'Burbujas especulativas: Asuencia condición de transverslidad (BLANCHARD)' que la ecuación de BLANCHARD de la línea 1456, con las erratas; además no se impone α+β=1."
     },
     {
@@ -133,7 +133,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 755,
+     "linea": 788,
      "nota_verificacion": "Recuadra ∂m/∂v<0 (debe ser >0); en la derivación de f (l. 794) divide m(u·1,u·θ) por v en lugar de u; y en l. 810 escribe f'(θ)−f(θ)<0 en vez de f'(θ)θ−f(θ)<0, aunque a continuación pone bien la elasticidad <1."
     },
     {
@@ -144,7 +144,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 888,
+     "linea": 939,
      "nota_verificacion": "Dice 'cuanto mayor sea el salario, mayor será el beneficio para la empresa de abrir una vacante', contrario a su propia condición p−w−(r+λ)pc/q(θ)=0 (más w ⇒ menor θ). En l. 879 dice que 'el parámetro p' mide la fuerza negociadora, cuando la ecuación usa β."
     },
     {
@@ -155,7 +155,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 1243,
+     "linea": 1267,
      "nota_verificacion": "Escribe 'v=q(θ̄)u'; con θ=v/u la recta de creación de empleo en (u,v) es v=θ̄u."
     },
     {
@@ -293,7 +293,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 1187,
+     "linea": 1206,
      "nota_verificacion": "(1+δ)²σ_M² se desarrolla como σ_M²+δσ_M²+2δσ_M² (debe ser σ_M²+2δσ_M²+δ²σ_M²); en l. 1206 la varianza de la segunda cartera es σ_M²+δ²r_TEF²+2Cov(r_M,r_f) (debe ser δ²σ_TEF²+2δCov(r_M,r_TEF)); y los incrementos se calculan como inicial−final con denominadores que no cuadran, aunque el resultado final es el correcto."
     },
     {
@@ -488,7 +488,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 966,
+     "linea": 977,
      "nota_verificacion": "Define σ_ij=∂ln(x_i/x_j)/∂ln(p_j/p_i)·(p_i/x_i), con un factor p_i/x_i sobrante, y en l. 962 la elasticidad intersectorial como ∂lnS(p)/∂p−1 en lugar de ∂lnS/∂lnp−1."
     },
     {
@@ -631,7 +631,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 943,
+     "linea": 960,
      "nota_verificacion": "Escribe y_t^d=m_t+p_t, cuando en el anexo (l. 1252) y en las soluciones (1)-(2) es y=m−p; en l. 963-964 habla de componente (no) sistemático 'de la demanda de dinero' cuando se refiere a m_t^s. La varianza de u_t en función de σ_p² es discutible (sale de invertir la relación de equilibrio), pero los dos primeros errores son claros."
     },
     {
@@ -654,7 +654,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 1058,
+     "linea": 1081,
      "nota_verificacion": "La NKPC recuadrada es π_t=βE_t[π_{t+1}|Ω_t] δx_t+e_t, sin '+'; la híbrida (l. 1077) escribe E[π_t+1|Ω_t]. Que β sea allí un peso es convención admisible, pero las erratas son reales."
     },
     {
@@ -674,7 +674,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 690,
+     "linea": 692,
      "nota_verificacion": "Afirma σ_α<σ ∀α∈[0,1] (también en l. 704), lo que con σ_α=σ/(1−α+αω) exige ω>1; la CPO de l. 685 pone C_t^α N_t^φ en vez de C_t^σ N_t^φ; y en l. 964 llama a κ_α 'parámetro de apertura'."
     },
     {
@@ -944,7 +944,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 959,
+     "linea": 965,
      "nota_verificacion": "Define λ=i_t+π_t−g y rotula i+π como r_t; el tipo real es i−π, así que λ≈i−π−g. En l. 997 se dice además 'λ=1+i_t−π_t−g', incoherente con lo anterior."
     },
     {
@@ -955,7 +955,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 964,
+     "linea": 970,
      "nota_verificacion": "Al iterar sustituye b_{t-1}=(1−λ)b_{t-2}+x_{t-1} (y lo mismo en l. 965), debiendo ser 1+λ; en l. 977 escribe b_{t+1}=(1+λ)b_{t-1}+x_t en lugar de b_{t+1}=(1+λ)b_t+x_{t+1}."
     },
     {
@@ -966,7 +966,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 663,
+     "linea": 664,
      "nota_verificacion": "Déficit = iB_t+P_tG_t−P_tG_t (debe restar P_tT_t); en l. 941 escribe 'G_ti_{t-1}B_t' (falta '+' y debería ser B_{t-1}); en l. 1032 la RPG lleva i_tB_t y en l. 1035 se iguala 'X_t=B_t=…'."
     },
     {
@@ -1119,7 +1119,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 1128,
+     "linea": 1190,
      "nota_verificacion": "Escribe 'Óptimo intratemporal: U_c/U_L=w_t', invertido respecto a U_L/U_C=w (l. 746 y l. 1145)."
     },
     {
@@ -1130,7 +1130,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 775,
+     "linea": 796,
      "nota_verificacion": "Dice que el individuo solo ofrece trabajo si U_L/U_C>w; la condición de participación es w>w_A=U_L(R,L_0)/U_C(R,L_0), como reconoce el propio texto en l. 779-780."
     },
     {
@@ -1141,7 +1141,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 918,
+     "linea": 935,
      "nota_verificacion": "La función objetivo es u(c_1,1−L_1)+β(c_2,1−L_2): falta la u del segundo periodo."
     },
     {
@@ -1283,7 +1283,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 884,
+     "linea": 891,
      "nota_verificacion": "Asigna a 'Exportadoras' φ=(F/(B_aN))^{1/(σ−1)} y a 'Domésticas' φ=(F/(B_extN_ext))^{1/(σ−1)}, ambas con Π_d(φ)=0. Las etiquetas están intercambiadas: el umbral con B_ext<B_a (y F_ext) es el de exportación, y debería escribirse con Π_x."
     },
     {
@@ -1294,7 +1294,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 1609,
+     "linea": 1648,
      "nota_verificacion": "Tras c_X^h<c_D^h dice que las empresas que solo venden en casa están en c∈[c_D^h,c_X^h), intervalo invertido; en l. 1623 pone '∀c≥c_X^h' para una condición de exportadoras (c≤c_X^h); y en l. 1414 la CDF es 'C(φ)=Pr(φ_M≤φ)=1−Pr(φ≤φ_M)', mal planteada."
     },
     {
@@ -1789,7 +1789,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 795,
+     "linea": 798,
      "nota_verificacion": "Las cinco propiedades de la FED se numeran (1),(2),(1),(1),(1) (y otra vez en el anexo, l. 1429), pero luego se cita 'la propiedad (v)'. La ley de WALRAS usa \\tilde z en l. 815 y \\hat z en el anexo (l. 1446) para el mismo vector."
     },
     {
@@ -1800,7 +1800,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 1497,
+     "linea": 1516,
      "nota_verificacion": "La anotación de la l.1097 dice 'OJO, la contingencia ya se ha resuelto en t=0' para los mercados spot de t=1, cuando el estado se revela en t=1. En el anexo (l.1496-1497) se maximiza sobre (x_{1i},…,x_{Si})∈R^{LS}_+ y de nuevo (x_{1i},…,x_{Si})∈R^S, cuando la segunda debería ser (z_{1i},…,z_{Si}) como en la l.1110."
     },
     {
@@ -1942,7 +1942,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 861,
+     "linea": 864,
      "nota_verificacion": "3.A.40 l.861: 'disminución de los salarios reales debido al aumento en el corto plazo de la productividad marginal'; con más trabajo y K dado la PMgL cae, que es lo que reduce w. En l.856 se usa 'ER<0' para efecto riqueza (problema menor de notación)."
     },
     {
@@ -2087,7 +2087,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 927,
+     "linea": 929,
      "nota_verificacion": "3.A.38 l.927 recuadra 'Condición de EULER: c_t^J=c_t^V → u(c_t^J)=β u(c_t^V)', sin derivadas ni (1+r); la Euler es u'(c^J)=β(1+r)u'(c^V) y la igualdad de consumos solo con β(1+r)=1."
     },
     {
@@ -2098,7 +2098,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 943,
+     "linea": 945,
      "nota_verificacion": "3.A.38 l.943 y l.967: c_t^J+s_1=(1+τ)w_1, cuando la cotización reduce la renta: (1−τ)w_1. En l.968 el rendimiento del reparto es w_1τ(1+g)(1+n) con (1+g) rotulado 'Transferencias' sin definir (debería ser crecimiento salarial/productividad)."
     },
     {
@@ -2289,7 +2289,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 897,
+     "linea": 905,
      "nota_verificacion": "4.B.11 l.897 y l.901 usan 1−∫_{w_0}^{w_m}f(w)dw, que es 0 sobre todo el soporte (debe ser ∫_{w_i}^{w_m}f=1−F(w_i)). L.892 escribe w_t^α en vez de w_i^α, l.872 pone \\mathrm w en lugar de dw y el pie de l.877 rotula el problema de MIRRLEES como 'esquema lineal'."
     },
     {
@@ -2300,7 +2300,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 919,
+     "linea": 927,
      "nota_verificacion": "4.B.11 l.919 contiene texto OCR corrupto ('aw(-)/aT; = A ar(L,w,'11)/ih;'), la ecuación (47) de l.925 está vacía y hay notas internas en rojo ('OJO -> Aquí se debe reescribir...', l.845 y l.1013)."
     },
     {
@@ -2410,7 +2410,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 768,
+     "linea": 770,
      "nota_verificacion": "4.B.11 l.768 recuadra t_x/t_y=η_x/η_y, pero de t_xη_x=t_yη_y sale t_x/t_y=η_y/η_x (además 'dividiendo por t_y n η_x' es errata). En l.736 la regla de Y se rotula '(X)', en l.727 se justifica con 'u_x≫1' y l.714 escribe 1/Δx=u_x/Δx, confuso."
     },
     {
@@ -2421,7 +2421,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 804,
+     "linea": 813,
      "nota_verificacion": "3.A.20: W (l.797) es excedente bruto menos costes, cuya derivada es (p_i−c_i)dq_i/dp_i, pero la CPO de l.804 tiene −q_i, propia de excedente neto del consumidor (más beneficios); además de esa CPO no se obtiene λ/(1+λ). En l.805 aparecen ε_{p_i,x_i} y ε_{x_i,p_i} a la vez y en l.808 se usa μ en vez de R."
     },
     {
@@ -2546,7 +2546,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 1124,
+     "linea": 1146,
      "nota_verificacion": "3.A.16 l.1124 escribe ∂x(p*+t)/∂t = x(·)·∂(p*+t)/∂t (la función en vez de su derivada) y concluye ∂(p*+t)/∂t=1 (traslación total), contradiciendo el texto posterior; l.1127 recuadra p_x*=x/(x−q), que no es una derivada. Lo correcto es dp*/dt=x'/(Q'−x')."
     },
     {
@@ -2577,7 +2577,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 685,
+     "linea": 703,
      "nota_verificacion": "4.B.8 l.683 define el precio bruto como el de la parte que no paga el impuesto (precio de mercado), pero en l.685, con el impuesto sobre los consumidores, llama precio bruto a los 10,3 $ que pagan estos (que según la definición sería el precio tras impuestos). En el análisis gráfico (l.784-814) P_g es siempre lo que pagan los consumidores."
     },
     {
@@ -2696,7 +2696,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 999,
+     "linea": 1019,
      "nota_verificacion": "3.A.6 l.999: PHILLIPS U=U_n+(1/α)(π−π^e), con signo positivo: la inflación sorpresa subiría el desempleo. Además α se usa también como peso de la inflación en la pérdida, que en l.998 es lineal: (U*−U_t)+α(π*−π_t)."
     },
     {
@@ -2707,7 +2707,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 1023,
+     "linea": 1043,
      "nota_verificacion": "3.A.6 l.1023 dice que las autoridades prefieren el punto B 'situado en una curva de indiferencia interior (peor)'; si lo prefieren, B está en una curva de menor pérdida, es decir, mejor. Es una contradicción interna."
     },
     {
@@ -2718,7 +2718,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 1469,
+     "linea": 1553,
      "nota_verificacion": "3.A.23 l.1469: 'recordar que u'(·)<0: ↓(W−D) ⇒ u'(·)↑'; lo que se usa es la concavidad u''<0 (con u'>0). Las condiciones de l.1449-1450 se escriben sobre U_i y no sobre u(·)."
     },
     {
@@ -2841,7 +2841,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 807,
+     "linea": 824,
      "nota_verificacion": "3.A.5 l.807: BP X(Y*)−mY+φe=β(r−r*) con signo invertido (de XN+β(r−r*)=0 sale XN=β(r*−r)), y l.809 define β∈(0,1) con 1 como movilidad perfecta, cuando esta corresponde a β→∞. En l.765 la IS se escribe Y=C(Y)+Y(r)+G en lugar de I(r)."
     },
     {
@@ -2852,7 +2852,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 813,
+     "linea": 817,
      "nota_verificacion": "3.A.39 l.813: ∂Y/∂G=(1/T)[1+∂(iB)/∂G]; diferenciando G+iB=T(Y) debe ser 1/T'(Y). En l.801 se dice que la monetización desplaza la LM por 'mayor demanda de dinero', cuando es por mayor oferta monetaria."
     },
     {
@@ -3063,7 +3063,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 1261,
+     "linea": 1309,
      "nota_verificacion": "3.A.6 l.1261 escribe p_t=γ/(1+γ)(m_t+γE[m_t]) y l.1266 p_t=E[m_t]+γ/(1+γ)(m_t−E[m_t]); de γ(p−Em)=m−p sale p=(m+γEm)/(1+γ) y coeficiente 1/(1+γ) en la sorpresa. El error se arrastra a la inflación (l.1281 y l.956), mientras que y=γ/(1+γ)(m−Em) es correcta."
     },
     {
@@ -3074,7 +3074,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 1234,
+     "linea": 1279,
      "nota_verificacion": "3.A.6 l.1234 escribe z_t∼N(0,σ_p), cuando la perturbación local tiene varianza σ_z^2 (l.1236). En l.1272 σ_e^2=σ_p^2/(1+γ)^2 está invertida (de p−E[p]=u/(1+γ) sale σ_p^2=σ_u^2/(1+γ)^2), y en l.1288-1290 u_t se rotula 'componente sistemático' y γ 'no sistemático'."
     },
     {
@@ -3190,7 +3190,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 660,
+     "linea": 662,
      "nota_verificacion": "3.A.44 l.660: c_t+\\dot k_t−(n+δ)k_t=Ak_t, incompatible con la ecuación dinámica de l.652 (\\dot k=Ak−(δ+n)k−c), que exige +(n+δ)k_t. En l.669 aparece γ^*=γ_i^*º+n (errata) y el pie de l.672 dice RABELO en lugar de REBELO."
     },
     {
@@ -3546,7 +3546,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 767,
+     "linea": 770,
      "nota_verificacion": "3.B.5 l.767 da salarios p_A a_{LA} y p_M a_{LM}, pero a_{LA} es un requerimiento unitario (FPP de l.755), luego w_A=p_A/a_{LA}. La tabla de l.773-774 asocia a_{LA}/a_{LM}<p_A/p_M con w_A<w_M y L→L_M, lo contrario de lo correcto y de la conclusión de l.778."
     },
     {
@@ -3557,7 +3557,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 848,
+     "linea": 851,
      "nota_verificacion": "La oferta relativa en el tramo vertical se escribe (L/a_{LA})/(L^*/a_{LA}^*), pero si el extranjero está especializado en manufacturas el denominador debe ser L^*/a_{LM}^*. La cota −1 ≤ ε ≤ 0 de la línea 827 no se justifica: la pendiente negativa solo exige ε<0."
     },
     {
@@ -3678,7 +3678,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 711,
+     "linea": 719,
      "nota_verificacion": "La CSO se escribe ∂Π_M/∂Q<0 (es la primera derivada, que la CPO iguala a 0) en lugar de ∂²Π_M/∂Q²<0. En la CPO de la línea 709 aparece P_x^s(Q) cuando el problema se plantea con la demanda inversa P_x^d(Q)."
     },
     {
@@ -3689,7 +3689,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 1158,
+     "linea": 1182,
      "nota_verificacion": "En el caso de complementarios brutos dice que el LERNER es 'menor al caso monoproducto (i.e. mayor que la inversa de la elasticidad)', lo que es contradictorio: debe decir 'menor'. En la línea 826 llama 'sobreremuneración' a un pago k=IMg·PMg < P·PMg, es decir, a una remuneración inferior al valor del producto marginal."
     },
     {
@@ -3700,7 +3700,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 888,
+     "linea": 905,
      "nota_verificacion": "La función objetivo pondera al tipo ineficiente con (1+ν) y le falta la W en el segundo término  en la ecuación desarrollada (línea 910) sí aparece (1−ν). La nota de las CPO atribuye la ausencia de distorsión a la empresa 'ineficiente', y la línea 936 pone Ū≫0, cuando la renta la recibe el tipo eficiente U̲ y la empresa sin distorsión es la eficiente."
     },
     {
@@ -3825,7 +3825,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 766,
+     "linea": 767,
      "nota_verificacion": "Con cambio flexible atribuye el deterioro de la cuenta corriente al 'encarecimiento de las importaciones', cuando la apreciación las abarata y encarece las exportaciones. La línea 767, del apartado 'Cambio fijo', empieza con 'En régimen de Tipo de Cambio Flexible', y la intervención del banco central (comprar divisas para evitar la apreciación) se llama de forma imprecisa 'depreciación artificial'. La caída del TCR es correcta si se define como eP*/P."
     },
     {
@@ -3836,7 +3836,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 754,
+     "linea": 758,
      "nota_verificacion": "El recuadro dice que una devaluación encarece las importaciones y crea 'la necesidad de mayor entrada de capitales' mediante un tipo de interés más alto. Con MARSHALL-LERNER la devaluación mejora la cuenta corriente y basta un tipo de interés menor  además el texto se contradice con la frase siguiente, que dice lo mismo de la apreciación."
     },
     {
@@ -3943,7 +3943,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 724,
+     "linea": 727,
      "nota_verificacion": "Dice que la curva SRD es 'perfectamente elástica respecto al salario real' y que 'solo depende de la PMg_L', cuando es horizontal (perfectamente elástica respecto al empleo) y la ecuación usa PMe_L (iguales solo bajo Y=AL). La línea 730 dice que la expansión mueve la economía 'hacia el origen' de la curva de PHILLIPS, cuando menos paro y más inflación es un movimiento hacia arriba y a la izquierda."
     },
     {
@@ -4070,7 +4070,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 1161,
+     "linea": 1187,
      "nota_verificacion": "Define ω≡σγ+(1+α)(ση−1), cuando en GALÍ-MONACELLI es (1−α). En la línea 1121, C_{F,t}=α(P_{H,t}/P_t)^{−η}C_t usa el precio doméstico en lugar de P_{F,t}."
     },
     {
@@ -4081,7 +4081,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 690,
+     "linea": 692,
      "nota_verificacion": "Con σ_α=σ/(1−α+αω) se afirma σ_α<σ para todo α∈[0,1], pero eso solo se cumple si ω>1 y α>0. La CPO (línea 685) escribe C_t^α en lugar de C_t^σ, y con α→0 (línea 689) da ∂π_H/∂x→σ en vez de κ=λ(σ+φ)."
     },
     {
@@ -4248,7 +4248,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 1143,
+     "linea": 1171,
      "nota_verificacion": "Faltan operadores: la NKPC 'βE_t[π_{t+1}] (sin +) δx_t' (línea 1058) y la regla 'π_t (sin +) φ_y(y_t−y^*)' (línea 1101) no llevan '+', y la híbrida (línea 1077) escribe E[π_t+1]. La condición de unicidad φ+(1−β)/δ>1 omite el coeficiente del output gap (debe ser φ_π+(1−β)φ_x/κ>1). La línea 1170 define el output gap con el PIB nominal."
     },
     {
@@ -4259,7 +4259,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 1155,
+     "linea": 1169,
      "nota_verificacion": "El comentario de la demanda c_t(i)=(P_t(i)/P_t)^{−θ}c_t dice que si sube el precio relativo, sube c_t(i), cuando la demanda es decreciente en él. El supuesto (iv) (línea 1136) dice que solo un conjunto α puede cambiar precios, pero en la fórmula de s_t α es la fracción que no ajusta. En la ZLB (línea 944) pone ρ_t<0⇒β_t>0, cuando debería ser β_t>1."
     },
     {
@@ -4549,7 +4549,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 916,
+     "linea": 931,
      "nota_verificacion": "Escribe d_1=ln[S*/V(I_0)]/(σ√t), sin el término +σ√t/2. Las interpretaciones de las líneas 922-923 ('cuán probable es ganar dinero' para d_1 y 'cuánto influye la opción en el subyacente' para d_2) son erróneas o intercambiadas: N(d_2) es la probabilidad neutral al riesgo de ejercer y N(d_1) es la delta."
     },
     {
@@ -4661,7 +4661,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 719,
+     "linea": 727,
      "nota_verificacion": "El segundo bloque de la ecuación, con las fórmulas de RWA_j y RWA, vuelve a rotularse 'Pérdida esperada'. Corresponde al capital por pérdida inesperada (en 3.B.26 está bajo 'Capital regulatorio: Pérdidas inesperadas')."
     },
     {
@@ -5160,7 +5160,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 747,
+     "linea": 762,
      "nota_verificacion": "En SHAPIRO-STIGLITZ dice que los trabajadores 'son aversos al riesgo'. En el modelo original son neutrales al riesgo, coherente con las utilidades lineales u=w−ē que usa el propio tema."
     },
     {
@@ -5410,7 +5410,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 983,
+     "linea": 1011,
      "nota_verificacion": "La cuarta observación lleva la etiqueta ∂M^d/∂W>0 pero explica W_H/W, y la quinta (línea 984) lleva ∂M^d/∂(W_H/W)>0 pero repite la explicación de la riqueza. En la línea 1002 se escribe 1/V=g(,π^e) sin r."
     },
     {
