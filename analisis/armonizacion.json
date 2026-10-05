@@ -674,7 +674,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 692,
+     "linea": 1549,
      "nota_verificacion": "Afirma σ_α<σ ∀α∈[0,1] (también en l. 704), lo que con σ_α=σ/(1−α+αω) exige ω>1; la CPO de l. 685 pone C_t^α N_t^φ en vez de C_t^σ N_t^φ; y en l. 964 llama a κ_α 'parámetro de apertura'."
     },
     {
@@ -4070,7 +4070,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 1187,
+     "linea": 1176,
      "nota_verificacion": "Define ω≡σγ+(1+α)(ση−1), cuando en GALÍ-MONACELLI es (1−α). En la línea 1121, C_{F,t}=α(P_{H,t}/P_t)^{−η}C_t usa el precio doméstico en lugar de P_{F,t}."
     },
     {
@@ -4081,7 +4081,7 @@
      ],
      "error": true,
      "verificacion": "confirmado",
-     "linea": 692,
+     "linea": 1549,
      "nota_verificacion": "Con σ_α=σ/(1−α+αω) se afirma σ_α<σ para todo α∈[0,1], pero eso solo se cumple si ω>1 y α>0. La CPO (línea 685) escribe C_t^α en lugar de C_t^σ, y con α→0 (línea 689) da ∂π_H/∂x→σ en vez de κ=λ(σ+φ)."
     },
     {
