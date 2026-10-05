@@ -87,13 +87,11 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
    al usuario y esperar su visto bueno; tras corregir, actualizar los informes (`RELACIONES.md`, apartado 4).
 4. **Limpieza de Markdown y OCR pegados**: hay unas 986 etiquetas `[Seguro]/[Probable]/[Suposición]` en 14 temas, `**` en 9, `�` en 35 y `#` sueltos en 20. Hay que enseñar los cambios al usuario antes de aplicarlos.
 5. **Temas que no generan PDF**: 3.A.9, 3.B.13, 3.B.18, 3.B.43, 4.B.15 y 4.B.25 (ver `ESTADO_COMPILACION.md`).
-6. **Imágenes referenciadas que faltan** (probablemente solo estaban en Overleaf):
-   - 3.A.11: Esquema_TiempoProduccion.png
-   - 3.A.24: FlowANDstock.png
-   - 3.A.29: ACFyPACF.png, Equilibrio_MF.png, JuegosRepetidos_Dilema.png, ProcesoEstacionario.png
-   - 3.A.30: CuentaFinanciera.png
-   - 3.A.35: MGS_CI.png
-   - 3.B.6: IndicePrecios_DIXIT_STIGLITZ.png
-   - 3.B.26: Fig6.png
+6. **Imágenes referenciadas que faltan** (probablemente solo estaban en Overleaf). La ventanita de imágenes (v0.25) lo explica al pasar el ratón; lista completa en `FORMULAS.md`, apartado «Imágenes»:
+   - están en otro tema: FlowANDstock.png de 3.A.24 y MGS_CI.png de 3.A.35 (en 3.A.29); IndicePrecios_DIXIT_STIGLITZ.png de 3.B.6 (en 3.A.18);
+   - otra extensión: 3.B.26 Fig6.png (existe Fig6.jpeg);
+   - no están en ningún sitio: 3.A.11 Esquema_TiempoProduccion.png; 3.A.29 ACFyPACF, Equilibrio_MF, JuegosRepetidos_Dilema y ProcesoEstacionario; 3.A.30 CuentaFinanciera.png;
+   - órdenes con errata (la imagen no sale): 3.B.15 `\imeganfit` y `\imagenit`, 3.B.18 `\imagefit`, 4.B.10 `\imagenfi`;
+   - fórmulas con errata (v0.24): 3.A.13:789 `\rigt.`, 3.A.20:794 `\\[0.5m]`.
 7. Revisar con el usuario las semanas más débiles de la propuesta de la 2ª vuelta (`progreso/calendarios/propuesta-2a-vuelta-3.json`), por ejemplo las semanas 5 y 18.
 8. La carpeta `~/TCEE/_antiguos` del Mac se puede borrar cuando el usuario quiera.
