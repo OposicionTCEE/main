@@ -203,6 +203,9 @@ El panel propio de la oposición: icono **TCEE** en la **barra lateral derecha**
   *Test*: practica el primer ejercicio por tema o bloque, con simulacros (examen oficial o mezclado, con tiempo), repasando las falladas
   o al azar; corrección al momento o al final, con la penalización del examen (error −1/3). Guarda tus respuestas y muestra tu acierto por bloque.
   El banco de preguntas se descarga al pulsar *Sincronizar*. Detalles en [TEST.md](TEST.md).
+- **Atajos en los `.tex`**: **⌘B** pone el texto seleccionado en negrita (`\textbf{…}`) y **⌘I** en cursiva (`\textit{…}`); si ya lo estaba, lo quita.
+  Sin seleccionar nada, escribe la orden con el cursor dentro. Al pasar el ratón por una fórmula se ve dibujada (como en Overleaf);
+  **⌘⌥M** abre un panel que dibuja la fórmula donde está el cursor mientras escribes.
 - **Abajo, Índice**: el título de la ventana es el título del tema. Todos los epígrafes (hasta los paragraphs) aparecen desplegados.
   Numeración desde Introducción = 1 hasta la Conclusión, y después los anexos (A1, A2…).
   Pulsa un epígrafe para saltar a él. Los epígrafes sin contenido llevan ○ y la palabra *vacío*.

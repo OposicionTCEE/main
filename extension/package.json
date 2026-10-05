@@ -2,7 +2,7 @@
   "name": "tcee-panel",
   "displayName": "Panel TCEE",
   "description": "Panel de trabajo para los temas de la oposición TCEE: acciones, tiempo restante, índice, calendario, relaciones y cante.",
-  "version": "0.21.1",
+  "version": "0.22.0",
   "publisher": "oposiciontcee",
   "license": "UNLICENSED",
   "repository": {
@@ -114,6 +114,16 @@
         "title": "Panel Oposición",
         "category": "TCEE",
         "icon": "$(dashboard)"
+      },
+      {
+        "command": "tcee.negrita",
+        "title": "Negrita (\\textbf)",
+        "category": "TCEE"
+      },
+      {
+        "command": "tcee.cursiva",
+        "title": "Cursiva (\\textit)",
+        "category": "TCEE"
       }
     ],
     "menus": {
@@ -155,6 +165,26 @@
           "when": "false"
         }
       ]
-    }
+    },
+    "keybindings": [
+      {
+        "command": "tcee.negrita",
+        "key": "ctrl+b",
+        "mac": "cmd+b",
+        "when": "editorTextFocus && !editorReadonly && editorLangId == latex"
+      },
+      {
+        "command": "tcee.cursiva",
+        "key": "ctrl+i",
+        "mac": "cmd+i",
+        "when": "editorTextFocus && !editorReadonly && editorLangId == latex"
+      },
+      {
+        "command": "latex-workshop.toggleMathPreviewPanel",
+        "key": "ctrl+alt+m",
+        "mac": "cmd+alt+m",
+        "when": "editorTextFocus && editorLangId == latex"
+      }
+    ]
   }
 }

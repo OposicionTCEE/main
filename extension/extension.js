@@ -374,6 +374,11 @@ function activate(context) {
     }),
     vscode.commands.registerCommand('tcee.refrescar', () => indice.refrescar()),
 
+    // ⌘B / ⌘I en un .tex: envuelve cada selección en \textbf{…} / \textit{…}; si ya lo está, lo quita.
+    // Sin selección, escribe \textbf{} con el cursor dentro.
+    vscode.commands.registerCommand('tcee.negrita', () => envolver('textbf')),
+    vscode.commands.registerCommand('tcee.cursiva', () => envolver('textit')),
+
     vscode.commands.registerCommand('tcee.compilar', async () => {
       const uri = indice.mostrado;
       if (!uri) { vscode.window.showInformationMessage('Abre primero el main.tex de un tema.'); return; }
@@ -535,6 +540,36 @@ async function rehacerInformes() {
   if (abrir) { try { await vscode.commands.executeCommand(abrir); } catch (e) { /* se abre a mano */ } }
   vscode.window.showInformationMessage(abrir ? 'Encargo copiado: pégalo (⌘V) en Claude Code y pulsa Intro.'
     : 'Encargo copiado. Abre Claude Code, pégalo (⌘V) y pulsa Intro.');
+}
+
+/** Envuelve (o desenvuelve) las selecciones del editor activo en \<macro>{…} */
+async function envolver(macro) {
+  const ed = vscode.window.activeTextEditor;
+  if (!ed) return;
+  const rx = new RegExp(`^\\\\${macro}\\{([\\s\\S]*)\\}$`);
+  const sels = ed.selections;
+  const textos = sels.map((s) => ed.document.getText(s));
+  // ya envueltas todas (y no vacías): se quita la orden
+  if (textos.every((t) => t && rx.test(t))) {
+    await ed.edit((e) => sels.forEach((s, i) => e.replace(s, textos[i].match(rx)[1])));
+    return;
+  }
+  // también si la selección es el contenido de \macro{…}: se quita la orden de alrededor
+  const doc = ed.document;
+  const rodea = sels.map((s) => {
+    if (s.isEmpty) return null;
+    const ini = doc.offsetAt(s.start), fin = doc.offsetAt(s.end), pre = `\\${macro}{`;
+    if (ini < pre.length) return null;
+    const antes = doc.getText(new vscode.Range(doc.positionAt(ini - pre.length), s.start));
+    const despues = doc.getText(new vscode.Range(s.end, doc.positionAt(fin + 1)));
+    return antes === pre && despues === '}' ? new vscode.Range(doc.positionAt(ini - pre.length), doc.positionAt(fin + 1)) : null;
+  });
+  if (rodea.every(Boolean)) {
+    await ed.edit((e) => rodea.forEach((r, i) => e.replace(r, textos[i])));
+    return;
+  }
+  // appendText escapa la barra invertida; el texto seleccionado (aunque lleve $ o llaves) se inserta tal cual
+  await ed.insertSnippet(new vscode.SnippetString().appendText(`\\${macro}{`).appendVariable('TM_SELECTED_TEXT', '').appendTabstop(0).appendText('}'));
 }
 
 function deactivate() {}
