@@ -95,7 +95,9 @@ function macros(texto, tex) {
     if (b < 0) continue;
     const nombre = m[1] || m[5];
     if (!new RegExp(`\\${nombre}(?![A-Za-z])`).test(tex)) { rx.lastIndex = b; continue; }
-    const cuerpo = pre.slice(a + 1, b);
+    let cuerpo = pre.slice(a + 1, b);
+    // órdenes de tipografía del documento (\fontfamily{…}\selectfont, \fontsize…) que MathJax no conoce: se quedan solo con el texto
+    if (/\\(fontfamily|selectfont|fontsize|usefont|fontseries|fontshape)\b/.test(cuerpo)) cuerpo = m[2] ? '\\textrm{#1}' : '';
     defs.push(m[1] ? `\\newcommand{${nombre}}${m[2] || ''}${m[3] || ''}{${cuerpo}}` : `\\newcommand{${nombre}}{\\operatorname${m[4] ? '*' : ''}{${cuerpo}}}`);
     rx.lastIndex = b;
   }
@@ -107,12 +109,66 @@ let motor = null;
 function dibujar(tex, display, colorTexto, escala = 1.1, prefijo = '') {
   if (!motor) motor = require('./lib/mathjax-svg.js');   // se carga la primera vez (≈1,7 MB)
   let s;
-  const limpia = sinComentarios(tex).trim();
-  try { s = motor.svg(prefijo + limpia, display); } catch (e) { if (!prefijo) throw e; s = motor.svg(limpia, display); }
+  // medidas de página que MathJax no conoce (\rule{\displaywidth}{…}): se sustituyen por un ancho fijo
+  const limpia = sinComentarios(tex).trim().replace(/\\(displaywidth|linewidth|textwidth|columnwidth|hsize)(?![A-Za-z])/g, '30em');
+  try { s = motor.svg(prefijo + limpia, display); } catch (e) {
+    let e2 = e;
+    if (prefijo) { try { s = motor.svg(limpia, display); } catch (x) { e2 = x; } }
+    if (!s) {
+      // en modo normal una orden desconocida (p. ej. la errata \rigt) no falla y provoca un error engañoso más adelante;
+      // en modo estricto falla justo en ella: si es eso, se informa de la causa de verdad
+      try { motor.svg(prefijo + limpia, display, true); } catch (x) {
+        if (/Undefined control sequence/.test(x.message) && !/Undefined control sequence/.test(e2.message)) throw x;
+      }
+      throw e2;
+    }
+  }
   // MathJax mide en ex; se pasa a píxeles (1 ex ≈ 8 px) para que el tamaño sea predecible en la ventanita
   s = s.replace(/(width|height)="([\d.]+)ex"/g, (x, k, v) => `${k}="${(parseFloat(v) * 8 * escala).toFixed(1)}px"`)
     .replace(/currentColor/g, colorTexto);
-  return s;
+  return compactar(s);
 }
 
-module.exports = { localizar, entorno, macros, dibujar, cierre, sinComentarios };
+/** Quita del SVG lo que no hace falta para verlo (atributos de accesibilidad y decimales sobrantes): ≈15 % menos */
+const compactar = (svg) => svg.replace(/\s(data-[a-z-]+|role|focusable|aria-hidden)="[^"]*"/g, '').replace(/(\d+\.\d)\d+/g, '$1');
+
+/** Mensajes de MathJax traducidos a algo que se entienda al leerlo (el original va detrás, entre paréntesis) */
+const ERRORES = [
+  [/Missing \\begin\{(\w+\*?)\} or extra \\end\{\1\}/, (m) => `Sobra un \\end{${m[1]}} o falta su \\begin{${m[1]}}.`],
+  [/Missing \\end\{(\w+\*?)\}|\\begin\{(\w+\*?)\} ended with/, (m) => `Falta cerrar un entorno con \\end{${m[1] || m[2]}}.`],
+  [/Extra close brace or missing open brace/, () => 'Sobra una llave de cierre «}» o falta una de apertura «{».'],
+  [/Missing close brace/, () => 'Falta una llave de cierre «}».'],
+  [/Extra open brace or missing close brace/, () => 'Sobra una llave de apertura «{» o falta una de cierre «}».'],
+  [/Undefined control sequence (\\\w+)/, (m) => `La orden ${m[1]} no existe: ¿errata, o está definida fuera del preámbulo de este tema?`],
+  [/'(\d*\.?\d+)\s*([a-z]+)' is not a valid dimension|Bracket argument to \\\\ must be a dimension/, (m) => m[1] ? `«${m[1]}${m[2]}» no es una medida válida: «${m[2]}» no es una unidad (usa em, ex, pt, mm o cm, por ejemplo «${m[1]}em»).` : 'Tras un salto de línea «\\\\», el corchete debe llevar una medida, por ejemplo «\\\\[0.5em]». Si la línea siguiente empieza por «[», escribe «\\\\ {[}» o «\\\\ \\relax [».'],
+  [/\\text is only supported in math mode/, () => 'Hay un \\text{…} dentro de otro \\text{…}. LaTeX lo admite, pero la vista previa (MathJax) no: quita el \\text exterior o cierra el primero antes de abrir el segundo. El PDF no se ve afectado.'],
+  [/(\\\w+) is only supported in math mode/, (m) => `${m[1]} solo puede usarse dentro de una fórmula, y aquí está en modo texto (por ejemplo, dentro de un \\text{…}).`],
+  [/Missing dimension|Missing or unrecognized delimiter for (\\\w+)/, (m) => m[1] ? `Falta o no se reconoce el delimitador de ${m[1]} (por ejemplo «\\left(» … «\\right)» o «\\right.»).` : 'Falta una medida con unidades (por ejemplo «0.5em» o «2pt»).'],
+  [/extra \\left|missing \\right|extra \\right|missing \\left/i, () => 'Los \\left y \\right no están emparejados: cada \\left necesita su \\right (vale «\\right.» si no quieres delimitador).'],
+  [/Misplaced &/, () => 'Hay un «&» fuera de un entorno de alineación (aligned, cases, array…).'],
+  [/Double (sub|super)scripts/, (m) => `Hay dos ${m[1] === 'sub' ? 'subíndices' : 'superíndices'} seguidos sobre lo mismo: agrúpalos entre llaves, por ejemplo x_{i}_{j} → x_{ij}.`],
+  [/Math input error|TeX parse error/, () => 'La fórmula tiene un error de escritura.'],
+];
+function explicarError(msg, tex = '') {
+  const m0 = String(msg || '');
+  // salto de línea con medida mal escrita: se cita la que falla (p. ej. «\\\\[0.5m]»)
+  if (/Bracket argument/.test(m0)) {
+    const d = [...String(tex).matchAll(/\\\\\s*\[\s*([\d.]*)\s*([A-Za-z]*)\s*\]/g)].find((x) => !/^(em|ex|pt|mm|cm|in|pc|bp|mu|px)$/.test(x[2]));
+    if (d) return `En «\\\\[${d[1]}${d[2]}]» ${d[2] ? `«${d[2]}» no es una unidad` : 'falta la unidad'}: usa em, ex, pt, mm o cm, por ejemplo «\\\\[${d[1] || '0.5'}em]». (MathJax: ${m0})`;
+  }
+  // \text dentro de \text: se cita el fragmento
+  if (/\\text is only supported/.test(m0)) {
+    const rx = /\\text\s*\{/g; let x;
+    while ((x = rx.exec(tex))) {
+      const b = cierre(tex, x.index + x[0].length - 1), dentro = b > 0 ? tex.slice(x.index + x[0].length, b) : '';
+      if (/\\text\s*\{/.test(dentro)) {
+        const frag = tex.slice(x.index, b + 1).replace(/\s+/g, ' ');
+        return `Hay un \\text{…} dentro de otro: «${frag.length > 90 ? frag.slice(0, 87) + '…' : frag}». LaTeX lo admite, pero la vista previa (MathJax) no: quita el \\text exterior o cierra el primero antes de abrir el segundo. El PDF no se ve afectado. (MathJax: ${m0})`;
+      }
+    }
+  }
+  for (const [rx, f] of ERRORES) { const m = m0.match(rx); if (m) return `${f(m)} (MathJax: ${m0})`; }
+  return `No se puede interpretar la fórmula. (MathJax: ${m0})`;
+}
+
+module.exports = { localizar, entorno, macros, dibujar, compactar, explicarError, cierre, sinComentarios };
