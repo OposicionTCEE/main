@@ -2,7 +2,7 @@
   "name": "tcee-panel",
   "displayName": "Panel TCEE",
   "description": "Panel de trabajo para los temas de la oposición TCEE: acciones, tiempo restante, índice, calendario, relaciones y cante.",
-  "version": "0.25.0",
+  "version": "0.26.0",
   "publisher": "oposiciontcee",
   "license": "UNLICENSED",
   "repository": {
@@ -20,6 +20,16 @@
     "onStartupFinished"
   ],
   "contributes": {
+    "configuration": {
+      "title": "Panel TCEE",
+      "properties": {
+        "tcee.notasContraidasAlAbrir": {
+          "type": "boolean",
+          "default": true,
+          "description": "Al abrir un tema, contraer las notas al pie (\\footnote) escritas en varias líneas."
+        }
+      }
+    },
     "viewsContainers": {
       "secondarySidebar": [
         {
@@ -129,6 +139,26 @@
         "command": "tcee.vistaFormulas",
         "title": "Vista previa de la fórmula (sigue al cursor)",
         "category": "TCEE"
+      },
+      {
+        "command": "tcee.notasAlternar",
+        "title": "Contraer o expandir las notas al pie",
+        "category": "TCEE"
+      },
+      {
+        "command": "tcee.notasContraer",
+        "title": "Contraer las notas al pie",
+        "category": "TCEE"
+      },
+      {
+        "command": "tcee.notasExpandir",
+        "title": "Expandir las notas al pie",
+        "category": "TCEE"
+      },
+      {
+        "command": "tcee.nuevaNota",
+        "title": "Insertar nota al pie (contraíble)",
+        "category": "TCEE"
       }
     ],
     "menus": {
@@ -189,6 +219,18 @@
         "key": "ctrl+alt+m",
         "mac": "cmd+alt+m",
         "when": "editorTextFocus && editorLangId == latex"
+      },
+      {
+        "command": "tcee.notasAlternar",
+        "key": "ctrl+alt+shift+n",
+        "mac": "ctrl+cmd+n",
+        "when": "editorTextFocus && editorLangId == latex"
+      },
+      {
+        "command": "tcee.nuevaNota",
+        "key": "ctrl+alt+shift+f",
+        "mac": "ctrl+cmd+shift+n",
+        "when": "editorTextFocus && !editorReadonly && editorLangId == latex"
       }
     ]
   }
