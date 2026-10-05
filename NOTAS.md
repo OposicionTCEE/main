@@ -7,9 +7,9 @@ y `scripts/notas_pie.js` (pasa las notas antiguas a la forma contraíble). Mante
 
 - Al abrir un tema, las notas al pie salen **contraídas**: solo se ve `\footnote{%` y un `⋯`. Se desactiva con el ajuste
   `tcee.notasContraidasAlAbrir`. La nota donde está el cursor no se contrae.
-- **⌃⌘N** contrae o expande todas las notas del tema. También: *TCEE: Contraer las notas al pie* / *Expandir las notas al pie*.
+- **⌘⌥N** contrae o expande todas las notas del tema. También: *TCEE: Contraer las notas al pie* / *Expandir las notas al pie*.
 - Una nota suelta se abre o cierra con la flecha del margen, junto al número de línea, como cualquier bloque.
-- **⌃⇧⌘N** inserta una nota nueva ya en forma contraíble (si hay texto seleccionado, lo mete dentro).
+- **⌘⌥⇧N** inserta una nota nueva ya en forma contraíble (si hay texto seleccionado, lo mete dentro).
 
 ## Por qué hay que escribirlas en varias líneas
 

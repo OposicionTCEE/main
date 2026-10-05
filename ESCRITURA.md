@@ -9,12 +9,17 @@ Código: `extension/escritura.js` (funciones puras, probadas fuera de VS Code), 
 |---|---|
 | ⌘B / ⌘I | Negrita / cursiva (ver abajo) |
 | ⌃H | Resaltado amarillo `\hl{…}`, con la misma lógica que ⌘B |
-| ⌃U | Mayúsculas de la selección (o de la palabra del cursor) |
-| ⌃⌘A | Ventana con todos los atajos del Panel TCEE; se cierra con Esc |
-| ⌃⌘N / ⌃⇧⌘N | Notas al pie (ver `NOTAS.md`) |
+| ⌘⌥U | Mayúsculas de la selección (o de la palabra del cursor) |
+| ⌃C | Rodear la selección de color: `\textcolor{|}{selección}`, con la lista de colores abierta; al elegir el color, el cursor sale detrás |
+| ⌘⌥K | Ventana con todos los atajos del Panel TCEE; se cierra con Esc. También en la acción «Atajos» del panel |
+| ⌘⌥N / ⌘⌥⇧N | Notas al pie (ver `NOTAS.md`) |
 | ⌘⌥M | Panel de la fórmula (ver `FORMULAS.md`) |
 
-En Windows/Linux: Ctrl+Alt+H, Ctrl+Alt+U, Ctrl+Alt+Shift+A.
+En Windows/Linux: Ctrl+Alt+H, Ctrl+Alt+U, Ctrl+Alt+C, Ctrl+Alt+Shift+A.
+Atajos cambiados tras probarlos en el Mac del usuario: ⌃⌘A abría la ventana de agentes de VS Code, ⌃⌘N abría una pestaña y ⌃U no hacía nada
+(algo de su VS Code los captura antes). Se pasaron a ⌘⌥ + letra, como ⌘⌥M, que sí funcionaba.
+En la ventana de atajos, el botón ⚙ de cada fila abre los atajos de VS Code filtrados por esa orden para cambiarlo; la ventana enseña
+los atajos cambiados así (lee `keybindings.json` del usuario). Además hay un botón «⌨ Atajos» en la barra inferior al editar un `.tex`.
 ⌃H sustituye, solo en los `.tex`, al «borrar a la izquierda» de macOS.
 
 La ventana de atajos se construye con los `keybindings` de `extension/package.json`, así que siempre está al día.
@@ -30,7 +35,7 @@ No muestra los de escritura (`$`). Intro ejecuta el atajo elegido.
   Si la selección corta un grupo `{ }` por la mitad, no se hace nada.
 - **Selección fuera**: se envuelve.
 
-## ⌃U: mayúsculas
+## ⌘⌥U: mayúsculas
 
 Pasa a mayúsculas el texto (con acentos y ñ), pero no:
 - las órdenes (`\textbf` no pasa a `\TEXTBF`);
@@ -51,7 +56,7 @@ Va en la tecla ⇧4, que es el `$` en los teclados español e inglés.
 
 - Al escribir `\col…`, la primera sugerencia es `\color → \textcolor{color}{texto}`. Con Intro se escribe `\textcolor{}{}`,
   con el cursor en el primer `{}`, y se abre la lista de colores con su significado.
-- En cuanto el color escrito (o elegido) es válido, el cursor salta al segundo `{}`.
+- En cuanto el color escrito (o elegido) es válido, el cursor salta al segundo `{}`; si ese texto ya está escrito (⌃C sobre una selección), sale detrás de la `}` final.
   Válidos: los de la paleta y los que `xcolor` conoce sin opciones (red, blue, gray, orange, violet…).
 - La lista enseña solo los colores de la paleta, cada uno con su significado al lado.
   Los demás colores de `xcolor` siguen valiendo si se escriben a mano.

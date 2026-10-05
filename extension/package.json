@@ -2,7 +2,7 @@
   "name": "tcee-panel",
   "displayName": "Panel TCEE",
   "description": "Panel de trabajo para los temas de la oposición TCEE: acciones, tiempo restante, índice, calendario, relaciones y cante.",
-  "version": "0.27.1",
+  "version": "0.28.1",
   "publisher": "oposiciontcee",
   "license": "UNLICENSED",
   "repository": {
@@ -176,6 +176,11 @@
         "category": "TCEE"
       },
       {
+        "command": "tcee.colorear",
+        "title": "Rodear de color (\\textcolor) la selección",
+        "category": "TCEE"
+      },
+      {
         "command": "tcee.atajos",
         "title": "Ver los atajos del Panel TCEE",
         "category": "TCEE"
@@ -243,19 +248,19 @@
       {
         "command": "tcee.notasAlternar",
         "key": "ctrl+alt+shift+n",
-        "mac": "ctrl+cmd+n",
+        "mac": "cmd+alt+n",
         "when": "editorTextFocus && editorLangId == latex"
       },
       {
         "command": "tcee.nuevaNota",
         "key": "ctrl+alt+shift+f",
-        "mac": "ctrl+cmd+shift+n",
+        "mac": "cmd+alt+shift+n",
         "when": "editorTextFocus && !editorReadonly && editorLangId == latex"
       },
       {
         "command": "tcee.mayusculas",
         "key": "ctrl+alt+u",
-        "mac": "ctrl+u",
+        "mac": "cmd+alt+u",
         "when": "editorTextFocus && !editorReadonly && editorLangId == latex"
       },
       {
@@ -272,7 +277,13 @@
       {
         "command": "tcee.atajos",
         "key": "ctrl+alt+shift+a",
-        "mac": "ctrl+cmd+a"
+        "mac": "cmd+alt+k"
+      },
+      {
+        "command": "tcee.colorear",
+        "key": "ctrl+alt+c",
+        "mac": "ctrl+c",
+        "when": "editorTextFocus && !editorReadonly && editorLangId == latex"
       }
     ]
   }
