@@ -484,6 +484,7 @@ function activate(context) {
 
   // ---- Panel Oposición (pestaña): calendario, tiempo restante de todos los temas y relaciones
   activarFormulas(context);
+  activarNotas(context);
 
   const panelOpo = require('./panelOposicion').crear(context, {
     progreso, textoDe, temaMostrado: () => indice.mostrado,
@@ -575,6 +576,70 @@ async function envolver(macro) {
 }
 
 // ---------------------------------------------------------------- Vista previa de fórmulas (formulas.js; reglas en main/FORMULAS.md)
+/**
+ * Notas al pie contraíbles (main/NOTAS.md). VS Code solo contrae líneas enteras: se ofrecen como tramos plegables
+ * las líneas del contenido de cada \footnote y, al abrir un .tex, se contraen todas (si no se ha desactivado).
+ */
+function activarNotas(context) {
+  const N = require('./notas');
+  const memo = new Map();   // uri → {version, tramos}
+  const tramos = (doc) => {
+    const k = doc.uri.toString(), m = memo.get(k);
+    if (m && m.version === doc.version) return m.tramos;
+    const t = N.tramos(doc.getText());
+    memo.set(k, { version: doc.version, tramos: t });
+    return t;
+  };
+  context.subscriptions.push(vscode.languages.registerFoldingRangeProvider({ language: 'latex' }, {
+    provideFoldingRanges(doc) { return tramos(doc).map((r) => new vscode.FoldingRange(r.inicio, r.fin, vscode.FoldingRangeKind.Region)); },
+  }));
+
+  const estado = new Map();   // uri → true si están contraídas
+  const aplicar = async (ed, contraer) => {
+    if (!ed || ed.document.languageId !== 'latex') return;
+    const lineas = tramos(ed.document).map((r) => r.inicio);
+    if (!lineas.length) { vscode.window.setStatusBarMessage('No hay notas al pie que se puedan contraer en este tema.', 3000); return; }
+    // la nota donde está el cursor se deja abierta al contraer, para no esconder lo que se está escribiendo
+    const cur = ed.selection.active.line;
+    const sel = contraer ? tramos(ed.document).filter((r) => !(cur >= r.inicio && cur <= r.fin + 1)).map((r) => r.inicio) : lineas;
+    await vscode.commands.executeCommand(contraer ? 'editor.fold' : 'editor.unfold', { levels: 1, direction: 'up', selectionLines: sel });
+    estado.set(ed.document.uri.toString(), contraer);
+  };
+  // al abrir un tema, una vez: contraídas
+  const vistos = new Set();
+  const alAbrir = (ed) => {
+    if (!ed || ed.document.languageId !== 'latex' || ed.document.uri.scheme !== 'file') return;
+    const k = ed.document.uri.toString();
+    if (vistos.has(k)) return;
+    vistos.add(k);
+    if (vscode.workspace.getConfiguration('tcee').get('notasContraidasAlAbrir', true) === false) return;
+    // VS Code calcula los tramos plegables justo después de abrir: se espera un momento
+    setTimeout(() => { if (vscode.window.activeTextEditor === ed) aplicar(ed, true); }, 700);
+  };
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor(alAbrir),
+    vscode.workspace.onDidCloseTextDocument((d) => { vistos.delete(d.uri.toString()); estado.delete(d.uri.toString()); memo.delete(d.uri.toString()); }),
+    vscode.commands.registerCommand('tcee.notasContraer', () => aplicar(vscode.window.activeTextEditor, true)),
+    vscode.commands.registerCommand('tcee.notasExpandir', () => aplicar(vscode.window.activeTextEditor, false)),
+    vscode.commands.registerCommand('tcee.notasAlternar', () => {
+      const ed = vscode.window.activeTextEditor; if (!ed) return;
+      const k = ed.document.uri.toString();
+      return aplicar(ed, !(estado.get(k) ?? false));
+    }),
+    // nueva nota ya escrita en varias líneas, para que se pueda contraer
+    vscode.commands.registerCommand('tcee.nuevaNota', () => {
+      const ed = vscode.window.activeTextEditor; if (!ed) return;
+      const linea = ed.document.lineAt(ed.selection.active.line).text, sangria = (linea.match(/^[ \t]*/) || [''])[0];
+      const dentro = ed.document.getText(ed.selection);
+      const s = new vscode.SnippetString().appendText(`\\footnote{%\n${sangria}    `);
+      if (dentro) s.appendText(dentro); else s.appendTabstop(0);
+      s.appendText(`%\n${sangria}}`);
+      return ed.insertSnippet(s);
+    }),
+  );
+  alAbrir(vscode.window.activeTextEditor);
+}
+
 function activarFormulas(context) {
   const F = require('./formulas');
   const cache = new Map();
