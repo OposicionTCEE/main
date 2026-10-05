@@ -10,11 +10,13 @@ Código: `extension/escritura.js` (funciones puras, probadas fuera de VS Code), 
 | ⌘B / ⌘I | Negrita / cursiva (ver abajo) |
 | ⌃H | Resaltado amarillo `\hl{…}`, con la misma lógica que ⌘B |
 | ⌃U | Mayúsculas de la selección (o de la palabra del cursor) |
-| ⌃⌘A | Ventana con todos los atajos del Panel TCEE; se cierra con Esc |
+| ⌃C | Rodear la selección de color: `\textcolor{|}{selección}`, con la lista de colores abierta; al elegir el color, el cursor sale detrás |
+| ⌃⌥⌘A | Ventana con todos los atajos del Panel TCEE; se cierra con Esc. También en la acción «Atajos» del panel |
 | ⌃⌘N / ⌃⇧⌘N | Notas al pie (ver `NOTAS.md`) |
 | ⌘⌥M | Panel de la fórmula (ver `FORMULAS.md`) |
 
-En Windows/Linux: Ctrl+Alt+H, Ctrl+Alt+U, Ctrl+Alt+Shift+A.
+En Windows/Linux: Ctrl+Alt+H, Ctrl+Alt+U, Ctrl+Alt+C, Ctrl+Alt+Shift+A.
+⌃⌘A no se usa porque VS Code ya lo usa para la ventana de agentes.
 ⌃H sustituye, solo en los `.tex`, al «borrar a la izquierda» de macOS.
 
 La ventana de atajos se construye con los `keybindings` de `extension/package.json`, así que siempre está al día.
@@ -51,7 +53,7 @@ Va en la tecla ⇧4, que es el `$` en los teclados español e inglés.
 
 - Al escribir `\col…`, la primera sugerencia es `\color → \textcolor{color}{texto}`. Con Intro se escribe `\textcolor{}{}`,
   con el cursor en el primer `{}`, y se abre la lista de colores con su significado.
-- En cuanto el color escrito (o elegido) es válido, el cursor salta al segundo `{}`.
+- En cuanto el color escrito (o elegido) es válido, el cursor salta al segundo `{}`; si ese texto ya está escrito (⌃C sobre una selección), sale detrás de la `}` final.
   Válidos: los de la paleta y los que `xcolor` conoce sin opciones (red, blue, gray, orange, violet…).
 - La lista enseña solo los colores de la paleta, cada uno con su significado al lado.
   Los demás colores de `xcolor` siguen valiendo si se escriben a mano.

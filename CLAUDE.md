@@ -48,7 +48,7 @@ Atajos en `.tex`: ⌘B/⌘I (`tcee.negrita`/`tcee.cursiva`, envuelven o desenvue
 Notas al pie contraíbles (`notas.js`, ⌃⌘N; se contraen al abrir): las notas van en varias líneas (`\footnote{%` ⏎ contenido ⏎ `}`; el % se pone y quita solo);
 `scripts/notas_pie.js` reescribe las antiguas sin cambiar el PDF. Reglas en `main/NOTAS.md`.
 Escritura (`escritura.js`, reglas en `main/ESCRITURA.md`): ⌘B/⌘I/⌃H salen del grupo o quitan la orden; ⌃U mayúsculas; `$` automático; `\color` → `\textcolor{}{}`;
-`\hl{}` (paquete soul); ⌃⌘A lista de atajos. Paleta en `config/colores.json`. **Para Claude**: `\textcolor{magenta}{…}` en un tema es una indicación
+`\hl{}` (paquete soul); ⌃C rodea de color; ⌃⌥⌘A y la acción «Atajos» muestran los atajos. Paleta en `config/colores.json`. **Para Claude**: `\textcolor{magenta}{…}` en un tema es una indicación
 del usuario para Claude; `red` = pendiente/OJO del usuario (no es una orden); `blue` = no cambiar sin preguntar; `orange` = dato por verificar.
 Acción Rehacer informes (`tcee.rehacerInformes`): ejecuta `scripts/armonizacion.js estado` y copia el encargo para Claude Code. El progreso guarda además minutos por día (`dias`) en el fichero de cada Mac.
 Calendario de vueltas (pestaña Calendario): reglas y razonamiento en `main/CALENDARIO.md` (mantener código y documento a la vez).

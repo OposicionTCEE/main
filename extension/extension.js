@@ -153,8 +153,9 @@ class Acciones {
   constructor() { this._ev = new vscode.EventEmitter(); this.onDidChangeTreeData = this._ev.event; }
   getTreeItem(e) { return e; }
   getChildren() {
-    const item = (label, icono, command, tooltip) => {
+    const item = (label, icono, command, tooltip, atajo) => {
       const t = new vscode.TreeItem(label);
+      if (atajo) t.description = atajo;   // el atajo a la vista, para irlo aprendiendo
       t.iconPath = new vscode.ThemeIcon(icono);
       t.command = { command, title: label };
       t.tooltip = tooltip;
@@ -165,6 +166,7 @@ class Acciones {
       item('Sincronizar con GitHub', 'sync', 'tcee.sincronizar', 'Guarda, trae y sube los cambios de main, temario y progreso'),
       item('Nueva nota', 'note', 'tcee.nota', 'Añade una nota al final de \\modificaciones del tema que elijas'),
       item('Panel Oposición', 'dashboard', 'tcee.panelOposicion', 'Calendario, tiempo restante de todos los temas y relaciones entre temas (se abre en una ventana aparte)'),
+      item('Atajos', 'keyboard', 'tcee.atajos', 'Todos los atajos del Panel TCEE en una ventana (se cierra con Esc). Atajo: ⌃⌥⌘A', '⌃⌥⌘A'),
       item('Rehacer informes', 'beaker', 'tcee.rehacerInformes', 'Comprueba qué informes faltan o están desactualizados (armonización de modelos y cobertura de las preguntas de test falladas) y prepara el encargo para Claude Code'),
     ];
   }
@@ -721,6 +723,15 @@ function activarEscritura(context) {
     const sels = ed.selections.map((s) => (s.isEmpty ? ed.document.getWordRangeAtPosition(s.active) : s)).filter(Boolean);
     await ed.edit((e) => sels.forEach((r) => e.replace(r, E.mayusculas(ed.document.getText(r)))));
   }));
+  // ⌃C: rodear la selección de color (\textcolor{|}{selección}); el cursor queda en el color, con la paleta abierta
+  context.subscriptions.push(vscode.commands.registerCommand('tcee.colorear', async () => {
+    const ed = vscode.window.activeTextEditor; if (!ed) return;
+    const s = new vscode.SnippetString().appendText('\\textcolor{').appendTabstop(1).appendText('}{');
+    if (ed.selections.every((x) => x.isEmpty)) s.appendTabstop(2); else s.appendVariable('TM_SELECTED_TEXT', '');
+    s.appendText('}').appendTabstop(0);
+    await ed.insertSnippet(s);
+    vscode.commands.executeCommand('editor.action.triggerSuggest');
+  }));
   // ⌃H: resaltado amarillo (\hl del paquete soul), con la misma lógica que ⌘B
   context.subscriptions.push(vscode.commands.registerCommand('tcee.resaltar', async () => {
     await envolver('hl');
@@ -799,7 +810,10 @@ function activarEscritura(context) {
       const p = ed.selection.active, linea = ed.document.lineAt(p.line).text;
       const m = linea.slice(0, p.character).match(/\\textcolor\{([A-Za-z]+)$/);
       if (!m || !valido(m[1]) || !linea.slice(p.character).startsWith('}{')) return;
-      const q = p.translate(0, 2);
+      // si el texto ya está escrito (por ejemplo, al rodear una selección con ⌃C), el cursor sale detrás de la } final;
+      // si está vacío, entra en el segundo {} para escribirlo
+      const doc = ed.document, abre = doc.offsetAt(p) + 1, cierra = E.cierre(doc.getText(), abre);
+      const q = cierra > abre + 1 ? doc.positionAt(cierra + 1) : p.translate(0, 2);
       ed.selection = new vscode.Selection(q, q);
       vscode.commands.executeCommand('hideSuggestWidget');
     }, 0);
