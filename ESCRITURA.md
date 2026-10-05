@@ -9,14 +9,17 @@ Código: `extension/escritura.js` (funciones puras, probadas fuera de VS Code), 
 |---|---|
 | ⌘B / ⌘I | Negrita / cursiva (ver abajo) |
 | ⌃H | Resaltado amarillo `\hl{…}`, con la misma lógica que ⌘B |
-| ⌃U | Mayúsculas de la selección (o de la palabra del cursor) |
+| ⌘⌥U | Mayúsculas de la selección (o de la palabra del cursor) |
 | ⌃C | Rodear la selección de color: `\textcolor{|}{selección}`, con la lista de colores abierta; al elegir el color, el cursor sale detrás |
-| ⌃⌥⌘A | Ventana con todos los atajos del Panel TCEE; se cierra con Esc. También en la acción «Atajos» del panel |
-| ⌃⌘N / ⌃⇧⌘N | Notas al pie (ver `NOTAS.md`) |
+| ⌘⌥K | Ventana con todos los atajos del Panel TCEE; se cierra con Esc. También en la acción «Atajos» del panel |
+| ⌘⌥N / ⌘⌥⇧N | Notas al pie (ver `NOTAS.md`) |
 | ⌘⌥M | Panel de la fórmula (ver `FORMULAS.md`) |
 
 En Windows/Linux: Ctrl+Alt+H, Ctrl+Alt+U, Ctrl+Alt+C, Ctrl+Alt+Shift+A.
-⌃⌘A no se usa porque VS Code ya lo usa para la ventana de agentes.
+Atajos cambiados tras probarlos en el Mac del usuario: ⌃⌘A abría la ventana de agentes de VS Code, ⌃⌘N abría una pestaña y ⌃U no hacía nada
+(algo de su VS Code los captura antes). Se pasaron a ⌘⌥ + letra, como ⌘⌥M, que sí funcionaba.
+En la ventana de atajos, el botón ⚙ de cada fila abre los atajos de VS Code filtrados por esa orden para cambiarlo; la ventana enseña
+los atajos cambiados así (lee `keybindings.json` del usuario). Además hay un botón «⌨ Atajos» en la barra inferior al editar un `.tex`.
 ⌃H sustituye, solo en los `.tex`, al «borrar a la izquierda» de macOS.
 
 La ventana de atajos se construye con los `keybindings` de `extension/package.json`, así que siempre está al día.
@@ -32,7 +35,7 @@ No muestra los de escritura (`$`). Intro ejecuta el atajo elegido.
   Si la selección corta un grupo `{ }` por la mitad, no se hace nada.
 - **Selección fuera**: se envuelve.
 
-## ⌃U: mayúsculas
+## ⌘⌥U: mayúsculas
 
 Pasa a mayúsculas el texto (con acentos y ñ), pero no:
 - las órdenes (`\textbf` no pasa a `\TEXTBF`);

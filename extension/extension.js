@@ -166,7 +166,7 @@ class Acciones {
       item('Sincronizar con GitHub', 'sync', 'tcee.sincronizar', 'Guarda, trae y sube los cambios de main, temario y progreso'),
       item('Nueva nota', 'note', 'tcee.nota', 'Añade una nota al final de \\modificaciones del tema que elijas'),
       item('Panel Oposición', 'dashboard', 'tcee.panelOposicion', 'Calendario, tiempo restante de todos los temas y relaciones entre temas (se abre en una ventana aparte)'),
-      item('Atajos', 'keyboard', 'tcee.atajos', 'Todos los atajos del Panel TCEE en una ventana (se cierra con Esc). Atajo: ⌃⌥⌘A', '⌃⌥⌘A'),
+      item('Atajos', 'keyboard', 'tcee.atajos', 'Todos los atajos del Panel TCEE en una ventana (se cierra con Esc; ⚙ cambia un atajo). Atajo: ⌘⌥K', '⌘⌥K'),
       item('Rehacer informes', 'beaker', 'tcee.rehacerInformes', 'Comprueba qué informes faltan o están desactualizados (armonización de modelos y cobertura de las preguntas de test falladas) y prepara el encargo para Claude Code'),
     ];
   }
@@ -867,18 +867,44 @@ function activarEscritura(context) {
   decorar(vscode.window.activeTextEditor);
 
   // ⌃⌘A: atajos del Panel TCEE (sacados de package.json; sin los de escritura como $), se cierra con Esc
-  context.subscriptions.push(vscode.commands.registerCommand('tcee.atajos', async () => {
+  context.subscriptions.push(vscode.commands.registerCommand('tcee.atajos', () => {
     const pj = context.extension.packageJSON.contributes;
     const titulos = Object.fromEntries((pj.commands || []).map((c) => [c.command, c.title]));
     const mac = process.platform === 'darwin';
     const bonito = (k) => k.split(' ').map((acorde) => acorde.split('+').map((x) => (mac
       ? ({ cmd: '⌘', ctrl: '⌃', alt: '⌥', shift: '⇧' }[x] || x.toUpperCase()) : x[0].toUpperCase() + x.slice(1))).join(mac ? '' : '+')).join(' ');
-    const items = (pj.keybindings || []).filter((k) => !['tcee.dolar'].includes(k.command)).map((k) => ({
-      label: bonito((mac && k.mac) || k.key), description: titulos[k.command] || k.command, comando: k.command,
+    // atajos por defecto (package.json) y, encima, los que el usuario haya cambiado en VS Code (keybindings.json)
+    const atajo = {};
+    (pj.keybindings || []).forEach((k) => { atajo[k.command] = (mac && k.mac) || k.key; });
+    try {
+      const dir = mac ? path.join(require('os').homedir(), 'Library', 'Application Support', 'Code', 'User')
+        : process.platform === 'win32' ? path.join(process.env.APPDATA || '', 'Code', 'User') : path.join(require('os').homedir(), '.config', 'Code', 'User');
+      const txt = require('fs').readFileSync(path.join(dir, 'keybindings.json'), 'utf8').replace(/^\s*\/\/.*$/gm, '').replace(/,(\s*[\]}])/g, '$1');
+      for (const k of JSON.parse(txt)) {
+        if (typeof k.command !== 'string') continue;
+        if (k.command.startsWith('-tcee.')) { if (atajo[k.command.slice(1)] === k.key) atajo[k.command.slice(1)] = null; }
+        else if (k.command.startsWith('tcee.')) atajo[k.command] = k.key;
+      }
+    } catch (e) { /* sin atajos propios */ }
+    const boton = { iconPath: new vscode.ThemeIcon('gear'), tooltip: 'Cambiar este atajo' };
+    const qp = vscode.window.createQuickPick();
+    qp.title = 'Atajos del Panel TCEE · Esc cierra · Intro lo ejecuta · ⚙ lo cambia';
+    qp.matchOnDescription = true;
+    qp.items = Object.entries(atajo).filter(([c]) => !['tcee.dolar'].includes(c)).map(([c, k]) => ({
+      label: k ? bonito(k) : '(sin atajo)', description: titulos[c] || c, comando: c, buttons: [boton],
     }));
-    const elegido = await vscode.window.showQuickPick(items, { title: 'Atajos del Panel TCEE (Esc para cerrar; Intro ejecuta el atajo)', matchOnDescription: true });
-    if (elegido) vscode.commands.executeCommand(elegido.comando);
+    qp.onDidAccept(() => { const it = qp.selectedItems[0]; qp.hide(); if (it) vscode.commands.executeCommand(it.comando); });
+    // ⚙: abre los atajos de VS Code filtrados por esa orden; allí se pulsa el lápiz y la combinación nueva (VS Code avisa si ya se usa)
+    qp.onDidTriggerItemButton((e) => { qp.hide(); vscode.commands.executeCommand('workbench.action.openGlobalKeybindings', e.item.comando); });
+    qp.onDidHide(() => qp.dispose());
+    qp.show();
   }));
+  // botón «⌨ Atajos» en la barra inferior mientras se edita un .tex: un clic y se ven todos
+  const barra = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 200);
+  barra.text = '$(keyboard) Atajos'; barra.command = 'tcee.atajos'; barra.tooltip = 'Atajos del Panel TCEE (⌘⌥K)';
+  const verBarra = (ed) => (ed && ed.document.languageId === 'latex' ? barra.show() : barra.hide());
+  context.subscriptions.push(barra, vscode.window.onDidChangeActiveTextEditor(verBarra));
+  verBarra(vscode.window.activeTextEditor);
 }
 
 function activarFormulas(context) {
