@@ -2,7 +2,7 @@
   "name": "tcee-panel",
   "displayName": "Panel TCEE",
   "description": "Panel de trabajo para los temas de la oposición TCEE: acciones, tiempo restante, índice, calendario, relaciones y cante.",
-  "version": "0.26.0",
+  "version": "0.27.0",
   "publisher": "oposiciontcee",
   "license": "UNLICENSED",
   "repository": {
@@ -159,6 +159,26 @@
         "command": "tcee.nuevaNota",
         "title": "Insertar nota al pie (contraíble)",
         "category": "TCEE"
+      },
+      {
+        "command": "tcee.mayusculas",
+        "title": "Poner en mayúsculas (sin tocar órdenes ni fórmulas)",
+        "category": "TCEE"
+      },
+      {
+        "command": "tcee.resaltar",
+        "title": "Resaltar en amarillo (\\hl)",
+        "category": "TCEE"
+      },
+      {
+        "command": "tcee.dolar",
+        "title": "Escribir $ (fórmula en línea)",
+        "category": "TCEE"
+      },
+      {
+        "command": "tcee.atajos",
+        "title": "Ver los atajos del Panel TCEE",
+        "category": "TCEE"
       }
     ],
     "menus": {
@@ -231,6 +251,28 @@
         "key": "ctrl+alt+shift+f",
         "mac": "ctrl+cmd+shift+n",
         "when": "editorTextFocus && !editorReadonly && editorLangId == latex"
+      },
+      {
+        "command": "tcee.mayusculas",
+        "key": "ctrl+alt+u",
+        "mac": "ctrl+u",
+        "when": "editorTextFocus && !editorReadonly && editorLangId == latex"
+      },
+      {
+        "command": "tcee.resaltar",
+        "key": "ctrl+alt+h",
+        "mac": "ctrl+h",
+        "when": "editorTextFocus && !editorReadonly && editorLangId == latex"
+      },
+      {
+        "command": "tcee.dolar",
+        "key": "shift+4",
+        "when": "editorTextFocus && !editorReadonly && editorLangId == latex"
+      },
+      {
+        "command": "tcee.atajos",
+        "key": "ctrl+alt+shift+a",
+        "mac": "ctrl+cmd+a"
       }
     ]
   }

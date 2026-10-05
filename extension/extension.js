@@ -485,6 +485,7 @@ function activate(context) {
   // ---- Panel Oposición (pestaña): calendario, tiempo restante de todos los temas y relaciones
   activarFormulas(context);
   activarNotas(context);
+  activarEscritura(context);
 
   const panelOpo = require('./panelOposicion').crear(context, {
     progreso, textoDe, temaMostrado: () => indice.mostrado,
@@ -549,6 +550,7 @@ async function rehacerInformes() {
 async function envolver(macro) {
   const ed = vscode.window.activeTextEditor;
   if (!ed) return;
+  const E = require('./escritura');
   const rx = new RegExp(`^\\\\${macro}\\{([\\s\\S]*)\\}$`);
   const sels = ed.selections;
   const textos = sels.map((s) => ed.document.getText(s));
@@ -557,8 +559,35 @@ async function envolver(macro) {
     await ed.edit((e) => sels.forEach((s, i) => e.replace(s, textos[i].match(rx)[1])));
     return;
   }
-  // también si la selección es el contenido de \macro{…}: se quita la orden de alrededor
   const doc = ed.document;
+  // un solo cursor dentro de un \macro{…} (main/ESCRITURA.md):
+  //  - sin selección: el cursor sale detrás de la } para seguir escribiendo sin la orden;
+  //  - todo el contenido seleccionado: se quita la orden;
+  //  - una parte seleccionada: solo esa parte deja de llevar la orden (\textbf{a}b\textbf{c}).
+  if (sels.length === 1) {
+    const s = sels[0], texto = doc.getText(), ini = doc.offsetAt(s.start), fin = doc.offsetAt(s.end);
+    const g = E.grupoQueRodea(texto, ini, fin, macro);
+    if (g) {
+      if (s.isEmpty) { const p = doc.positionAt(g.cierra + 1); ed.selection = new vscode.Selection(p, p); return; }
+      const contenido = texto.slice(g.abre + 1, g.cierra);
+      const todo = new vscode.Range(doc.positionAt(g.inicio), doc.positionAt(g.cierra + 1));
+      if (texto.slice(g.abre + 1, ini).trim() === '' && texto.slice(fin, g.cierra).trim() === '') {
+        await ed.edit((e) => e.replace(todo, contenido));
+        const p0 = doc.positionAt(g.inicio + (ini - g.abre - 1)), p1 = doc.positionAt(g.inicio + (fin - g.abre - 1));
+        ed.selection = new vscode.Selection(p0, p1);
+        return;
+      }
+      const sel = texto.slice(ini, fin);
+      if (!E.equilibrado(sel)) { vscode.window.setStatusBarMessage('La selección corta un grupo { } por la mitad: no se cambia.', 3000); return; }
+      const A = texto.slice(g.abre + 1, ini), B = texto.slice(fin, g.cierra);
+      const pa = A.trim() ? `\\${macro}{${A}}` : A, pb = B.trim() ? `\\${macro}{${B}}` : B;
+      await ed.edit((e) => e.replace(todo, pa + sel + pb));
+      const p0 = doc.positionAt(g.inicio + pa.length), p1 = doc.positionAt(g.inicio + pa.length + sel.length);
+      ed.selection = new vscode.Selection(p0, p1);
+      return;
+    }
+  }
+  // también si la selección es el contenido de \macro{…}: se quita la orden de alrededor (varios cursores)
   const rodea = sels.map((s) => {
     if (s.isEmpty) return null;
     const ini = doc.offsetAt(s.start), fin = doc.offsetAt(s.end), pre = `\\${macro}{`;
@@ -638,6 +667,179 @@ function activarNotas(context) {
     }),
   );
   alAbrir(vscode.window.activeTextEditor);
+}
+
+/**
+ * Ayudas de escritura (main/ESCRITURA.md): ⌃U mayúsculas, ⌃H resaltado \hl, $ automático, \color → \textcolor{}{} con la paleta
+ * de config/colores.json (salta al texto al completar un color), \high → \hl{}, colores y resaltado visibles en el editor y ⌃⌘A atajos.
+ */
+function activarEscritura(context) {
+  const E = require('./escritura');
+  const raiz = path.resolve(context.extensionUri.fsPath, '..');   // main/ (en la instalación, se busca también en la carpeta TCEE)
+  let pal = null;
+  const paleta = () => {
+    if (pal) return pal;
+    const cands = [raiz, ...(vscode.workspace.workspaceFolders || []).map((f) => f.uri.fsPath), ...(vscode.workspace.workspaceFolders || []).map((f) => path.join(f.uri.fsPath, 'main'))];
+    for (const c of cands) { const v = E.paleta(c); if (v.length) { pal = v; break; } }
+    return pal || [];
+  };
+  const hexDe = (c) => { const p = paleta().find((x) => x.color === c); return p ? p.hex : E.XCOLOR[c]; };
+  const valido = (c) => !!hexDe(c);
+  const latex = { language: 'latex' };
+
+  // ⌃U: mayúsculas sin tocar órdenes, fórmulas ni comentarios
+  context.subscriptions.push(vscode.commands.registerCommand('tcee.mayusculas', async () => {
+    const ed = vscode.window.activeTextEditor; if (!ed) return;
+    const sels = ed.selections.map((s) => (s.isEmpty ? ed.document.getWordRangeAtPosition(s.active) : s)).filter(Boolean);
+    await ed.edit((e) => sels.forEach((r) => e.replace(r, E.mayusculas(ed.document.getText(r)))));
+  }));
+  // ⌃H: resaltado amarillo (\hl del paquete soul), con la misma lógica que ⌘B
+  context.subscriptions.push(vscode.commands.registerCommand('tcee.resaltar', async () => {
+    await envolver('hl');
+    const ed = vscode.window.activeTextEditor, t = ed ? ed.document.getText() : '';
+    const pre = t.slice(0, Math.max(0, t.indexOf('\\begin{document}')));
+    if (ed && !/\\usepackage(\[[^\]]*\])?\{[^}]*\bsoul/.test(pre))
+      vscode.window.showWarningMessage('Este tema no carga el paquete «soul»: el resaltado (\\hl) dará error al compilar. Hay que añadir al preámbulo \\usepackage{soul}\\sethlcolor{yellow} (ver ESCRITURA.md).');
+  }));
+
+  // $: par con el cursor en medio, envolver la selección, o uno solo si hay texto pegado
+  context.subscriptions.push(vscode.commands.registerCommand('tcee.dolar', async () => {
+    const ed = vscode.window.activeTextEditor; if (!ed) return;
+    const doc = ed.document;
+    if (ed.selections.length !== 1) return vscode.commands.executeCommand('type', { text: '$' });
+    const s = ed.selection;
+    if (!s.isEmpty) {
+      const t = doc.getText(s);
+      await ed.edit((e) => e.replace(s, `$${t}$`));
+      const a = doc.offsetAt(s.start) + 1;
+      ed.selection = new vscode.Selection(doc.positionAt(a), doc.positionAt(a + t.length));
+      return;
+    }
+    const p = s.active, linea = doc.lineAt(p.line).text;
+    const accion = E.dolar(linea[p.character - 1] || '', linea[p.character] || '');
+    if (accion === 'saltar') { const q = p.translate(0, 1); ed.selection = new vscode.Selection(q, q); return; }
+    if (accion === 'uno') return vscode.commands.executeCommand('type', { text: '$' });
+    await ed.insertSnippet(new vscode.SnippetString('\\$$0\\$'));
+  }));
+
+  // \color → \textcolor{}{} (y abre la lista de colores); \high → \hl{}
+  context.subscriptions.push(vscode.languages.registerCompletionItemProvider(latex, {
+    provideCompletionItems(doc, pos) {
+      const linea = doc.lineAt(pos.line).text.slice(0, pos.character);
+      // dentro del primer argumento de \textcolor: la paleta con su significado y los demás colores de xcolor
+      const mc = linea.match(/\\textcolor\{([A-Za-z]*)$/);
+      if (mc) {
+        const rango = new vscode.Range(pos.translate(0, -mc[1].length), pos);
+        const vistos = new Set();
+        const items = paleta().map((c, i) => {
+          vistos.add(c.color);
+          const it = new vscode.CompletionItem({ label: c.color, description: c.significado }, vscode.CompletionItemKind.Color);
+          it.documentation = c.hex; it.detail = c.hex; it.sortText = `0${i}`; it.range = rango; it.preselect = i === 0;
+          return it;
+        });
+        Object.entries(E.XCOLOR).filter(([c]) => !vistos.has(c)).forEach(([c, h]) => {
+          const it = new vscode.CompletionItem({ label: c, description: 'sin significado asignado' }, vscode.CompletionItemKind.Color);
+          it.documentation = h; it.detail = h; it.sortText = `1${c}`; it.range = rango; items.push(it);
+        });
+        return new vscode.CompletionList(items, false);
+      }
+      const m = linea.match(/\\([A-Za-z]*)$/);
+      if (!m) return;
+      const rango = new vscode.Range(pos.translate(0, -m[0].length), pos);
+      const items = [];
+      if (m[1].length >= 3 && 'color'.startsWith(m[1].toLowerCase())) {
+        const it = new vscode.CompletionItem({ label: '\\color', description: '→ \\textcolor{color}{texto}' }, vscode.CompletionItemKind.Snippet);
+        it.insertText = new vscode.SnippetString('\\\\textcolor{$1}{$2}$0'); it.filterText = '\\color'; it.sortText = '!0'; it.preselect = true; it.range = rango;
+        it.command = { command: 'editor.action.triggerSuggest', title: 'colores' };
+        it.documentation = 'Texto en color. Al escribir un color válido, el cursor salta al texto. Significados en config/colores.json.';
+        items.push(it);
+      }
+      if ((m[1].length >= 3 && 'highlight'.startsWith(m[1].toLowerCase())) || m[1] === 'hl') {
+        const it = new vscode.CompletionItem({ label: '\\highlight', description: '→ \\hl{texto} (resaltado amarillo, ⌃H)' }, vscode.CompletionItemKind.Snippet);
+        it.insertText = new vscode.SnippetString('\\\\hl{$1}$0'); it.filterText = '\\highlight'; it.sortText = '!1'; it.preselect = true; it.range = rango;
+        items.push(it);
+      }
+      return items;
+    },
+  }, '\\', '{'));
+
+  // al completar un color válido en \textcolor{…}, el cursor salta al segundo argumento
+  context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((e) => {
+    const ed = vscode.window.activeTextEditor;
+    if (!ed || e.document !== ed.document || e.document.languageId !== 'latex' || e.contentChanges.length !== 1) return;
+    const ch = e.contentChanges[0];
+    if (!ch.text || ch.text.includes('\n')) return;
+    setTimeout(() => {
+      if (vscode.window.activeTextEditor !== ed || ed.selections.length !== 1 || !ed.selection.isEmpty) return;
+      const p = ed.selection.active, linea = ed.document.lineAt(p.line).text;
+      const m = linea.slice(0, p.character).match(/\\textcolor\{([A-Za-z]+)$/);
+      if (!m || !valido(m[1]) || !linea.slice(p.character).startsWith('}{')) return;
+      const q = p.translate(0, 2);
+      ed.selection = new vscode.Selection(q, q);
+      vscode.commands.executeCommand('hideSuggestWidget');
+    }, 0);
+  }));
+
+  // al pasar el ratón por el color de \textcolor{color}: su significado
+  context.subscriptions.push(vscode.languages.registerHoverProvider(latex, {
+    provideHover(doc, pos) {
+      const r = doc.getWordRangeAtPosition(pos, /\\textcolor\{[A-Za-z]+\}/);
+      if (!r) return null;
+      const c = doc.getText(r).match(/\{([A-Za-z]+)\}/)[1];
+      const p = paleta().find((x) => x.color === c);
+      const md = new vscode.MarkdownString();
+      if (p) md.appendMarkdown(`**${c}** → ${p.significado}`);
+      else if (E.XCOLOR[c]) md.appendMarkdown(`**${c}**: color sin significado asignado (config/colores.json).`);
+      else md.appendMarkdown(`**⚠ «${c}» no es un color que LaTeX conozca**: el texto no saldrá en el PDF o dará error. ¿Errata?`);
+      return new vscode.Hover(md, r);
+    },
+  }));
+
+  // en el editor: el texto de \textcolor en su color y el de \hl con fondo amarillo
+  const tipos = new Map();
+  const tipo = (hex) => {
+    if (!tipos.has(hex)) tipos.set(hex, vscode.window.createTextEditorDecorationType({ color: hex }));
+    return tipos.get(hex);
+  };
+  const amarillo = vscode.window.createTextEditorDecorationType({ backgroundColor: 'rgba(255, 221, 0, 0.30)', borderRadius: '2px' });
+  context.subscriptions.push(amarillo, { dispose: () => tipos.forEach((t) => t.dispose()) });
+  const decorar = (ed) => {
+    if (!ed || ed.document.languageId !== 'latex') return;
+    const t = ed.document.getText(), doc = ed.document;
+    const porColor = new Map(), hl = [];
+    const rx = /\\(textcolor\{([A-Za-z]+)\}|hl)\s*\{/g; let m;
+    while ((m = rx.exec(t))) {
+      if (E.escapado(t, m.index)) continue;
+      const a = m.index + m[0].length - 1, b = E.cierre(t, a);
+      if (b < 0) continue;
+      const r = new vscode.Range(doc.positionAt(a + 1), doc.positionAt(b));
+      if (m[2]) { const h = hexDe(m[2]); if (h && m[2] !== 'black' && m[2] !== 'white') { if (!porColor.has(h)) porColor.set(h, []); porColor.get(h).push(r); } } else hl.push(r);
+    }
+    tipos.forEach((ty, h) => { if (!porColor.has(h)) ed.setDecorations(ty, []); });
+    porColor.forEach((rs, h) => ed.setDecorations(tipo(h), rs));
+    ed.setDecorations(amarillo, hl);
+  };
+  let espera = null;
+  const programar = (ed) => { clearTimeout(espera); espera = setTimeout(() => decorar(ed), 300); };
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor((ed) => decorar(ed)),
+    vscode.workspace.onDidChangeTextDocument((e) => { const ed = vscode.window.activeTextEditor; if (ed && e.document === ed.document) programar(ed); }),
+  );
+  decorar(vscode.window.activeTextEditor);
+
+  // ⌃⌘A: atajos del Panel TCEE (sacados de package.json; sin los de escritura como $), se cierra con Esc
+  context.subscriptions.push(vscode.commands.registerCommand('tcee.atajos', async () => {
+    const pj = context.extension.packageJSON.contributes;
+    const titulos = Object.fromEntries((pj.commands || []).map((c) => [c.command, c.title]));
+    const mac = process.platform === 'darwin';
+    const bonito = (k) => k.split(' ').map((acorde) => acorde.split('+').map((x) => (mac
+      ? ({ cmd: '⌘', ctrl: '⌃', alt: '⌥', shift: '⇧' }[x] || x.toUpperCase()) : x[0].toUpperCase() + x.slice(1))).join(mac ? '' : '+')).join(' ');
+    const items = (pj.keybindings || []).filter((k) => !['tcee.dolar'].includes(k.command)).map((k) => ({
+      label: bonito((mac && k.mac) || k.key), description: titulos[k.command] || k.command, comando: k.command,
+    }));
+    const elegido = await vscode.window.showQuickPick(items, { title: 'Atajos del Panel TCEE (Esc para cerrar; Intro ejecuta el atajo)', matchOnDescription: true });
+    if (elegido) vscode.commands.executeCommand(elegido.comando);
+  }));
 }
 
 function activarFormulas(context) {
@@ -758,4 +960,4 @@ function activarFormulas(context) {
 }
 
 function deactivate() {}
-module.exports = { activate, deactivate };
+module.exports = { activate, deactivate, _pruebas: { activarEscritura, activarNotas, envolver } };   // _pruebas: solo para probar fuera de VS Code
