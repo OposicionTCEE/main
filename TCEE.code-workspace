@@ -43,6 +43,12 @@
     "latex-workshop.view.pdf.internal.synctex.keybinding": "double-click",
     "latex-workshop.message.error.show": false,
     "latex-workshop.message.warning.show": false,
+    // ---- Vista previa de fórmulas al pasar el ratón (como Overleaf) y panel de vista previa (⌘⌥M) ----
+    "latex-workshop.hover.preview.enabled": true,
+    "latex-workshop.hover.preview.scale": 1.1,
+    "latex-workshop.hover.preview.cursor.enabled": true,
+    "latex-workshop.hover.preview.newcommand.parseTeXFile.enabled": true,
+    "latex-workshop.mathpreviewpanel.cursor.enabled": true,
 
     // ---- Git / GitHub ----
     "git.autoRepositoryDetection": "subFolders",
