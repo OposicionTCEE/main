@@ -81,7 +81,8 @@ Por eso las indicaciones para Claude van en `magenta`. Si fueran en rojo, las no
 
 - Al escribir `\hig…` o `\hl`, la sugerencia `\highlight` escribe `\hl{}`. En el editor, el texto de `\hl{…}` lleva fondo amarillo.
 - `\hl` es del paquete `soul`. Se añadió a los 145 preámbulos el 5 de octubre de 2026, con el visto bueno del usuario.
-  Para temas nuevos, `scripts/preambulo_resaltado.js aplicar` lo añade antes de `\begin{document}`:
+  Va justo debajo del último `\usepackage` del preámbulo, antes del bloque «Fija primero tus valores globales».
+  Para temas nuevos, `scripts/preambulo_resaltado.js aplicar` lo añade en ese mismo sitio:
 
   ```
   \usepackage{soul}\sethlcolor{yellow}
