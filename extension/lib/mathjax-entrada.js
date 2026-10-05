@@ -15,18 +15,20 @@ require('mathjax-full/js/input/tex/noundefined/NoUndefinedConfiguration.js');
 require('mathjax-full/js/input/tex/textmacros/TextMacrosConfiguration.js');
 const adaptor = liteAdaptor();
 RegisterHTMLHandler(adaptor);
-let doc = null;
-function documento() {
-  if (!doc) doc = mathjax.document('', {
-    InputJax: new TeX({ packages: ['base', 'ams', 'newcommand', 'boldsymbol', 'cancel', 'color', 'mathtools', 'noundefined', 'textmacros'],
+const docs = {};
+// estricto: sin «noundefined», para que una orden desconocida dé error (sirve para encontrar la causa de otros errores)
+function documento(estricto) {
+  const k = estricto ? 'e' : 'n';
+  if (!docs[k]) docs[k] = mathjax.document('', {
+    InputJax: new TeX({ packages: ['base', 'ams', 'newcommand', 'boldsymbol', 'cancel', 'color', 'mathtools', 'textmacros'].concat(estricto ? [] : ['noundefined']),
       formatError: (jax, err) => { throw err; } }),
     OutputJax: new SVG({ fontCache: 'local' }),
   });
-  return doc;
+  return docs[k];
 }
 /** TeX → cadena SVG. Lanza un error si la fórmula no se puede interpretar */
-function svg(tex, display = true) {
-  const d = documento();
+function svg(tex, display = true, estricto = false) {
+  const d = documento(estricto);
   const nodo = d.convert(tex, { display });
   d.clear && d.clear();
   return adaptor.innerHTML(nodo);

@@ -587,11 +587,29 @@ function activarFormulas(context) {
     const clave = `${color()}|${r.display}|${r.tex}`;
     if (!cache.has(clave)) {
       let v;
-      try { v = { svg: F.dibujar(r.tex, r.display, color(), 1.1, F.macros(texto, r.tex)) }; } catch (e) { v = { error: String(e.message || e) }; }
+      try {
+        const svg = F.dibujar(r.tex, r.display, color(), 1.1, F.macros(texto, r.tex));
+        // órdenes desconocidas: MathJax las pinta en rojo en lugar de fallar
+        v = { svg, aviso: /fill="red"|mathcolor="red"/.test(svg) ? 'En rojo: órdenes que la vista previa no conoce (¿errata o definidas fuera del preámbulo?).' : '' };
+      } catch (e) { v = { error: F.explicarError(e.message || e, r.tex) }; }
       if (cache.size > 80) cache.delete(cache.keys().next().value);
       cache.set(clave, v);
     }
     return { ...cache.get(clave), rango: new vscode.Range(doc.positionAt(r.inicio), doc.positionAt(r.fin)) };
+  };
+
+  /** Guarda el SVG en la carpeta de la extensión y devuelve su dirección (para fórmulas que no caben incrustadas) */
+  const fs_ = require('fs'), path_ = require('path'), crypto_ = require('crypto');
+  // en la carpeta de la propia extensión: VS Code siempre deja mostrar imágenes de ahí en las ventanitas
+  const dirSvg = path_.join(context.extensionUri.fsPath, '.formulas');
+  const aFichero = (svg) => {
+    fs_.mkdirSync(dirSvg, { recursive: true });
+    const f = path_.join(dirSvg, `${crypto_.createHash('sha1').update(svg).digest('hex').slice(0, 16)}.svg`);
+    if (!fs_.existsSync(f)) {
+      fs_.writeFileSync(f, svg);
+      try { const v = fs_.readdirSync(dirSvg); if (v.length > 300) v.slice(0, 100).forEach((x) => fs_.unlinkSync(path_.join(dirSvg, x))); } catch (e) { /* limpieza opcional */ }
+    }
+    return vscode.Uri.file(f).toString();
   };
 
   // al pasar el ratón
@@ -599,9 +617,17 @@ function activarFormulas(context) {
     provideHover(doc, pos) {
       const r = svgEn(doc, pos);
       if (!r) return null;
-      const md = new vscode.MarkdownString(r.svg
-        ? `![fórmula](data:image/svg+xml;base64,${Buffer.from(r.svg).toString('base64')})`
-        : `*No se puede dibujar esta fórmula:* ${r.error.replace(/[\\`*_[\]]/g, ' ')}`);
+      let md;
+      if (r.svg) {
+        // la ventanita no admite más de ~100.000 caracteres: las fórmulas grandes van como fichero en lugar de incrustadas
+        const b64 = Buffer.from(r.svg).toString('base64');
+        const img = b64.length < 90000 ? `data:image/svg+xml;base64,${b64}` : aFichero(r.svg);
+        md = new vscode.MarkdownString(`![fórmula](${img})${r.aviso ? `\n\n*${r.aviso}*` : ''}${b64.length < 90000 ? '' : '\n\n*Fórmula grande: si no se ve, pulsa ⌘⌥M para verla en el panel.*'}`);
+      } else {
+        md = new vscode.MarkdownString();
+        md.appendMarkdown('**⚠ No se puede dibujar esta fórmula**\n\n');
+        md.appendText(r.error);
+      }
       return new vscode.Hover(md, r.rango);
     },
   }));
@@ -614,7 +640,7 @@ function activarFormulas(context) {
     const r = svgEn(ed.document, ed.selection.active);
     const fondo = 'var(--vscode-editor-background)', tinta = 'var(--vscode-foreground)';
     const cuerpo = !r ? '<p class="nada">Coloca el cursor dentro de una fórmula (por ejemplo, dentro de un \\eqblock).</p>'
-      : r.svg ? `<div class="f">${r.svg}</div>` : `<p class="err">No se puede dibujar esta fórmula:<br>${r.error.replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]))}</p>`;
+      : r.svg ? `<div class="f">${r.svg}</div>${r.aviso ? `<p class="nada">${r.aviso}</p>` : ''}` : `<p class="err"><strong>⚠ No se puede dibujar esta fórmula</strong><br>${r.error.replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]))}</p>`;
     panel.webview.html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:;">
 <style>body{background:${fondo};color:${tinta};font-family:var(--vscode-font-family);padding:16px;overflow:auto}.f{overflow-x:auto}.nada{opacity:.6}.err{color:var(--vscode-errorForeground)}</style></head><body>${cuerpo}</body></html>`;
   };
