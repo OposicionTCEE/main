@@ -158,6 +158,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
       if (r.ok !== false) enviar();
       return;
     }
+    if (m.tipo === 'abrirUrl') { if (/^https:\/\//.test(m.url || '')) vscode.env.openExternal(vscode.Uri.parse(m.url)); return; }
     if (m.tipo === 'abrir') return irA(m.codigo, m.epigrafe);
     if (m.tipo === 'hecho') { progreso.marcar(m.codigo, !!m.valor); alMarcar(); return; }
     if (m.tipo === 'relDetalle') {
@@ -202,6 +203,17 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
       if (m.tipo === 'idiEmpezar') return responder('idiSesion', { sesion: idiomas.empezar(m) });
       if (m.tipo === 'idiResponder') return responder('idiCorreccion', { clave: m.clave, resultado: idiomas.responder(m) });
       if (m.tipo === 'idiTerminar') { const r = idiomas.terminar(m); responder('idiFin', { fin: r }); return responder('idiDatos', { datos: idiomas.datos() }); }
+      if (m.tipo === 'idiAnotar') return responder('idiAnotado', { id: m.id, nota: idiomas.anotar(m) });
+      if (m.tipo === 'idiEliminarPerfil') {
+        const { ruta, nombre } = idiomas.rutaPerfil(m.dir);
+        const si = await vscode.window.showWarningMessage(`¿Eliminar el perfil «${nombre}»?`,
+          { modal: true, detail: `Se moverá a la Papelera la carpeta ${path.basename(ruta)} con todo su progreso, errores y anotaciones. Desde la Papelera se puede recuperar.` }, 'Eliminar');
+        if (si !== 'Eliminar') return;
+        await vscode.workspace.fs.delete(vscode.Uri.file(ruta), { recursive: true, useTrash: true });
+        await idiomas.olvidarPerfil(m.dir);
+        responder('aviso', { texto: `Perfil «${nombre}» eliminado (está en la Papelera).` });
+        return responder('idiDatos', { datos: idiomas.datos() });
+      }
       if (m.tipo === 'idiDescartarError') { idiomas.descartarError(m); return responder('idiDatos', { datos: idiomas.datos() }); }
     } catch (e) { responder('aviso', { texto: String(e.message || e), error: true }); }
   }
