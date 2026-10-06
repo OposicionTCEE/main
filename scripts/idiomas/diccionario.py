@@ -35,8 +35,9 @@ def main():
         palabra = limpio(palabra)
         if not palabra or len(palabra) > 60 or len(palabra.split()) > 5:
             return
-        e = D[l][(palabra, cat)]
-        e['cat'] = cat
+        e = D[l][palabra]
+        if cat and cat not in e['cat'].split(', ') and len(e['cat']) < 40:
+            e['cat'] = f"{e['cat']}, {cat}" if e['cat'] else cat
         if ipa and not e['ipa']:
             e['ipa'] = ipa
         for t in trad:
@@ -83,7 +84,7 @@ def main():
             add('fr', x.get('word'), cat, trs, [], ipa)
         print('fr-extract:', n, 'líneas')
     for l in ('fr', 'en'):
-        ent = [[p, e['cat'], e['ipa'], e['trad'], e['glosas']] for (p, _), e in D[l].items() if e['trad'] or e['glosas']]
+        ent = [[p, e['cat'], e['ipa'], e['trad'], e['glosas']] for p, e in D[l].items() if e['trad'] or e['glosas']]
         ent.sort(key=lambda e: (e[0].lower(), e[1]))
         os.makedirs(os.path.join(salida, l), exist_ok=True)
         with open(os.path.join(salida, l, 'diccionario.json'), 'w', encoding='utf-8') as f:
