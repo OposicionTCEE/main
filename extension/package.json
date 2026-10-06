@@ -2,7 +2,7 @@
   "name": "tcee-panel",
   "displayName": "Panel TCEE",
   "description": "Panel de trabajo para los temas de la oposición TCEE: acciones, tiempo restante, índice, calendario, relaciones y cante.",
-  "version": "0.28.1",
+  "version": "0.29.1",
   "publisher": "oposiciontcee",
   "license": "UNLICENSED",
   "repository": {
@@ -181,6 +181,11 @@
         "category": "TCEE"
       },
       {
+        "command": "tcee.intro",
+        "title": "Intro en una lista (añade \\item)",
+        "category": "TCEE"
+      },
+      {
         "command": "tcee.atajos",
         "title": "Ver los atajos del Panel TCEE",
         "category": "TCEE"
@@ -273,6 +278,11 @@
         "command": "tcee.dolar",
         "key": "shift+4",
         "when": "editorTextFocus && !editorReadonly && editorLangId == latex"
+      },
+      {
+        "command": "tcee.intro",
+        "key": "enter",
+        "when": "editorTextFocus && !editorReadonly && editorLangId == latex && tcee.enLista && !suggestWidgetVisible && !inSnippetMode && !editorHasMultipleSelections"
       },
       {
         "command": "tcee.atajos",

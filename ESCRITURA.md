@@ -29,6 +29,7 @@ No muestra los de escritura (`$`). Intro ejecuta el atajo elegido.
 
 - **Sin selección, fuera de la orden**: escribe `\textbf{|}` con el cursor dentro.
 - **Sin selección, dentro de un `\textbf{…}`**: el cursor sale detrás de la `}` para seguir escribiendo sin negrita.
+- **Sin selección, dentro de un `\textbf{}` vacío**: se borra (casi siempre es un error).
   Si está dentro de varios grupos, sale del `\textbf` más cercano.
 - **Selección de todo el contenido** (o de la orden completa): se quita la negrita.
 - **Selección de una parte**: solo esa parte deja de ir en negrita (`\textbf{a}b\textbf{c}`).
@@ -92,3 +93,41 @@ Por eso las indicaciones para Claude van en `magenta`. Si fueran en rojo, las no
 - Si se usa ⌃H en un tema sin el paquete, aparece un aviso.
 - Probado de nuevo tras añadirlo, en 3.A.1 y 3.B.14: mismo número de errores y de páginas que antes.
 - Límites de `soul`: dentro de `\hl{…}` no puede haber `\footnote`, `\eqblock` ni cambios de párrafo.
+
+## Listas: \lnum, \la e Intro
+
+- `\lnum` + Intro escribe una lista numerada y `\la` + Intro una alfabética, con el primer `\item` y el cursor detrás:
+
+  ```
+  \begin{lnum}
+      \item |
+  \end{lnum}
+  ```
+- Dentro de una lista (`lnum`, `la`, `itemize` o `enumerate`), Intro abre una línea nueva que ya empieza con `\item`, con la misma sangría.
+- Intro en un `\item` vacío lo quita y saca el cursor de la lista, debajo del `\end{…}` (como en Word).
+- No actúa:
+  - dentro de unas llaves abiertas en el `\item`, como una `\footnote{…}` o un `\textbf{…}`;
+  - en un entorno metido en la lista, como una fórmula;
+  - con la lista de sugerencias abierta, dentro de un fragmento con Tab ni con varios cursores.
+
+  En esos casos Intro funciona como siempre.
+- Código: `enLista` y `finDeEntorno` en `escritura.js`. Intro es el comando `tcee.intro`, activo solo cuando `tcee.enLista` es cierto
+  (se calcula al mover el cursor). No sale en la ventana de atajos.
+
+## Citas textuales: \cita
+
+```
+\begin{cita}[Autor][Año][Obra]
+    Texto de la cita.
+\end{cita}
+```
+
+- Debajo, a la derecha: «AUTOR (Año), *Obra*». Los tres datos son opcionales; sin ninguno, no hay firma.
+- `\cita` + Intro escribe `\begin{cita}[Autor][Año][Obra]` con el cursor en el texto de la cita.
+  Tab pasa a «Autor», que queda seleccionado (lo que escribas lo sustituye); después a «Año» y a «Obra».
+  Si un dato se deja sin cambiar, la palabra sale en el PDF a propósito, para ver lo que falta. En el editor se subraya con una línea ondulada.
+- Si un corchete se deja vacío (`[]`), en el editor se ve en gris qué dato va. Esa pista no se escribe en el `.tex`.
+- La definición (`\NewDocumentEnvironment{cita}{ O{} O{} O{} +b }`) está en los 145 temas, justo antes del bloque de listas.
+  Se añadió el 6 de octubre de 2026 con el visto bueno del usuario; antes solo estaba en 3.A.19, y con dos datos.
+  Las citas de 3.A.42, 3.B.2 y 3.B.3, que daban error, se reordenaron a [Autor][Año][Obra].
+- El espacio entre autor y año es `\space`: con `~` (babel en castellano) salía «@» y dos errores.

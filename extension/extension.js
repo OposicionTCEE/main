@@ -570,7 +570,14 @@ async function envolver(macro) {
     const s = sels[0], texto = doc.getText(), ini = doc.offsetAt(s.start), fin = doc.offsetAt(s.end);
     const g = E.grupoQueRodea(texto, ini, fin, macro);
     if (g) {
-      if (s.isEmpty) { const p = doc.positionAt(g.cierra + 1); ed.selection = new vscode.Selection(p, p); return; }
+      if (s.isEmpty) {
+        // \textbf{} vacío: se borra (suele ser un error); si tiene texto, el cursor sale detrás de la }
+        if (!texto.slice(g.abre + 1, g.cierra).trim()) {
+          await ed.edit((e) => e.delete(new vscode.Range(doc.positionAt(g.inicio), doc.positionAt(g.cierra + 1))));
+          const p = doc.positionAt(g.inicio); ed.selection = new vscode.Selection(p, p); return;
+        }
+        const p = doc.positionAt(g.cierra + 1); ed.selection = new vscode.Selection(p, p); return;
+      }
       const contenido = texto.slice(g.abre + 1, g.cierra);
       const todo = new vscode.Range(doc.positionAt(g.inicio), doc.positionAt(g.cierra + 1));
       if (texto.slice(g.abre + 1, ini).trim() === '' && texto.slice(fin, g.cierra).trim() === '') {
@@ -732,6 +739,37 @@ function activarEscritura(context) {
     await ed.insertSnippet(s);
     vscode.commands.executeCommand('editor.action.triggerSuggest');
   }));
+  // Intro dentro de una lista (lnum, la, itemize, enumerate): línea nueva con \item; en un \item vacío, sale de la lista
+  let enListaAntes = false;
+  const marcarLista = (ed) => {
+    const v = !!(ed && ed.document.languageId === 'latex' && ed.selections.length === 1 && E.enLista(ed.document.getText(), ed.document.offsetAt(ed.selection.active)));
+    if (v !== enListaAntes) { enListaAntes = v; vscode.commands.executeCommand('setContext', 'tcee.enLista', v); }
+  };
+  context.subscriptions.push(
+    vscode.window.onDidChangeTextEditorSelection((e) => marcarLista(e.textEditor)),
+    vscode.window.onDidChangeActiveTextEditor(marcarLista),
+    vscode.commands.registerCommand('tcee.intro', async () => {
+      const ed = vscode.window.activeTextEditor; if (!ed) return;
+      const doc = ed.document, p = ed.selection.active, texto = doc.getText();
+      const l = E.enLista(texto, doc.offsetAt(p));
+      if (!l || !ed.selection.isEmpty) return vscode.commands.executeCommand('type', { text: '\n' });
+      const linea = doc.lineAt(p.line);
+      if (linea.text.trim() === '\\item') {
+        // \item vacío: se quita y el cursor sale debajo del \end{…}
+        const fin = E.finDeEntorno(texto, l.inicio, l.nombre);
+        if (fin < 0) return;
+        const finPos = doc.positionAt(fin);
+        await ed.edit((w) => { w.insert(finPos, '\n'); w.delete(linea.rangeIncludingLineBreak); });
+        const q = doc.positionAt(E.finDeEntorno(doc.getText(), l.inicio, l.nombre) + 1);
+        ed.selection = new vscode.Selection(q, q);
+        return;
+      }
+      // sangría del \item en el que se está (o de la línea actual)
+      let k = p.line; while (k > 0 && !/^\s*\\item\b/.test(doc.lineAt(k).text) && doc.offsetAt(new vscode.Position(k, 0)) > l.inicio) k--;
+      const sangria = (doc.lineAt(/^\s*\\item\b/.test(doc.lineAt(k).text) ? k : p.line).text.match(/^[ \t]*/) || [''])[0];
+      await ed.edit((w) => w.insert(p, `\n${sangria}\\item `));
+    }),
+  );
   // ⌃H: resaltado amarillo (\hl del paquete soul), con la misma lógica que ⌘B
   context.subscriptions.push(vscode.commands.registerCommand('tcee.resaltar', async () => {
     await envolver('hl');
@@ -790,6 +828,16 @@ function activarEscritura(context) {
         it.documentation = 'Texto en color. Al escribir un color válido, el cursor salta al texto. Significados en config/colores.json.';
         items.push(it);
       }
+      // \lnum y \la → lista con su primer \item; \cita → bloque de cita (cursor en el texto; Tab: Autor, Año, Obra)
+      const bloque = (nombre, desc, snippet, orden) => {
+        const it = new vscode.CompletionItem({ label: `\\${nombre}`, description: desc }, vscode.CompletionItemKind.Snippet);
+        it.insertText = new vscode.SnippetString(snippet); it.filterText = `\\${nombre}`; it.sortText = `!${orden}`; it.preselect = true; it.range = rango;
+        return it;
+      };
+      const ml = m[1].toLowerCase();
+      if (ml.length >= 2 && 'lnum'.startsWith(ml)) items.push(bloque('lnum', '→ lista numerada (1. 2. 3.)', '\\begin{lnum}\n\t\\item $0\n\\end{lnum}', 2));
+      if (ml === 'la') items.push(bloque('la', '→ lista alfabética (a) b) c))', '\\begin{la}\n\t\\item $0\n\\end{la}', 3));
+      if (ml.length >= 2 && 'cita'.startsWith(ml)) items.push(bloque('cita', '→ cita textual (Tab: Autor, Año, Obra)', '\\begin{cita}[${2:Autor}][${3:Año}][${4:Obra}]\n\t$1\n\\end{cita}$0', 4));
       if ((m[1].length >= 3 && 'highlight'.startsWith(m[1].toLowerCase())) || m[1] === 'hl') {
         const it = new vscode.CompletionItem({ label: '\\highlight', description: '→ \\hl{texto} (resaltado amarillo, ⌃H)' }, vscode.CompletionItemKind.Snippet);
         it.insertText = new vscode.SnippetString('\\\\hl{$1}$0'); it.filterText = '\\highlight'; it.sortText = '!1'; it.preselect = true; it.range = rango;
@@ -841,6 +889,10 @@ function activarEscritura(context) {
     return tipos.get(hex);
   };
   const amarillo = vscode.window.createTextEditorDecorationType({ backgroundColor: 'rgba(255, 221, 0, 0.30)', borderRadius: '2px' });
+  const pista = vscode.window.createTextEditorDecorationType({ before: { color: new vscode.ThemeColor('editorGhostText.foreground'), fontStyle: 'italic' } });
+  // «Autor», «Año» u «Obra» sin cambiar en una cita: subrayado ondulado, para ver de un vistazo lo que falta
+  const falta = vscode.window.createTextEditorDecorationType({ textDecoration: 'underline wavy', color: new vscode.ThemeColor('editorWarning.foreground') });
+  context.subscriptions.push(pista, falta);
   context.subscriptions.push(amarillo, { dispose: () => tipos.forEach((t) => t.dispose()) });
   const decorar = (ed) => {
     if (!ed || ed.document.languageId !== 'latex') return;
@@ -854,6 +906,22 @@ function activarEscritura(context) {
       const r = new vscode.Range(doc.positionAt(a + 1), doc.positionAt(b));
       if (m[2]) { const h = hexDe(m[2]); if (h && m[2] !== 'black' && m[2] !== 'white') { if (!porColor.has(h)) porColor.set(h, []); porColor.get(h).push(r); } } else hl.push(r);
     }
+    // \begin{cita}[…][…][…]: en los corchetes vacíos, el dato que va (Autor, Año, Obra) en gris, sin escribirlo en el texto
+    const pistas = [], faltan = [];
+    const rc = /\\begin\{cita\}/g; let mc;
+    while ((mc = rc.exec(t))) {
+      let i = mc.index + mc[0].length;
+      for (const nombre of ['Autor', 'Año', 'Obra']) {
+        if (t[i] !== '[') break;
+        const j = t.indexOf(']', i);
+        if (j < 0) break;
+        if (j === i + 1) { const p = doc.positionAt(i + 1); pistas.push({ range: new vscode.Range(p, p), renderOptions: { before: { contentText: nombre } } }); }
+        else if (t.slice(i + 1, j) === nombre) faltan.push(new vscode.Range(doc.positionAt(i + 1), doc.positionAt(j)));   // sin rellenar: se subraya
+        i = j + 1;
+      }
+    }
+    ed.setDecorations(pista, pistas);
+    ed.setDecorations(falta, faltan);
     tipos.forEach((ty, h) => { if (!porColor.has(h)) ed.setDecorations(ty, []); });
     porColor.forEach((rs, h) => ed.setDecorations(tipo(h), rs));
     ed.setDecorations(amarillo, hl);
@@ -890,7 +958,7 @@ function activarEscritura(context) {
     const qp = vscode.window.createQuickPick();
     qp.title = 'Atajos del Panel TCEE · Esc cierra · Intro lo ejecuta · ⚙ lo cambia';
     qp.matchOnDescription = true;
-    qp.items = Object.entries(atajo).filter(([c]) => !['tcee.dolar'].includes(c)).map(([c, k]) => ({
+    qp.items = Object.entries(atajo).filter(([c]) => !['tcee.dolar', 'tcee.intro'].includes(c)).map(([c, k]) => ({
       label: k ? bonito(k) : '(sin atajo)', description: titulos[c] || c, comando: c, buttons: [boton],
     }));
     qp.onDidAccept(() => { const it = qp.selectedItems[0]; qp.hide(); if (it) vscode.commands.executeCommand(it.comando); });
