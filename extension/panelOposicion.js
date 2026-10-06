@@ -9,6 +9,7 @@ const { crearCalendarios } = require('./calendarioPanel');
 const { crearRelaciones } = require('./relacionesPanel');
 const { crearCante } = require('./cante');
 const { crearTest } = require('./testPanel');
+const { crearIdiomas } = require('./idiomasPanel');
 
 function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
   let panel = null;
@@ -29,6 +30,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
   const calendarios = crearCalendarios({ ctx: context, progreso, raiz, desarrollos });
   const relaciones = crearRelaciones({ raiz, desarrollos });
   const test = crearTest({ raiz, progreso });
+  const idiomas = crearIdiomas({ raiz, globalState: context.globalState });
   // Cante: grabación y transcripción (main/CANTE.md). alCambiar(ligero): solo el estado en vivo (nivel, % transcrito) o todo el panel
   const cante = crearCante({
     raiz, progreso,
@@ -166,6 +168,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     }
     if (m.tipo && m.tipo.startsWith('cante')) return mensajeCante(m);
     if (m.tipo && m.tipo.startsWith('test')) return mensajeTest(m);
+    if (m.tipo && m.tipo.startsWith('idi')) return mensajeIdiomas(m);
     if (m.tipo === 'abrirLinea') {
       if (!cache) await temas();
       const t = cache[m.codigo]; if (t) vscode.commands.executeCommand('tcee.irA', t.uri, Math.max(0, m.linea), { principal: true });
@@ -185,6 +188,22 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
           .then((r) => { if (r) { test.borrar(m.id); enviarHistorial(); progreso.testCambiado(); alMarcar(); } });
       }
     } catch (e) { panel.webview.postMessage({ tipo: 'aviso', texto: String(e.message || e), error: true }); }
+  }
+
+  /** Pestaña Idiomas (main/IDIOMAS.md): los datos van y vienen solo cuando la pestaña los pide */
+  async function mensajeIdiomas(m) {
+    const responder = (tipo, x) => panel.webview.postMessage({ tipo, ...x });
+    try {
+      if (m.tipo === 'idiCargar') return responder('idiDatos', { datos: idiomas.datos() });
+      if (m.tipo === 'idiCrearPerfil') { idiomas.crearPerfil(m.perfil); return responder('idiDatos', { datos: idiomas.datos() }); }
+      if (m.tipo === 'idiGuardarPerfil') { idiomas.guardarPerfil(m.cambios); responder('aviso', { texto: 'Ajustes guardados.' }); return responder('idiDatos', { datos: idiomas.datos() }); }
+      if (m.tipo === 'idiElegirPerfil') { await idiomas.elegirPerfil(m.dir); return responder('idiDatos', { datos: idiomas.datos() }); }
+      if (m.tipo === 'idiFicha') return responder('idiFicha', { ficha: idiomas.ficha(m.lengua, m.id) });
+      if (m.tipo === 'idiEmpezar') return responder('idiSesion', { sesion: idiomas.empezar(m) });
+      if (m.tipo === 'idiResponder') return responder('idiCorreccion', { clave: m.clave, resultado: idiomas.responder(m) });
+      if (m.tipo === 'idiTerminar') { const r = idiomas.terminar(m); responder('idiFin', { fin: r }); return responder('idiDatos', { datos: idiomas.datos() }); }
+      if (m.tipo === 'idiDescartarError') { idiomas.descartarError(m); return responder('idiDatos', { datos: idiomas.datos() }); }
+    } catch (e) { responder('aviso', { texto: String(e.message || e), error: true }); }
   }
 
   async function mensajeCante(m) {
@@ -239,6 +258,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
 <script nonce="${nonce}" src="${url('relaciones.js')}"></script>
 <script nonce="${nonce}" src="${url('cante.js')}"></script>
 <script nonce="${nonce}" src="${url('test.js')}"></script>
+<script nonce="${nonce}" src="${url('idiomas.js')}"></script>
 <script nonce="${nonce}" src="${url('panel.js')}"></script></body></html>`;
   }
 
