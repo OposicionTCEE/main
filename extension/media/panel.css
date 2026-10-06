@@ -805,9 +805,15 @@ mark.idi-marca.con-nota { border-bottom: 2px dotted currentColor; }
 .idi-vfila.col { flex-direction: column; align-items: stretch; }
 .idi-vlab { font-weight: 700; min-width: 80px; }
 .idi-vlab a { font-weight: normal; font-size: .85em; margin-left: 6px; }
-.idi-vtiempos { align-items: start; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
-.idi-vmodo { display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; border-radius: 8px; background: var(--fondo); border: 1px solid var(--borde); }
-.idi-vmodo label { font-size: .92em; display: flex; gap: 6px; align-items: center; }
+.idi-vtiempos { display: flex; flex-direction: column; gap: 6px; }
+.idi-vmodo { display: grid; grid-template-columns: 96px 1fr; align-items: start; gap: 8px; }
+.idi-vmodo > b { padding-top: 3px; font-size: .92em; }
+.idi-vtchips { display: flex; flex-wrap: wrap; gap: 4px; }
+.idi-vtchip { padding: 2px 9px; font-size: .9em; border-radius: 12px; }
+.idi-vtchip.activo { background: var(--vscode-button-background); color: var(--vscode-button-foreground); border-color: transparent; }
+.idi-verbos .idi-practica { grid-template-columns: 1fr 1fr; }
+.idi-verbos .idi-practica.plegada { grid-template-columns: 44px 1fr; }
+.idi-vconf .idi-vfila { margin: 8px 0; }
 .idi-vbusca { position: relative; }
 .idi-vsug { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; max-height: 220px; overflow-y: auto; }
 .idi-vsug button { text-align: left; padding: 4px 8px; }
@@ -817,7 +823,7 @@ mark.idi-marca.con-nota { border-bottom: 2px dotted currentColor; }
 .idi-vverbo { margin: 4px 0 12px; font-size: 1.6em; }
 .idi-vverbo small { font-size: .55em; font-weight: normal; }
 .idi-vtabla { display: flex; flex-direction: column; gap: 6px; }
-.idi-vfilaej { display: grid; grid-template-columns: 110px minmax(160px, 260px) 1fr; align-items: center; gap: 10px; padding: 4px 8px; border-radius: 8px; }
+.idi-vfilaej { display: grid; grid-template-columns: 90px minmax(140px, 240px) 1fr; align-items: center; gap: 10px; padding: 4px 8px; border-radius: 8px; }
 .idi-vfilaej.grande { grid-template-columns: auto 1fr; font-size: 1.2em; }
 .idi-vfilaej.ok { background: color-mix(in srgb, var(--iok) 12%, transparent); }
 .idi-vfilaej.mal { background: color-mix(in srgb, var(--imal) 10%, transparent); }
@@ -846,7 +852,13 @@ mark.idi-marca.con-nota { border-bottom: 2px dotted currentColor; }
 .idi-vt h5 { margin: 0 0 4px; font-size: .86em; color: var(--tinta); }
 .idi-vt-f { display: flex; gap: 6px; line-height: 1.55; font-size: .95em; }
 .idi-vt-p { flex: none; width: 54px; text-align: right; color: var(--apagado); font-size: .9em; }
-.idi-vraiz { color: var(--apagado); }
-.idi-vterm { color: var(--vscode-charts-orange, #e5a55d); font-weight: 600; }
-.idi-vaux { color: var(--vscode-charts-blue, #6cb6ff); }
+.idi-raiz { --vterm: #f0a050; --vaux: #6cb6ff; }                         /* temas oscuros */
+body.vscode-light .idi-raiz { --vterm: #b4530a; --vaux: #1f5fbf; }        /* temas claros: tonos oscuros, buen contraste */
+body.vscode-high-contrast .idi-raiz, body.vscode-high-contrast-light .idi-raiz { --vterm: var(--tinta); --vaux: var(--tinta); }
+.idi-vraiz { color: var(--tinta); opacity: .65; }
+.idi-vterm { color: var(--vterm); font-weight: 700; }
+body.vscode-high-contrast .idi-vterm, body.vscode-high-contrast-light .idi-vterm { text-decoration: underline; }
+.idi-vaux { color: var(--vaux); }
+.idi-vrejilla.pf { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.idi-vt-intro { margin: 8px 10px; }
 .idi-vt-nota { margin-top: 6px; padding: 4px 8px; font-size: .84em; border-left: 2px solid var(--iaviso); background: color-mix(in srgb, var(--iaviso) 8%, transparent); border-radius: 4px; line-height: 1.4; }

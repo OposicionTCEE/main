@@ -271,7 +271,7 @@ function paradigma(datos, verbo) {
   const tiempos = {};
   for (const [k] of TIEMPOS_FR) tiempos[k] = (conjugar(datos, verbo, k) || []).map((x) => ({ pronombre: x.pronombre, formas: x.respuestas }));
   const pp = formasSimples(datos, verbo, 'pp') || [], ppres = formasSimples(datos, verbo, 'ppres') || [];
-  return { verbo, raiz: v[1], grupo: v[3], tiempos, participios: { presente: (ppres[0] || [])[0] || '', pasado: pp.map((x) => (x ? x[0] : null)).filter(Boolean) },
+  return { verbo, raiz: v[1], grupo: v[3], hAspirada: !!v[5], tiempos, participios: { presente: (ppres[0] || [])[0] || '', pasado: pp.map((x) => (x ? x[0] : null)).filter(Boolean) },
     auxiliar: CON_ETRE.has(verbo) ? 'être' : DOBLE_AUX.has(verbo) ? 'être / avoir' : 'avoir' };
 }
 /** Prepara los datos de verbos.json para conjugar */
