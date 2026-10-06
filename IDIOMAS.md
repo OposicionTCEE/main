@@ -72,6 +72,7 @@ idiomas/
   README.md, LICENCIAS.md          atribuciones de cada fuente
   <lengua>/                        fr, en
     materias.json                  índice A1→C2: id estable, bloque, título, nivel, descripción, fuente, ficha
+    titulos.json                   título y descripción de cada materia en la lengua estudiada; rótulo oficial (Core Inventory) si lo hay
     fichas/<id>.json               explicación, ejemplos y ejercicios propios de la ficha
     ejercicios/<id>.json           banco de ejercicios de respuesta fija, montado por programa
     lexico.json                    palabras por nivel y campo semántico, con pronunciación y ejemplos
@@ -87,6 +88,7 @@ perfil.json        nombre, idiomas, nivel orientativo y estimado por bloque, com
 sesiones.jsonl     una línea por sesión: fecha, idioma, tipo, minutos, materias, resultados
 repaso.json        estado del repaso de cada ficha (ts-fsrs)
 errores.json       cuaderno de errores: frase, corrección, ficha, fecha, veces
+anotaciones.json   anotaciones del usuario en cada ficha
 escritos/, audio/  lo que el usuario escribe y graba (fases 2–3)
 ```
 
@@ -111,6 +113,27 @@ Ver `scripts/idiomas/encargos/fichas_comun.md`. Resumen: `id`, `titulo`, `titulo
 `explicacion` (bloques texto/tabla/lista, en español), `ejemplos` (frase + traducción), `errores_hispanohablantes` (mal/bien/nota),
 `ejercicios` (12–16: hueco, eleccion, transformar, corregir, ordenar; todas las respuestas válidas en `respuestas`; `origen` si viene de Tatoeba)
 y `fuente`.
+
+## Pantalla (v0.31, 6/10/2026, con el usuario)
+
+- **Barra superior**: a la izquierda «IDIOMA: [desplegable]»; a la derecha, el perfil (nombre, niveles, ⚙ Ajustes) y debajo los compromisos.
+- **Izquierda (1/3)**: *Empezar sesión* con las seis destrezas y competencias (Gramática, Léxico, Comprensión lectora, Comprensión auditiva,
+  Expresión escrita, Expresión oral; las cuatro últimas, desactivadas hasta las fases 2–3) y, aparte, Repaso, Al azar y Examen.
+  Debajo, el cuaderno de errores y las últimas sesiones.
+- **Derecha (2/3)**: fichas como tarjetas, solo las del nivel elegido (flechas ◀ ▶ y botones A1…C2 con la parte dominada) y del bloque elegido
+  en el desplegable (Gramática, Léxico, Fonética, Destrezas o todas). Cada tarjeta: nivel, bloque, estado, título y descripción, progreso
+  (última nota en un anillo con la media, sesiones, fecha de repaso) y marcas «CI» (rótulo del Core Inventory) y 📝 (tiene anotaciones).
+- **Idioma de las tarjetas**: por defecto, la lengua estudiada (`<lengua>/titulos.json` del paquete: `titulo_l`, `descripcion_l`, `oficial`);
+  en Ajustes se puede pasar a castellano. Las explicaciones de dentro de la ficha siguen en castellano.
+  En inglés, `oficial` es el rótulo exacto del *Core Inventory for General English* cuando la materia coincide (78 de 125); en francés no hay
+  rótulo oficial verificable (no tenemos el texto del *Inventaire*), así que el título usa la terminología FLE habitual.
+- **Ficha**: siempre las mismas secciones y en el mismo orden, plegables: De qué trata · Reglas y claves · Ejemplos (con 🔊, voz del Mac) ·
+  Errores típicos de hispanohablantes · Material complementario (fuente, rótulo oficial, fichas relacionadas, enlaces de consulta) · Mis anotaciones
+  (se guardan solas en `anotaciones.json` del perfil).
+- **Práctica**: la ficha a la izquierda (plegable a una franja) y los ejercicios a la derecha, con una barra de puntos verde/rojo por ejercicio.
+- **Ejercicios según el nivel**: si la ficha está por debajo del nivel del usuario, salen primero los de producción (transformar, corregir, ordenar);
+  si está por encima, primero los de reconocimiento (elegir, hueco). Con el mismo nivel, mezclados.
+- **Eliminar perfil**: Ajustes → *Eliminar este perfil…*; pide confirmación y manda la carpeta a la Papelera del Mac.
 
 ## Cómo funciona la pestaña (fase 1)
 

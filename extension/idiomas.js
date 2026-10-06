@@ -73,9 +73,18 @@ function barajar(arr, semilla = Date.now()) {
  * Ejercicios de una sesión sobre una ficha: primero los que el usuario falló (cuaderno de errores), luego los no vistos y, por último,
  * los vistos hace más tiempo. Mezcla tipos.
  */
-function elegirEjercicios(ficha, registro, n = 10, semilla) {
+// Orden de preferencia de los tipos de ejercicio según el nivel del usuario frente al de la ficha:
+// ficha por debajo de su nivel → primero los de producción (escribir la frase); ficha por encima → primero los de reconocimiento.
+const TIPOS_PRODUCCION = ['transformar', 'corregir', 'ordenar', 'hueco', 'eleccion'];
+const TIPOS_RECONOCIMIENTO = ['eleccion', 'hueco', 'ordenar', 'corregir', 'transformar'];
+function elegirEjercicios(ficha, registro, n = 10, semilla, ajuste = 0) {
   const vistos = (registro && registro.ejercicios) || {};   // id → {ultima, fallos}
-  const todos = barajar(ficha.ejercicios || [], semilla);
+  let todos = barajar(ficha.ejercicios || [], semilla);
+  if (ajuste) {
+    const orden = ajuste > 0 ? TIPOS_PRODUCCION : TIPOS_RECONOCIMIENTO;
+    const rango = (e) => { const r = orden.indexOf(e.tipo); return r < 0 ? 2 : r; };
+    todos = todos.map((e, i) => ({ e, i })).sort((a, b) => rango(a.e) - rango(b.e) || a.i - b.i).map((x) => x.e);
+  }
   const fallados = todos.filter((e) => vistos[e.id] && vistos[e.id].fallos > 0 && !vistos[e.id].corregido);
   const nuevos = todos.filter((e) => !vistos[e.id]);
   const resto = todos.filter((e) => vistos[e.id] && !fallados.includes(e)).sort((a, b) => (vistos[a.id].ultima || '').localeCompare(vistos[b.id].ultima || ''));

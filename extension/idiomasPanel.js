@@ -16,15 +16,23 @@ function crearIdiomas({ raiz, globalState }) {
   function paquete(l) {
     const f = path.join(dirPaquete(), l, 'materias.json');
     let m = 0; try { m = fs.statSync(f).mtimeMs; } catch (e) { return null; }
+    const ft = path.join(dirPaquete(), l, 'titulos.json');
+    try { m += fs.statSync(ft).mtimeMs; } catch (e) { /* paquete antiguo sin títulos en la lengua */ }
     const c = cachePaquete[l];
     if (c && c.m === m) return c;
-    const materias = (leer(f, { materias: [] }).materias || []);
+    const tl = leer(ft, { titulos: {} }).titulos || {};
+    const materias = (leer(f, { materias: [] }).materias || []).map((x) => ({ ...x, ...(tl[x.id] || {}) }));
     let fichas = []; try { fichas = fs.readdirSync(path.join(dirPaquete(), l, 'fichas')).filter((x) => x.endsWith('.json')); } catch (e) { /* aún no hay */ }
     const conFicha = new Set();
     const titulos = {};
     for (const x of fichas) {
       const d = leer(path.join(dirPaquete(), l, 'fichas', x), null);
-      if (d && d.id) { conFicha.add(d.id); titulos[d.id] = { titulo_es: d.titulo_es, descripcion_es: d.descripcion_es, n: (d.ejercicios || []).length }; }
+      if (d && d.id) {
+        conFicha.add(d.id);
+        const tipos = {}; for (const e of d.ejercicios || []) tipos[e.tipo] = (tipos[e.tipo] || 0) + 1;
+        titulos[d.id] = { titulo_es: d.titulo_es, descripcion_es: d.descripcion_es, n: (d.ejercicios || []).length, tipos,
+          nEjemplos: (d.ejemplos || []).length, nErrores: (d.errores_hispanohablantes || []).length, fuenteNombre: d.fuente && d.fuente.nombre };
+      }
     }
     cachePaquete[l] = { m, materias, conFicha, titulos };
     return cachePaquete[l];
@@ -47,6 +55,15 @@ function crearIdiomas({ raiz, globalState }) {
   const perfil = () => (f('perfil.json') ? leer(f('perfil.json'), null) : null);
   const registros = () => leer(f('materias.json') || '', {});
   const errores = () => leer(f('errores.json') || '', []);
+  const anotaciones = () => leer(f('anotaciones.json') || '', {});
+  /** Anotación del usuario sobre una ficha (vacía = se borra) */
+  function anotar({ id, texto }) {
+    if (!dirActivo()) throw new Error('No hay perfil.');
+    const a = anotaciones(); const t = String(texto || '').replace(/\s+$/, '');
+    if (t) a[id] = { texto: t, fecha: new Date().toISOString() }; else delete a[id];
+    escribir(f('anotaciones.json'), a);
+    return a[id] || null;
+  }
   function sesiones() {
     const x = f('sesiones.jsonl'); if (!x) return [];
     try { return fs.readFileSync(x, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)); } catch (e) { return []; }
@@ -97,7 +114,7 @@ function crearIdiomas({ raiz, globalState }) {
       errores: errores().filter((e) => !e.resuelto).slice(-300),
       sesiones: ses.slice(-60),
       compromisos: p ? I.compromisos(p.compromisos, ses).map((c) => ({ ...c, texto: I.textoRegla(c.regla) })) : [],
-      nivel, pendientes,
+      nivel, pendientes, anotaciones: p ? anotaciones() : {},
     };
   }
 
@@ -109,6 +126,7 @@ function crearIdiomas({ raiz, globalState }) {
     const regs = registros();
     const n = (p.ajustes && p.ajustes.ejercicios) || 10;
     const nivel = (p.idiomas[lengua] || {}).nivel || 'B1';
+    const nivelDe = Object.fromEntries(k.materias.map((m) => [m.id, m.nivel]));
     const semilla = Date.now();
     let partes = [];
     const rec = (bloque) => I.recomendar(k.materias, regs, { bloque, nivel, conFicha: k.conFicha, semilla });
@@ -128,7 +146,9 @@ function crearIdiomas({ raiz, globalState }) {
     const bloques = partes.map(({ id, n: cuantos }) => {
       const fi = ficha(lengua, id);
       if (!fi) throw new Error(`Falta la ficha ${id}.`);
-      let ejercicios = I.elegirEjercicios(fi, regs[id], cuantos, semilla);
+      // ejercicios adecuados al nivel: si la ficha queda por debajo del tuyo, más de producción; si queda por encima, más de reconocimiento
+      const ajuste = I.nivelNum(nivel) - I.nivelNum(fi.nivel || nivelDe[id] || nivel);
+      let ejercicios = I.elegirEjercicios(fi, regs[id], cuantos, semilla, ajuste);
       if (tipo === 'errores') {
         const fallados = new Set(errores().filter((e) => e.materia === id && !e.resuelto).map((e) => e.ejercicio));
         ejercicios = [...fi.ejercicios.filter((e) => fallados.has(e.id)), ...ejercicios.filter((e) => !fallados.has(e.id))].slice(0, cuantos);
@@ -190,7 +210,15 @@ function crearIdiomas({ raiz, globalState }) {
     escribir(f('errores.json'), errs);
   }
 
-  return { datos, crearPerfil, guardarPerfil, empezar, responder, terminar, descartarError, ficha, elegirPerfil: (dir) => globalState.update('tcee.idiomasPerfil', dir), dirActivo };
+  /** Ruta de la carpeta de un perfil (para borrarla desde la extensión, que la manda a la Papelera) */
+  function rutaPerfil(dir) {
+    const p = perfiles().find((x) => x.dir === dir);
+    if (!p) throw new Error('Ese perfil no existe.');
+    return { ruta: path.join(raiz(), p.dir), nombre: p.nombre };
+  }
+  const olvidarPerfil = (dir) => (globalState.get('tcee.idiomasPerfil') === dir ? globalState.update('tcee.idiomasPerfil', undefined) : undefined);
+
+  return { datos, crearPerfil, anotar, rutaPerfil, olvidarPerfil, guardarPerfil, empezar, responder, terminar, descartarError, ficha, elegirPerfil: (dir) => globalState.update('tcee.idiomasPerfil', dir), dirActivo };
 }
 
 module.exports = { crearIdiomas };
