@@ -30,20 +30,24 @@ def limpio(s):
 def main():
     args = sys.argv[1:]
     salida = args[-1]; es_x = args[0]; fr_x = args[1] if len(args) > 2 else None
-    D = {l: defaultdict(lambda: {'cat': '', 'ipa': '', 'trad': [], 'glosas': []}) for l in ('fr', 'en')}
-    def add(l, palabra, cat, trad=(), glosas=(), ipa=''):
+    D = {l: defaultdict(lambda: {'cat': '', 'ipa': '', 'trad': [], 'inv': [], 'glosas': []}) for l in ('fr', 'en')}
+    def add(l, palabra, cat, trad=(), glosas=(), ipa='', invertida=False):
+        # traducciones «invertidas» (de una entrada española que da esta palabra como traducción): menos fiables, van detrás
+        if l == 'en' and invertida:
+            palabra = re.sub(r'^to\s+', '', limpio(palabra))
         palabra = limpio(palabra)
-        if not palabra or len(palabra) > 60 or len(palabra.split()) > 5:
+        if not palabra or palabra.lower() in ('to', 'the', 'a') or len(palabra) > 60 or len(palabra.split()) > 5:
             return
         e = D[l][palabra]
         if cat and cat not in e['cat'].split(', ') and len(e['cat']) < 40:
             e['cat'] = f"{e['cat']}, {cat}" if e['cat'] else cat
         if ipa and not e['ipa']:
             e['ipa'] = ipa
+        lista = e['inv'] if invertida else e['trad']
         for t in trad:
-            t = limpio(t)
-            if t and t not in e['trad'] and len(e['trad']) < 10:
-                e['trad'].append(t)
+            t = re.sub(r'[.;]+$', '', limpio(t))
+            if t and t.lower() not in [x.lower() for x in lista] and len(lista) < 10:
+                lista.append(t)
         for g in glosas:
             g = limpio(g)[:220]
             if g and g not in e['glosas'] and len(e['glosas']) < 5:
@@ -67,7 +71,7 @@ def main():
             for t in x.get('translations', []) + [t for s in x.get('senses', []) for t in s.get('translations', [])]:
                 tl = t.get('lang_code') or t.get('code')
                 if tl in ('fr', 'en') and t.get('word'):
-                    add(tl, t['word'], cat, [w])
+                    add(tl, t['word'], cat, [w], invertida=True)
     print('es-extract:', n, 'líneas')
     if fr_x:
         n = 0
@@ -84,7 +88,12 @@ def main():
             add('fr', x.get('word'), cat, trs, [], ipa)
         print('fr-extract:', n, 'líneas')
     for l in ('fr', 'en'):
-        ent = [[p, e['cat'], e['ipa'], e['trad'], e['glosas']] for p, e in D[l].items() if e['trad'] or e['glosas']]
+        ent = []
+        for p, e in D[l].items():
+            vistos = {x.lower() for x in e['trad']}
+            trad = e['trad'] + [x for x in e['inv'] if x.lower() not in vistos][:4 if e['trad'] or e['glosas'] else 6]
+            if trad or e['glosas']:
+                ent.append([p, ', '.join(e['cat'].split(', ')[:2]), e['ipa'], trad[:10], e['glosas']])
         ent.sort(key=lambda e: (e[0].lower(), e[1]))
         os.makedirs(os.path.join(salida, l), exist_ok=True)
         with open(os.path.join(salida, l, 'diccionario.json'), 'w', encoding='utf-8') as f:
