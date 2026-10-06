@@ -98,6 +98,14 @@
         "problemMatcher": []
       },
       {
+        "label": "Descargar o actualizar el paquete de idiomas",
+        "type": "shell",
+        "command": "bash main/scripts/idiomas/descargar_paquete.sh",
+        "options": { "cwd": "${workspaceFolder}" },
+        "presentation": { "reveal": "always", "panel": "dedicated", "clear": true, "focus": true },
+        "problemMatcher": []
+      },
+      {
         "label": "Descargar fuentes de idiomas",
         "type": "shell",
         "command": "bash main/scripts/idiomas/descargar_fuentes.sh",

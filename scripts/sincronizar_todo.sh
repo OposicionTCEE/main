@@ -16,7 +16,7 @@ if ! git ls-remote -q https://github.com/OposicionTCEE/main.git >/dev/null 2>&1;
   exit 0
 fi
 
-subidos=(); actualizados=(); conflictos=(); errores=()
+subidos=(); actualizados=(); conflictos=(); errores=(); detalles=()
 
 # Lista legible de los temas cambiados (p. ej. "3.A.19 4.B.11") para el mensaje del commit
 temas_cambiados() {
@@ -38,12 +38,13 @@ sincronizar() {
 
   # 2) Traer lo que haya en GitHub y colocar lo tuyo encima
   local antes; antes="$(git rev-parse HEAD 2>/dev/null)"
-  if ! git pull -q --rebase origin "$(git rev-parse --abbrev-ref HEAD)" >/dev/null 2>&1; then
+  local salida
+  if ! salida="$(git pull -q --rebase origin "$(git rev-parse --abbrev-ref HEAD)" 2>&1)"; then
     if [ -d .git/rebase-merge ] || [ -d .git/rebase-apply ]; then
       git rebase --abort 2>/dev/null
       conflictos+=("$nombre")
     else
-      errores+=("$nombre")
+      errores+=("$nombre"); detalles+=("$nombre: $(printf '%s' "$salida" | tail -2 | tr '\n' ' ')")
     fi
     return 0
   fi
@@ -51,7 +52,7 @@ sincronizar() {
 
   # 3) Subir lo tuyo
   if [ -n "$(git log --oneline '@{u}..HEAD' 2>/dev/null)" ]; then
-    if git push -q 2>/dev/null; then subidos+=("$nombre"); else errores+=("$nombre"); fi
+    if salida="$(git push -q 2>&1)"; then subidos+=("$nombre"); else errores+=("$nombre"); detalles+=("$nombre: $(printf '%s' "$salida" | tail -2 | tr '\n' ' ')"); fi
   fi
 }
 
@@ -61,9 +62,14 @@ sincronizar "$BASE/progreso" "progreso"   # privado: tiempos y temas hechos del 
 # banco de preguntas del test (pestaña Test del Panel Oposición): se descarga la primera vez
 if [ ! -d "$BASE/test/.git" ] && git clone -q https://github.com/OposicionTCEE/test.git "$BASE/test" 2>/dev/null; then actualizados+=("test (descargado)"); fi
 sincronizar "$BASE/test" "test"
-# paquete de idiomas (pestaña Idiomas: materias, fichas, ejercicios, léxico y textos): se descarga la primera vez
-if [ ! -d "$BASE/idiomas/.git" ] && git clone -q https://github.com/OposicionTCEE/idiomas.git "$BASE/idiomas" 2>/dev/null; then actualizados+=("idiomas (descargado)"); fi
-sincronizar "$BASE/idiomas" "idiomas"
+# paquete de idiomas (pestaña Idiomas): solo se descarga, nunca se sube (scripts/idiomas/descargar_paquete.sh)
+salida_idiomas="$(bash "$MAIN_DIR/scripts/idiomas/descargar_paquete.sh" --estado 2>&1)"
+case "$salida_idiomas" in
+  *ESTADO=descargado*) actualizados+=("idiomas (descargado)") ;;
+  *ESTADO=actualizado*) actualizados+=("idiomas") ;;
+  *"ESTADO=al día"*) ;;
+  *) errores+=("idiomas"); detalles+=("idiomas: $(printf '%s' "$salida_idiomas" | grep -v '^ESTADO=' | tail -2 | tr '\n' ' ')") ;;
+esac
 
 [ -d "$BASE/progreso/.git" ] || echo "Aviso: falta la carpeta progreso. Ejecuta la tarea «Descargar el temario (si falta)»."
 
@@ -84,5 +90,7 @@ fi
 if [ ${#errores[@]} -gt 0 ]; then
   echo ""
   echo "  No se pudo sincronizar: ${errores[*]}"
-  echo "  Suele ser un problema de inicio de sesión en GitHub (ver GUIA_INSTALACION.md, paso 6)."
+  for d in "${detalles[@]}"; do echo "    · $d"; done
+  echo "  Suele ser un problema de conexión o de inicio de sesión en GitHub (ver GUIA_INSTALACION.md, paso 6)."
+  echo "  Si se repite, copia a Claude las líneas que empiezan por «·»."
 fi
