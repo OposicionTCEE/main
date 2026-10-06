@@ -202,9 +202,10 @@ Al escribirlas se revisaron de nuevo todas las fichas: unas 90 correcciones (res
     `notas` por tiempo bajo su tabla, `notas_finales`, `extra`). El panel genera con Verbiste las tablas de TODOS los tiempos del verbo
     modelo (también passé antérieur, compuestos y futur proche), agrupadas por modos con su color; raíz en gris, terminación en naranja,
     auxiliar en azul; «parti(e)s» cuando hay concordancia. Sin ejemplos ni errores típicos. Encargo: `encargos/fichas_conjugacion_v2.md`.
-  - v0.36: sin pestaña de compuestos: cada ficha trae al final «Tiempos compuestos: auxiliar y concordancia» (contenido de `compuestos.json`,
-    cuyas notas también salen bajo las tablas de los compuestos) y un bloque «Perífrasis verbales» generado para el verbo modelo
-    (futur proche, passé récent, être en train de, être sur le point de). Mitad y mitad (ficha / entrenador); tiempos como botones;
+  - v0.36: pestaña «Compuestos, doble auxiliar y perífrasis» (`compuestos.json`, `"formato": "particularidades"`): sin cabecera ni
+    conjugaciones de un verbo; tres subpestañas solo de explicación (Tiempos compuestos, con être y concordancia; Doble auxiliar;
+    Perífrasis verbales), cada una con bloques de texto, tabla o lista. Encargo: `encargos/particularidades.md`.
+    Las fichas de grupo solo llevan sus tablas por modos. Mitad y mitad (ficha / entrenador); tiempos como botones;
     colores por tipo de tema de VS Code (`body.vscode-light`, `vscode-dark`, alto contraste con subrayado).
 
 ## Búsqueda por significado: opciones (pendiente, 7/10/2026)

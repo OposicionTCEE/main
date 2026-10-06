@@ -862,3 +862,10 @@ body.vscode-high-contrast .idi-vterm, body.vscode-high-contrast-light .idi-vterm
 .idi-vrejilla.pf { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
 .idi-vt-intro { margin: 8px 10px; }
 .idi-vt-nota { margin-top: 6px; padding: 4px 8px; font-size: .84em; border-left: 2px solid var(--iaviso); background: color-mix(in srgb, var(--iaviso) 8%, transparent); border-radius: 4px; line-height: 1.4; }
+/* Pestaña de particularidades (compuestos, doble auxiliar, perífrasis) */
+.idi-vsubs { display: flex; gap: 0; border-bottom: 1px solid var(--borde); margin-bottom: 10px; }
+.idi-vsubs button { border: none; border-bottom: 2px solid transparent; border-radius: 0; background: none; padding: 6px 12px; color: var(--apagado); font-weight: 600; }
+.idi-vsubs button.activo { color: var(--tinta); border-bottom-color: var(--iC); }
+.idi-vpart { display: flex; flex-direction: column; gap: 12px; }
+.idi-vpbloque h4 { margin: 0 0 6px; font-size: .98em; color: var(--tinta); }
+.idi-vpbloque p { margin: 0; line-height: 1.55; }

@@ -1014,7 +1014,7 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
     const tmp = document.createElement('div');
     const tarjetas = fichas.map((f) => {
       const a = X.anotaciones[f.id], m = materia(l, f.id) || {};
-      tmp.innerHTML = f.formato === 'conjugacion' ? cuerpoConjugacion(f) : cuerpoFicha(f, l);
+      tmp.innerHTML = f.formato === 'conjugacion' ? cuerpoConjugacion(f) : f.formato === 'particularidades' ? (f.subpestanas || []).map((sp) => { const g = st().idiVerbSub; st().idiVerbSub = f.subpestanas.indexOf(sp); const h = cuerpoParticularidades(f); st().idiVerbSub = g; return h; }).join('') : cuerpoFicha(f, l);
       const items = [];
       if (a.texto) items.push(`<div class="idi-lb-item"><div class="idi-lb-sec">📝 Nota general</div><div class="idi-recuadro c-amarillo"><p>${esc(a.texto)}</p></div></div>`);
       for (const mk of a.marcas || []) {
@@ -1045,14 +1045,14 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
     if (!I2) { vistaEl.innerHTML = '<p class="vacio">Cargando los verbos…</p>'; return; }
     if (I2.falta) { vistaEl.innerHTML = '<div class="idi-centro"><p class="vacio">Falta la base de verbos en el paquete de idiomas. Ejecuta «Sincronizar».</p><p><a id="idi-volver">← Volver</a></p></div>'; vistaEl.querySelector('#idi-volver').onclick = () => ir('inicio'); return; }
     const c = confVerbos(), plegada = !!st().idiVerbPlegada;
-    const fichas = (I2.fichas || []).filter((f) => f.id !== 'fr.v.compuestos'), fi = fichas[Math.min(c.ficha || 0, fichas.length - 1)];
+    const fichas = I2.fichas || [], fi = fichas[Math.min(c.ficha || 0, fichas.length - 1)];
     vistaEl.innerHTML = `<div class="idi-verbos">
       <div class="idi-ficha-barra"><a id="idi-volver">← Volver</a><b>🔁 Practica los verbos · francés</b><span class="apagado idi-mini">${I2.total.toLocaleString('es-ES')} verbos (Verbiste)</span></div>
       <div class="idi-practica ${plegada ? 'plegada' : ''}">
         <aside class="idi-pr-ficha">
           <div class="idi-pr-ficha-cab"><button id="idi-vplegar" title="${plegada ? 'Desplegar las fichas' : 'Plegar las fichas'}">${plegada ? '▶' : '◀'}</button>
-            ${plegada ? '<span class="idi-vertical">Fichas de conjugación</span>' : `<div class="idi-vtabs">${fichas.map((f, j) => `<button class="${j === (c.ficha || 0) ? 'activo' : ''}" data-vficha="${j}">${esc(f.titulo_es.replace(/^Verbos del? /, '').replace(/\s*\(.*\)$/, ''))}</button>`).join('')}</div>`}</div>
-          ${plegada || !fi ? '' : `<div class="idi-pr-ficha-cuerpo"><h3>${esc(fi.titulo)}</h3><p class="idi-ficha-sub">${esc(fi.titulo_es)}</p>${fi.formato === 'conjugacion' ? cuerpoConjugacion(fi) : cuerpoFicha(fi, 'fr', { compacta: true })}</div>`}
+            ${plegada ? '<span class="idi-vertical">Fichas de conjugación</span>' : `<div class="idi-vtabs">${fichas.map((f, j) => `<button class="${j === (c.ficha || 0) ? 'activo' : ''}" data-vficha="${j}">${esc(f.formato === 'particularidades' ? f.titulo : f.titulo_es.replace(/^Verbos del? /, '').replace(/\s*\(.*\)$/, ''))}</button>`).join('')}</div>`}</div>
+          ${plegada || !fi ? '' : `<div class="idi-pr-ficha-cuerpo">${fi.formato === 'particularidades' ? cuerpoParticularidades(fi) : `<h3>${esc(fi.titulo)}</h3><p class="idi-ficha-sub">${esc(fi.titulo_es)}</p>${fi.formato === 'conjugacion' ? cuerpoConjugacion(fi) : cuerpoFicha(fi, 'fr', { compacta: true })}`}</div>`}
         </aside>
         <section class="idi-pr-ej" id="idi-vzona"></section></div></div>`;
     vistaEl.querySelector('#idi-volver').onclick = () => { VB.ses = null; ir('inicio'); };
@@ -1060,6 +1060,7 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
     vistaEl.querySelectorAll('[data-vficha]').forEach((b) => b.onclick = () => { c.ficha = Number(b.dataset.vficha); ctx.guardar(); pVerbos(); });
     if (!plegada && fi) {
       const cont = vistaEl.querySelector('.idi-pr-ficha-cuerpo');
+      cont.querySelectorAll('[data-vsub]').forEach((b) => b.onclick = () => { st().idiVerbSub = Number(b.dataset.vsub); ctx.guardar(); pVerbos(); });
       cont.querySelectorAll('[data-vmodelo]').forEach((b) => b.onclick = () => { st().idiVerbModelo = { ...(st().idiVerbModelo || {}), [fi.id]: Number(b.dataset.vmodelo) }; ctx.guardar(); pVerbos(); });
       enlazarFicha(cont, fi, 'fr');
     }
@@ -1067,7 +1068,7 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
   }
 
   // Ficha de conjugación (diseño «por modos»): cabecera breve, pestañas de verbos modelo y, por modo, las tablas de todos los tiempos
-  const MODOS_V = [['Indicatif', 'Indicativo', 'iB', ['pres', 'imp', 'ps', 'fut', 'pc', 'pqp', 'pant', 'fant']], ['Conditionnel', 'Condicional', 'iok', ['cond', 'condpasse']],
+  const MODOS_V = [['Indicatif', 'Indicativo', 'iB', ['pres', 'imp', 'ps', 'fut', 'pc', 'pqp', 'pant', 'fant', 'fproche']], ['Conditionnel', 'Condicional', 'iok', ['cond', 'condpasse']],
     ['Subjonctif', 'Subjuntivo', 'iC', ['subj', 'subjimp', 'subjpasse', 'subjpqp']], ['Impératif', 'Imperativo', 'iaviso', ['impe', 'impepasse']]];
   const NOMBRE_T = { pres: 'Présent', imp: 'Imparfait', ps: 'Passé simple', fut: 'Futur simple', pc: 'Passé composé', pqp: 'Plus-que-parfait', pant: 'Passé antérieur',
     fant: 'Futur antérieur', fproche: 'Futur proche', cond: 'Présent', condpasse: 'Passé', subj: 'Présent', subjimp: 'Imparfait', subjpasse: 'Passé', subjpqp: 'Plus-que-parfait', impe: 'Présent', impepasse: 'Passé' };
@@ -1090,19 +1091,14 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
     const r = raiz && resto.startsWith(raiz) ? raiz : '';
     return `${aux ? `<span class="idi-vaux">${esc(aux)}</span>` : ''}${r ? `<span class="idi-vraiz">${esc(r)}</span>` : ''}<b class="idi-vterm">${esc(resto.slice(r.length))}</b>`;
   }
-  /** Perífrasis verbales del verbo modelo: verbo auxiliar conjugado + infinitivo (aller, venir de, être en train de, être sur le point de) */
-  function perifrasis(par) {
-    const v = par.verbo, elide = /^[aeiouyàâäéèêëîïôöùûüœ]/i.test(v) || (/^h/i.test(v) && !par.hAspirada);
-    const de = elide ? "d'" : 'de';
-    const P = ['je', 'tu', 'il', 'nous', 'vous', 'ils'];
-    const ALLER = ['vais', 'vas', 'va', 'allons', 'allez', 'vont'], VENIR = ['viens', 'viens', 'vient', 'venons', 'venez', 'viennent'], ETRE = ['suis', 'es', 'est', 'sommes', 'êtes', 'sont'];
-    const col = (titulo, es, aux, enlace) => {
-      const union = enlace ? `${enlace}${enlace.endsWith("'") ? '' : ' '}` : '';
-      return `<div class="idi-vt" data-k="pf-${titulo}"><h5>${titulo} <small class="apagado">${es}</small></h5>${P.map((p0, i) => `<div class="idi-vt-f"><span class="idi-vt-p">${i === 0 && /^[aeiouyé]/i.test(aux[0]) ? "j'" : p0}</span><span><span class="idi-vaux">${aux[i]} ${esc(union)}</span><b class="idi-vterm">${esc(v)}</b></span></div>`).join('')}</div>`;
-    };
-    return `<section class="idi-vbloque" style="--mc:var(--iok)"><h4>Perífrasis verbales <small>verbo auxiliar conjugado + infinitivo</small></h4>
-      <p class="idi-vt-nota idi-vt-intro" data-k="pf">Una perífrasis no es un tiempo verbal: es un verbo auxiliar conjugado (aller, venir, être) seguido del infinitivo, que indica cuándo o cómo ocurre la acción. Se forman igual con cualquier verbo; solo cambia «de» por «d'» ante vocal.</p>
-      <div class="idi-vrejilla pf">${col('Futur proche', 'ir a + infinitivo', ALLER, '')}${col('Passé récent', 'acabar de + inf.', VENIR, de)}${col('En train de', 'estar + gerundio', ETRE, `en train ${de}`)}${col('Sur le point de', 'estar a punto de', ETRE, `sur le point ${de}`)}</div></section>`;
+  /** Pestaña «Compuestos, doble auxiliar y perífrasis»: una subpestaña por tema, solo explicación (texto, tablas y listas) */
+  function cuerpoParticularidades(fc) {
+    const subs = fc.subpestanas || [];
+    const i = Math.min(st().idiVerbSub || 0, subs.length - 1), sp = subs[i] || { bloques: [] };
+    return `<div class="idi-vsubs">${subs.map((x, j) => `<button class="${j === i ? 'activo' : ''}" data-vsub="${j}">${esc(x.titulo)}</button>`).join('')}</div>
+      <div class="idi-vpart">${(sp.bloques || []).map((b, j) => `<div class="idi-vpbloque" data-k="${esc(sp.id)}-${j}">${b.titulo ? `<h4>${esc(b.titulo)}</h4>` : ''}
+        ${b.tipo === 'tabla' ? `<div class="idi-tabla-env"><table class="idi-tabla"><thead><tr>${(b.cabecera || []).map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${(b.filas || []).map((r) => `<tr>${r.map((c) => `<td>${negrita(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`
+          : b.tipo === 'lista' ? `<ul class="idi-lista">${(b.items || []).map((x) => `<li>${negrita(x)}</li>`).join('')}</ul>` : `<p>${negrita(b.texto || '')}</p>`}</div>`).join('')}</div>`;
   }
   function cuerpoConjugacion(fc) {
     const P = (VB.info && VB.info.paradigmas) || {};
@@ -1122,15 +1118,9 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
           <span class="idi-vchipaux" title="Auxiliar de los tiempos compuestos">aux. ${esc(par.auxiliar)}</span>
           ${mod.nota ? `<div class="idi-mini apagado" data-k="mn">${negrita(mod.nota)}</div>` : ''}</div>
         ${MODOS_V.map(([m, es, color, ks]) => `<section class="idi-vbloque" style="--mc:var(--${color})"><h4>${m} <small>${es}</small></h4><div class="idi-vrejilla">${ks.map(tabla).join('')}</div></section>`).join('')}
-        ${perifrasis(par)}
         <div class="idi-vt-nota" data-k="part"><b>Participes:</b> présent <b>${esc(par.participios.presente)}</b> · passé <b>${esc(par.participios.pasado.join(', '))}</b></div>`
     : '<p class="apagado">Falta la base de verbos.</p>'}
       ${(fc.notas_finales || []).filter((n) => !/^Participi/i.test(n)).map((n, j) => `<div class="idi-vt-nota" data-k="nf${j}">${negrita(n)}</div>`).join('')}
-      <details class="idi-sec s-material"><summary><span class="idi-sec-ico">🧩</span>Tiempos compuestos: auxiliar (avoir / être) y concordancia</summary><div class="idi-sec-cuerpo" data-k="comp">
-        <ul class="idi-lista">${(comp.cabecera || []).map((x) => `<li>${negrita(x)}</li>`).join('')}</ul>
-        ${(comp.extra || []).filter((e) => !/perífrasis|passé récent/i.test(e.titulo || '')).map((e) => `<p class="idi-rel-tit">${esc(e.titulo || '')}</p>${e.tipo === 'tabla'
-          ? `<div class="idi-tabla-env"><table class="idi-tabla"><thead><tr>${(e.cabecera || []).map((x) => `<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${(e.filas || []).map((r) => `<tr>${r.map((x) => `<td>${negrita(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`
-          : `<ul class="idi-lista">${(e.items || []).map((x) => `<li>${negrita(x)}</li>`).join('')}</ul>`}`).join('')}</div></details>
       ${(fc.extra || []).map((e, j) => `<details class="idi-sec s-material" ${j === 0 ? 'open' : ''}><summary><span class="idi-sec-ico">📌</span>${esc(e.titulo || '')}</summary><div class="idi-sec-cuerpo" data-k="x${j}">
         ${e.tipo === 'tabla' ? `<div class="idi-tabla-env"><table class="idi-tabla"><thead><tr>${(e.cabecera || []).map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${(e.filas || []).map((r) => `<tr>${r.map((c) => `<td>${negrita(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`
           : `<ul class="idi-lista">${(e.items || []).map((x) => `<li>${negrita(x)}</li>`).join('')}</ul>`}</div></details>`).join('')}`;
