@@ -52,7 +52,7 @@ Escritura (`escritura.js`, reglas en `main/ESCRITURA.md`): ⌘B/⌘I/⌃H salen 
 `\lnum`/`\la` + Intro → lista; Intro en una lista añade `\item`; `\cita` → `\begin{cita}[Autor][Año][Obra]` (entorno definido en los 145 temas). Paleta en `config/colores.json`. **Para Claude**: `\textcolor{magenta}{…}` en un tema es una indicación
 del usuario para Claude; `red` = pendiente/OJO del usuario (no es una orden); `blue` = no cambiar sin preguntar; `orange` = dato por verificar.
 Idiomas (pestaña del Panel Oposición, fase 1 hecha: `idiomas.js`, `idiomasPanel.js`, `media/idiomas.js`): diseño, fases, fuentes, licencias y reglas en `main/IDIOMAS.md`. Contenido en el repositorio público `idiomas` (`TCEE/idiomas`; solo se descarga: tarea «Descargar o actualizar el paquete de idiomas» y *Sincronizar*);
-datos del usuario solo en local (`TCEE/idiomas-<nombre>/`). Fuentes descargadas en el Mac con la tarea «Descargar fuentes de idiomas» (`TCEE/.fuentes-idiomas/`).
+datos del usuario solo en local (`TCEE/idiomas-<nombre>/`). Fuentes descargadas en el Mac con `scripts/idiomas/descargar_fuentes.sh` (`TCEE/.fuentes-idiomas/`; sin tarea: ver abajo).
 Acción Rehacer informes (`tcee.rehacerInformes`): ejecuta `scripts/armonizacion.js estado` y copia el encargo para Claude Code. El progreso guarda además minutos por día (`dias`) en el fichero de cada Mac.
 Calendario de vueltas (pestaña Calendario): reglas y razonamiento en `main/CALENDARIO.md` (mantener código y documento a la vez).
 `calendario.js` (generar semanas temático/correlativo/aleatorio, reparto diario, librar días, mover cante), `afinidad.js` (relaciones entre temas),
@@ -61,6 +61,10 @@ Los calendarios se guardan en el repositorio PRIVADO `progreso/calendarios/`. La
 
 Bloques temáticos del temario en `config/bloques.json` (`ejercicios.<n>.bloques[]`: id, nombre, grupo, color, temas). Es la fuente única de a qué bloque
 pertenece cada tema: no guardarlo en las carpetas ni en los `.tex`. Solo existe aún para el 3er ejercicio.
+
+**Tareas de VS Code** (`TCEE.code-workspace`): solo las de uso habitual del usuario. Las temporales o auxiliares (descargas de una vez,
+preparación de material para Claude, migraciones) se quitan en cuanto dejan de hacer falta, explicando al usuario por qué se quitan y por qué
+no las necesita; el script se conserva en `scripts/` y Claude lo ejecuta o vuelve a añadir la tarea solo mientras haga falta.
 
 Historia del proyecto, decisiones tomadas y tareas pendientes: `main/CONTEXTO.md` (leerlo al empezar una tarea nueva).
 

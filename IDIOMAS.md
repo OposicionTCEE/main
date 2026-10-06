@@ -35,7 +35,7 @@ Mantener este documento y el código a la vez.
 
 | Fase | Contenido | Estado |
 |---|---|---|
-| 0 | Repositorio `idiomas`, este documento, *Sincronizar* lo descarga, tarea «Descargar fuentes de idiomas» | Hecha (6/10/2026) |
+| 0 | Repositorio `idiomas`, este documento, *Sincronizar* lo descarga, descarga de fuentes en el Mac | Hecha (6/10/2026) |
 | 1 | Perfil, Ajustes, compromisos; índice A1→C2; fichas de gramática y ejercicios con respuesta fija; léxico; sesiones Gramática, Léxico, Repaso y Al azar; mapa de materias, cuaderno de errores, repaso y primer ajuste de nivel | Hecha (v0.30) |
 | 2 | Biblioteca de textos (nivel, tema, palabras clave), longitud flexible, Escucha (voz del Mac), Escrito (plantillas y rúbrica, LanguageTool y modelo local), instalador de Ollama | Pendiente |
 | 3 | Oral (whisper, métricas), tribunal (preguntas con voz), sesión tipo examen, vídeo | Pendiente |
@@ -59,8 +59,10 @@ Las webs gratuitas pero con todos los derechos reservados (TV5Monde, BBC Learnin
 | VOA Learning English | Textos y audios en inglés (fase 2) | Dominio público |
 | Wikipedia, Wikinews, Vikidia, Wikisource | Textos de todos los temas (fase 2) | CC BY-SA / dominio público |
 
-El entorno de Claude no llega a la mayoría de estas webs. Por eso la tarea **Descargar fuentes de idiomas**
-(`scripts/idiomas/descargar_fuentes.sh`) las baja en el Mac a `TCEE/.fuentes-idiomas/` (fuera de GitHub).
+El entorno de Claude no llega a la mayoría de estas webs. Por eso `scripts/idiomas/descargar_fuentes.sh`
+las baja en el Mac a `TCEE/.fuentes-idiomas/` (fuera de GitHub). Ya no hay tarea de VS Code para ello (se quitó el 6/10/2026 por ser auxiliar):
+cuando una fase necesite fuentes nuevas, Claude amplía el script y lo ejecuta o vuelve a añadir la tarea solo mientras haga falta.
+Re-ejecutarlo es inofensivo: no toca nada fuera de `.fuentes-idiomas/` y salta lo ya descargado.
 Claude las recoge desde ahí, fabrica el paquete con los programas de `scripts/idiomas/` y lo sube al repositorio `idiomas`.
 
 ## Repositorio `idiomas`
@@ -100,6 +102,7 @@ escritos/, audio/  lo que el usuario escribe y graba (fases 2–3)
   Las dudas de norma frente a uso (après que + indicativo, «des bons amis»…) se resolvieron enseñando la norma y avisándolo en la explicación.
 - Comprobación automática: `scripts/idiomas/validar_fichas.py <carpeta idiomas>` (formato, niveles, una sola laguna por hueco, respuesta entre las opciones,
   palabras de «ordenar»…). Además, cada respuesta aceptada pasa el corrector del panel (`corregir` en `extension/idiomas.js`).
+- Pendiente para la fase 2: las páginas no3, no4 y taf5 de Tex ya están en `.fuentes-idiomas/tex/` (bajaron el 6/10/2026); revisar con ellas las fichas que se escribieron sin fuente.
 - Pendiente para la fase 2: usar EFLLex/FLELex (`TCEE/.fuentes-idiomas/cefrlex/`) para medir la dificultad de los textos y el nivel del vocabulario usado.
 
 ## Formato de las fichas

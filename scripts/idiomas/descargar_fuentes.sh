@@ -1,6 +1,6 @@
 #!/bin/bash
 # Descarga en TCEE/.fuentes-idiomas/ las fuentes abiertas con las que Claude fabrica el paquete de idiomas (main/IDIOMAS.md, apartado «Fuentes»).
-# Se ejecuta en el Mac con la tarea «Descargar fuentes de idiomas»: el entorno de Claude no llega a estas webs.
+# Se ejecuta en el Mac (sin tarea de VS Code: es auxiliar; ver IDIOMAS.md). El entorno de Claude no llega a estas webs.
 # No hace falta volver a ejecutarlo salvo que Claude lo pida. Ocupa unos 300 MB; la carpeta no se sube a GitHub.
 BASE="$(cd "$(dirname "$0")/../../.." && pwd)"
 D="$BASE/.fuentes-idiomas"
