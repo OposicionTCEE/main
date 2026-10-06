@@ -1178,13 +1178,17 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
       b.onclick = () => { const i = VB.focoInput; if (!i || i.disabled) return; const a = i.selectionStart, c = i.selectionEnd; i.value = i.value.slice(0, a) + b.dataset.acento + i.value.slice(c); i.setSelectionRange(a + 1, a + 1); i.focus(); };
     });
   }
-  const norm = (x) => String(x || '').toLowerCase().replace(/[’`´]/g, "'").replace(/\s+/g, ' ').trim();
+  const norm = (x) => String(x || '').toLowerCase().replace(/œ/g, 'oe').replace(/æ/g, 'ae').replace(/[’`´]/g, "'").replace(/\s+/g, ' ').trim();
   const quitaAc = (x) => x.normalize('NFD').replace(/[̀-ͯ]/g, '');
   const corregirV = (resp, esc2) => { const r = norm(esc2); if (!r) return { ok: false, casi: false }; if (resp.some((x) => norm(x) === r)) return { ok: true }; return { ok: false, casi: resp.some((x) => quitaAc(norm(x)) === quitaAc(r)) }; };
   const pronTxt = (p) => (/'$/.test(p) ? p : `${p} `);
 
   const IRREG = new Set('être avoir aller faire dire pouvoir vouloir savoir devoir venir voir prendre'.split(' '));
   const fichaPara = (it) => (IRREG.has(it.verbo) ? 3 : (it.grupo || 1) - 1);
+  /** Lo que se pide, bien visible: modo (con su color) y tiempo */
+  const COLOR_MODO = { Indicatif: 'iB', Conditionnel: 'iok', Subjonctif: 'iC', 'Impératif': 'iaviso' };
+  const cabTiempo = (it) => { const [m, t] = String(it.nombreTiempo || '').split(' · ');
+    return `<div class="idi-vpide" style="--mc:var(--${COLOR_MODO[m] || 'iB'})"><span class="idi-vpide-modo">${esc(m || '')}</span><span class="idi-vpide-t">${esc(t || '')}</span></div>`; };
   function pintarEjercicioVerbo() {
     const S2 = VB.ses, it = S2.items[VB.i], total = S2.items.length;
     const c = confVerbos(), fd = fichaPara(it);
@@ -1202,7 +1206,7 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
     const h = VB.hecho;
     if (S2.modo === 'tabla') {
       z.innerHTML = `${cab}<div class="idi-ej-tarjeta">
-        <p class="idi-ej-num"><span>${esc(it.nombreTiempo)}</span>${vozDisponible() ? `<button class="idi-voz" data-decir="${esc(it.verbo)}">🔊</button>` : ''}</p>
+        ${cabTiempo(it)}${vozDisponible() ? `<button class="idi-voz idi-vvoz" data-decir="${esc(it.verbo)}">🔊</button>` : ''}
         <h2 class="idi-vverbo">${esc(it.verbo)} <small class="apagado">${esc(it.trad || '')}</small></h2>
         <div class="idi-vtabla">${it.filas.map((f, k) => {
           const r = h && h[k];
@@ -1210,18 +1214,17 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
             <input class="idi-vresp" data-k="${k}" autocomplete="off" spellcheck="false" ${r ? 'disabled' : ''} value="${esc(r ? r.escrito : '')}">
             ${r ? `<span class="idi-vsol">${r.ok ? '✓' : `${r.casi ? '≈ ' : '✗ '}<b>${esc(f.respuestas[0])}</b>`}${f.respuestas.length > 1 ? ` <span class="apagado">(${esc(f.respuestas.slice(1).join(' · '))})</span>` : ''}</span>` : ''}</label>`;
         }).join('')}</div>
-        ${h ? '' : tecladoAcentos()}
         <div class="idi-ej-botones">${h ? `<button class="primario" id="idi-vsig">${VB.i + 1 < total ? 'Siguiente →' : 'Ver resultado'}</button>` : '<button class="primario" id="idi-vcomp">Comprobar</button>'}</div>
         ${h && h.some((r) => !r.ok) ? '<p class="idi-mini apagado">Consulta la ficha del grupo a la izquierda para repasar la regla. ≈ = solo fallan los acentos.</p>' : ''}</div>`;
     } else {
       const r = h && h[0];
       z.innerHTML = `${cab}<div class="idi-ej-tarjeta">
-        <p class="idi-ej-num"><span>${esc(it.nombreTiempo)}</span></p>
+        ${cabTiempo(it)}
         <h2 class="idi-vverbo">${esc(it.verbo)} <small class="apagado">${esc(it.trad || '')}</small></h2>
         <label class="idi-vfilaej grande ${r ? (r.ok ? 'ok' : 'mal') : ''}"><span class="idi-vpron">${esc(it.pronombre)}</span>
           <input class="idi-vresp" data-k="0" autocomplete="off" spellcheck="false" ${r ? 'disabled' : ''} value="${esc(r ? r.escrito : '')}"></label>
         ${r ? `<div class="idi-ver ${r.ok ? 'ok' : 'mal'}"><b>${r.ok ? '✓ Correcto' : r.casi ? '≈ Casi: revisa los acentos' : '✗ No es correcto'}</b>
-          <div class="idi-ver-frase">${vozDisponible() ? `<button class="idi-voz" data-decir="${esc(pronTxt(it.pronombre).replace(/[()]/g, '') + it.respuestas[0])}">🔊</button>` : ''}<span><b>${esc(pronTxt(it.pronombre) + it.respuestas[0])}</b>${it.respuestas.length > 1 ? ` <span class="apagado">· también ${esc(it.respuestas.slice(1).join(' · '))}</span>` : ''}</span></div></div>` : tecladoAcentos()}
+          <div class="idi-ver-frase">${vozDisponible() ? `<button class="idi-voz" data-decir="${esc(pronTxt(it.pronombre).replace(/[()]/g, '') + it.respuestas[0])}">🔊</button>` : ''}<span><b>${esc(pronTxt(it.pronombre) + it.respuestas[0])}</b>${it.respuestas.length > 1 ? ` <span class="apagado">· también ${esc(it.respuestas.slice(1).join(' · '))}</span>` : ''}</span></div></div>` : ''}
         <div class="idi-ej-botones">${r ? `<button class="primario" id="idi-vsig">${VB.i + 1 < total ? 'Siguiente →' : 'Ver resultado'}</button>` : '<button class="primario" id="idi-vcomp">Comprobar</button><button id="idi-vnose">No lo sé</button>'}</div></div>`;
     }
     z.querySelector('#idi-vsalir').onclick = terminarVerbos;

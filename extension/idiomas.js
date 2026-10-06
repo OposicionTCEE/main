@@ -9,7 +9,7 @@ const nivelNum = (n) => NIVELES.indexOf(n) + 1;
 const sinAcentos = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '');
 /** Forma comparable de una respuesta: minúsculas, apóstrofos y comillas unificados, espacios simples, sin comas ni puntuación final */
 function normalizar(s) {
-  return String(s || '').replace(/[’‘`´]/g, "'").replace(/[“”«»]/g, '"').replace(/ /g, ' ')
+  return String(s || '').replace(/œ/g, 'oe').replace(/Œ/g, 'Oe').replace(/æ/g, 'ae').replace(/[’‘`´]/g, "'").replace(/[“”«»]/g, '"').replace(/ /g, ' ')
     .replace(/\s+/g, ' ').trim().toLowerCase().replace(/\s*([.!?…]+)$/, '').replace(/\s*,\s*/g, ' ').replace(/\s+([;:!?])/g, '$1').replace(/\s+/g, ' ').trim();
 }
 /** Para ordenar: solo las palabras, sin signos */
@@ -259,7 +259,7 @@ function pronombre(datos, verbo, tiempo, per, forma) {
 }
 /** Corrige una forma: exacta (sin distinguir mayúsculas ni espacios de más) o «casi» si solo fallan acentos */
 function corregirForma(respuestas, escrito) {
-  const n = (x) => String(x || '').toLowerCase().replace(/[’`´]/g, "'").replace(/\s+/g, ' ').trim();
+  const n = (x) => String(x || '').toLowerCase().replace(/œ/g, 'oe').replace(/æ/g, 'ae').replace(/[’`´]/g, "'").replace(/\s+/g, ' ').trim();
   const r = n(escrito);
   if (!r) return { ok: false, casi: false };
   if (respuestas.some((x) => n(x) === r)) return { ok: true, casi: false };
