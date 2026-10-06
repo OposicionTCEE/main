@@ -18,16 +18,19 @@
       nueva: 'Nueva', aprendiendo: 'Aprendiendo', dominada: 'Dominada', repasar: 'Para repasar', prep: 'Ficha en preparación',
       ejercicios: 'ejercicios', sesiones: (n) => `${n} ${n === 1 ? 'sesión' : 'sesiones'}`, nota: 'Última nota', repaso: 'Repaso',
       fichas: (n) => `${n} ${n === 1 ? 'ficha' : 'fichas'}`, dominadas: (n) => `${n} dominada${n === 1 ? '' : 's'}`, conNota: 'Con anotaciones',
+      avance: 'Avance', dominio: 'Dominio', hechos: (a, b) => `${a} de ${b} ejercicios hechos`,
       vacio: 'No hay materias de este bloque en este nivel.', oficial: 'Rótulo oficial', sinEmpezar: 'Sin empezar', loc: 'es-ES' },
     fr: { gramatica: 'Grammaire', lexico: 'Lexique', fonetica: 'Phonétique', destrezas: 'Compétences', todas: 'Toutes les matières',
       nueva: 'Nouvelle', aprendiendo: 'En cours', dominada: 'Maîtrisée', repasar: 'À réviser', prep: 'Fiche en préparation',
       ejercicios: 'exercices', sesiones: (n) => `${n} séance${n === 1 ? '' : 's'}`, nota: 'Dernière note', repaso: 'Révision',
       fichas: (n) => `${n} fiche${n === 1 ? '' : 's'}`, dominadas: (n) => `${n} maîtrisée${n === 1 ? '' : 's'}`, conNota: 'Avec des notes',
+      avance: 'Avancée', dominio: 'Maîtrise', hechos: (a, b) => `${a} exercices faits sur ${b}`,
       vacio: 'Aucune matière de ce bloc à ce niveau.', oficial: 'Intitulé officiel', sinEmpezar: 'Pas encore commencée', loc: 'fr-FR' },
     en: { gramatica: 'Grammar', lexico: 'Vocabulary', fonetica: 'Pronunciation', destrezas: 'Skills', todas: 'All topics',
       nueva: 'New', aprendiendo: 'Learning', dominada: 'Mastered', repasar: 'Due for review', prep: 'Coming soon',
       ejercicios: 'exercises', sesiones: (n) => `${n} session${n === 1 ? '' : 's'}`, nota: 'Last score', repaso: 'Review',
       fichas: (n) => `${n} card${n === 1 ? '' : 's'}`, dominadas: (n) => `${n} mastered`, conNota: 'With notes',
+      avance: 'Progress', dominio: 'Mastery', hechos: (a, b) => `${a} of ${b} exercises done`,
       vacio: 'No topics in this block at this level.', oficial: 'Official label', sinEmpezar: 'Not started', loc: 'en-GB' },
   };
   // Seis destrezas y competencias (Marco Común Europeo) + sesiones especiales
@@ -49,9 +52,9 @@
   const VOZ = { fr: 'fr-FR', en: 'en-GB' };
 
   let X = null;            // datos de la extensión
-  let raiz = null, ctx = null, pedido = false;
+  let raiz = null, vistaEl = null, cajonEl = null, ctx = null, pedido = false;
   let vista = 'inicio';    // inicio | ajustes | ficha | sesion | fin | nuevo
-  let fichaAbierta = null, S = null, fin = null, tic = null, desdeVista = 'inicio';
+  let fichaAbierta = null, S = null, fin = null, tic = null, desdeVista = 'inicio', libretaFichas = null;
   const st = () => ctx.estado;
   const enviar = (m) => ctx.enviar(m);
   const lengua = () => (X && X.perfil && [ 'en', X.perfil.segundo ].includes(st().idiLengua) ? st().idiLengua : 'en');
@@ -68,6 +71,11 @@
     if (m.tipo === 'idiSesion') empezarSesion(m.sesion);
     if (m.tipo === 'idiCorreccion') corregido(m.clave, m.resultado);
     if (m.tipo === 'idiFin') { fin = m.fin; vista = 'fin'; pintarVista(); }
+    if (m.tipo === 'idiRevisionOk') { X.revision = m.revision; }
+    if (m.tipo === 'idiMiDicc') { X.miDiccionario = m.lista; if (vista === 'diccionario') pMiDicc(); else if (vista === 'inicio') pInicio(); }
+    if (m.tipo === 'idiResultados') resultadosCajon(m);
+    if (m.tipo === 'idiDefinicion') { const d = document.querySelector(`.idi-dlg [data-def="${m.clave}"]`); if (d && !d.value) { d.value = m.definicion; d.placeholder = m.definicion ? '' : 'Sin definición en el diccionario: escríbela tú'; } }
+    if (m.tipo === 'idiLibreta') { libretaFichas = m.fichas; if (vista === 'libreta') pLibreta(); }
     // idiAnotado: lo guardado ya está en X.anotaciones (se actualiza al escribir); no se pisa con la respuesta, que puede llegar con retraso
   }
 
@@ -81,29 +89,33 @@
       return;
     }
     raiz = document.createElement('div'); raiz.className = 'idi-raiz'; e.appendChild(raiz);
+    vistaEl = document.createElement('div'); vistaEl.className = 'idi-vista'; raiz.appendChild(vistaEl);
+    cajonEl = document.createElement('aside'); cajonEl.className = 'idi-cajon'; raiz.appendChild(cajonEl);
+    habilitarSeleccionGeneral();
     pintarVista();
   }
   const enPantalla = () => raiz && document.body.contains(raiz);
 
   function pintarVista() {
     if (!raiz) return;
-    if (!X) { raiz.innerHTML = '<p class="vacio">Cargando idiomas…</p>'; return; }
+    if (!X) { vistaEl.innerHTML = '<p class="vacio">Cargando idiomas…</p>'; return; }
     if (!X.hayPaquete) {
-      raiz.innerHTML = `<div class="idi-centro"><div class="idi-tarjeta-grande"><h2>Falta el paquete de idiomas</h2>
+      vistaEl.innerHTML = `<div class="idi-centro"><div class="idi-tarjeta-grande"><h2>Falta el paquete de idiomas</h2>
         <p>Ejecuta la tarea <b>Descargar o actualizar el paquete de idiomas</b> (o <b>Sincronizar</b>) y pulsa el botón.</p>
         <button class="primario" id="idi-recargar">Volver a mirar</button></div></div>`;
       raiz.querySelector('#idi-recargar').onclick = () => enviar({ tipo: 'idiCargar' });
       return;
     }
-    if (!X.perfil || vista === 'nuevo') return pNuevo();
-    ({ inicio: pInicio, ajustes: pAjustes, ficha: pFicha, sesion: pSesion, fin: pFin })[vista]();
+    if (!X.perfil || vista === 'nuevo') { cajonEl.innerHTML = ''; return pNuevo(); }
+    pintarCajon();
+    ({ inicio: pInicio, ajustes: pAjustes, ficha: pFicha, sesion: pSesion, fin: pFin, diccionario: pMiDicc, libreta: pLibreta })[vista]();
   }
   const ir = (v) => { vista = v; pintarVista(); window.scrollTo(0, 0); };
 
   // ------------------------------------------------------------------ primer uso: perfil
   function pNuevo() {
     const borrador = st().idiBorrador || { nombre: '', segundo: 'fr', niveles: { en: 'B1', fr: 'B1' }, compromisos: [] };
-    raiz.innerHTML = `<div class="idi-centro"><div class="idi-tarjeta-grande">
+    vistaEl.innerHTML = `<div class="idi-centro"><div class="idi-tarjeta-grande">
       ${X.perfil ? '<p><a id="idi-volver">← Volver</a></p>' : ''}
       <h2>${X.perfil ? 'Nuevo perfil' : 'Bienvenido a Idiomas'}</h2>
       <p class="ayuda">Tu perfil y todo tu progreso se guardan solo en este Mac, en la carpeta <code>TCEE/idiomas-&lt;nombre&gt;</code>.
@@ -168,7 +180,7 @@
   // ------------------------------------------------------------------ inicio
   function pInicio() {
     const l = lengua(), P = X.perfil;
-    raiz.innerHTML = `<div class="idi2">
+    vistaEl.innerHTML = `<div class="idi2">
       ${barraSuperior(l, P)}
       ${avisosNivel(l, nivelDecl(l), X.nivel[l] || {})}
       <div class="idi-cuerpo">
@@ -180,6 +192,7 @@
             <div class="idi-especiales">${ESPECIALES.map(botonSesion).join('')}</div>
           </section>
           ${cuadernoHtml(l)}
+          ${cajasPersonales(l)}
           ${historialHtml(l)}
         </aside>
         <section class="idi-der">${fichasHtml(l)}</section>
@@ -191,7 +204,8 @@
       b.onclick = () => enviar({ tipo: 'idiFicha', lengua: l, id: b.dataset.materia });
       b.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); b.click(); } };
     });
-    raiz.querySelectorAll('[data-practicar-errores]').forEach((b) => b.onclick = (e) => { e.preventDefault(); enviar({ tipo: 'idiEmpezar', lengua: l, clase: 'errores', materia: b.dataset.practicarErrores }); });
+    raiz.querySelectorAll('[data-practicar-errores]').forEach((b) => b.onclick = (e) => { e.preventDefault(); enviar({ tipo: 'idiEmpezar', lengua: l, clase: 'errores', materia: b.dataset.practicarErrores || undefined }); });
+    raiz.querySelectorAll('[data-abrir-vista]').forEach((b) => b.onclick = () => { if (b.dataset.abrirVista === 'libreta') enviar({ tipo: 'idiLibreta' }); ir(b.dataset.abrirVista); });
     raiz.querySelectorAll('[data-descartar]').forEach((b) => b.onclick = () => { const [m, ej] = b.dataset.descartar.split('|'); enviar({ tipo: 'idiDescartarError', materia: m, ejercicio: ej }); });
     raiz.querySelectorAll('[data-ajustar-nivel]').forEach((b) => b.onclick = () => enviar({ tipo: 'idiGuardarPerfil', cambios: { idiomas: { [l]: { nivel: b.dataset.ajustarNivel } } } }));
     const sb = raiz.querySelector('#idi-bloque'); sb.onchange = () => { st().idiBloque = sb.value; ctx.guardar(); pInicio(); };
@@ -255,17 +269,33 @@
   }
   const fecha = (iso) => { const [a, m, d] = iso.split('-').map(Number); return new Date(a, m - 1, d).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }); };
 
+  /** Cuaderno de errores compacto: barra de acumulación (más llena y más roja cuantos más errores) y repaso conjunto; el detalle, plegado */
   function cuadernoHtml(l) {
     const errs = (X.errores || []).filter((e) => e.lengua === l);
     const porMateria = {};
     for (const e of errs) (porMateria[e.materia] = porMateria[e.materia] || []).push(e);
     const titulo = (id) => { const m = materia(l, id); return m ? (m.titulo_es || m.titulo) : id; };
-    return `<section class="idi-caja"><h3>Cuaderno de errores ${errs.length ? `<span class="idi-num gris">${errs.length}</span>` : ''}</h3>
-      ${errs.length ? `<div class="idi-cuaderno">${Object.entries(porMateria).sort((a, b) => b[1].length - a[1].length).map(([id, es]) => `<details>
+    const n = errs.length, carga = Math.min(100, Math.round((100 * n) / 40));
+    const nivelCarga = n === 0 ? 'vacia' : n < 10 ? 'baja' : n < 25 ? 'media' : 'alta';
+    const aviso = n === 0 ? 'Sin errores pendientes.' : n < 10 ? 'Pocos errores: repásalos cuando quieras.' : n < 25 ? 'Se van acumulando: conviene un repaso.' : 'Muchos errores acumulados: haz un repaso ya.';
+    return `<section class="idi-caja"><h3>Cuaderno de errores <span class="idi-num ${n ? 'rojo' : 'gris'}">${n}</span></h3>
+      <div class="idi-acum ${nivelCarga}" title="${n} errores pendientes"><i style="width:${carga}%"></i></div>
+      <p class="idi-mini apagado">${aviso}</p>
+      ${n ? `<p class="idi-acciones"><button class="primario" data-practicar-errores="">⟳ Repasar los errores</button></p>
+      <details class="idi-cuaderno"><summary>Ver el detalle por ficha</summary>${Object.entries(porMateria).sort((a, b) => b[1].length - a[1].length).map(([id, es]) => `<details>
         <summary><span class="idi-cu-tit">${esc(titulo(id))}</span><span class="idi-num rojo">${es.length}</span><button data-practicar-errores="${esc(id)}" title="Repetir estos ejercicios">Practicar</button></summary>
         <ul>${es.map((e) => `<li><div class="idi-cu-frase">${esc(e.frase || '')}</div><span class="idi-mal">${esc(e.respuesta || '(en blanco)')}</span> → <span class="idi-bien">${esc(e.correcta)}</span>
-          ${e.veces > 1 ? `<span class="apagado"> · ${e.veces} veces</span>` : ''} <a class="idi-quitar" data-descartar="${esc(id)}|${esc(e.ejercicio)}" title="Ya lo tengo claro: quitar del cuaderno">quitar</a></li>`).join('')}</ul></details>`).join('')}</div>`
-        : '<p class="apagado">Sin errores pendientes. Los fallos de tus sesiones aparecerán aquí, agrupados por ficha, y volverán a salir hasta que los aciertes.</p>'}</section>`;
+          ${e.veces > 1 ? `<span class="apagado"> · ${e.veces} veces</span>` : ''} <a class="idi-quitar" data-descartar="${esc(id)}|${esc(e.ejercicio)}" title="Ya lo tengo claro: quitar del cuaderno">quitar</a></li>`).join('')}</ul></details>`).join('')}</details>` : ''}</section>`;
+  }
+
+  /** Mi diccionario y Libreta: accesos con su recuento */
+  function cajasPersonales(l) {
+    const d = (X.miDiccionario || []).filter((x) => x.lengua === l);
+    const notas = Object.entries(X.anotaciones || {}).filter(([id]) => id.startsWith(`${l}.`)).reduce((a, [, x]) => a + (x.marcas || []).length + (x.texto ? 1 : 0), 0);
+    return `<section class="idi-caja idi-personales">
+      <button class="idi-personal" data-abrir-vista="diccionario"><span class="idi-ico">📖</span><b>Mi diccionario</b><small>${d.length} ${d.length === 1 ? 'entrada' : 'entradas'} · selecciona cualquier texto para añadir</small></button>
+      <button class="idi-personal" data-abrir-vista="libreta"><span class="idi-ico">📒</span><b>Libreta</b><small>${notas} ${notas === 1 ? 'subrayado o nota' : 'subrayados y notas'} de tus fichas</small></button>
+    </section>`;
   }
 
   function historialHtml(l) {
@@ -316,8 +346,10 @@
       <h4>${esc(tituloDe(m))}</h4>
       <p class="idi-carta-desc">${esc(descDe(m))}</p>
       <div class="idi-carta-pie">${r && r.sesiones
-        ? `<span class="idi-anillo" style="--p:${Math.round((media || 0) * 100)}" title="${esc(t.nota)}"><b>${Math.round((r.notas[r.notas.length - 1] || 0) * 100)}</b></span>
-           <span class="idi-carta-datos"><span>${esc(t.sesiones(r.sesiones))}</span>${r.due ? `<span>${esc(t.repaso)}: ${esc(fechaCorta(r.due, t.loc))}</span>` : ''}</span>`
+        ? `<span class="idi-roscos">
+             <span class="idi-rosco"><span class="idi-anillo av" style="--p:${Math.round(100 * Math.min(1, (r.vistos || 0) / (m.n || 1)))}"><b>${Math.round(100 * Math.min(1, (r.vistos || 0) / (m.n || 1)))}</b></span><small>${esc(t.avance)}</small></span>
+             <span class="idi-rosco"><span class="idi-anillo" style="--p:${Math.round((media || 0) * 100)}"><b>${Math.round((media || 0) * 100)}</b></span><small>${esc(t.dominio)}</small></span></span>
+           <span class="idi-carta-datos"><span>${esc(t.hechos(r.vistos || 0, m.n || 0))}</span><span>${esc(t.sesiones(r.sesiones))}</span>${r.due ? `<span>${esc(t.repaso)}: ${esc(fechaCorta(r.due, t.loc))}</span>` : ''}</span>`
         : `<span class="idi-carta-datos"><span>${esc(t.sinEmpezar)}</span><span>${m.n || 0} ${esc(t.ejercicios)}</span></span>`}</div>
     </article>`;
   }
@@ -327,7 +359,7 @@
     const P = JSON.parse(JSON.stringify(X.perfil));
     P.compromisos = P.compromisos || []; P.medios = P.medios || []; P.ajustes = P.ajustes || {};
     const actual = X.perfiles.find((p) => p.nombre === P.nombre) || {};
-    raiz.innerHTML = `<div class="idi-centro ancho"><p><a id="idi-volver">← Volver</a></p><h2>Ajustes de idiomas</h2>
+    vistaEl.innerHTML = `<div class="idi-centro ancho"><p><a id="idi-volver">← Volver</a></p><h2>Ajustes de idiomas</h2>
       <div class="idi-ajustes-rejilla">
       <section class="idi-caja"><h3>Perfil</h3>
         <p><b>${esc(P.nombre)}</b> <span class="apagado">· carpeta <code>${esc(actual.dir || '')}</code></span></p>
@@ -509,6 +541,7 @@
   const botonesColor = (actual) => COLORES.map(([c, t]) => `<button class="idi-bm-color c-${c} ${c === actual ? 'activo' : ''}" data-color="${c}" title="Subrayar en ${t.toLowerCase()}"></button>`).join('');
   /** Selección de texto → barra para subrayar o anotar; clic en un subrayado → cambiar color, anotar o quitar */
   function habilitarMarcas(cont, fid) {
+    cont.classList.add('idi-marcable');
     aplicarMarcas(cont, fid);
     cont.addEventListener('mouseup', (ev) => {
       if (ev.target.closest('textarea, button, a, .idi-recuadro')) return;
@@ -522,7 +555,11 @@
         const cita = r.toString().replace(/\s+/g, ' ').trim(); if (!cita) return;
         const pre = document.createRange(); pre.setStart(kA, 0); pre.setEnd(r.startContainer, r.startOffset);
         const aprox = pre.toString().length;
-        const b = mostrarBarra(r.getBoundingClientRect(), `${botonesColor('')}<button class="idi-bm-nota" data-accion="nota">✎ Nota</button>`);
+        const ctxTexto = contextoDe(r);
+        const b = mostrarBarra(r.getBoundingClientRect(), `${botonesColor('')}<button class="idi-bm-nota" data-accion="nota">✎ Nota</button>
+          <span class="idi-bm-sep"></span><button data-accion="dicc" title="Añadir a mi diccionario">📖</button><button data-accion="buscar" title="Buscar en el diccionario">🔎</button>`);
+        b.querySelector('[data-accion="dicc"]').onclick = () => { quitarBarra(); sel.removeAllRanges(); abrirAlta({ texto: cita, contexto: ctxTexto }); };
+        b.querySelector('[data-accion="buscar"]').onclick = () => { quitarBarra(); buscarEnCajon(cita); };
         const crear = (color, caja) => {
           const t = textoDe(kA); let inicio = t.indexOf(cita), j = inicio;
           while (j >= 0) { if (Math.abs(j - aprox) < Math.abs(inicio - aprox)) inicio = j; j = t.indexOf(cita, j + 1); }
@@ -597,7 +634,7 @@
     const f = fichaAbierta;
     if (!f) return ir('inicio');
     const l = lengua(), m = materia(l, f.id) || {};
-    raiz.innerHTML = `<div class="idi-centro ancho idi-ficha">
+    vistaEl.innerHTML = `<div class="idi-centro ancho idi-ficha">
       <div class="idi-ficha-barra"><a id="idi-volver">← Volver a las fichas</a><button class="primario" id="idi-practicar">▶ Practicar esta ficha</button></div>
       ${cabeceraFicha(f, l, m)}
       <div class="idi-ficha-cuerpo">${cuerpoFicha(f, l)}</div>
@@ -605,7 +642,7 @@
     raiz.querySelector('#idi-volver').onclick = () => ir('inicio');
     const practicar = () => enviar({ tipo: 'idiEmpezar', lengua: l, clase: 'ficha', materia: f.id });
     raiz.querySelector('#idi-practicar').onclick = practicar; raiz.querySelector('#idi-practicar2').onclick = practicar;
-    enlazarFicha(raiz, f, l);
+    enlazarFicha(vistaEl.querySelector('.idi-ficha-cuerpo'), f, l);
   }
   function refrescarPieFicha() { /* los datos generales cambiaron con la ficha abierta: no se repinta para no perder lo escrito */ }
 
@@ -629,7 +666,7 @@
     const plegada = !!st().idiFichaPlegada;
     const cambiaFicha = !S.fichaPintada || S.fichaPintada !== b.ficha.id || S.plegadaPintada !== plegada || !raiz.querySelector('.idi-practica');
     if (cambiaFicha) {
-      raiz.innerHTML = `<div class="idi-practica ${plegada ? 'plegada' : ''}">
+      vistaEl.innerHTML = `<div class="idi-practica ${plegada ? 'plegada' : ''}">
         <aside class="idi-pr-ficha">
           <div class="idi-pr-ficha-cab"><button id="idi-plegar" title="${plegada ? 'Desplegar la ficha' : 'Plegar la ficha'}">${plegada ? '▶' : '◀'}</button>
             ${plegada ? '<span class="idi-vertical">Ficha</span>' : `<span class="idi-chip-niv n-${b.ficha.nivel}">${esc(b.ficha.nivel)}</span><b>${esc(m.titulo_l || b.ficha.titulo)}</b>`}</div>
@@ -651,17 +688,35 @@
         <p class="idi-enun">${esc(it.enunciado || '')}</p>
         ${campoEjercicio(it, hecho)}
         <div id="idi-veredicto">${hecho ? veredicto(hecho) : ''}</div>
+        ${hecho ? `<div class="idi-ver-pie">
+          <label class="idi-revisar" title="Solo la deja señalada (se guarda en tu perfil) para revisarla más adelante con Claude"><input type="checkbox" id="idi-revisar" ${(X.revision || []).includes(`${it.materia}|${it.id}`) ? 'checked' : ''}> Marcar para revisión</label>
+          <a id="idi-consultar" title="Abre Claude en el navegador con la pregunta ya escrita">Consultar</a></div>` : ''}
         <div class="idi-ej-botones">${hecho ? `<button class="primario" id="idi-sig">${S.i + 1 < S.items.length ? 'Siguiente →' : 'Ver resultado'}</button>`
           : '<button class="primario" id="idi-comprobar">Comprobar</button><button id="idi-nose">No lo sé</button>'}</div>
       </div>
       <p class="apagado idi-mini centro">Intro = comprobar / siguiente</p>`;
     zona.querySelector('#idi-salir').onclick = () => terminar();
+    const rv = zona.querySelector('#idi-revisar');
+    if (rv) rv.onchange = () => {
+      const k = `${it.materia}|${it.id}`; X.revision = (X.revision || []).filter((x) => x !== k); if (rv.checked) X.revision.push(k);
+      enviar({ tipo: 'idiRevision', lengua: l, materia: it.materia, ejercicio: it.id, marcado: rv.checked, respuesta: hecho.respuesta, correcta: hecho.correcta, frase: hecho.frase });
+    };
+    const cs = zona.querySelector('#idi-consultar'); if (cs) cs.onclick = () => enviar({ tipo: 'abrirUrl', url: `https://claude.ai/new?q=${encodeURIComponent(preguntaConsulta(it, hecho, l, b.ficha))}` });
     const inp = zona.querySelector('#idi-resp');
     if (inp && !hecho) { inp.focus(); inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); comprobar(false); } }); }
     const c = zona.querySelector('#idi-comprobar'); if (c) c.onclick = () => comprobar(false);
     const n = zona.querySelector('#idi-nose'); if (n) n.onclick = () => { S.respuesta = ''; comprobar(true); };
     const s = zona.querySelector('#idi-sig'); if (s) { s.focus({ preventScroll: true }); s.onclick = siguiente; }
     zona.querySelectorAll('[data-decir]').forEach((vz) => vz.onclick = () => decir(vz.dataset.decir, l));
+  }
+  /** Pregunta ya redactada para consultar fuera: «¿Cuándo se utiliza… en un contexto…? ¿Es correcto utilizar…?» */
+  function preguntaConsulta(it, h, l, f) {
+    const L2 = { fr: 'francés', en: 'inglés' }[l] || l;
+    const buena = h.respuestas[0] || h.correcta || '';
+    const frase = it.tipo === 'ordenar' ? `(ordenar: ${(it.palabras || []).join(' / ')})` : `«${it.frase || ''}»`;
+    return `Estoy estudiando ${L2} (ficha «${f.titulo_es || f.titulo}», nivel ${f.nivel}). Ejercicio: ${it.enunciado || ''} ${frase}.
+La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí «${h.respuesta}»` : ''}.
+¿Cuándo se utiliza «${buena}» en un contexto como este y qué regla lo explica?${h.respuesta && !h.ok ? ` ¿Es correcto o aceptable utilizar «${h.respuesta}»? Si no, ¿por qué?` : ''} ¿Hay otras respuestas válidas? Responde en español, con ejemplos.`;
   }
   const TIPO_EJ = { hueco: 'Completa', eleccion: 'Elige', transformar: 'Transforma', corregir: 'Corrige', ordenar: 'Ordena' };
 
@@ -746,7 +801,7 @@
     const ok = r.filter((x) => x.ok).length;
     const pct = r.length ? Math.round((100 * ok) / r.length) : 0;
     const titulos = Object.fromEntries((S ? S.sesion.bloques : []).map((b) => [b.ficha.id, b.ficha.titulo_es || b.ficha.titulo]));
-    raiz.innerHTML = `<div class="idi-centro idi-fin">
+    vistaEl.innerHTML = `<div class="idi-centro idi-fin">
       <div class="idi-tarjeta-grande centro">
         <span class="idi-anillo grande" style="--p:${pct}"><b>${pct}%</b></span>
         <h2>${ok} de ${r.length} ${pct >= 90 ? '· ¡Excelente!' : pct >= 70 ? '· Bien' : pct >= 50 ? '· Vas por buen camino' : '· A repasar'}</h2>
@@ -761,6 +816,205 @@
         <p class="apagado idi-mini">Estos errores quedan en tu cuaderno y volverán a salir en los próximos repasos.</p></section>` : ''}
       <p class="idi-acciones centro"><button class="primario" id="idi-volver">Volver al inicio</button></p></div>`;
     raiz.querySelector('#idi-volver').onclick = () => { S = null; fin = null; ir('inicio'); };
+  }
+
+  // ------------------------------------------------------------------ selección en cualquier parte: añadir a mi diccionario o buscar
+  function contextoDe(r) {
+    const n = r.startContainer.nodeType === 1 ? r.startContainer : r.startContainer.parentElement;
+    const el = n.closest('p, li, td, .idi-ejemplo, .idi-error, .idi-frase, .idi-ver-bloque, .idi-cr, h4, div');
+    return el ? el.textContent.replace(/\s+/g, ' ').trim().slice(0, 240) : '';
+  }
+  function habilitarSeleccionGeneral() {
+    raiz.addEventListener('mouseup', (ev) => {
+      if (ev.target.closest('input, textarea, button, a, .idi-marcable, .idi-recuadro')) return;
+      setTimeout(() => {
+        const sel = window.getSelection();
+        if (!sel || sel.isCollapsed || !sel.rangeCount) return;
+        const r = sel.getRangeAt(0);
+        if (!raiz.contains(r.commonAncestorContainer)) return;
+        const texto = r.toString().replace(/\s+/g, ' ').trim(); if (!texto || texto.length > 160) return;
+        const contexto = contextoDe(r);
+        const b = mostrarBarra(r.getBoundingClientRect(), '<button data-accion="dicc">📖 Añadir a mi diccionario</button><button data-accion="buscar">🔎 Buscar</button>');
+        b.querySelector('[data-accion="dicc"]').onclick = () => { quitarBarra(); sel.removeAllRanges(); abrirAlta({ texto, contexto }); };
+        b.querySelector('[data-accion="buscar"]').onclick = () => { quitarBarra(); buscarEnCajon(texto); };
+      }, 0);
+    });
+  }
+  /** Ficha en pantalla (abierta o la del ejercicio en curso), para clasificar lo que se añade al diccionario */
+  function fichaActual() {
+    if (vista === 'ficha' && fichaAbierta) return fichaAbierta;
+    if (vista === 'sesion' && S) return S.sesion.bloques[S.items[S.i].k].ficha;
+    return null;
+  }
+  let claveDlg = 0;
+  /** Diálogo para añadir o editar una entrada de Mi diccionario */
+  function abrirAlta(e) {
+    const l = e.lengua || lengua();
+    const f = e.id ? null : fichaActual();
+    const m = f ? materia(l, f.id) || {} : {};
+    const palabras = String(e.texto || '').trim().split(/\s+/).length;
+    const ent = { id: e.id, lengua: l, texto: e.texto || '', definicion: e.definicion || '', tipo: e.tipo || (palabras >= 3 || /___/.test(e.texto || '') ? 'estructura' : 'palabra'),
+      campo: e.campo || (f ? (m.titulo_es || f.titulo_es || f.titulo) : 'General'), ficha: e.ficha || (f ? f.id : null), contexto: e.contexto || '', fecha: e.fecha };
+    const campos = [...new Set((X.miDiccionario || []).filter((x) => x.lengua === l).map((x) => x.campo))];
+    const clave = ++claveDlg;
+    document.querySelectorAll('.idi-dlg-fondo').forEach((x) => x.remove());
+    const fondo = document.createElement('div'); fondo.className = 'idi-dlg-fondo idi-raiz';
+    fondo.innerHTML = `<div class="idi-dlg" role="dialog" aria-label="Mi diccionario">
+      <h3>📖 ${e.id ? 'Editar entrada' : 'Añadir a mi diccionario'} <span class="apagado">· ${esc(X.lenguas[l] || l)}</span></h3>
+      <label>Palabra o estructura <input type="text" data-k="texto" value="${esc(ent.texto)}"></label>
+      <label>Definición o traducción <input type="text" data-k="definicion" data-def="${clave}" value="${esc(ent.definicion)}" placeholder="Buscando en el diccionario…"></label>
+      <div class="idi-dlg-fila"><span>Tipo</span><div class="segmentos"><button data-tipo-ent="palabra" class="${ent.tipo === 'palabra' ? 'activo' : ''}">Palabra</button><button data-tipo-ent="estructura" class="${ent.tipo === 'estructura' ? 'activo' : ''}">Estructura</button></div></div>
+      <label>${ent.tipo === 'palabra' ? 'Campo semántico' : 'Ficha o grupo'} <input type="text" data-k="campo" list="idi-campos" value="${esc(ent.campo)}"><datalist id="idi-campos">${campos.map((c) => `<option value="${esc(c)}">`).join('')}</datalist></label>
+      ${ent.contexto ? `<p class="idi-mini apagado">Contexto: «${esc(ent.contexto)}»</p>` : ''}
+      <p class="idi-acciones"><button class="primario" data-accion="guardar">Guardar</button><button data-accion="cancelar">Cancelar</button></p></div>`;
+    document.body.appendChild(fondo);
+    const cerrar = () => fondo.remove();
+    fondo.addEventListener('mousedown', (ev) => { if (ev.target === fondo) cerrar(); });
+    fondo.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') cerrar(); if (ev.key === 'Enter' && ev.target.tagName === 'INPUT') fondo.querySelector('[data-accion="guardar"]').click(); });
+    fondo.querySelectorAll('[data-tipo-ent]').forEach((b) => b.onclick = () => { ent.tipo = b.dataset.tipoEnt; fondo.querySelectorAll('[data-tipo-ent]').forEach((x) => x.classList.toggle('activo', x === b)); });
+    fondo.querySelector('[data-accion="cancelar"]').onclick = cerrar;
+    fondo.querySelector('[data-accion="guardar"]').onclick = () => {
+      fondo.querySelectorAll('[data-k]').forEach((i) => { ent[i.dataset.k] = i.value; });
+      if (!ent.texto.trim()) return;
+      enviar({ tipo: 'idiGuardarEntrada', entrada: ent }); cerrar();
+      if (ctx.aviso) ctx.aviso(e.id ? 'Entrada actualizada.' : `«${ent.texto}» añadido a tu diccionario.`);
+    };
+    if (!ent.definicion) enviar({ tipo: 'idiDefinir', clave, lengua: l, texto: ent.texto }); else fondo.querySelector('[data-def]').placeholder = '';
+    const t = fondo.querySelector(ent.definicion ? '[data-k="campo"]' : '[data-k="definicion"]'); t.focus();
+  }
+
+  // ------------------------------------------------------------------ cajón fijo: diccionario bilingüe (y WantWords para inglés)
+  let claveBusq = 0, tBusq = null;
+  function pintarCajon() {
+    const l = lengua(), abierto = !!st().idiCajon, modo = st().idiCajonModo || 'directo';
+    const firma = `${l}|${abierto}|${modo}`;
+    raiz.classList.toggle('cajon-abierto', abierto);
+    if (cajonEl.dataset.firma === firma) return;
+    const q = (cajonEl.querySelector('#idi-cq') || {}).value || '';
+    cajonEl.dataset.firma = firma;
+    if (!abierto) {
+      cajonEl.className = 'idi-cajon cerrado';
+      cajonEl.innerHTML = '<button class="idi-cajon-asa" id="idi-cajon-abrir" title="Abrir el diccionario">📚 <span>Diccionario</span></button>';
+      cajonEl.querySelector('#idi-cajon-abrir').onclick = () => { st().idiCajon = true; ctx.guardar(); pintarCajon(); const i = cajonEl.querySelector('#idi-cq'); if (i) i.focus(); };
+      return;
+    }
+    const nombre = X.lenguas[l] || l;
+    cajonEl.className = 'idi-cajon';
+    cajonEl.innerHTML = `<div class="idi-cajon-cab"><b>📚 Diccionario · ${esc(nombre)}</b><button id="idi-cajon-cerrar" title="Plegar">⟩</button></div>
+      <div class="segmentos idi-cajon-modos"><button data-modo="directo" class="${modo === 'directo' ? 'activo' : ''}" title="Escribe una palabra o expresión en ${esc(nombre.toLowerCase())}">${esc(nombre)} → castellano</button>
+        <button data-modo="inverso" class="${modo === 'inverso' ? 'activo' : ''}" title="Describe en castellano lo que quieres decir y te propone palabras">Por significado</button></div>
+      <input id="idi-cq" type="search" placeholder="${modo === 'directo' ? `Palabra en ${esc(nombre.toLowerCase())}…` : 'Describe en castellano: «subida general de precios»…'}" value="${esc(q)}">
+      <div class="idi-cajon-res" id="idi-cres">${X.hayDiccionario && X.hayDiccionario[l] ? '<p class="apagado idi-mini">Escribe para buscar. Con «＋» lo guardas en Mi diccionario.</p>'
+        : '<p class="apagado idi-mini">El diccionario bilingüe de esta lengua aún no está en el paquete de idiomas.</p>'}</div>
+      <div class="idi-cajon-pie">${l === 'en' ? '<a data-externo href="https://wantwords.net/">WantWords ↗</a> <span class="apagado">buscar palabras inglesas por su definición (en el navegador)</span><br>' : ''}
+        <span class="apagado">Fuente: Wiktionary (kaikki.org), CC BY-SA.</span></div>`;
+    cajonEl.querySelector('#idi-cajon-cerrar').onclick = () => { st().idiCajon = false; ctx.guardar(); pintarCajon(); };
+    cajonEl.querySelectorAll('[data-modo]').forEach((b) => b.onclick = () => { st().idiCajonModo = b.dataset.modo; ctx.guardar(); pintarCajon(); lanzarBusqueda(); });
+    cajonEl.querySelectorAll('[data-externo]').forEach((a) => a.onclick = (e) => { e.preventDefault(); enviar({ tipo: 'abrirUrl', url: a.getAttribute('href') }); });
+    const inp = cajonEl.querySelector('#idi-cq');
+    inp.addEventListener('input', () => { clearTimeout(tBusq); tBusq = setTimeout(lanzarBusqueda, 250); });
+    if (q) lanzarBusqueda();
+  }
+  function lanzarBusqueda() {
+    const inp = cajonEl.querySelector('#idi-cq'); if (!inp) return;
+    const q = inp.value.trim(); if (!q) return;
+    enviar({ tipo: 'idiBuscar', clave: ++claveBusq, lengua: lengua(), q, modo: st().idiCajonModo || 'directo' });
+  }
+  function buscarEnCajon(texto) {
+    st().idiCajon = true; st().idiCajonModo = 'directo'; ctx.guardar(); pintarCajon();
+    const inp = cajonEl.querySelector('#idi-cq'); inp.value = texto; lanzarBusqueda();
+  }
+  function resultadosCajon(m) {
+    if (m.clave !== claveBusq) return;
+    const cont = cajonEl.querySelector('#idi-cres'); if (!cont) return;
+    if (m.falta) { cont.innerHTML = '<p class="apagado idi-mini">El diccionario bilingüe de esta lengua aún no está en el paquete de idiomas.</p>'; return; }
+    const l = lengua();
+    cont.innerHTML = m.resultados.length ? m.resultados.map((x, i) => `<div class="idi-cr">
+        <div class="idi-cr-cab">${vozDisponible() ? `<button class="idi-voz" data-decir="${esc(x.palabra)}">🔊</button>` : ''}<b>${esc(x.palabra)}</b>
+          ${x.cat ? `<i>${esc(x.cat)}</i>` : ''}${x.ipa ? `<span class="apagado">${esc(x.ipa)}</span>` : ''}<button class="idi-cr-mas" data-mas="${i}" title="Añadir a mi diccionario">＋</button></div>
+        ${x.trad.length ? `<div class="idi-cr-trad">${x.trad.slice(0, 8).map(esc).join(' · ')}</div>` : ''}
+        ${x.glosas.length ? `<ol class="idi-cr-glosas">${x.glosas.slice(0, 3).map((g) => `<li>${esc(g)}</li>`).join('')}</ol>` : ''}</div>`).join('')
+      : '<p class="apagado idi-mini">Sin resultados. Prueba con la forma base (infinitivo, singular) o cambia de modo.</p>';
+    cont.querySelectorAll('[data-decir]').forEach((b) => b.onclick = () => decir(b.dataset.decir, l));
+    cont.querySelectorAll('[data-mas]').forEach((b) => b.onclick = () => {
+      const x = m.resultados[Number(b.dataset.mas)];
+      abrirAlta({ texto: x.palabra, definicion: x.trad.length ? x.trad.slice(0, 4).join(', ') : (x.glosas[0] || ''), contexto: '' });
+    });
+  }
+
+  // ------------------------------------------------------------------ vista Mi diccionario
+  function pMiDicc() {
+    const l = lengua();
+    const xs = (X.miDiccionario || []).filter((x) => x.lengua === l);
+    const filtro = (st().idiDiccFiltro || '').toLowerCase();
+    const vis = xs.filter((x) => !filtro || `${x.texto} ${x.definicion} ${x.campo}`.toLowerCase().includes(filtro));
+    const grupo = (tipo, titulo, sub) => {
+      const ys = vis.filter((x) => x.tipo === tipo);
+      const porCampo = {}; for (const y of ys) (porCampo[y.campo] = porCampo[y.campo] || []).push(y);
+      return `<section class="idi-caja"><h3>${titulo} <span class="idi-num gris">${ys.length}</span></h3><p class="idi-sub">${sub}</p>
+        ${ys.length ? Object.entries(porCampo).sort((a, b) => a[0].localeCompare(b[0], 'es')).map(([c, zs]) => `<div class="idi-dg"><h4>${esc(c)} <span class="apagado">(${zs.length})</span></h4>
+          <div class="idi-de-rejilla">${zs.sort((a, b) => a.texto.localeCompare(b.texto, l)).map((z) => `<div class="idi-de" title="${esc(z.contexto ? `Contexto: ${z.contexto}` : '')}">
+            <div class="idi-de-cab">${vozDisponible() ? `<button class="idi-voz" data-decir="${esc(z.texto)}">🔊</button>` : ''}<b>${esc(z.texto)}</b>
+              <span class="idi-de-acc"><button data-editar="${esc(z.id)}" title="Editar">✎</button><button data-borrar="${esc(z.id)}" title="Borrar">🗑</button></span></div>
+            <div class="idi-de-def">${esc(z.definicion || '—')}</div></div>`).join('')}</div></div>`).join('')
+          : '<p class="apagado">Aún no hay entradas.</p>'}</section>`;
+    };
+    vistaEl.innerHTML = `<div class="idi-centro ancho idi-midicc"><div class="idi-ficha-barra"><a id="idi-volver">← Volver</a>
+      <button class="primario" id="idi-nueva-ent">＋ Añadir a mano</button></div>
+      <h2>📖 Mi diccionario · ${esc(X.lenguas[l] || l)}</h2>
+      <p class="ayuda">Selecciona cualquier texto del panel (fichas, ejercicios, correcciones, diccionario) y pulsa «📖 Añadir a mi diccionario».
+        Las palabras se agrupan por campo semántico y las estructuras por ficha. Más adelante habrá sesiones de repaso sobre este diccionario.</p>
+      <input type="search" id="idi-dfiltro" placeholder="Filtrar…" value="${esc(st().idiDiccFiltro || '')}">
+      ${grupo('palabra', 'Vocabulario', 'Por campo semántico')}
+      ${grupo('estructura', 'Estructuras y expresiones', 'Por ficha o grupo')}</div>`;
+    vistaEl.querySelector('#idi-volver').onclick = () => ir('inicio');
+    vistaEl.querySelector('#idi-nueva-ent').onclick = () => abrirAlta({ texto: '' });
+    const fi = vistaEl.querySelector('#idi-dfiltro');
+    fi.oninput = () => { st().idiDiccFiltro = fi.value; const pos = fi.selectionStart; pMiDicc(); const n = vistaEl.querySelector('#idi-dfiltro'); n.focus(); n.setSelectionRange(pos, pos); };
+    vistaEl.querySelectorAll('[data-decir]').forEach((b) => b.onclick = () => decir(b.dataset.decir, l));
+    vistaEl.querySelectorAll('[data-editar]').forEach((b) => b.onclick = () => abrirAlta({ ...xs.find((x) => x.id === b.dataset.editar) }));
+    vistaEl.querySelectorAll('[data-borrar]').forEach((b) => b.onclick = () => enviar({ tipo: 'idiBorrarEntrada', id: b.dataset.borrar }));
+  }
+
+  // ------------------------------------------------------------------ vista Libreta: todo lo subrayado y anotado, por ficha
+  const SECCION = (k) => (/^(desc|ctx|resumen|sec-que)/.test(k) ? '🎯 De qué trata' : /^(r\d|sec-reglas)/.test(k) ? '📐 Reglas y claves' : /^(ej|sec-ejemplos)/.test(k) ? '💬 Ejemplos'
+    : /^(err|sec-errores)/.test(k) ? '⚠️ Errores típicos' : k === 'sec-material' ? '📎 Material' : 'Ficha');
+  function pLibreta() {
+    const l = lengua();
+    if (!libretaFichas) { vistaEl.innerHTML = '<p class="vacio">Cargando la libreta…</p>'; return; }
+    const fichas = libretaFichas.filter((f) => f.id.startsWith(`${l}.`) && (X.anotaciones || {})[f.id]);
+    const tmp = document.createElement('div');
+    const tarjetas = fichas.map((f) => {
+      const a = X.anotaciones[f.id], m = materia(l, f.id) || {};
+      tmp.innerHTML = cuerpoFicha(f, l);
+      const items = [];
+      if (a.texto) items.push(`<div class="idi-lb-item"><div class="idi-lb-sec">📝 Nota general</div><div class="idi-recuadro c-amarillo"><p>${esc(a.texto)}</p></div></div>`);
+      for (const mk of a.marcas || []) {
+        let extracto = '';
+        if (mk.cita) {
+          const el = tmp.querySelector(`[data-k="${CSS.escape(mk.k)}"]`);
+          const t = el ? textoDe(el) : '';
+          let i = t.substr(mk.inicio || 0, mk.cita.length) === mk.cita ? (mk.inicio || 0) : t.indexOf(mk.cita);
+          if (i < 0) extracto = `<mark class="idi-marca c-${mk.color}">${esc(mk.cita)}</mark>`;
+          else {
+            const a0 = Math.max(0, i - 90), b0 = Math.min(t.length, i + mk.cita.length + 90);
+            extracto = `${a0 > 0 ? '…' : ''}${esc(t.slice(a0, i))}<mark class="idi-marca c-${mk.color}">${esc(mk.cita)}</mark>${esc(t.slice(i + mk.cita.length, b0))}${b0 < t.length ? '…' : ''}`;
+          }
+        }
+        items.push(`<div class="idi-lb-item"><div class="idi-lb-sec">${SECCION(mk.k)}</div>
+          ${extracto ? `<blockquote class="idi-lb-cita">${extracto}</blockquote>` : ''}
+          ${mk.nota ? `<div class="idi-recuadro c-${mk.color || 'amarillo'}"><p>${esc(mk.nota)}</p></div>` : ''}</div>`);
+      }
+      return `<article class="idi-lb-ficha n-${f.nivel}"><div class="idi-lb-cab"><span class="idi-chip-niv">${esc(f.nivel)}</span>
+        <b>${esc(m.titulo_l || f.titulo)}</b><span class="apagado">${esc(f.titulo_es || '')}</span><button data-abrir-ficha-lb="${esc(f.id)}">Abrir la ficha</button></div>
+        ${items.join('')}</article>`;
+    });
+    vistaEl.innerHTML = `<div class="idi-centro ancho idi-libreta"><p><a id="idi-volver">← Volver</a></p>
+      <h2>📒 Libreta · ${esc(X.lenguas[l] || l)}</h2>
+      <p class="ayuda">Todo lo que has subrayado o anotado en las fichas, con el fragmento de la ficha y tu nota.</p>
+      ${tarjetas.length ? tarjetas.join('') : '<p class="vacio">Aún no hay anotaciones. Abre una ficha, selecciona un texto y elige un color o «✎ Nota».</p>'}</div>`;
+    vistaEl.querySelector('#idi-volver').onclick = () => ir('inicio');
+    vistaEl.querySelectorAll('[data-abrir-ficha-lb]').forEach((b) => b.onclick = () => enviar({ tipo: 'idiFicha', lengua: l, id: b.dataset.abrirFichaLb }));
   }
 
   window.TCEE_IDI = { pintar, recibir };

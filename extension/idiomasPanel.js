@@ -115,11 +115,14 @@ function crearIdiomas({ raiz, globalState }) {
     for (const l of lenguas) pendientes[l] = Object.entries(regs).filter(([id, r]) => id.startsWith(`${l}.`) && r.tarjeta && new Date(r.tarjeta.due) <= ahora).length;
     return {
       perfil: p, perfiles: perfiles(), lenguas: LENGUAS, hayPaquete: Object.keys(paquetes).length > 0, paquetes,
-      registros: Object.fromEntries(Object.entries(regs).map(([id, r]) => [id, { sesiones: r.sesiones, notas: r.notas, ultima: r.ultima, due: r.tarjeta && r.tarjeta.due }])),
+      registros: Object.fromEntries(Object.entries(regs).map(([id, r]) => [id, { sesiones: r.sesiones, notas: r.notas, ultima: r.ultima, due: r.tarjeta && r.tarjeta.due,
+        vistos: Object.keys(r.ejercicios || {}).length, bien: Object.values(r.ejercicios || {}).filter((e) => !e.fallos || e.corregido).length }])),
       errores: errores().filter((e) => !e.resuelto).slice(-300),
       sesiones: ses.slice(-60),
       compromisos: p ? I.compromisos(p.compromisos, ses).map((c) => ({ ...c, texto: I.textoRegla(c.regla) })) : [],
       nivel, pendientes, anotaciones: p ? anotaciones() : {},
+      revision: p ? revision().map((x) => `${x.materia}|${x.ejercicio}`) : [], miDiccionario: p ? miDiccionario() : [],
+      hayDiccionario: Object.fromEntries(Object.keys(LENGUAS).map((l) => [l, fs.existsSync(path.join(dirPaquete(), l, 'diccionario.json'))])),
     };
   }
 
@@ -135,7 +138,16 @@ function crearIdiomas({ raiz, globalState }) {
     const semilla = Date.now();
     let partes = [];
     const rec = (bloque) => I.recomendar(k.materias, regs, { bloque, nivel, conFicha: k.conFicha, semilla });
-    if (tipo === 'ficha' || tipo === 'errores') partes = [{ id: materia, n }];
+    if (tipo === 'errores' && !materia) {
+      // repaso de todo el cuaderno: las fichas con más errores pendientes, solo los ejercicios fallados, hasta n
+      const porFicha = {};
+      for (const e of errores()) if (!e.resuelto && e.lengua === lengua && k.conFicha.has(e.materia)) (porFicha[e.materia] = porFicha[e.materia] || new Set()).add(e.ejercicio);
+      let quedan = Math.max(n, 12);
+      partes = Object.entries(porFicha).sort((a, b) => b[1].size - a[1].size).map(([id, xs]) => {
+        const c = Math.min(xs.size, quedan); quedan -= c; return { id, n: c, solo: xs };
+      }).filter((x) => x.n > 0);
+      if (!partes.length) throw new Error('No tienes errores pendientes en este idioma.');
+    } else if (tipo === 'ficha' || tipo === 'errores') partes = [{ id: materia, n }];
     else if (tipo === 'gramatica' || tipo === 'lexico') { const m = rec(tipo)[0]; if (m) partes = [{ id: m.id, n }]; }
     else if (tipo === 'repaso') {
       const vencidas = Object.entries(regs).filter(([id, r]) => id.startsWith(`${lengua}.`) && r.tarjeta && new Date(r.tarjeta.due) <= new Date() && k.conFicha.has(id))
@@ -148,18 +160,19 @@ function crearIdiomas({ raiz, globalState }) {
       partes = elegidas.map((m) => ({ id: m.id, n: Math.max(4, Math.round(n / 2)) }));
     }
     if (!partes.length) throw new Error('No hay fichas disponibles para esta sesión todavía.');
-    const bloques = partes.map(({ id, n: cuantos }) => {
+    const bloques = partes.map(({ id, n: cuantos, solo }) => {
       const fi = ficha(lengua, id);
       if (!fi) throw new Error(`Falta la ficha ${id}.`);
       // ejercicios adecuados al nivel: si la ficha queda por debajo del tuyo, más de producción; si queda por encima, más de reconocimiento
       const ajuste = I.nivelNum(nivel) - I.nivelNum(fi.nivel || nivelDe[id] || nivel);
       let ejercicios = I.elegirEjercicios(fi, regs[id], cuantos, semilla, ajuste);
-      if (tipo === 'errores') {
+      if (solo) ejercicios = I.barajar(fi.ejercicios.filter((e) => solo.has(e.id)), semilla).slice(0, cuantos);
+      else if (tipo === 'errores') {
         const fallados = new Set(errores().filter((e) => e.materia === id && !e.resuelto).map((e) => e.ejercicio));
         ejercicios = [...fi.ejercicios.filter((e) => fallados.has(e.id)), ...ejercicios.filter((e) => !fallados.has(e.id))].slice(0, cuantos);
       }
       // al navegador no se mandan las respuestas: se corrige aquí
-      return { ficha: { ...fi, ejercicios: undefined }, ejercicios: ejercicios.map(({ respuestas, explicacion, ...e }) => e) };
+      return { ficha: { ...fi, ejercicios: undefined }, ejercicios: ejercicios.map(({ id: eid, tipo: t, enunciado, frase, opciones, palabras }) => ({ id: eid, tipo: t, enunciado, frase, opciones, palabras })) };
     });
     return { id: `s${semilla}`, lengua, tipo, inicio: new Date().toISOString(), bloques };
   }
@@ -218,6 +231,89 @@ function crearIdiomas({ raiz, globalState }) {
     escribir(f('errores.json'), errs);
   }
 
+  // ---------------------------------------------------------------- preguntas marcadas para revisar (revision.json del perfil)
+  const revision = () => leer(f('revision.json') || '', []);
+  function marcarRevision({ lengua, materia, ejercicio, marcado, respuesta, correcta, frase }) {
+    if (!dirActivo()) throw new Error('No hay perfil.');
+    const xs = revision().filter((x) => !(x.materia === materia && x.ejercicio === ejercicio));
+    if (marcado) xs.push({ lengua, materia, ejercicio, frase, respuesta, correcta, fecha: new Date().toISOString() });
+    escribir(f('revision.json'), xs);
+    return xs.map((x) => `${x.materia}|${x.ejercicio}`);
+  }
+
+  // ---------------------------------------------------------------- diccionario personal (diccionario.json del perfil)
+  const miDiccionario = () => leer(f('diccionario.json') || '', []);
+  function guardarEntrada(e) {
+    if (!dirActivo()) throw new Error('No hay perfil.');
+    const xs = miDiccionario();
+    const texto = String(e.texto || '').trim(); if (!texto) throw new Error('Falta la palabra.');
+    const limpia = { id: e.id || `d${Date.now().toString(36)}`, lengua: e.lengua, texto, definicion: String(e.definicion || '').trim(),
+      tipo: e.tipo === 'estructura' ? 'estructura' : 'palabra', campo: String(e.campo || 'General').trim() || 'General',
+      ficha: e.ficha || null, contexto: String(e.contexto || '').slice(0, 300), fecha: e.fecha || new Date().toISOString() };
+    const i = xs.findIndex((x) => x.id === limpia.id);
+    if (i >= 0) xs[i] = limpia; else xs.push(limpia);
+    escribir(f('diccionario.json'), xs);
+    return xs;
+  }
+  function borrarEntrada({ id }) { const xs = miDiccionario().filter((x) => x.id !== id); escribir(f('diccionario.json'), xs); return xs; }
+
+  // ---------------------------------------------------------------- diccionario bilingüe del paquete (<l>/diccionario.json, de Wiktionary)
+  // entradas: [palabra, categoría, pronunciación, [traducciones al español], [definiciones en español]]
+  const cacheDicc = {};
+  const plano = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[’']/g, "'").trim();
+  const VACIAS = new Set('de la el los las un una unos unas y o a en con por para que se su sus del al lo es como mas muy sin sobre'.split(' '));
+  function dicc(l) {
+    const fp = path.join(dirPaquete(), l, 'diccionario.json');
+    let m = 0; try { m = fs.statSync(fp).mtimeMs; } catch (e) { return null; }
+    if (cacheDicc[l] && cacheDicc[l].m === m) return cacheDicc[l];
+    const d = leer(fp, { entradas: [] });
+    const ent = d.entradas || [];
+    const porPalabra = new Map(), inverso = new Map();
+    ent.forEach((x, i) => {
+      const k = plano(x[0]); if (!porPalabra.has(k)) porPalabra.set(k, []); porPalabra.get(k).push(i);
+      const toks = new Set(`${(x[3] || []).join(' ')} ${(x[4] || []).join(' ')}`.split(/[^\p{L}']+/u).map(plano).filter((w) => w.length > 2 && !VACIAS.has(w)));
+      for (const w of toks) { if (!inverso.has(w)) inverso.set(w, []); inverso.get(w).push(i); }
+    });
+    cacheDicc[l] = { m, ent, porPalabra, claves: [...porPalabra.keys()].sort(), inverso, fuente: d.fuente || '' };
+    return cacheDicc[l];
+  }
+  const entrada = (x) => ({ palabra: x[0], cat: x[1] || '', ipa: x[2] || '', trad: x[3] || [], glosas: x[4] || [] });
+  /** Búsqueda: «directa» (palabra o expresión en la lengua estudiada → castellano) o «inversa» (describe en castellano lo que buscas) */
+  function buscar({ lengua, q, modo }) {
+    const D = dicc(lengua); if (!D) return { resultados: [], falta: true };
+    const t = plano(q); if (!t) return { resultados: [] };
+    let ids = [];
+    if (modo === 'inverso') {
+      const toks = t.split(/[^\p{L}']+/u).filter((w) => w.length > 2 && !VACIAS.has(w));
+      const puntos = new Map();
+      for (const w of toks) for (const i of D.inverso.get(w) || []) puntos.set(i, (puntos.get(i) || 0) + 1);
+      ids = [...puntos.entries()].sort((a, b) => {
+        const ea = D.ent[a[0]], eb = D.ent[b[0]];
+        const exa = (ea[3] || []).some((x) => plano(x) === t) ? 1 : 0, exb = (eb[3] || []).some((x) => plano(x) === t) ? 1 : 0;
+        return b[1] - a[1] || exb - exa || ea[0].length - eb[0].length;
+      }).slice(0, 40).map(([i]) => i);
+    } else {
+      ids = [...(D.porPalabra.get(t) || [])];
+      // prefijo, en orden alfabético (búsqueda binaria en las claves ordenadas)
+      let lo = 0, hi = D.claves.length;
+      while (lo < hi) { const mid = (lo + hi) >> 1; if (D.claves[mid] < t) lo = mid + 1; else hi = mid; }
+      for (let j = lo; j < D.claves.length && D.claves[j].startsWith(t) && ids.length < 40; j++) if (D.claves[j] !== t) ids.push(...D.porPalabra.get(D.claves[j]));
+    }
+    return { resultados: ids.slice(0, 40).map((i) => entrada(D.ent[i])), fuente: D.fuente };
+  }
+  /** Definición breve para el diccionario personal: traducciones de la entrada exacta (o, si no hay, su primera definición) */
+  function definir({ lengua, texto }) {
+    const D = dicc(lengua); if (!D) return '';
+    const xs = (D.porPalabra.get(plano(texto)) || []).map((i) => entrada(D.ent[i]));
+    const trad = [...new Set(xs.flatMap((x) => x.trad))].slice(0, 5);
+    return trad.length ? trad.join(', ') : (xs[0] && xs[0].glosas[0]) || '';
+  }
+
+  /** Para la Libreta: las fichas que tienen anotaciones */
+  function fichasAnotadas() {
+    return Object.keys(anotaciones()).map((id) => { const l = id.split('.')[0]; const fi = ficha(l, id); return fi ? { ...fi, ejercicios: undefined } : null; }).filter(Boolean);
+  }
+
   /** Ruta de la carpeta de un perfil (para borrarla desde la extensión, que la manda a la Papelera) */
   function rutaPerfil(dir) {
     const p = perfiles().find((x) => x.dir === dir);
@@ -226,7 +322,7 @@ function crearIdiomas({ raiz, globalState }) {
   }
   const olvidarPerfil = (dir) => (globalState.get('tcee.idiomasPerfil') === dir ? globalState.update('tcee.idiomasPerfil', undefined) : undefined);
 
-  return { datos, crearPerfil, anotar, rutaPerfil, olvidarPerfil, guardarPerfil, empezar, responder, terminar, descartarError, ficha, elegirPerfil: (dir) => globalState.update('tcee.idiomasPerfil', dir), dirActivo };
+  return { datos, crearPerfil, anotar, marcarRevision, guardarEntrada, borrarEntrada, buscar, definir, fichasAnotadas, rutaPerfil, olvidarPerfil, guardarPerfil, empezar, responder, terminar, descartarError, ficha, elegirPerfil: (dir) => globalState.update('tcee.idiomasPerfil', dir), dirActivo };
 }
 
 module.exports = { crearIdiomas };
