@@ -98,6 +98,14 @@
         "problemMatcher": []
       },
       {
+        "label": "Descargar fuentes de idiomas",
+        "type": "shell",
+        "command": "bash main/scripts/idiomas/descargar_fuentes.sh",
+        "options": { "cwd": "${workspaceFolder}" },
+        "presentation": { "reveal": "always", "panel": "dedicated", "clear": true, "focus": true },
+        "problemMatcher": []
+      },
+      {
         "label": "Descargar el temario (si falta)",
         "type": "shell",
         "command": "bash main/scripts/descargar_temario.sh",
