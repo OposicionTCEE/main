@@ -30,7 +30,7 @@ function crearIdiomas({ raiz, globalState }) {
       if (d && d.id) {
         conFicha.add(d.id);
         const tipos = {}; for (const e of d.ejercicios || []) tipos[e.tipo] = (tipos[e.tipo] || 0) + 1;
-        titulos[d.id] = { titulo_es: d.titulo_es, descripcion_es: d.descripcion_es, n: (d.ejercicios || []).length, tipos,
+        titulos[d.id] = { titulo_es: d.titulo_es, descripcion_es: d.descripcion_es, descripcion_larga_es: d.descripcion_larga_es, n: (d.ejercicios || []).length, tipos,
           nEjemplos: (d.ejemplos || []).length, nErrores: (d.errores_hispanohablantes || []).length, fuenteNombre: d.fuente && d.fuente.nombre };
       }
     }
@@ -56,11 +56,16 @@ function crearIdiomas({ raiz, globalState }) {
   const registros = () => leer(f('materias.json') || '', {});
   const errores = () => leer(f('errores.json') || '', []);
   const anotaciones = () => leer(f('anotaciones.json') || '', {});
-  /** Anotación del usuario sobre una ficha (vacía = se borra) */
-  function anotar({ id, texto }) {
+  /**
+   * Anotaciones del usuario sobre una ficha: {texto (nota general), marcas: [{id, k (bloque), inicio, cita, color, nota}]}.
+   * Las marcas son subrayados sobre el texto de la ficha; si llevan nota, se ven como un recuadro debajo del bloque. Vacía = se borra.
+   */
+  function anotar({ id, anotacion, texto }) {
     if (!dirActivo()) throw new Error('No hay perfil.');
-    const a = anotaciones(); const t = String(texto || '').replace(/\s+$/, '');
-    if (t) a[id] = { texto: t, fecha: new Date().toISOString() }; else delete a[id];
+    const a = anotaciones();
+    const x = anotacion || { ...(a[id] || {}), texto };
+    const limpio = { texto: String(x.texto || '').replace(/\s+$/, ''), marcas: (x.marcas || []).filter((m) => m && m.k && (m.cita || m.nota)) };
+    if (limpio.texto || limpio.marcas.length) a[id] = { ...limpio, fecha: new Date().toISOString() }; else delete a[id];
     escribir(f('anotaciones.json'), a);
     return a[id] || null;
   }
@@ -163,7 +168,10 @@ function crearIdiomas({ raiz, globalState }) {
     const fi = ficha(lengua, materia); if (!fi) throw new Error('Ficha no encontrada.');
     const ej = (fi.ejercicios || []).find((e) => e.id === ejercicio); if (!ej) throw new Error('Ejercicio no encontrado.');
     const r = I.corregir(ej, respuesta);
-    return { ...r, respuestas: ej.respuestas, explicacion: ej.explicacion };
+    // tras responder ya se puede enseñar todo: explicación ampliada, la de su respuesta concreta, las de cada opción, traducción y glosario
+    return { ...r, respuestas: ej.respuestas, explicacion: ej.explicacion, breve: ej.explicacion_breve || '', traduccion: ej.traduccion || '',
+      suya: r.ok ? ((ej.por_opcion || {})[Object.keys(ej.por_opcion || {}).find((o) => I.normalizar(o) === I.normalizar(respuesta))] || null) : I.explicarRespuesta(ej, respuesta),
+      porOpcion: ej.por_opcion || null, glosario: ej.glosario || [], frase: ej.frase || '' };
   }
 
   /** Guarda la sesión: por materia, nota, repaso (ts-fsrs) y ejercicios; errores al cuaderno; línea en sesiones.jsonl */

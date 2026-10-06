@@ -175,4 +175,17 @@ function textoRegla(r, nombres = { fr: 'Francés', en: 'Inglés', cualquiera: 'C
 
 const slug = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'usuario';
 
-module.exports = { NIVELES, nivelNum, normalizar, corregir, repasar, valoracion, estadoMateria, elegirEjercicios, estimarNivel, recomendar, compromisos, textoRegla, barajar, slug };
+/**
+ * Explicación concreta de la respuesta del usuario: la de su opción (ejercicios de elección) o la del error previsto que coincida.
+ * Devuelve el texto o null.
+ */
+function explicarRespuesta(ej, respuesta) {
+  if (!String(respuesta || '').trim()) return null;
+  const f = ej.tipo === 'ordenar' ? soloPalabras : normalizar;
+  const r = f(respuesta);
+  for (const [op, t] of Object.entries(ej.por_opcion || {})) if (f(op) === r) return t;
+  for (const ep of ej.errores_previstos || []) if (f(ep.respuesta) === r) return ep.explicacion;
+  return null;
+}
+
+module.exports = { NIVELES, nivelNum, normalizar, corregir, explicarRespuesta, repasar, valoracion, estadoMateria, elegirEjercicios, estimarNivel, recomendar, compromisos, textoRegla, barajar, slug };
