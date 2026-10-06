@@ -89,6 +89,8 @@ sesiones.jsonl     una línea por sesión: fecha, idioma, tipo, minutos, materia
 repaso.json        estado del repaso de cada ficha (ts-fsrs)
 errores.json       cuaderno de errores: frase, corrección, ficha, fecha, veces
 anotaciones.json   anotaciones del usuario en cada ficha
+diccionario.json   Mi diccionario (palabras y estructuras guardadas)
+revision.json      preguntas marcadas para revisar con Claude
 escritos/, audio/  lo que el usuario escribe y graba (fases 2–3)
 ```
 
@@ -147,6 +149,35 @@ Al escribirlas se revisaron de nuevo todas las fichas: unas 90 correcciones (res
 - **Ejercicios según el nivel**: si la ficha está por debajo del nivel del usuario, salen primero los de producción (transformar, corregir, ordenar);
   si está por encima, primero los de reconocimiento (elegir, hueco). Con el mismo nivel, mezclados.
 - **Eliminar perfil**: Ajustes → *Eliminar este perfil…*; pide confirmación y manda la carpeta a la Papelera del Mac.
+
+## v0.33 (6/10/2026, con el usuario)
+
+- **Niveles de francés** alineados con el *Inventaire* en 30 materias donde su rótulo coincide con la ficha (`NIVEL_FR_LEXICO` y tuplas de
+  `scripts/idiomas/indice.py`). No se tocaron 20 en las que el rótulo del Inventaire solo cubre una parte de la ficha
+  (p. ej. conectores-1, impersonales, concordancia-participio, negacion-compleja).
+- **Marcar para revisión**: casilla bajo cada corrección. Solo guarda la pregunta en `revision.json` del perfil
+  (`[{lengua, materia, ejercicio, frase, respuesta, correcta, fecha}]`) para revisarla más adelante con Claude. No cambia nada más.
+- **Consultar**: enlace junto a la casilla; abre Claude en el navegador (`https://claude.ai/new?q=…`) con la pregunta ya redactada
+  (ficha, ejercicio, solución, tu respuesta, «¿cuándo se utiliza…?, ¿es correcto utilizar…?»).
+- **Dos roscos por tarjeta**: *Avance* (ejercicios distintos hechos / ejercicios de la ficha) y *Dominio* (media de las 3 últimas notas).
+- **Cuaderno de errores compacto**: barra de acumulación (verde < 10, ámbar < 25, rojo), «Repasar los errores» (sesión `errores` sin materia:
+  solo ejercicios fallados, de las fichas con más errores) y el detalle plegado.
+- **Mi diccionario** (`diccionario.json` del perfil): al seleccionar cualquier texto del panel sale «📖 Añadir a mi diccionario» / «🔎 Buscar»
+  (en la ficha, junto a los colores). Entradas `{id, lengua, texto, definicion, tipo: palabra|estructura, campo, ficha, contexto, fecha}`;
+  la definición se rellena con el diccionario bilingüe. Vista: vocabulario por campo semántico y estructuras por ficha. Repaso: pendiente.
+- **Libreta**: todos los subrayados y notas de las fichas, agrupados por ficha, con el fragmento subrayado y su contexto y la nota en recuadro.
+- **Cajón del diccionario** (fijo a la derecha, plegable): «lengua → castellano» (palabra exacta y por prefijo) o «Por significado»
+  (describes en castellano y propone palabras: búsqueda inversa sobre traducciones y definiciones). Datos: `<l>/diccionario.json` del paquete,
+  generado con `scripts/idiomas/diccionario.py` a partir de Wiktionary (wiktextract/kaikki.org: es-extract y fr-extract; CC BY-SA 4.0).
+  Versión del 6/10/2026: francés 64.310 entradas (es.wiktionary + traducciones al español de fr.wiktionary + 2.886 palabras de FLELex con definición
+  en francés, «(fr)»; cubre el 99,4 % de las 12.000 palabras más frecuentes de FLELex), inglés 30.937 (solo es.wiktionary; 89 % de las 6.000 de EFLLex).
+  Para regenerarlo: descargar es-extract.jsonl.gz y fr-extract.jsonl.gz de kaikki.org/dictionary/rawdata.html; filtrar el francés con
+  `zcat fr-extract.jsonl.gz | grep -F '"lang_code": "es"' | grep -F '"lang_code": "fr"' | gzip > fr-es.jsonl.gz` (30 s; leerlo entero en Python
+  tarda más de lo que permite una orden) y ejecutar `diccionario.py es-extract.jsonl.gz fr-es.jsonl.gz <carpeta idiomas>`.
+  La búsqueda «por significado» puntúa traducciones (peso 2) y definiciones (peso 1), con plurales simplificados; depende de las palabras
+  que use Wiktionary, así que no entiende sinónimos que no aparezcan en la entrada.
+  WantWords (diccionario inverso de la Universidad de Tsinghua) solo existe para inglés y chino y necesita un modelo neuronal pesado;
+  se enlaza su web para inglés en lugar de instalarlo.
 
 ## Cómo funciona la pestaña (fase 1)
 

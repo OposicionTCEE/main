@@ -203,6 +203,12 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
       if (m.tipo === 'idiEmpezar') return responder('idiSesion', { sesion: idiomas.empezar(m) });
       if (m.tipo === 'idiResponder') return responder('idiCorreccion', { clave: m.clave, resultado: idiomas.responder(m) });
       if (m.tipo === 'idiTerminar') { const r = idiomas.terminar(m); responder('idiFin', { fin: r }); return responder('idiDatos', { datos: idiomas.datos() }); }
+      if (m.tipo === 'idiRevision') return responder('idiRevisionOk', { revision: idiomas.marcarRevision(m) });
+      if (m.tipo === 'idiGuardarEntrada') return responder('idiMiDicc', { lista: idiomas.guardarEntrada(m.entrada) });
+      if (m.tipo === 'idiBorrarEntrada') return responder('idiMiDicc', { lista: idiomas.borrarEntrada(m) });
+      if (m.tipo === 'idiBuscar') return responder('idiResultados', { clave: m.clave, ...idiomas.buscar(m) });
+      if (m.tipo === 'idiDefinir') return responder('idiDefinicion', { clave: m.clave, definicion: idiomas.definir(m) });
+      if (m.tipo === 'idiLibreta') return responder('idiLibreta', { fichas: idiomas.fichasAnotadas() });
       if (m.tipo === 'idiAnotar') return responder('idiAnotado', { id: m.id, nota: idiomas.anotar(m) });
       if (m.tipo === 'idiEliminarPerfil') {
         const { ruta, nombre } = idiomas.rutaPerfil(m.dir);

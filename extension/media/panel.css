@@ -719,3 +719,72 @@ mark.idi-marca.con-nota { border-bottom: 2px dotted currentColor; }
 .idi-bm-color.c-amarillo { background: #f2c94c; } .idi-bm-color.c-verde { background: #6fcf97; }
 .idi-bm-color.c-azul { background: #56ccf2; } .idi-bm-color.c-rosa { background: #f78fb3; }
 .idi-bm-nota { padding: 2px 8px; }
+
+/* Idiomas v0.33: cuaderno compacto, Mi diccionario, Libreta, cajón del diccionario, dos roscos, revisión */
+.idi-acum { height: 10px; border-radius: 6px; background: var(--isup2); overflow: hidden; border: 1px solid var(--borde); }
+.idi-acum i { display: block; height: 100%; border-radius: 6px; transition: width .3s; }
+.idi-acum.baja i { background: var(--iok); }
+.idi-acum.media i { background: var(--iaviso); }
+.idi-acum.alta i { background: var(--imal); }
+.idi-cuaderno > summary { cursor: pointer; color: var(--apagado); font-size: .9em; margin-top: 6px; }
+.idi-personales { display: flex; flex-direction: column; gap: 8px; }
+.idi-personal { display: grid; grid-template-columns: auto 1fr; column-gap: 10px; text-align: left; padding: 10px 12px; border-radius: 8px; background: var(--fondo); }
+.idi-personal .idi-ico { grid-row: span 2; font-size: 1.5em; align-self: center; }
+.idi-personal small { color: var(--apagado); }
+.idi-roscos { display: flex; gap: 8px; }
+.idi-rosco { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.idi-rosco small { font-size: .72em; color: var(--apagado); }
+.idi-anillo.av { background: radial-gradient(closest-side, var(--isup) 74%, transparent 76%), conic-gradient(var(--iB) calc(var(--p) * 1%), var(--borde) 0); }
+.idi-ver-pie { display: flex; justify-content: flex-end; align-items: center; gap: 16px; margin-top: 10px; font-size: .9em; }
+.idi-revisar { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--apagado); }
+.idi-revisar input { width: 15px; height: 15px; }
+#idi-consultar { text-decoration: underline; }
+.idi-bm-sep { width: 1px; align-self: stretch; background: var(--borde); margin: 0 2px; }
+.idi-barra-marca button { padding: 2px 8px; }
+/* diálogo de alta */
+.idi-dlg-fondo { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.35); display: grid; place-items: center; }
+.idi-dlg { width: min(460px, 92vw); padding: 18px 20px; border-radius: 14px; background: var(--vscode-editorWidget-background, var(--fondo)); border: 1px solid var(--borde);
+  box-shadow: 0 10px 40px rgba(0,0,0,.4); display: flex; flex-direction: column; gap: 10px; }
+.idi-dlg h3 { margin: 0; }
+.idi-dlg label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: .92em; }
+.idi-dlg input[type=text] { font-weight: normal; }
+.idi-dlg-fila { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: .92em; }
+/* cajón del diccionario */
+.idi-cajon { position: fixed; right: 0; top: 110px; bottom: 12px; width: 360px; z-index: 30; display: flex; flex-direction: column; gap: 8px;
+  padding: 12px; border-radius: 12px 0 0 12px; border: 1px solid var(--borde); border-right: none; background: var(--vscode-editorWidget-background, var(--isup2));
+  box-shadow: -6px 0 24px rgba(0,0,0,.25); }
+.idi-cajon.cerrado { width: auto; top: 50%; bottom: auto; transform: translateY(-50%); padding: 0; box-shadow: none; background: none; border: none; }
+.idi-cajon-asa { writing-mode: vertical-rl; transform: rotate(180deg); padding: 12px 6px; border-radius: 0 10px 10px 0; font-weight: 600; letter-spacing: .05em;
+  background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; }
+.idi-cajon-asa span { margin-top: 6px; }
+.idi-cajon-cab { display: flex; justify-content: space-between; align-items: center; }
+.idi-cajon-modos button { font-size: .86em; padding: 4px 10px; }
+.idi-cajon-res { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 2px; }
+.idi-cajon-pie { font-size: .8em; line-height: 1.4; }
+.idi-cr { padding: 8px 10px; border-radius: 8px; background: var(--fondo); border: 1px solid var(--borde); }
+.idi-cr-cab { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.idi-cr-cab i { color: var(--apagado); font-size: .85em; }
+.idi-cr-mas { margin-left: auto; padding: 0 8px; }
+.idi-cr-trad { margin-top: 3px; color: var(--iok); }
+.idi-cr-glosas { margin: 4px 0 0; padding-left: 18px; color: var(--apagado); font-size: .9em; }
+.idi-raiz.cajon-abierto .idi-vista { margin-right: 372px; }
+@media (max-width: 1000px) { .idi-raiz.cajon-abierto .idi-vista { margin-right: 0; } }
+/* Mi diccionario */
+.idi-midicc .idi-caja { margin-top: 14px; }
+.idi-dg h4 { margin: 12px 0 6px; }
+.idi-de-rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+.idi-de { padding: 8px 10px; border-radius: 8px; background: var(--fondo); border: 1px solid var(--borde); }
+.idi-de-cab { display: flex; align-items: center; gap: 6px; }
+.idi-de-acc { margin-left: auto; display: flex; gap: 2px; opacity: 0; transition: opacity .12s; }
+.idi-de:hover .idi-de-acc, .idi-de-acc:focus-within { opacity: 1; }
+.idi-de-acc button { padding: 0 6px; font-size: .85em; }
+.idi-de-def { color: var(--apagado); margin-top: 2px; }
+/* Libreta */
+.idi-lb-ficha { margin-top: 14px; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--borde); border-left: 5px solid var(--n); background: var(--isup); }
+.idi-lb-cab { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.idi-lb-cab button { margin-left: auto; }
+.idi-lb-item { padding: 8px 0; border-top: 1px dashed var(--borde); }
+.idi-lb-sec { font-size: .8em; color: var(--apagado); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
+.idi-lb-cita { margin: 0 0 6px; padding: 6px 12px; border-left: 3px solid var(--borde); color: var(--apagado); line-height: 1.5; }
+.idi-lb-cita mark { color: var(--tinta); }
+.idi-lb-item .idi-recuadro p { margin: 0; }
