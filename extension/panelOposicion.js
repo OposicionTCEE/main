@@ -208,6 +208,10 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
       if (m.tipo === 'idiBorrarEntrada') return responder('idiMiDicc', { lista: idiomas.borrarEntrada(m) });
       if (m.tipo === 'idiBuscar') return responder('idiResultados', { clave: m.clave, ...idiomas.buscar(m) });
       if (m.tipo === 'idiDefinir') return responder('idiDefinicion', { clave: m.clave, definicion: idiomas.definir(m) });
+      if (m.tipo === 'idiVerbosInicio') return responder('idiVerbos', { info: idiomas.verbosInicio() });
+      if (m.tipo === 'idiVerbosBuscar') return responder('idiVerbosLista', { clave: m.clave, lista: idiomas.verbosBuscar(m) });
+      if (m.tipo === 'idiVerbosSesion') return responder('idiVerbosSesion', { sesion: idiomas.verbosSesion(m) });
+      if (m.tipo === 'idiVerbosTerminar') { responder('idiVerbos', { info: idiomas.verbosTerminar(m) }); return responder('idiDatos', { datos: idiomas.datos() }); }
       if (m.tipo === 'idiLibreta') return responder('idiLibreta', { fichas: idiomas.fichasAnotadas() });
       if (m.tipo === 'idiAnotar') return responder('idiAnotado', { id: m.id, nota: idiomas.anotar(m) });
       if (m.tipo === 'idiEliminarPerfil') {

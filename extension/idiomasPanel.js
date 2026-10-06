@@ -269,9 +269,13 @@ function crearIdiomas({ raiz, globalState }) {
     if (cacheDicc[l] && cacheDicc[l].m === m) return cacheDicc[l];
     const d = leer(fp, { entradas: [] });
     const ent = d.entradas || [];
-    const porPalabra = new Map(), inverso = new Map();
+    const porPalabra = new Map(), inverso = new Map(), porTrad = new Map();
     ent.forEach((x, i) => {
       const k = plano(x[0]); if (!porPalabra.has(k)) porPalabra.set(k, []); porPalabra.get(k).push(i);
+      for (const t of x[3] || []) for (const parte of String(t).split(/[,;]\s*/)) {   // «Ordenador, computadora» → dos claves
+        const kt = plano(parte.replace(/\(.*?\)/g, '')); if (!kt) continue;
+        if (!porTrad.has(kt)) porTrad.set(kt, []); if (!porTrad.get(kt).includes(i)) porTrad.get(kt).push(i);
+      }
       // índice inverso: palabra española → [entrada, peso] (2 si está en una traducción, 1 si solo en una definición)
       const pesos = new Map();
       for (const [txt, p] of [[(x[3] || []).join(' '), 2], [(x[4] || []).join(' '), 1]]) {
@@ -279,7 +283,7 @@ function crearIdiomas({ raiz, globalState }) {
       }
       for (const [w, p] of pesos) { if (!inverso.has(w)) inverso.set(w, []); inverso.get(w).push([i, p]); }
     });
-    cacheDicc[l] = { m, ent, porPalabra, claves: [...porPalabra.keys()].sort(), inverso, fuente: d.fuente || '' };
+    cacheDicc[l] = { m, ent, porPalabra, claves: [...porPalabra.keys()].sort(), inverso, porTrad, clavesTrad: [...porTrad.keys()].sort(), fuente: d.fuente || '' };
     return cacheDicc[l];
   }
   const entrada = (x) => ({ palabra: x[0], cat: x[1] || '', ipa: x[2] || '', trad: x[3] || [], glosas: x[4] || [] });
@@ -288,7 +292,20 @@ function crearIdiomas({ raiz, globalState }) {
     const D = dicc(lengua); if (!D) return { resultados: [], falta: true };
     const t = plano(q); if (!t) return { resultados: [] };
     let ids = [];
-    if (modo === 'inverso') {
+    const prefijo = (claves, mapa, lim) => {
+      const xs = []; let lo = 0, hi = claves.length;
+      while (lo < hi) { const mid = (lo + hi) >> 1; if (claves[mid] < t) lo = mid + 1; else hi = mid; }
+      for (let j = lo; j < claves.length && claves[j].startsWith(t) && xs.length < lim; j++) if (claves[j] !== t) xs.push(...mapa.get(claves[j]));
+      return xs;
+    };
+    if (modo === 'espanol') {
+      // castellano → lengua estudiada: traducción exacta, luego traducciones que empiezan igual, luego las que contienen la palabra
+      const exactas = D.porTrad.get(t) || [];
+      const pref = prefijo(D.clavesTrad, D.porTrad, 40);
+      const cont = (D.inverso.get(raizEs(t)) || []).filter(([, p]) => p === 2).map(([i]) => i);
+      const vistos = new Set(); ids = [];
+      for (const i of [...exactas.sort((a, b) => D.ent[a][0].length - D.ent[b][0].length), ...pref, ...cont]) if (!vistos.has(i)) { vistos.add(i); ids.push(i); }
+    } else if (modo === 'inverso') {
       const toks = [...new Set(t.split(/[^\p{L}']+/u).filter((w) => w.length > 2 && !VACIAS.has(w)).map(raizEs))];
       const puntos = new Map();
       for (const w of toks) for (const [i, p] of D.inverso.get(w) || []) puntos.set(i, (puntos.get(i) || 0) + p);
@@ -314,9 +331,87 @@ function crearIdiomas({ raiz, globalState }) {
     return trad.length ? trad.join(', ') : (xs[0] && xs[0].glosas[0]) || '';
   }
 
+  // ---------------------------------------------------------------- entrenador de verbos (francés; idiomas/fr/verbos.json, Verbiste)
+  let cacheVerbos = null;
+  function verbos() {
+    const fp = path.join(dirPaquete(), 'fr', 'verbos.json');
+    let m = 0; try { m = fs.statSync(fp).mtimeMs; } catch (e) { return null; }
+    if (cacheVerbos && cacheVerbos.m === m) return cacheVerbos.d;
+    const d = I.prepararVerbos(leer(fp, { verbos: [], plantillas: {} }));
+    d.porFrecuencia = [...d.verbos].sort((a, b) => b[4] - a[4]);
+    cacheVerbos = { m, d }; return d;
+  }
+  const statsVerbos = () => leer(f('verbos.json') || '', {});
+  const fichasConjugacion = () => ['grupo1', 'grupo2', 'grupo3', 'irregulares', 'compuestos']
+    .map((n) => leer(path.join(dirPaquete(), 'fr', 'conjugacion', `${n}.json`), null)).filter(Boolean);
+  const traduccion = (v) => definir({ lengua: 'fr', texto: v }).split(', ').slice(0, 3).join(', ');
+  function verbosInicio() {
+    const d = verbos(); if (!d) return { falta: true };
+    const st = statsVerbos();
+    const debiles = Object.entries(st).filter(([, x]) => x.i >= 2 && x.a / x.i < 0.8).sort((a, b) => a[1].a / a[1].i - b[1].a / b[1].i).slice(0, 8)
+      .map(([k, x]) => { const [verbo, tiempo] = k.split('|'); return { verbo, tiempo, pct: Math.round((100 * x.a) / x.i), i: x.i }; });
+    const practicadas = Object.values(st).reduce((a, x) => a + x.i, 0);
+    return { tiempos: I.TIEMPOS_FR, fichas: fichasConjugacion(), total: d.verbos.length, debiles, practicadas,
+      grupos: [1, 2, 3].map((g) => d.verbos.filter((v) => v[3] === g).length) };
+  }
+  function verbosBuscar({ q }) {
+    const d = verbos(); if (!d) return [];
+    const t = plano(q); if (!t) return [];
+    return d.porFrecuencia.filter((v) => plano(v[0]).startsWith(t)).slice(0, 15).map((v) => ({ verbo: v[0], grupo: v[3], trad: traduccion(v[0]) }));
+  }
+  /** Sesión del entrenador: modo «tabla» (verbo + tiempo, todas las personas) o «mezcla» (una forma por pregunta) */
+  function verbosSesion({ grupos, tiempos, elegidos, aleatorios, frecuentes, modo, n, debiles }) {
+    const d = verbos(); if (!d) throw new Error('Falta la base de verbos en el paquete de idiomas: ejecuta «Sincronizar».');
+    const ts = (tiempos || []).filter((t) => I.TIEMPOS_FR.some((x) => x[0] === t));
+    if (!ts.length) throw new Error('Elige al menos un tiempo.');
+    let pares = [];
+    if (debiles) {
+      const st = statsVerbos();
+      pares = Object.entries(st).filter(([k, x]) => x.i && x.a / x.i < 0.8 && ts.includes(k.split('|')[1])).sort((a, b) => a[1].a / a[1].i - b[1].a / b[1].i)
+        .slice(0, 12).map(([k]) => k.split('|'));
+      if (!pares.length) throw new Error('Aún no hay verbos flojos en esos tiempos: practica primero unas cuantas sesiones.');
+    } else {
+      let vs = (elegidos || []).filter((v) => d.porVerbo.has(v));
+      const gs = (grupos && grupos.length ? grupos : [1, 2, 3]).map(Number);
+      if (!vs.length || aleatorios) {
+        let pool = d.porFrecuencia.filter((v) => gs.includes(v[3]));
+        if (frecuentes) pool = pool.slice(0, gs.length === 3 ? 300 : 120);
+        vs = vs.concat(I.barajar(pool.map((v) => v[0])).filter((v) => !vs.includes(v)).slice(0, aleatorios || 3));
+      }
+      for (const v of vs) for (const t of ts) pares.push([v, t]);
+    }
+    const trads = {};
+    const tr = (v) => (trads[v] = trads[v] !== undefined ? trads[v] : traduccion(v));
+    const nombre = (t) => { const x = I.TIEMPOS_FR.find((y) => y[0] === t); return x ? `${x[1]} · ${x[2]}` : t; };
+    if (modo === 'mezcla') {
+      const todas = [];
+      for (const [v, t] of pares) for (const fila of I.conjugar(d, v, t) || []) todas.push({ verbo: v, grupo: d.porVerbo.get(v)[3], tiempo: t, nombreTiempo: nombre(t), trad: tr(v), ...fila });
+      const items = I.barajar(todas).slice(0, Math.max(5, Number(n) || 15));
+      if (!items.length) throw new Error('No hay formas para esa combinación.');
+      return { modo, items, inicio: new Date().toISOString() };
+    }
+    const items = pares.map(([v, t]) => ({ verbo: v, grupo: d.porVerbo.get(v)[3], tiempo: t, nombreTiempo: nombre(t), trad: tr(v), filas: I.conjugar(d, v, t) || [] })).filter((x) => x.filas.length);
+    if (!items.length) throw new Error('No hay formas para esa combinación.');
+    return { modo: 'tabla', items, inicio: new Date().toISOString() };
+  }
+  function verbosTerminar({ resultados, segundos, inicio }) {
+    if (!dirActivo()) throw new Error('No hay perfil.');
+    const st = statsVerbos(); const ahora = new Date().toISOString();
+    for (const r of resultados || []) {
+      const k = `${r.verbo}|${r.tiempo}`; const x = st[k] || { i: 0, a: 0, fallos: {} };
+      x.i += 1; if (r.ok) x.a += 1; else x.fallos[r.persona] = (x.fallos[r.persona] || 0) + 1; x.u = ahora; st[k] = x;
+    }
+    escribir(f('verbos.json'), st);
+    const ok = (resultados || []).filter((x) => x.ok).length;
+    fs.appendFileSync(f('sesiones.jsonl'), JSON.stringify({ id: `v${Date.now()}`, fecha: inicio || ahora, lengua: 'fr', tipo: 'verbos', minutos: Math.round((segundos || 0) / 6) / 10,
+      materias: [], ejercicios: (resultados || []).length, aciertos: ok }) + '\n');
+    return verbosInicio();
+  }
+
   /** Para la Libreta: las fichas que tienen anotaciones */
   function fichasAnotadas() {
-    return Object.keys(anotaciones()).map((id) => { const l = id.split('.')[0]; const fi = ficha(l, id); return fi ? { ...fi, ejercicios: undefined } : null; }).filter(Boolean);
+    const conj = fichasConjugacion();
+    return Object.keys(anotaciones()).map((id) => { const l = id.split('.')[0]; const fi = id.startsWith('fr.v.') ? conj.find((x) => x.id === id) : ficha(l, id); return fi ? { ...fi, ejercicios: undefined } : null; }).filter(Boolean);
   }
 
   /** Ruta de la carpeta de un perfil (para borrarla desde la extensión, que la manda a la Papelera) */
@@ -327,7 +422,7 @@ function crearIdiomas({ raiz, globalState }) {
   }
   const olvidarPerfil = (dir) => (globalState.get('tcee.idiomasPerfil') === dir ? globalState.update('tcee.idiomasPerfil', undefined) : undefined);
 
-  return { datos, crearPerfil, anotar, marcarRevision, guardarEntrada, borrarEntrada, buscar, definir, fichasAnotadas, rutaPerfil, olvidarPerfil, guardarPerfil, empezar, responder, terminar, descartarError, ficha, elegirPerfil: (dir) => globalState.update('tcee.idiomasPerfil', dir), dirActivo };
+  return { datos, verbosInicio, verbosBuscar, verbosSesion, verbosTerminar, crearPerfil, anotar, marcarRevision, guardarEntrada, borrarEntrada, buscar, definir, fichasAnotadas, rutaPerfil, olvidarPerfil, guardarPerfil, empezar, responder, terminar, descartarError, ficha, elegirPerfil: (dir) => globalState.update('tcee.idiomasPerfil', dir), dirActivo };
 }
 
 module.exports = { crearIdiomas };

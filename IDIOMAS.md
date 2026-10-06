@@ -91,6 +91,7 @@ errores.json       cuaderno de errores: frase, corrección, ficha, fecha, veces
 anotaciones.json   anotaciones del usuario en cada ficha
 diccionario.json   Mi diccionario (palabras y estructuras guardadas)
 revision.json      preguntas marcadas para revisar con Claude
+verbos.json        estadística del entrenador de verbos: {"verbo|tiempo": {i, a, fallos por persona, u}}
 escritos/, audio/  lo que el usuario escribe y graba (fases 2–3)
 ```
 
@@ -178,6 +179,42 @@ Al escribirlas se revisaron de nuevo todas las fichas: unas 90 correcciones (res
   que use Wiktionary, así que no entiende sinónimos que no aparezcan en la entrada.
   WantWords (diccionario inverso de la Universidad de Tsinghua) solo existe para inglés y chino y necesita un modelo neuronal pesado;
   se enlaza su web para inglés en lugar de instalarlo.
+
+## v0.34 (7/10/2026, con el usuario)
+
+- **Cajón del diccionario**: tres modos, «Francés → Español», «Español → Francés» (traducción exacta, luego por prefijo, luego traducciones
+  que contienen la palabra) y «Por significado»; se repinta al cambiar de idioma. Se busca igual con œ que con oe.
+- **Libreta**: el contexto de cada subrayado es la fila de la tabla (con el nombre de cada columna), el punto de la lista o la frase o frases
+  que lo contienen, no el bloque entero.
+- **Practica los verbos** (solo francés; barra entre «Empezar sesión» y el cuaderno de errores):
+  - Datos: `idiomas/fr/verbos.json` (7.015 verbos y 149 modelos de Verbiste, GPL; frecuencia contada en las frases francesas de Tatoeba),
+    generado con `scripts/idiomas/verbos.py`. Conjugador en `extension/idiomas.js` (`conjugar`): tiempos simples de Verbiste; compuestos con
+    avoir/être (lista `CON_ETRE`, doble auxiliar `DOBLE_AUX` acepta los dos), concordancia del participio con el sujeto (je/tu: masc. o fem.;
+    vous: plural o singular de cortesía), futur proche; variantes aceptadas: paie/paye, préférerai/préfèrerai (1990).
+  - Entrenador (como Scholingua): grupos 1.º/2.º/3.º, solo frecuentes (300 más frecuentes), 16 tiempos por modo, buscar y elegir verbos o 3 al
+    azar, «Lo que más fallo». Modos: Tabla (un verbo y un tiempo, las 6 personas) y Mezcla (una forma por pregunta). Se escribe solo la forma
+    (el pronombre, con elisión y «que» en subjuntivo, ya aparece); teclado de acentos; «≈» si solo fallan acentos.
+  - Fallos: estadística propia por verbo y tiempo en `verbos.json` del perfil (no van al cuaderno de errores); cada ronda cuenta como sesión.
+  - Izquierda, plegable: cinco fichas de consulta (`idiomas/fr/conjugacion/`: grupo1, grupo2, grupo3, irregulares, compuestos), con el
+    formato de las fichas (sin ejercicios), subrayables y anotables; se abre sola la del grupo del verbo o la de compuestos.
+    Las formas de sus tablas se generaron y comprobaron con Verbiste; pouvoir: «pu» invariable (Verbiste da «pue»).
+
+## Búsqueda por significado: opciones (pendiente, 7/10/2026)
+
+El problema: hoy solo se cruzan las palabras de la descripción con las traducciones y definiciones de cada entrada; «subida general de
+precios» no encuentra inflation porque su entrada dice «inflación». Opciones, de más a menos intensivas:
+
+1. **Modelo de lenguaje local (Ollama, fase 2)**: el modelo propone palabras a partir de la descripción y el diccionario las confirma.
+   El más flexible; 2–3 GB y unos segundos por consulta en un Mac de 8 GB.
+2. **Búsqueda semántica con un modelo de «embeddings» multilingüe pequeño** (p. ej. paraphrase-multilingual-MiniLM o multilingual-e5-small,
+   120–470 MB, en la propia extensión con transformers.js): se calcula una vez el vector de cada definición (unos minutos) y se busca por
+   cercanía de significado. Entiende sinónimos y paráfrasis; sin conexión.
+3. **Tesauro preparado una vez por Claude** para el vocabulario frecuente (FLELex/EFLLex, ~12.000 palabras por lengua): para cada palabra,
+   5–10 maneras de describirla en castellano. Luego la búsqueda actual funciona muy bien en ese vocabulario; coste solo al prepararlo.
+4. **Doble salto por el Wikcionario en español** (datos que ya tenemos): buscar la descripción en las DEFINICIONES de las palabras españolas
+   («inflación: elevación del nivel general de los precios») y pasar de la palabra española a su traducción. Barato y eficaz para conceptos
+   que tienen una palabra española clara; mejorable con ponderación BM25 y raíces de las palabras.
+5. **Enlaces externos** (OneLook o WantWords para inglés, diccionarios en línea): lo mínimo, fuera del panel.
 
 ## Cómo funciona la pestaña (fase 1)
 
