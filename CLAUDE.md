@@ -51,7 +51,7 @@ Escritura (`escritura.js`, reglas en `main/ESCRITURA.md`): ⌘B/⌘I/⌃H salen 
 `\hl{}` (paquete soul); ⌃C rodea de color; ⌘⌥K y la acción «Atajos» muestran los atajos;
 `\lnum`/`\la` + Intro → lista; Intro en una lista añade `\item`; `\cita` → `\begin{cita}[Autor][Año][Obra]` (entorno definido en los 145 temas). Paleta en `config/colores.json`. **Para Claude**: `\textcolor{magenta}{…}` en un tema es una indicación
 del usuario para Claude; `red` = pendiente/OJO del usuario (no es una orden); `blue` = no cambiar sin preguntar; `orange` = dato por verificar.
-Idiomas (pestaña del Panel Oposición, fase 1 hecha: `idiomas.js`, `idiomasPanel.js`, `media/idiomas.js`): diseño, fases, fuentes, licencias y reglas en `main/IDIOMAS.md`. Contenido en el repositorio público `idiomas` (`TCEE/idiomas`);
+Idiomas (pestaña del Panel Oposición, fase 1 hecha: `idiomas.js`, `idiomasPanel.js`, `media/idiomas.js`): diseño, fases, fuentes, licencias y reglas en `main/IDIOMAS.md`. Contenido en el repositorio público `idiomas` (`TCEE/idiomas`; solo se descarga: tarea «Descargar o actualizar el paquete de idiomas» y *Sincronizar*);
 datos del usuario solo en local (`TCEE/idiomas-<nombre>/`). Fuentes descargadas en el Mac con la tarea «Descargar fuentes de idiomas» (`TCEE/.fuentes-idiomas/`).
 Acción Rehacer informes (`tcee.rehacerInformes`): ejecuta `scripts/armonizacion.js estado` y copia el encargo para Claude Code. El progreso guarda además minutos por día (`dias`) en el fichero de cada Mac.
 Calendario de vueltas (pestaña Calendario): reglas y razonamiento en `main/CALENDARIO.md` (mantener código y documento a la vez).

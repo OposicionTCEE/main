@@ -10,7 +10,8 @@ Mantener este documento y el código a la vez.
 - **Sin «definir el nivel» a mano.** La primera vez se crea un **perfil**: nombre, segundo idioma y nivel orientativo de cada idioma.
   El panel ajusta el nivel con lo que observa y avisa cuando cree que el real es otro.
 - **Datos del usuario solo en local**, en `TCEE/idiomas-<nombre>/`, fuera de los repositorios: progreso, errores, escritos y grabaciones.
-- **Contenido** en el repositorio público `idiomas` (`TCEE/idiomas`), que se descarga y actualiza con *Sincronizar*.
+- **Contenido** en el repositorio público `idiomas` (`TCEE/idiomas`). Solo se descarga, nunca se sube: lo hacen *Sincronizar* y la tarea
+  *Descargar o actualizar el paquete de idiomas* (`scripts/idiomas/descargar_paquete.sh`). Si hay cambios locales en el paquete, se apartan con `git stash`.
 - **Compromiso flexible**: reglas sueltas y opcionales del tipo «francés, cada día, 30 min», «inglés, 1 vez por semana, sin duración»
   o «francés, cada 2 semanas el martes, 60 min». Siempre está el botón *Empezar sesión ahora*. Nunca bloquea nada.
 - **Sesiones a elección**: Gramática, Léxico, Escrito, Oral, Escucha, Al azar, Tipo examen y Repaso.
