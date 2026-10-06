@@ -112,3 +112,44 @@ const XCOLOR = {
 };
 
 module.exports = { grupoQueRodea, equilibrado, mayusculas, dolar, paleta, XCOLOR, cierre, escapado };
+
+// listas en las que Intro añade un \item (las propias del temario y las de LaTeX)
+const LISTAS = ['lnum', 'la', 'itemize', 'enumerate'];
+
+/**
+ * Si la posición está dentro de una lista (el entorno más interior es lnum, la, itemize o enumerate), sin estar dentro de
+ * unas llaves abiertas después de su \begin (por ejemplo, una \footnote o un \textbf), devuelve {nombre, inicio}; si no, null.
+ */
+function enLista(t, off) {
+  const desde = Math.max(0, off - 30000), trozo = t.slice(desde, off);
+  const rx = /\\(begin|end)\{([A-Za-z*]+)\}/g; const pila = []; let m;
+  while ((m = rx.exec(trozo))) {
+    if (escapado(trozo, m.index)) continue;
+    if (m[1] === 'begin') pila.push({ nombre: m[2], inicio: desde + m.index, fin: desde + m.index + m[0].length });
+    else { let k = pila.length - 1; while (k >= 0 && pila[k].nombre !== m[2]) k--; if (k >= 0) pila.length = k; }
+  }
+  const e = pila[pila.length - 1];
+  if (!e || !LISTAS.includes(e.nombre)) return null;
+  const dentro = t.slice(e.fin, off);
+  if (!/\\item\b/.test(dentro)) return null;
+  // llaves abiertas sin cerrar entre el \begin y el cursor: se está dentro de una orden, no en la lista
+  let p = 0;
+  for (let i = 0; i < dentro.length; i++) {
+    const c = dentro[i];
+    if (c === '\\') { i++; continue; }
+    if (c === '%') { const n = dentro.indexOf('\n', i); if (n < 0) break; i = n; continue; }
+    if (c === '{') p++; else if (c === '}') p--;
+  }
+  return p > 0 ? null : { nombre: e.nombre, inicio: e.inicio };
+}
+
+/** Posición justo detrás del \end{nombre} que cierra la lista que empieza en «inicio» (contando el anidamiento), o -1 */
+function finDeEntorno(t, inicio, nombre) {
+  const rx = new RegExp(`\\\\(begin|end)\\{${nombre}\\}`, 'g'); rx.lastIndex = inicio; let p = 0, m;
+  while ((m = rx.exec(t))) { if (m[1] === 'begin') p++; else if (--p === 0) return m.index + m[0].length; }
+  return -1;
+}
+
+module.exports.enLista = enLista;
+module.exports.finDeEntorno = finDeEntorno;
+module.exports.LISTAS = LISTAS;
