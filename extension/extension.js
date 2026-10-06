@@ -837,7 +837,7 @@ function activarEscritura(context) {
       const ml = m[1].toLowerCase();
       if (ml.length >= 2 && 'lnum'.startsWith(ml)) items.push(bloque('lnum', '→ lista numerada (1. 2. 3.)', '\\begin{lnum}\n\t\\item $0\n\\end{lnum}', 2));
       if (ml === 'la') items.push(bloque('la', '→ lista alfabética (a) b) c))', '\\begin{la}\n\t\\item $0\n\\end{la}', 3));
-      if (ml.length >= 2 && 'cita'.startsWith(ml)) items.push(bloque('cita', '→ cita textual (Tab: Autor, Año, Obra)', '\\begin{cita}[$2][$3][$4]\n\t$1\n\\end{cita}$0', 4));
+      if (ml.length >= 2 && 'cita'.startsWith(ml)) items.push(bloque('cita', '→ cita textual (Tab: Autor, Año, Obra)', '\\begin{cita}[${2:Autor}][${3:Año}][${4:Obra}]\n\t$1\n\\end{cita}$0', 4));
       if ((m[1].length >= 3 && 'highlight'.startsWith(m[1].toLowerCase())) || m[1] === 'hl') {
         const it = new vscode.CompletionItem({ label: '\\highlight', description: '→ \\hl{texto} (resaltado amarillo, ⌃H)' }, vscode.CompletionItemKind.Snippet);
         it.insertText = new vscode.SnippetString('\\\\hl{$1}$0'); it.filterText = '\\highlight'; it.sortText = '!1'; it.preselect = true; it.range = rango;
@@ -890,7 +890,9 @@ function activarEscritura(context) {
   };
   const amarillo = vscode.window.createTextEditorDecorationType({ backgroundColor: 'rgba(255, 221, 0, 0.30)', borderRadius: '2px' });
   const pista = vscode.window.createTextEditorDecorationType({ before: { color: new vscode.ThemeColor('editorGhostText.foreground'), fontStyle: 'italic' } });
-  context.subscriptions.push(pista);
+  // «Autor», «Año» u «Obra» sin cambiar en una cita: subrayado ondulado, para ver de un vistazo lo que falta
+  const falta = vscode.window.createTextEditorDecorationType({ textDecoration: 'underline wavy', color: new vscode.ThemeColor('editorWarning.foreground') });
+  context.subscriptions.push(pista, falta);
   context.subscriptions.push(amarillo, { dispose: () => tipos.forEach((t) => t.dispose()) });
   const decorar = (ed) => {
     if (!ed || ed.document.languageId !== 'latex') return;
@@ -905,7 +907,7 @@ function activarEscritura(context) {
       if (m[2]) { const h = hexDe(m[2]); if (h && m[2] !== 'black' && m[2] !== 'white') { if (!porColor.has(h)) porColor.set(h, []); porColor.get(h).push(r); } } else hl.push(r);
     }
     // \begin{cita}[…][…][…]: en los corchetes vacíos, el dato que va (Autor, Año, Obra) en gris, sin escribirlo en el texto
-    const pistas = [];
+    const pistas = [], faltan = [];
     const rc = /\\begin\{cita\}/g; let mc;
     while ((mc = rc.exec(t))) {
       let i = mc.index + mc[0].length;
@@ -914,10 +916,12 @@ function activarEscritura(context) {
         const j = t.indexOf(']', i);
         if (j < 0) break;
         if (j === i + 1) { const p = doc.positionAt(i + 1); pistas.push({ range: new vscode.Range(p, p), renderOptions: { before: { contentText: nombre } } }); }
+        else if (t.slice(i + 1, j) === nombre) faltan.push(new vscode.Range(doc.positionAt(i + 1), doc.positionAt(j)));   // sin rellenar: se subraya
         i = j + 1;
       }
     }
     ed.setDecorations(pista, pistas);
+    ed.setDecorations(falta, faltan);
     tipos.forEach((ty, h) => { if (!porColor.has(h)) ed.setDecorations(ty, []); });
     porColor.forEach((rs, h) => ed.setDecorations(tipo(h), rs));
     ed.setDecorations(amarillo, hl);

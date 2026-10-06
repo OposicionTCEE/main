@@ -123,8 +123,10 @@ Por eso las indicaciones para Claude van en `magenta`. Si fueran en rojo, las no
 ```
 
 - Debajo, a la derecha: «AUTOR (Año), *Obra*». Los tres datos son opcionales; sin ninguno, no hay firma.
-- `\cita` + Intro escribe el bloque con el cursor en el texto. Tab pasa a Autor, después a Año y después a Obra.
-  En los corchetes vacíos se ve en gris qué dato va. Es solo una pista en el editor: no se escribe en el `.tex`.
+- `\cita` + Intro escribe `\begin{cita}[Autor][Año][Obra]` con el cursor en el texto de la cita.
+  Tab pasa a «Autor», que queda seleccionado (lo que escribas lo sustituye); después a «Año» y a «Obra».
+  Si un dato se deja sin cambiar, la palabra sale en el PDF a propósito, para ver lo que falta. En el editor se subraya con una línea ondulada.
+- Si un corchete se deja vacío (`[]`), en el editor se ve en gris qué dato va. Esa pista no se escribe en el `.tex`.
 - La definición (`\NewDocumentEnvironment{cita}{ O{} O{} O{} +b }`) está en los 145 temas, justo antes del bloque de listas.
   Se añadió el 6 de octubre de 2026 con el visto bueno del usuario; antes solo estaba en 3.A.19, y con dos datos.
   Las citas de 3.A.42, 3.B.2 y 3.B.3, que daban error, se reordenaron a [Autor][Año][Obra].
