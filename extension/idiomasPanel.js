@@ -260,7 +260,7 @@ function crearIdiomas({ raiz, globalState }) {
   // ---------------------------------------------------------------- diccionario bilingüe del paquete (<l>/diccionario.json, de Wiktionary)
   // entradas: [palabra, categoría, pronunciación, [traducciones al español], [definiciones en español]]
   const cacheDicc = {};
-  const plano = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[’']/g, "'").trim();
+  const plano = (x) => String(x || '').replace(/œ/g, 'oe').replace(/Œ/g, 'Oe').replace(/æ/g, 'ae').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[’']/g, "'").trim();
   const raizEs = (w) => (w.length > 5 && /es$/.test(w) && !/[aeiou]es$/.test(w) ? w.slice(0, -2) : w.length > 4 && /s$/.test(w) ? w.slice(0, -1) : w);
   const VACIAS = new Set('de la el los las un una unos unas y o a en con por para que se su sus del al lo es como mas muy sin sobre'.split(' '));
   function dicc(l) {
