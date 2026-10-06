@@ -1,6 +1,7 @@
 #!/bin/bash
 # Sincroniza con GitHub los repositorios: main (herramientas), temario (todos los temas),
-# progreso (privado: tiempo de trabajo, calendarios, cantes y respuestas del test) y test (banco de preguntas).
+# progreso (privado: tiempo de trabajo, calendarios, cantes y respuestas del test), test (banco de preguntas)
+# e idiomas (paquete de contenido de la pestaña Idiomas; los datos del usuario van aparte, en TCEE/idiomas-<nombre>/, sin GitHub).
 # Para cada uno: guarda tus cambios (commit), trae lo que haya en GitHub y sube lo tuyo.
 # Si no hay conexión, no hace nada y te lo dice: tus cambios siguen a salvo en tu Mac.
 # Si detecta un conflicto (el mismo fragmento cambiado en GitHub y en tu Mac), NO toca ese
@@ -60,6 +61,9 @@ sincronizar "$BASE/progreso" "progreso"   # privado: tiempos y temas hechos del 
 # banco de preguntas del test (pestaña Test del Panel Oposición): se descarga la primera vez
 if [ ! -d "$BASE/test/.git" ] && git clone -q https://github.com/OposicionTCEE/test.git "$BASE/test" 2>/dev/null; then actualizados+=("test (descargado)"); fi
 sincronizar "$BASE/test" "test"
+# paquete de idiomas (pestaña Idiomas: materias, fichas, ejercicios, léxico y textos): se descarga la primera vez
+if [ ! -d "$BASE/idiomas/.git" ] && git clone -q https://github.com/OposicionTCEE/idiomas.git "$BASE/idiomas" 2>/dev/null; then actualizados+=("idiomas (descargado)"); fi
+sincronizar "$BASE/idiomas" "idiomas"
 
 [ -d "$BASE/progreso/.git" ] || echo "Aviso: falta la carpeta progreso. Ejecuta la tarea «Descargar el temario (si falta)»."
 
