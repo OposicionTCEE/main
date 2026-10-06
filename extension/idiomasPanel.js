@@ -261,6 +261,7 @@ function crearIdiomas({ raiz, globalState }) {
   // entradas: [palabra, categoría, pronunciación, [traducciones al español], [definiciones en español]]
   const cacheDicc = {};
   const plano = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[’']/g, "'").trim();
+  const raizEs = (w) => (w.length > 5 && /es$/.test(w) && !/[aeiou]es$/.test(w) ? w.slice(0, -2) : w.length > 4 && /s$/.test(w) ? w.slice(0, -1) : w);
   const VACIAS = new Set('de la el los las un una unos unas y o a en con por para que se su sus del al lo es como mas muy sin sobre'.split(' '));
   function dicc(l) {
     const fp = path.join(dirPaquete(), l, 'diccionario.json');
@@ -271,8 +272,12 @@ function crearIdiomas({ raiz, globalState }) {
     const porPalabra = new Map(), inverso = new Map();
     ent.forEach((x, i) => {
       const k = plano(x[0]); if (!porPalabra.has(k)) porPalabra.set(k, []); porPalabra.get(k).push(i);
-      const toks = new Set(`${(x[3] || []).join(' ')} ${(x[4] || []).join(' ')}`.split(/[^\p{L}']+/u).map(plano).filter((w) => w.length > 2 && !VACIAS.has(w)));
-      for (const w of toks) { if (!inverso.has(w)) inverso.set(w, []); inverso.get(w).push(i); }
+      // índice inverso: palabra española → [entrada, peso] (2 si está en una traducción, 1 si solo en una definición)
+      const pesos = new Map();
+      for (const [txt, p] of [[(x[3] || []).join(' '), 2], [(x[4] || []).join(' '), 1]]) {
+        for (const w of txt.split(/[^\p{L}']+/u).map(plano).filter((w) => w.length > 2 && !VACIAS.has(w)).map(raizEs)) pesos.set(w, Math.max(pesos.get(w) || 0, p));
+      }
+      for (const [w, p] of pesos) { if (!inverso.has(w)) inverso.set(w, []); inverso.get(w).push([i, p]); }
     });
     cacheDicc[l] = { m, ent, porPalabra, claves: [...porPalabra.keys()].sort(), inverso, fuente: d.fuente || '' };
     return cacheDicc[l];
@@ -284,9 +289,9 @@ function crearIdiomas({ raiz, globalState }) {
     const t = plano(q); if (!t) return { resultados: [] };
     let ids = [];
     if (modo === 'inverso') {
-      const toks = t.split(/[^\p{L}']+/u).filter((w) => w.length > 2 && !VACIAS.has(w));
+      const toks = [...new Set(t.split(/[^\p{L}']+/u).filter((w) => w.length > 2 && !VACIAS.has(w)).map(raizEs))];
       const puntos = new Map();
-      for (const w of toks) for (const i of D.inverso.get(w) || []) puntos.set(i, (puntos.get(i) || 0) + 1);
+      for (const w of toks) for (const [i, p] of D.inverso.get(w) || []) puntos.set(i, (puntos.get(i) || 0) + p);
       ids = [...puntos.entries()].sort((a, b) => {
         const ea = D.ent[a[0]], eb = D.ent[b[0]];
         const exa = (ea[3] || []).some((x) => plano(x) === t) ? 1 : 0, exb = (eb[3] || []).some((x) => plano(x) === t) ? 1 : 0;

@@ -169,6 +169,12 @@ Al escribirlas se revisaron de nuevo todas las fichas: unas 90 correcciones (res
 - **Cajón del diccionario** (fijo a la derecha, plegable): «lengua → castellano» (palabra exacta y por prefijo) o «Por significado»
   (describes en castellano y propone palabras: búsqueda inversa sobre traducciones y definiciones). Datos: `<l>/diccionario.json` del paquete,
   generado con `scripts/idiomas/diccionario.py` a partir de Wiktionary (wiktextract/kaikki.org: es-extract y fr-extract; CC BY-SA 4.0).
+  Versión del 6/10/2026: francés 61.424 entradas (es.wiktionary + traducciones al español de fr.wiktionary), inglés 30.937 (solo es.wiktionary).
+  Para regenerarlo: descargar es-extract.jsonl.gz y fr-extract.jsonl.gz de kaikki.org/dictionary/rawdata.html; filtrar el francés con
+  `zcat fr-extract.jsonl.gz | grep -F '"lang_code": "es"' | grep -F '"lang_code": "fr"' | gzip > fr-es.jsonl.gz` (30 s; leerlo entero en Python
+  tarda más de lo que permite una orden) y ejecutar `diccionario.py es-extract.jsonl.gz fr-es.jsonl.gz <carpeta idiomas>`.
+  La búsqueda «por significado» puntúa traducciones (peso 2) y definiciones (peso 1), con plurales simplificados; depende de las palabras
+  que use Wiktionary, así que no entiende sinónimos que no aparezcan en la entrada.
   WantWords (diccionario inverso de la Universidad de Tsinghua) solo existe para inglés y chino y necesita un modelo neuronal pesado;
   se enlaza su web para inglés en lugar de instalarlo.
 
