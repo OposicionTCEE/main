@@ -50,9 +50,12 @@ def main():
     n = 0
     for x in lineas(es_x):
         n += 1
-        lc = x.get('lang_code'); w = x.get('word'); cat = CAT.get(x.get('pos', ''), x.get('pos_title', '') or '')
+        lc = x.get('lang_code'); w = x.get('word'); cat = (x.get('pos_title') or '').lower() or CAT.get(x.get('pos', ''), '')
         if lc in ('fr', 'en'):
-            gl = [limpio(' '.join(s.get('glosses', []))) for s in x.get('senses', []) if s.get('glosses')]
+            if 'flexiva' in (x.get('pos_title') or '').lower():
+                continue   # formas flexionadas (plurales, conjugaciones): no son entradas de diccionario
+            gl = [limpio(' '.join(s.get('glosses', []))) for s in x.get('senses', [])
+                  if s.get('glosses') and not s.get('form_of') and 'form-of' not in (s.get('tags') or [])]
             gl = [g for g in gl if g and not FORMA.match(g)]
             if not gl:
                 continue
