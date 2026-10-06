@@ -6,7 +6,9 @@ Entradas: es-extract.jsonl.gz (Wiktionary en español) y, opcional, fr-extract.j
 - Palabras españolas con traducciones al francés o al inglés (es.wiktionary): se invierten.
 - Palabras francesas con traducciones al español (fr.wiktionary): traducciones y pronunciación.
 Salida: <idiomas>/<fr|en>/diccionario.json = {lengua, fuente, licencia, entradas: [[palabra, categoría, AFI, [traducciones], [definiciones]]]}
-Uso: diccionario.py <es-extract.jsonl.gz> [<fr-extract.jsonl.gz>] <carpeta idiomas>
+- Opcional: palabras francesas de una lista (p. ej. el vocabulario de FLELex) que siguen sin entrada: definiciones en francés
+  de fr.wiktionary, marcadas «(fr)», para no dejar fuera palabras frecuentes que Wiktionary no traduce al español.
+Uso: diccionario.py <es-extract.jsonl.gz> [<fr-extract.jsonl.gz>] [--mono-fr <entradas fr.jsonl.gz> --lista <palabras.txt>] <carpeta idiomas>
 """
 import gzip, json, os, re, sys
 from collections import defaultdict
@@ -29,6 +31,11 @@ def limpio(s):
 
 def main():
     args = sys.argv[1:]
+    mono = lista = None
+    if '--mono-fr' in args:
+        i = args.index('--mono-fr'); mono = args[i + 1]; del args[i:i + 2]
+    if '--lista' in args:
+        i = args.index('--lista'); lista = {w.strip().lower() for w in open(args[i + 1], encoding='utf-8') if w.strip()}; del args[i:i + 2]
     salida = args[-1]; es_x = args[0]; fr_x = args[1] if len(args) > 2 else None
     D = {l: defaultdict(lambda: {'cat': '', 'ipa': '', 'trad': [], 'inv': [], 'glosas': []}) for l in ('fr', 'en')}
     def add(l, palabra, cat, trad=(), glosas=(), ipa='', invertida=False):
@@ -87,6 +94,22 @@ def main():
             ipa = next((s.get('ipa') for s in x.get('sounds', []) if s.get('ipa')), '')
             add('fr', x.get('word'), cat, trs, [], ipa)
         print('fr-extract:', n, 'líneas')
+    if mono:
+        n = 0
+        for x in lineas(mono):
+            w = limpio(x.get('word'))
+            if x.get('lang_code') != 'fr' or (lista and w.lower() not in lista):
+                continue
+            e = D['fr'].get(w)
+            if e and (e['trad'] or e['glosas'] or e['inv']):
+                continue
+            gl = [limpio(' '.join(s.get('glosses', []))) for s in x.get('senses', []) if s.get('glosses') and not s.get('form_of')]
+            gl = [f'(fr) {g}' for g in gl if g][:3]
+            if not gl:
+                continue
+            ipa = next((s.get('ipa') for s in x.get('sounds', []) if s.get('ipa')), '')
+            add('fr', w, CAT.get(x.get('pos', ''), ''), [], gl, ipa); n += 1
+        print('definiciones solo en francés:', n)
     for l in ('fr', 'en'):
         ent = []
         for p, e in D[l].items():
