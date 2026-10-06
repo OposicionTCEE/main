@@ -660,3 +660,62 @@ button.ts-op:hover:not([disabled]) { border-color: var(--acento); }
 .idi-fin-fichas > div { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 8px 12px; border-radius: 8px; background: var(--fondo); border: 1px solid var(--borde); }
 .idi-fin-fichas .apagado { grid-column: 1 / -1; font-size: .88em; }
 @media (prefers-reduced-motion: reduce) { .idi-carta, .idi-sesion-btn { transition: none; } .idi-carta:hover, .idi-sesion-btn:hover { transform: none; } }
+
+/* Idiomas v0.32: niveles, pistas de respuesta, corrección ampliada, contexto de la ficha y anotaciones */
+.idi-niv-puntos { margin-left: 0; gap: 6px; }
+.idi-punto { padding: 5px 14px 8px; font-size: .95em; font-weight: 600; border-radius: 8px; }
+.idi-punto sup { font-size: .55em; margin-left: 2px; color: var(--acento); }
+.idi-punto.activo { background: color-mix(in srgb, var(--n) 18%, transparent); border-width: 2px; }
+.idi-pistas { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px; }
+.idi-pistas small { color: var(--apagado); margin-right: 2px; }
+.idi-pista { padding: 3px 10px; border-radius: 8px; border: 1px dashed var(--borde); background: var(--fondo); font-size: 1.02em; }
+.idi-pista.ok { border: 1px solid var(--iok); background: color-mix(in srgb, var(--iok) 15%, transparent); }
+.idi-pista.mal { border: 1px solid var(--imal); background: color-mix(in srgb, var(--imal) 14%, transparent); text-decoration: line-through; }
+.idi-ver { gap: 10px; padding: 14px 16px; }
+.idi-ver-cab { font-weight: 700; font-size: 1.08em; }
+.idi-ver-par { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+.idi-ver-par > div { display: flex; flex-direction: column; gap: 2px; }
+.idi-ver-par small { color: var(--apagado); font-size: .8em; text-transform: uppercase; letter-spacing: .04em; }
+.idi-tuya-mal { font-weight: 600; }
+.idi-dif { color: var(--imal); text-decoration: underline wavy var(--imal); text-underline-offset: 3px; }
+.idi-ver-frase { display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; border-radius: 8px; background: var(--fondo); font-style: normal; }
+.idi-ver-bloque { padding: 8px 12px; border-radius: 8px; background: var(--fondo); border-left: 3px solid var(--borde); line-height: 1.5; }
+.idi-ver-bloque h5, .idi-ctx h5 { margin: 0 0 4px; font-size: .92em; }
+.idi-ver-bloque p { margin: 0; }
+.idi-ver-bloque.suya { border-left-color: var(--iaviso); }
+.idi-ver-bloque.regla { border-left-color: var(--iC); }
+.idi-ver-bloque.opciones summary { cursor: pointer; font-weight: 600; }
+.idi-ver-bloque.opciones ul { list-style: none; padding: 0; margin: 6px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.idi-ver-bloque.opciones li.ok b { color: var(--iok); }
+.idi-ver-bloque.opciones li.mal b { color: var(--imal); }
+.idi-ver-bloque.glosario { border-left-color: var(--iok); }
+.idi-glos { display: flex; flex-wrap: wrap; gap: 6px; }
+.idi-glos span { padding: 2px 8px; border-radius: 8px; background: var(--isup2); font-size: .92em; }
+.idi-glos b { margin-right: 4px; }
+.idi-ctx-rejilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 10px 0; }
+.idi-ctx { padding: 10px 12px; border-radius: 8px; background: var(--fondo); border: 1px solid var(--borde); }
+.idi-ctx p { margin: 0; }
+.idi-resumen { font-style: italic; }
+.idi-pr-ficha-cuerpo .idi-ctx-rejilla { grid-template-columns: 1fr; }
+.idi-pista-marcas { margin: 0; font-size: .86em; color: var(--apagado); }
+.idi-sec-nota { margin-left: 10px; padding: 0 8px; font-size: .78em; font-weight: normal; opacity: 0; transition: opacity .12s; }
+.idi-sec > summary:hover .idi-sec-nota, .idi-sec-nota:focus-visible { opacity: 1; }
+mark.idi-marca { color: inherit; border-radius: 2px; padding: 0 1px; cursor: pointer; }
+mark.idi-marca.c-amarillo { background: color-mix(in srgb, #f2c94c 45%, transparent); }
+mark.idi-marca.c-verde { background: color-mix(in srgb, #6fcf97 45%, transparent); }
+mark.idi-marca.c-azul { background: color-mix(in srgb, #56ccf2 40%, transparent); }
+mark.idi-marca.c-rosa { background: color-mix(in srgb, #f78fb3 45%, transparent); }
+mark.idi-marca.con-nota { border-bottom: 2px dotted currentColor; }
+.idi-recuadro { margin: 8px 0; padding: 8px 10px; border-radius: 8px; border: 1px solid; border-left-width: 4px; background: var(--fondo); }
+.idi-recuadro.c-amarillo { border-color: #d4a72c; } .idi-recuadro.c-verde { border-color: #3fa266; }
+.idi-recuadro.c-azul { border-color: #3794ff; } .idi-recuadro.c-rosa { border-color: #d6608f; }
+.idi-recuadro-cab { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: .86em; color: var(--apagado); margin-bottom: 4px; }
+.idi-recuadro-cab button { padding: 0 6px; font-size: .9em; }
+.idi-recuadro textarea { border: none !important; background: transparent !important; padding: 2px 0 !important; min-height: 2.6em; }
+.idi-barra-marca { position: fixed; z-index: 50; display: flex; gap: 4px; align-items: center; padding: 5px 6px; border-radius: 10px;
+  background: var(--vscode-editorWidget-background, var(--isup2)); border: 1px solid var(--borde); box-shadow: 0 4px 16px rgba(0,0,0,.35); }
+.idi-bm-color { width: 22px; height: 22px; padding: 0; border-radius: 50%; border: 2px solid transparent; }
+.idi-bm-color.activo { border-color: var(--tinta); }
+.idi-bm-color.c-amarillo { background: #f2c94c; } .idi-bm-color.c-verde { background: #6fcf97; }
+.idi-bm-color.c-azul { background: #56ccf2; } .idi-bm-color.c-rosa { background: #f78fb3; }
+.idi-bm-nota { padding: 2px 8px; }

@@ -1,0 +1,89 @@
+# Hallazgos en las fichas originales (detectados al escribir las explicaciones ampliadas, 6/10/2026)
+
+Formato: id · ejercicio · problema. «Falta aceptar» = respuesta correcta que el corrector rechaza.
+
+## Francés
+- fr.g.y-en · explicación (lista, 2.º punto) · dice «sin concordancia del participio: Je n'y suis jamais allé»: engañoso; con être sí concuerda con el sujeto (allée); lo que no provoca concordancia es y/en.
+- fr.l.viajes · explicación (países) · falta que los masculinos que empiezan por vocal llevan en (en Iran). Tabla: «arriver/quitter la chambre = check-in/out» impreciso; «composter» casi en desuso (indicarlo).
+- fr.l.viajes · e04 · falta aceptar «aller retour» (sin guion).
+- fr.l.abstracto · e01 · acepta «boom» (anglicismo) aunque la ficha busca registro culto (essor): mantener pero es dudoso → quitar «boom» de respuestas.
+- fr.g.cantidad · e11 · «tant de haine»: añadir a la explicación que la h de haine es aspirada.
+- fr.g.interrogativos-pron · e13 · «Mon poème ? ___ parles-tu ?» con «Duquel» es poco natural → reescribir la frase: «Tu parles d'un poème ? ___ ?» (Duquel).
+- fr.l.matizar · e08 · el subjuntivo «commence» es igual al indicativo: no comprueba el modo → cambiar el verbo por uno con subjuntivo distinto (p. ej. «Il semble que la situation ___ (aller) mieux» → aille).
+- fr.g.inversion · e10 · acepta «était-il arrivé … dut»; con passé simple en la principal la norma pide «fut-il arrivé»: quitar la variante con était si la principal está en passé simple, o explicarlo.
+- fr.g.condicional · e05 · falta aceptar «préfèrerais» (ortografía de 1990).
+- fr.g.condicional-pasado · e03 · falta aceptar «aurait aidée».
+- fr.l.conectores-1 · e06 · enunciado «de una palabra» pero acepta «c'est pourquoi», «du coup» → corregir el enunciado.
+- fr.g.conjunciones · e05 · enunciado «conjunción subordinante» pero acepta «car» (coordinante) → corregir enunciado o respuestas.
+- fr.l.cultura · e09 · «novelle» no es el falso amigo real: usar «une nouvelle» (relato) como trampa.
+- fr.l.cultura · e05 · opción «metteuse» incompleta → «metteuse en scène» no cabe; cambiar distractor.
+- fr.l.medios · e10 · acepta «followers» tras «d'» → quitar «followers» (solo «abonnés»).
+- fr.l.narrar · e11 · da por error «Après dîner» (locución admitida) → cambiar el ejercicio por otro error claro.
+- fr.g.modalizacion · e10 · ficha admite indicativo «si es casi seguro» pero solo acepta subjuntivo → aclarar enunciado (pide subjuntivo) o aceptar «sont» con nota.
+- fr.g.modales · e10 · falta aceptar «devrait».
+- fr.l.politica · errores_hispanohablantes 3.º · «enquête d'opinion» es correcto → sustituir el ejemplo.
+- fr.l.politica · e13 · falta aceptar «a son siège» si el enunciado lo permite (pide una palabra: dejar).
+- fr.g.posesivos · e15 · falta aceptar «sa clef».
+- fr.g.preposiciones-lugar · tabla · «Ciudades e islas pequeñas: à Cuba» → la regla es «islas sin artículo».
+- fr.g.pronombres-sujeto · e14 · falta aceptar «On».
+- fr.l.estilo · e07 · acepta «craint» aunque pide el verbo culto → quitar «craint».
+- fr.g.estilo-indirecto-pasado · e08 · «si j'___» delata la respuesta → reescribir sin elisión (p. ej. «si nous ___ heureux» → étions).
+- fr.l.dinero · e09 · opción «rebaisses» no existe → cambiar distractor.
+- fr.g.faire-causativo · e14 · falta aceptar «par les». e15 · quitar «Tom a fait longtemps attendre Marie».
+- fr.l.gustos · e01 · enunciado: precisar «con el artículo».
+- fr.l.falsos-amigos · e06, e07 · bureau / date no son falsos amigos → cambiar por falsos amigos reales.
+- fr.l.trabajo-estudios · errores_hispanohablantes · «j'ai un 8» en Francia es suspenso → «j'ai eu 15 sur 20».
+- fr.g.valores-tiempos · e12 · falta aceptar «Je voulais / J'aimerais / Je prendrais deux baguettes…» si la frase lo permite.
+- fr.g.si-hipotesis · e04 · falta aceptar «venait» o precisar el enunciado (pasado). e16 · falta aceptar «Si tu veux rester ici tu peux».
+- fr.l.sintesis · e12 · enunciado pide «La hausse…» pero acepta «L'augmentation» → corregir enunciado.
+- fr.l.sociedad · e05 · explicación «combattre no lleva contre» demasiado tajante → matizar. e10 · aceptar «logis» si encaja.
+- fr.l.salud · e11 · falta aceptar «grippé».
+- fr.g.participio-compuesto · e12 · «Une fois finie la réunion» es correcto → cambiar el ejercicio.
+- fr.l.numeros-tiempo · e14 · falta aceptar «Combien ça coûte».
+- fr.g.pasiva · e12 · falta aceptar «On m'a invitée à la fête.».
+- fr.g.relativos-qui-que · e16 · aceptar «C'est le train de Lyon qui arrive» solo si el sentido es el pedido; si no, dejar.
+
+## Inglés
+- en.g.phrasal-1 · e04 · falta aceptar «out» (fill out, AmE).
+- en.g.participiales-2 · e13, e14 · faltan órdenes válidos («It was a good year all things considered»; «The island seen from a distance looks like a whale»).
+- en.g.phrasal-2 · explicación «Truco» · look after/get over no son «verbos de movimiento + preposición»; «coloca el pronombre detrás de todo» contradice la regla → reescribir.
+- en.g.pasiva-impersonal · explicación · «or» por «o».
+- en.g.pasiva-completa · tabla Past perfect · cambiar «had been sold out» por «had been sold».
+- en.l.dinero · e05 · explicación «lend me» confusa → «Lend me = préstame (tú das)». e14 · aceptar «draw out».
+- en.l.economia · tabla · «workforce / labour force = población activa / plantilla»: separar.
+- en.l.derecho-justicia · tabla · «solicitor = procurador-asesor» → «abogado (asesor, no litiga en tribunales superiores)». e06 · aceptar «bond».
+- en.g.demostrativos · e14 · quitar «Is this my favourite room».
+- en.l.cultura · e15 · aceptar «Currently the cathedral is being restored».
+- en.g.condicional-sin-if · e14 · aceptar «Let me know should you change your mind».
+- en.l.colocaciones · e15 · aceptar «Tourism in Spain plays a key role». e14 · aceptar «profoundly».
+- en.l.conectores-1 · e01 · enunciado (because / because of) vs «due to» aceptado → corregir enunciado. e12 · aceptar «because of heavy rain».
+- en.l.comida · e11 · quitar «For the dessert…».
+- en.g.formulas-subjuntivo · tabla · «Every citizen, be it rich or poor» → «be they rich or poor».
+- en.g.futuro-pasado · e05 · aceptar «supposed», «expected», «scheduled». e12 · aceptar la frase conservando «at any moment» o precisar enunciado.
+- en.g.have-got · e03 · enunciado pide contraída pero acepta «have not got» → quitar «(contraída)» del enunciado.
+- en.g.causativo · e11 · enunciado vs respuesta con have + persona + infinitivo → quitar esa respuesta o ampliar enunciado.
+- en.l.ciencia-tecnologia · e06 · enunciado «una palabra» → «Completa (I+D)».
+- en.g.preguntas-sujeto · e02 · la opción «met you» también es válida → cambiar distractor o dar contexto.
+- en.g.preguntas-wh · e07 · «long» también válida → dar contexto de precio en la frase.
+- en.g.pp-continuous · e09 · explicación debe mencionar que también vale el present perfect simple.
+- en.g.pp-vs-past · e12 · aceptar «I was in Lisbon last summer».
+- en.g.present-perfect · e12 · quitar «Have you gone to the new museum?».
+- en.g.relativas · e06, e08 · enunciado debe incluir «that».
+- en.g.question-tags · e14 · respuesta con mayúscula inicial y signo final.
+- en.g.relativas-explicativas · e15 · aceptar «whom I work with».
+- en.l.salud · e13 · aceptar «To keep fit I swim».
+- en.l.sintesis · e09 · aceptar «In a word». e15 · aceptar «It has been argued that the tax is unfair» y «The tax is argued to be unfair».
+- en.g.tercer-condicional · e02, e08, e09, e10, e13 · añadir combinaciones de contracciones (we'd have, I'd live, she'd studied … would have, would've lent).
+- en.g.there-is · e13 · aceptar «In the kitchen there's a big window.».
+- en.g.elipsis · e13 · aceptar «Sarah can come tonight but I can't».
+- en.l.especializado · e15 · quitar «Russia imposed sanctions on the EU».
+- en.l.exposicion · e08 · aceptar «Do you have any questions?».
+- en.l.estilo · e12 · quitar «not».
+- en.l.medio-ambiente · e12 · aceptar «To save energy turn off the lights» / «… turn the lights off».
+- en.g.participiales · e14, e15 · aceptar «I walked having missed the bus» solo si natural (no); «he refused when asked to comment» sí.
+- en.g.nominalizacion · e09 · aceptar «led to», «resulted in».
+- en.l.trabajo-estudios · errores_hispanohablantes · el ejemplo de pass es incoherente → «I passed the exam yesterday (= me presenté)» → «I took the exam yesterday».
+- en.g.verbo-ing-to · e09 · añadir afford a la tabla de verbos + to.
+- en.l.viajes · e12 · explicación pide pregunta: quitar «Breakfast is included» o cambiar explicación.
+- en.g.will · e07 · aceptar «'m going to buy».
+- en.l.vida-diaria · lista · aclarar «make the bed».

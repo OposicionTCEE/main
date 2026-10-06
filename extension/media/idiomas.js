@@ -18,7 +18,7 @@
       nueva: 'Nueva', aprendiendo: 'Aprendiendo', dominada: 'Dominada', repasar: 'Para repasar', prep: 'Ficha en preparación',
       ejercicios: 'ejercicios', sesiones: (n) => `${n} ${n === 1 ? 'sesión' : 'sesiones'}`, nota: 'Última nota', repaso: 'Repaso',
       fichas: (n) => `${n} ${n === 1 ? 'ficha' : 'fichas'}`, dominadas: (n) => `${n} dominada${n === 1 ? '' : 's'}`, conNota: 'Con anotaciones',
-      vacio: 'No hay materias de este bloque en este nivel.', oficial: 'Rótulo del Core Inventory (British Council–EAQUALS)', sinEmpezar: 'Sin empezar', loc: 'es-ES' },
+      vacio: 'No hay materias de este bloque en este nivel.', oficial: 'Rótulo oficial', sinEmpezar: 'Sin empezar', loc: 'es-ES' },
     fr: { gramatica: 'Grammaire', lexico: 'Lexique', fonetica: 'Phonétique', destrezas: 'Compétences', todas: 'Toutes les matières',
       nueva: 'Nouvelle', aprendiendo: 'En cours', dominada: 'Maîtrisée', repasar: 'À réviser', prep: 'Fiche en préparation',
       ejercicios: 'exercices', sesiones: (n) => `${n} séance${n === 1 ? '' : 's'}`, nota: 'Dernière note', repaso: 'Révision',
@@ -28,7 +28,7 @@
       nueva: 'New', aprendiendo: 'Learning', dominada: 'Mastered', repasar: 'Due for review', prep: 'Coming soon',
       ejercicios: 'exercises', sesiones: (n) => `${n} session${n === 1 ? '' : 's'}`, nota: 'Last score', repaso: 'Review',
       fichas: (n) => `${n} card${n === 1 ? '' : 's'}`, dominadas: (n) => `${n} mastered`, conNota: 'With notes',
-      vacio: 'No topics in this block at this level.', oficial: 'Core Inventory (British Council–EAQUALS) label', sinEmpezar: 'Not started', loc: 'en-GB' },
+      vacio: 'No topics in this block at this level.', oficial: 'Official label', sinEmpezar: 'Not started', loc: 'en-GB' },
   };
   // Seis destrezas y competencias (Marco Común Europeo) + sesiones especiales
   const DESTREZAS = [
@@ -58,7 +58,7 @@
   const L = () => (X && X.perfil && X.perfil.ajustes && X.perfil.ajustes.idiomaFichas === 'es' ? T.es : T[lengua()] || T.es);
   const nivelDecl = (l) => ((X.perfil.idiomas[l] || {}).nivel || 'B1');
   const tituloDe = (m) => (L() === T.es ? (m.titulo_es || m.titulo) : (m.titulo_l || m.titulo_es || m.titulo));
-  const descDe = (m) => (L() === T.es ? (m.descripcion_es || m.descripcion) : (m.descripcion_l || m.descripcion_es || m.descripcion));
+  const descDe = (m) => (L() === T.es ? (m.descripcion_larga_es || m.descripcion_es || m.descripcion) : (m.descripcion_larga_l || m.descripcion_l || m.descripcion_es || m.descripcion));
   const materia = (l, id) => ((X.paquetes[l] || { materias: [] }).materias.find((m) => m.id === id) || null);
 
   // ------------------------------------------------------------------ mensajes
@@ -68,7 +68,7 @@
     if (m.tipo === 'idiSesion') empezarSesion(m.sesion);
     if (m.tipo === 'idiCorreccion') corregido(m.clave, m.resultado);
     if (m.tipo === 'idiFin') { fin = m.fin; vista = 'fin'; pintarVista(); }
-    if (m.tipo === 'idiAnotado') { X.anotaciones = X.anotaciones || {}; if (m.nota) X.anotaciones[m.id] = m.nota; else delete X.anotaciones[m.id]; const g = raiz && raiz.querySelector('#idi-nota-estado'); if (g) g.textContent = m.nota ? `Guardado · ${hora(m.nota.fecha)}` : 'Sin anotaciones'; }
+    // idiAnotado: lo guardado ya está en X.anotaciones (se actualiza al escribir); no se pisa con la respuesta, que puede llegar con retraso
   }
 
   /** El panel repinta todas las pestañas cuando cambian los datos generales: se conserva lo ya pintado (texto escrito, foco) */
@@ -195,7 +195,8 @@
     raiz.querySelectorAll('[data-descartar]').forEach((b) => b.onclick = () => { const [m, ej] = b.dataset.descartar.split('|'); enviar({ tipo: 'idiDescartarError', materia: m, ejercicio: ej }); });
     raiz.querySelectorAll('[data-ajustar-nivel]').forEach((b) => b.onclick = () => enviar({ tipo: 'idiGuardarPerfil', cambios: { idiomas: { [l]: { nivel: b.dataset.ajustarNivel } } } }));
     const sb = raiz.querySelector('#idi-bloque'); sb.onchange = () => { st().idiBloque = sb.value; ctx.guardar(); pInicio(); };
-    raiz.querySelectorAll('[data-nivel-paso]').forEach((b) => b.onclick = () => { verNivel(l, Number(b.dataset.nivelPaso)); });
+    const np = raiz.querySelector('.idi-niv-puntos');
+    if (np) np.onkeydown = (e) => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); verNivel(l, e.key === 'ArrowLeft' ? -1 : 1); const x = raiz.querySelector('.idi-punto.activo'); if (x) x.focus(); } };
     raiz.querySelectorAll('[data-nivel-ir]').forEach((b) => b.onclick = () => { st().idiNivelVista = { ...(st().idiNivelVista || {}), [l]: b.dataset.nivelIr }; ctx.guardar(); pInicio(); });
   }
   const verNivel = (l, paso) => {
@@ -286,17 +287,12 @@
     const conFicha = ms.filter((m) => m.ficha);
     const dom = conFicha.filter((m) => m.estado === 'dominada').length;
     const porNivel = Object.fromEntries(NIVELES.map((n) => [n, paq.materias.filter((m) => (bloque === 'todas' || m.bloque === bloque) && m.nivel === n && m.ficha)]));
-    const i = NIVELES.indexOf(nv);
     return `<div class="idi-der-cab">
         <select id="idi-bloque" class="idi-sel-grande" title="Mapa de materias">${[...BLOQUES, 'todas'].map((b) => `<option value="${b}" ${b === bloque ? 'selected' : ''}>${esc(t[b])}</option>`).join('')}</select>
-        <div class="idi-niv-nav">
-          <button data-nivel-paso="-1" ${i <= 0 ? 'disabled' : ''} title="Nivel anterior">◀</button>
-          <div class="idi-niv-actual n-${nv}"><b>${nv}</b>${nv === decl ? '<small>tu nivel</small>' : ''}</div>
-          <button data-nivel-paso="1" ${i >= NIVELES.length - 1 ? 'disabled' : ''} title="Nivel siguiente">▶</button>
-        </div>
-        <div class="idi-niv-puntos">${NIVELES.map((n) => {
+        <div class="idi-niv-puntos" role="tablist" aria-label="Nivel">${NIVELES.map((n) => {
           const xs = porNivel[n], d = xs.filter((m) => m.estado === 'dominada').length;
-          return `<button class="idi-punto n-${n} ${n === nv ? 'activo' : ''}" data-nivel-ir="${n}" title="${n}: ${xs.length} fichas, ${d} dominadas">${n}<i style="width:${xs.length ? (100 * d) / xs.length : 0}%"></i></button>`;
+          return `<button role="tab" aria-selected="${n === nv}" class="idi-punto n-${n} ${n === nv ? 'activo' : ''} ${n === decl ? 'tuyo' : ''}" data-nivel-ir="${n}"
+            title="${n}${n === decl ? ' (tu nivel)' : ''}: ${xs.length} fichas, ${d} dominadas">${n}${n === decl ? '<sup>●</sup>' : ''}<i style="width:${xs.length ? (100 * d) / xs.length : 0}%"></i></button>`;
         }).join('')}</div>
       </div>
       <p class="idi-der-res"><span>${esc(DESC_NIVEL[nv])}</span><span>${esc(t.fichas(conFicha.length))} · ${esc(t.dominadas(dom))}</span></p>
@@ -314,7 +310,7 @@
     const media = r && r.notas && r.notas.length ? r.notas.slice(-3).reduce((a, b) => a + b, 0) / Math.min(3, r.notas.length) : null;
     return `<article class="idi-carta est-${m.estado} n-${m.nivel}" data-materia="${esc(m.id)}" tabindex="0" title="${esc(otraLengua)}">
       <div class="idi-carta-fila"><span class="idi-chip-niv">${m.nivel}</span><span class="idi-chip-bloque">${esc(t[m.bloque] || m.bloque)}</span>
-        ${m.oficial ? `<span class="idi-chip-of" title="${esc(`${t.oficial}: ${m.oficial}`)}">CI</span>` : ''}
+        ${m.oficial ? `<span class="idi-chip-of" title="${esc(`${t.oficial} (${m.id.startsWith('fr.') ? 'Inventaire linguistique des contenus clés, Eaquals–CIEP' : 'Core Inventory for General English, British Council–EAQUALS'}): ${m.oficial}`)}">📘</span>` : ''}
         ${tieneNota ? `<span class="idi-chip-nota" title="${esc(t.conNota)}">📝</span>` : ''}
         <span class="idi-chip-est">${esc(t[m.estado] || t.nueva)}</span></div>
       <h4>${esc(tituloDe(m))}</h4>
@@ -384,36 +380,182 @@
     window.speechSynthesis.speak(u);
   }
 
-  /** Cuerpo de la ficha: las mismas secciones, en el mismo orden, para todas */
+  /** Cuerpo de la ficha: las mismas secciones, en el mismo orden, para todas. Los bloques llevan data-k para anclar subrayados y notas. */
   function cuerpoFicha(f, l, { compacta } = {}) {
     const m = materia(l, f.id) || {};
     const bloques = f.explicacion || [];
-    const sec = (clase, icono, titulo, html, abierta = true) => (html ? `<details class="idi-sec ${clase}" ${abierta ? 'open' : ''}><summary><span class="idi-sec-ico">${icono}</span>${titulo}</summary><div class="idi-sec-cuerpo">${html}</div></details>` : '');
-    const reglas = bloques.map((b) => (b.tipo === 'texto' ? `<div class="idi-clave">${esc(b.texto)}</div>`
-      : b.tipo === 'lista' ? `<ul class="idi-lista">${b.items.map((i) => `<li>${resaltar(i)}</li>`).join('')}</ul>`
-        : `<div class="idi-tabla-env"><table class="idi-tabla"><thead><tr>${b.cabecera.map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${b.filas.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`)).join('');
-    const ejemplos = (f.ejemplos || []).length ? `<div class="idi-ejemplos-rejilla">${f.ejemplos.map((e) => `<div class="idi-ejemplo">
+    const sec = (clase, k, icono, titulo, html, abierta = true) => (html ? `<details class="idi-sec ${clase}" ${abierta ? 'open' : ''}>
+      <summary><span class="idi-sec-ico">${icono}</span>${titulo}<button class="idi-sec-nota" data-nota-sec="${k}" title="Añadir un recuadro de nota al final de esta sección">＋ nota</button></summary>
+      <div class="idi-sec-cuerpo" data-k="${k}">${html}</div></details>` : '');
+    const cx = f.contexto || {};
+    const que = `<p class="idi-desc-es" data-k="desc">${esc(f.descripcion_larga_es || f.descripcion_es || m.descripcion_es || '')}</p>
+      ${cx.que_es || cx.por_que_importa || cx.cuando_se_usa ? `<div class="idi-ctx-rejilla">${[['que_es', '🔎', 'Qué es'], ['por_que_importa', '⭐', 'Por qué importa'], ['cuando_se_usa', '🕒', 'Cuándo se usa']]
+        .filter(([c]) => cx[c]).map(([c, i, t]) => `<div class="idi-ctx"><h5>${i} ${t}</h5><p data-k="ctx-${c}">${esc(cx[c])}</p></div>`).join('')}</div>` : ''}
+      ${f.resumen ? `<p class="idi-resumen" data-k="resumen">${esc(f.resumen)}</p>` : ''}`;
+    const reglas = bloques.map((b, i) => (b.tipo === 'texto' ? `<div class="idi-clave" data-k="r${i}">${esc(b.texto)}</div>`
+      : b.tipo === 'lista' ? `<ul class="idi-lista" data-k="r${i}">${b.items.map((x) => `<li>${resaltar(x)}</li>`).join('')}</ul>`
+        : `<div class="idi-tabla-env" data-k="r${i}"><table class="idi-tabla"><thead><tr>${b.cabecera.map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${b.filas.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`)).join('');
+    const ejemplos = (f.ejemplos || []).length ? `<div class="idi-ejemplos-rejilla">${f.ejemplos.map((e, i) => `<div class="idi-ejemplo" data-k="ej${i}">
         <div class="idi-ej-frase">${vozDisponible() ? `<button class="idi-voz" data-decir="${esc(e.frase)}" title="Escuchar">🔊</button>` : ''}<b>${esc(e.frase)}</b></div>
         ${e.traduccion ? `<div class="idi-ej-trad">${esc(e.traduccion)}</div>` : ''}</div>`).join('')}</div>` : '';
-    const errores = (f.errores_hispanohablantes || []).length ? `<div class="idi-errores-rejilla">${f.errores_hispanohablantes.map((e) => `<div class="idi-error">
+    const errores = (f.errores_hispanohablantes || []).length ? `<div class="idi-errores-rejilla">${f.errores_hispanohablantes.map((e, i) => `<div class="idi-error" data-k="err${i}">
         <div class="idi-err-mal">✗ ${esc(e.mal)}</div><div class="idi-err-bien">✓ ${esc(e.bien)}</div>${e.nota ? `<div class="idi-err-nota">${esc(e.nota)}</div>` : ''}</div>`).join('')}</div>` : '';
     const rel = relacionadas(l, m);
     const material = `${fuenteHtml(f.fuente)}
-      ${m.oficial ? `<p>📘 <b>Core Inventory for General English</b> (British Council–EAQUALS): <i>${esc(m.oficial)}</i></p>` : ''}
+      ${m.oficial ? `<p>📘 <b>${l === 'fr' ? 'Inventaire linguistique des contenus clés des niveaux du CECRL' : 'Core Inventory for General English'}</b>
+        (${l === 'fr' ? 'Eaquals–CIEP' : 'British Council–EAQUALS'}): <i>${esc(m.oficial)}</i>${m.nivel_oficial ? ` · nivel ${esc(m.nivel_oficial)}` : ''}</p>` : ''}
       ${rel.length ? `<p class="idi-rel-tit">Fichas relacionadas</p><div class="idi-rel">${rel.map((r) => `<button class="idi-rel-chip n-${r.nivel}" data-abrir-ficha="${esc(r.id)}"><span class="idi-chip-niv">${r.nivel}</span>${esc(r.titulo_es || r.titulo)}</button>`).join('')}</div>` : ''}
       <p class="idi-rel-tit">Conjugar y escuchar</p><p class="idi-mini">${l === 'fr'
         ? '<a href="https://leconjugueur.lefigaro.fr/" data-externo>Le Conjugueur</a> · <a href="https://tatoeba.org/fra/sentences/search?from=fra&to=spa" data-externo>Frases de Tatoeba</a> · <a href="https://forvo.com/languages/fr/" data-externo>Pronunciación (Forvo)</a>'
         : '<a href="https://dictionary.cambridge.org/" data-externo>Cambridge Dictionary</a> · <a href="https://tatoeba.org/eng/sentences/search?from=eng&to=spa" data-externo>Frases de Tatoeba</a> · <a href="https://youglish.com/english" data-externo>YouGlish</a>'}</p>`;
-    const nota = (X.anotaciones || {})[f.id];
-    const anot = `<textarea id="idi-nota" rows="${compacta ? 4 : 6}" placeholder="Tus reglas mnemotécnicas, dudas, ejemplos propios… Se guarda solo, en tu carpeta de perfil.">${esc(nota ? nota.texto : '')}</textarea>
-      <p class="idi-mini apagado" id="idi-nota-estado">${nota ? `Guardado · ${fechaCorta(nota.fecha)} ${hora(nota.fecha)}` : 'Sin anotaciones'}</p>`;
-    return `${sec('s-que', '🎯', 'De qué trata', `<p class="idi-desc-es">${esc(f.descripcion_es || m.descripcion_es || '')}</p><p>${esc(f.resumen || '')}</p>`)}
-      ${sec('s-reglas', '📐', 'Reglas y claves', reglas)}
-      ${sec('s-ejemplos', '💬', `Ejemplos <span class="apagado">(${(f.ejemplos || []).length})</span>`, ejemplos)}
-      ${sec('s-errores', '⚠️', `Errores típicos de hispanohablantes <span class="apagado">(${(f.errores_hispanohablantes || []).length})</span>`, errores)}
-      ${sec('s-material', '📎', 'Material complementario', material, !compacta)}
-      ${sec('s-notas', '📝', 'Mis anotaciones', anot, !compacta || !!nota)}`;
+    return `<p class="idi-pista-marcas">✎ Selecciona cualquier texto de la ficha para <b>subrayarlo</b> o <b>anotarlo</b>; con «＋ nota» añades un recuadro al final de una sección.</p>
+      <div class="idi-nota-general" data-k="general"></div>
+      ${sec('s-que', 'sec-que', '🎯', 'De qué trata', que)}
+      ${sec('s-reglas', 'sec-reglas', '📐', 'Reglas y claves', reglas)}
+      ${sec('s-ejemplos', 'sec-ejemplos', '💬', `Ejemplos <span class="apagado">(${(f.ejemplos || []).length})</span>`, ejemplos)}
+      ${sec('s-errores', 'sec-errores', '⚠️', `Errores típicos de hispanohablantes <span class="apagado">(${(f.errores_hispanohablantes || []).length})</span>`, errores)}
+      ${sec('s-material', 'sec-material', '📎', 'Material complementario', material, !compacta)}`;
   }
+
+  // ------------------------------------------------------------------ anotaciones sobre la ficha: subrayados y recuadros de nota
+  // Cada marca: {id, k (bloque con data-k), inicio, cita, color, caja (recuadro visible), nota}. Se guardan en anotaciones.json del perfil.
+  const COLORES = [['amarillo', 'Amarillo'], ['verde', 'Verde'], ['azul', 'Azul'], ['rosa', 'Rosa']];
+  const anotDe = (id) => { const a = (X.anotaciones || {})[id] || {}; return { texto: a.texto || '', marcas: (a.marcas || []).map((m) => ({ ...m })) }; };
+  let tGuardar = null;
+  function guardarAnot(id, a) {
+    X.anotaciones = X.anotaciones || {};
+    if (a.texto || a.marcas.length) X.anotaciones[id] = { ...a, fecha: new Date().toISOString() }; else delete X.anotaciones[id];
+    clearTimeout(tGuardar); tGuardar = setTimeout(() => enviar({ tipo: 'idiAnotar', id, anotacion: a }), 600);
+  }
+  /** Nodos de texto de un bloque, sin los recuadros, botones ni campos de escritura */
+  function nodosTexto(el) {
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, { acceptNode: (n) => (n.parentElement.closest('.idi-recuadro, textarea, button, .idi-barra-marca') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) });
+    const xs = []; let n; while ((n = w.nextNode())) xs.push(n); return xs;
+  }
+  const textoDe = (el) => nodosTexto(el).map((n) => n.data).join('');
+  /** Envuelve en <mark> el tramo [a, b) del texto del bloque, aunque cruce varios nodos */
+  function envolver(el, a, b, m) {
+    let pos = 0;
+    for (const n of nodosTexto(el)) {
+      const ini = pos, fin = pos + n.data.length; pos = fin;
+      if (fin <= a || ini >= b) continue;
+      let nodo = n;
+      const desde = Math.max(a, ini) - ini, hasta = Math.min(b, fin) - ini;
+      if (hasta < nodo.data.length) nodo.splitText(hasta);
+      if (desde > 0) nodo = nodo.splitText(desde);
+      if (!nodo.data.trim()) continue;
+      const mk = document.createElement('mark'); mk.className = `idi-marca c-${m.color || 'amarillo'}${m.nota ? ' con-nota' : ''}`; mk.dataset.m = m.id;
+      if (m.nota) mk.title = m.nota;
+      nodo.parentNode.insertBefore(mk, nodo); mk.appendChild(nodo);
+    }
+  }
+  function recuadro(m, etiqueta) {
+    const d = document.createElement('div');
+    d.className = `idi-recuadro c-${m.color || 'amarillo'}`; d.dataset.caja = m.id;
+    d.innerHTML = `<div class="idi-recuadro-cab"><span>📝 ${etiqueta ? esc(etiqueta) : m.cita ? `«${esc(m.cita.length > 70 ? `${m.cita.slice(0, 70)}…` : m.cita)}»` : 'Nota'}</span>
+      <button data-quitar-caja="${esc(m.id)}" title="Quitar la nota">✕</button></div><textarea rows="2" placeholder="Escribe tu nota…" data-nota="${esc(m.id)}">${esc(m.nota || '')}</textarea>`;
+    return d;
+  }
+  /** Pinta (de nuevo) subrayados y recuadros de la ficha en el contenedor y engancha la barra de marcar */
+  function aplicarMarcas(cont, fid) {
+    cont.querySelectorAll('mark.idi-marca').forEach((mk) => { const p = mk.parentNode; while (mk.firstChild) p.insertBefore(mk.firstChild, mk); p.removeChild(mk); p.normalize(); });
+    cont.querySelectorAll('.idi-recuadro').forEach((d) => d.remove());
+    const a = anotDe(fid);
+    const gen = cont.querySelector('[data-k="general"]');
+    if (gen && a.texto) {
+      const d = recuadro({ id: '__general', nota: a.texto, color: 'amarillo' }, 'Nota general'); gen.appendChild(d);
+    }
+    for (const m of a.marcas) {
+      const el = cont.querySelector(`[data-k="${CSS.escape(m.k)}"]`); if (!el) continue;
+      if (m.cita) {
+        const t = textoDe(el);
+        let i = t.substr(m.inicio || 0, m.cita.length) === m.cita ? (m.inicio || 0) : -1;
+        if (i < 0) { let best = -1, j = t.indexOf(m.cita); while (j >= 0) { if (best < 0 || Math.abs(j - (m.inicio || 0)) < Math.abs(best - (m.inicio || 0))) best = j; j = t.indexOf(m.cita, j + 1); } i = best; }
+        if (i >= 0) envolver(el, i, i + m.cita.length, m);
+      }
+      if (m.caja) {
+        const d = recuadro(m);
+        if (/^sec-/.test(m.k)) el.appendChild(d); else el.insertAdjacentElement('afterend', d);
+      }
+    }
+    // recuadros: escribir guarda solo; ✕ quita la nota (el subrayado se queda)
+    cont.querySelectorAll('[data-nota]').forEach((ta) => ta.addEventListener('input', () => {
+      const b = anotDe(fid);
+      if (ta.dataset.nota === '__general') b.texto = ta.value;
+      else { const m = b.marcas.find((x) => x.id === ta.dataset.nota); if (m) m.nota = ta.value; }
+      guardarAnot(fid, b);
+      const mk = cont.querySelector(`mark[data-m="${CSS.escape(ta.dataset.nota)}"]`); if (mk) mk.title = ta.value;
+    }));
+    cont.querySelectorAll('[data-quitar-caja]').forEach((bt) => bt.onclick = () => {
+      const b = anotDe(fid), id = bt.dataset.quitarCaja;
+      if (id === '__general') b.texto = '';
+      else { const m = b.marcas.find((x) => x.id === id); if (m && m.cita) { m.caja = false; m.nota = ''; } else b.marcas = b.marcas.filter((x) => x.id !== id); }
+      guardarAnot(fid, b); aplicarMarcas(cont, fid);
+    });
+  }
+  let barra = null;
+  const quitarBarra = () => { if (barra) { barra.remove(); barra = null; } };
+  function mostrarBarra(rect, botones) {
+    quitarBarra();
+    barra = document.createElement('div'); barra.className = 'idi-barra-marca';
+    barra.innerHTML = botones;
+    document.body.appendChild(barra);
+    const w = barra.offsetWidth;
+    barra.style.left = `${Math.max(8, Math.min(window.innerWidth - w - 8, rect.left + rect.width / 2 - w / 2))}px`;
+    barra.style.top = `${Math.max(8, rect.top - barra.offsetHeight - 8)}px`;
+    barra.addEventListener('mousedown', (e) => e.preventDefault());   // no perder la selección
+    return barra;
+  }
+  const botonesColor = (actual) => COLORES.map(([c, t]) => `<button class="idi-bm-color c-${c} ${c === actual ? 'activo' : ''}" data-color="${c}" title="Subrayar en ${t.toLowerCase()}"></button>`).join('');
+  /** Selección de texto → barra para subrayar o anotar; clic en un subrayado → cambiar color, anotar o quitar */
+  function habilitarMarcas(cont, fid) {
+    aplicarMarcas(cont, fid);
+    cont.addEventListener('mouseup', (ev) => {
+      if (ev.target.closest('textarea, button, a, .idi-recuadro')) return;
+      setTimeout(() => {
+        const sel = window.getSelection();
+        if (!sel || sel.isCollapsed || !sel.rangeCount) return;
+        const r = sel.getRangeAt(0);
+        const kA = (r.startContainer.nodeType === 1 ? r.startContainer : r.startContainer.parentElement).closest('[data-k]');
+        const kB = (r.endContainer.nodeType === 1 ? r.endContainer : r.endContainer.parentElement).closest('[data-k]');
+        if (!kA || kA !== kB || !cont.contains(kA) || kA.dataset.k === 'general') return;
+        const cita = r.toString().replace(/\s+/g, ' ').trim(); if (!cita) return;
+        const pre = document.createRange(); pre.setStart(kA, 0); pre.setEnd(r.startContainer, r.startOffset);
+        const aprox = pre.toString().length;
+        const b = mostrarBarra(r.getBoundingClientRect(), `${botonesColor('')}<button class="idi-bm-nota" data-accion="nota">✎ Nota</button>`);
+        const crear = (color, caja) => {
+          const t = textoDe(kA); let inicio = t.indexOf(cita), j = inicio;
+          while (j >= 0) { if (Math.abs(j - aprox) < Math.abs(inicio - aprox)) inicio = j; j = t.indexOf(cita, j + 1); }
+          if (inicio < 0) return;
+          const a = anotDe(fid);
+          const m = { id: `m${Date.now().toString(36)}`, k: kA.dataset.k, inicio, cita, color, caja, nota: '' };
+          a.marcas.push(m); guardarAnot(fid, a); sel.removeAllRanges(); quitarBarra(); aplicarMarcas(cont, fid);
+          if (caja) { const ta = cont.querySelector(`[data-nota="${m.id}"]`); if (ta) ta.focus(); }
+        };
+        b.querySelectorAll('[data-color]').forEach((x) => x.onclick = () => crear(x.dataset.color, false));
+        b.querySelector('[data-accion="nota"]').onclick = () => crear('amarillo', true);
+      }, 0);
+    });
+    cont.addEventListener('click', (ev) => {
+      const mk = ev.target.closest('mark.idi-marca');
+      if (!mk || !window.getSelection().isCollapsed) return;
+      const a = anotDe(fid), m = a.marcas.find((x) => x.id === mk.dataset.m); if (!m) return;
+      const b = mostrarBarra(mk.getBoundingClientRect(), `${botonesColor(m.color)}<button class="idi-bm-nota" data-accion="nota">${m.caja ? '✎ Ver nota' : '✎ Nota'}</button><button data-accion="quitar" title="Quitar el subrayado y su nota">🗑</button>`);
+      b.querySelectorAll('[data-color]').forEach((x) => x.onclick = () => { m.color = x.dataset.color; guardarAnot(fid, a); quitarBarra(); aplicarMarcas(cont, fid); });
+      b.querySelector('[data-accion="nota"]').onclick = () => { m.caja = true; guardarAnot(fid, a); quitarBarra(); aplicarMarcas(cont, fid); const ta = cont.querySelector(`[data-nota="${m.id}"]`); if (ta) ta.focus(); };
+      b.querySelector('[data-accion="quitar"]').onclick = () => { a.marcas = a.marcas.filter((x) => x.id !== m.id); guardarAnot(fid, a); quitarBarra(); aplicarMarcas(cont, fid); };
+    });
+    cont.querySelectorAll('[data-nota-sec]').forEach((bt) => bt.onclick = (e) => {
+      e.preventDefault(); e.stopPropagation();
+      const det = bt.closest('details'); if (det) det.open = true;
+      const a = anotDe(fid); const m = { id: `m${Date.now().toString(36)}`, k: bt.dataset.notaSec, cita: '', color: 'amarillo', caja: true, nota: '' };
+      a.marcas.push(m); guardarAnot(fid, a); aplicarMarcas(cont, fid);
+      const ta = cont.querySelector(`[data-nota="${m.id}"]`); if (ta) ta.focus();
+    });
+  }
+  document.addEventListener('mousedown', (e) => { if (barra && !barra.contains(e.target)) quitarBarra(); });
+  window.addEventListener('scroll', quitarBarra, true);
+
   /** Resalta en negrita lo que va antes de «:» en una lista de reglas */
   const resaltar = (s) => { const t = esc(s); const i = t.indexOf(':'); return i > 0 && i < 70 ? `<b>${t.slice(0, i)}</b>${t.slice(i)}` : t; };
   const fuenteHtml = (fu) => (fu && fu.nombre && fu.nombre !== 'propia'
@@ -433,15 +575,7 @@
     cont.querySelectorAll('[data-decir]').forEach((b) => b.onclick = (e) => { e.stopPropagation(); decir(b.dataset.decir, l); });
     cont.querySelectorAll('[data-abrir-ficha]').forEach((b) => b.onclick = () => { if (vista === 'sesion' && !confirmarSalida()) return; enviar({ tipo: 'idiFicha', lengua: l, id: b.dataset.abrirFicha }); });
     cont.querySelectorAll('[data-externo]').forEach((a) => a.onclick = (e) => { e.preventDefault(); enviar({ tipo: 'abrirUrl', url: a.getAttribute('href') }); });
-    const ta = cont.querySelector('#idi-nota');
-    if (ta) {
-      let t = null;
-      ta.addEventListener('input', () => {
-        const g = cont.querySelector('#idi-nota-estado'); if (g) g.textContent = 'Escribiendo…';
-        clearTimeout(t); t = setTimeout(() => enviar({ tipo: 'idiAnotar', id: f.id, texto: ta.value }), 800);
-      });
-      ta.addEventListener('blur', () => { clearTimeout(t); enviar({ tipo: 'idiAnotar', id: f.id, texto: ta.value }); });
-    }
+    habilitarMarcas(cont, f.id);
   }
   const confirmarSalida = () => { if (S && S.resultados.length) { terminar(); return false; } clearInterval(tic); S = null; return true; };
 
@@ -518,44 +652,38 @@
         ${campoEjercicio(it, hecho)}
         <div id="idi-veredicto">${hecho ? veredicto(hecho) : ''}</div>
         <div class="idi-ej-botones">${hecho ? `<button class="primario" id="idi-sig">${S.i + 1 < S.items.length ? 'Siguiente →' : 'Ver resultado'}</button>`
-          : `${it.tipo === 'eleccion' ? '' : '<button class="primario" id="idi-comprobar">Comprobar</button>'}<button id="idi-nose">No lo sé</button>`}</div>
+          : '<button class="primario" id="idi-comprobar">Comprobar</button><button id="idi-nose">No lo sé</button>'}</div>
       </div>
       <p class="apagado idi-mini centro">Intro = comprobar / siguiente</p>`;
     zona.querySelector('#idi-salir').onclick = () => terminar();
     const inp = zona.querySelector('#idi-resp');
     if (inp && !hecho) { inp.focus(); inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); comprobar(false); } }); }
-    zona.querySelectorAll('[data-op]').forEach((o) => o.onclick = () => { if (hecho) return; S.respuesta = o.dataset.op; comprobar(false); });
-    zona.querySelectorAll('[data-pal]').forEach((o) => o.onclick = () => { if (hecho) return; S.orden.push(Number(o.dataset.pal)); pSesion(); });
-    const deshacer = zona.querySelector('#idi-deshacer'); if (deshacer) deshacer.onclick = () => { S.orden.pop(); pSesion(); };
     const c = zona.querySelector('#idi-comprobar'); if (c) c.onclick = () => comprobar(false);
     const n = zona.querySelector('#idi-nose'); if (n) n.onclick = () => { S.respuesta = ''; comprobar(true); };
-    const s = zona.querySelector('#idi-sig'); if (s) { s.focus(); s.onclick = siguiente; }
-    const vz = zona.querySelector('[data-decir]'); if (vz) vz.onclick = () => decir(vz.dataset.decir, l);
+    const s = zona.querySelector('#idi-sig'); if (s) { s.focus({ preventScroll: true }); s.onclick = siguiente; }
+    zona.querySelectorAll('[data-decir]').forEach((vz) => vz.onclick = () => decir(vz.dataset.decir, l));
   }
   const TIPO_EJ = { hueco: 'Completa', eleccion: 'Elige', transformar: 'Transforma', corregir: 'Corrige', ordenar: 'Ordena' };
 
+  /** Siempre se escribe la respuesta: en «elige» las opciones y en «ordena» las palabras se muestran solo como pista */
   function campoEjercicio(it, hecho) {
     const frase = esc(it.frase || '').replace('___', '<span class="idi-hueco">____</span>');
+    let pistas = '';
     if (it.tipo === 'eleccion') {
-      return `<p class="idi-frase">${frase}</p><div class="idi-ops">${(it.opciones || []).map((o) => `<button data-op="${esc(o)}" class="${hecho && hecho.respuesta === o ? (hecho.ok ? 'ok' : 'mal') : hecho && hecho.respuestas.includes(o) ? 'ok' : ''}" ${hecho ? 'disabled' : ''}>${esc(o)}</button>`).join('')}</div>`;
+      pistas = `<div class="idi-pistas"><small>Opciones (escríbela):</small>${(it.opciones || []).map((o) => `<span class="idi-pista ${hecho ? (hecho.respuestas.includes(o) ? 'ok' : normal(hecho.respuesta) === normal(o) ? 'mal' : '') : ''}">${esc(o)}</span>`).join('')}</div>`;
+    } else if (it.tipo === 'ordenar') {
+      pistas = `<div class="idi-pistas"><small>Palabras:</small>${(it.palabras || []).map((w) => `<span class="idi-pista">${esc(w)}</span>`).join('')}</div>`;
     }
-    if (it.tipo === 'ordenar') {
-      const usadas = new Set(S.orden);
-      return `<p class="idi-frase idi-construida">${S.orden.map((i) => esc(it.palabras[i])).join(' ') || '<span class="apagado">Pulsa las palabras en orden…</span>'}</p>
-        <div class="idi-ops">${(it.palabras || []).map((p, i) => `<button data-pal="${i}" ${usadas.has(i) || hecho ? 'disabled' : ''}>${esc(p)}</button>`).join('')}
-        ${!hecho && S.orden.length ? '<button id="idi-deshacer" title="Quitar la última">↶</button>' : ''}</div>`;
-    }
-    const pista = it.tipo === 'hueco' ? 'Escribe lo que va en el hueco' : 'Escribe la frase completa';
-    return `<p class="idi-frase">${frase}</p><input id="idi-resp" class="idi-resp" type="text" autocomplete="off" spellcheck="false" placeholder="${pista}"
+    const pista = it.tipo === 'hueco' || it.tipo === 'eleccion' ? 'Escribe lo que va en el hueco' : it.tipo === 'ordenar' ? 'Escribe la frase ordenada' : 'Escribe la frase completa';
+    return `${it.tipo === 'ordenar' ? '' : `<p class="idi-frase">${frase}</p>`}${pistas}<input id="idi-resp" class="idi-resp" type="text" autocomplete="off" spellcheck="false" placeholder="${pista}"
       value="${esc(hecho ? hecho.respuesta : S.respuesta || '')}" ${hecho ? 'disabled' : ''}>`;
   }
+  const normal = (x) => String(x || '').toLowerCase().replace(/[’']/g, "'").replace(/\s+/g, ' ').replace(/[.!?]+$/, '').trim();
 
   function comprobar(enBlanco) {
     if (S.corrigiendo) return;
     const it = S.items[S.i];
-    let resp = S.respuesta;
-    if (it.tipo === 'ordenar') resp = S.orden.map((i) => it.palabras[i]).join(' ');
-    else if (it.tipo !== 'eleccion') { const inp = raiz.querySelector('#idi-resp'); resp = inp ? inp.value : ''; }
+    const inp = raiz.querySelector('#idi-resp'); const resp = inp ? inp.value : '';
     if (!enBlanco && !String(resp).trim()) return;
     S.corrigiendo = true;
     enviar({ tipo: 'idiResponder', clave: S.i, lengua: S.sesion.lengua, materia: it.materia, ejercicio: it.id, respuesta: enBlanco ? '' : resp });
@@ -566,20 +694,43 @@
     if (!S || clave !== S.i) return;
     const it = S.items[S.i];
     S.resultados.push({ indice: S.i, materia: it.materia, ejercicio: it.id, ok: r.ok, casi: r.casi, respuesta: S.pendiente, correcta: r.correcta,
-      respuestas: r.respuestas, explicacion: r.explicacion, frase: it.frase || (it.palabras || []).join(' '), enunciado: it.enunciado });
+      respuestas: r.respuestas, explicacion: r.explicacion, breve: r.breve, traduccion: r.traduccion, suya: r.suya, porOpcion: r.porOpcion,
+      glosario: r.glosario || [], tipo: it.tipo, frase: it.frase || (it.palabras || []).join(' '), enunciado: it.enunciado });
     S.corrigiendo = false;
     pSesion();
   }
+  /** Palabras de la respuesta del usuario que no están en la correcta (para señalarlas) */
+  function marcarDiferencias(suya, buena) {
+    const enBuena = new Set(normal(buena).split(' ').map((w) => w.replace(/[,;:]/g, '')));
+    return String(suya).split(/(\s+)/).map((w) => (/^\s+$/.test(w) || !w || enBuena.has(normal(w).replace(/[,;:]/g, '')) ? esc(w) : `<span class="idi-dif">${esc(w)}</span>`)).join('');
+  }
   const veredicto = (h) => {
-    const completa = h.respuestas[0] && /___/.test(h.frase || '') ? h.frase.replace('___', h.respuestas[0]) : '';
-    return `<div class="idi-ver ${h.ok ? 'ok' : 'mal'}"><b>${h.ok ? '✓ Correcto' : h.casi ? '✗ Casi: revisa acentos o mayúsculas' : h.respuesta ? '✗ No es correcto' : 'Respuesta'}</b>
-    ${h.ok && h.respuestas.length < 2 ? '' : `<div>${h.ok ? 'También valdría' : 'Correcto'}: ${h.respuestas.filter((x) => !h.ok || x !== h.respuesta).map((x) => `<b>${esc(x)}</b>`).join(' · ')}</div>`}
-    ${completa && vozDisponible() ? `<div class="idi-ver-frase"><button class="idi-voz" data-decir="${esc(completa)}" title="Escuchar la frase">🔊</button>${esc(completa)}</div>` : ''}
-    ${h.explicacion ? `<div class="idi-ver-exp">${esc(h.explicacion)}</div>` : ''}</div>`;
+    const buena = h.respuestas[0] || '';
+    const completa = buena && /___/.test(h.frase || '') ? h.frase.replace('___', buena).replace(/\s*\([^)]*\)\s*([.!?…]?)\s*$/, '$1') : (h.tipo === 'ordenar' || h.tipo === 'transformar' || h.tipo === 'corregir' ? buena : '');
+    const otras = h.respuestas.filter((x) => normal(x) !== normal(h.ok ? h.respuesta : buena));
+    const titulo = h.ok ? '✓ Correcto' : h.casi ? '✗ Casi: revisa los acentos o las mayúsculas' : h.respuesta ? '✗ No es correcto' : 'La respuesta era…';
+    const porQueSuya = h.suya ? `<div class="idi-ver-bloque suya"><h5>${h.ok ? '👍 Por qué tu respuesta es correcta' : `🔍 Por qué «${esc(h.respuesta)}» no vale`}</h5><p>${esc(h.suya)}</p></div>`
+      : !h.ok && h.respuesta ? `<div class="idi-ver-bloque suya"><h5>🔍 Qué cambia respecto a la solución</h5>
+        <p>${h.casi ? 'Las palabras son las correctas, pero falla algún acento o una mayúscula: en esta lengua el acento distingue palabras, así que cuenta como fallo.' : 'Las partes en rojo de tu respuesta no aparecen en la solución; compáralas con ella y relee la regla de abajo.'}</p></div>` : '';
+    const opciones = h.porOpcion ? `<details class="idi-ver-bloque opciones" ${h.ok ? '' : 'open'}><summary>🔁 Todas las opciones, una a una</summary><ul>${Object.entries(h.porOpcion).map(([o, t]) => `<li class="${h.respuestas.includes(o) ? 'ok' : 'mal'}">
+        <b>${h.respuestas.includes(o) ? '✓' : '✗'} ${esc(o)}</b> — ${esc(t)}</li>`).join('')}</ul></details>` : '';
+    return `<div class="idi-ver ${h.ok ? 'ok' : 'mal'}">
+      <div class="idi-ver-cab">${titulo}</div>
+      <div class="idi-ver-par">
+        ${h.respuesta ? `<div><small>Tu respuesta</small><span class="${h.ok ? 'idi-bien' : 'idi-tuya-mal'}">${h.ok ? esc(h.respuesta) : marcarDiferencias(h.respuesta, buena)}</span></div>` : ''}
+        ${h.ok ? '' : `<div><small>Respuesta correcta</small><b class="idi-bien">${esc(buena)}</b></div>`}
+        ${otras.length ? `<div><small>También vale</small>${otras.map((x) => `<b>${esc(x)}</b>`).join(' · ')}</div>` : ''}
+      </div>
+      ${completa ? `<div class="idi-ver-frase">${vozDisponible() ? `<button class="idi-voz" data-decir="${esc(completa)}" title="Escuchar la frase">🔊</button>` : ''}<span><b>${esc(completa)}</b>${h.traduccion ? `<br><span class="apagado">${esc(h.traduccion)}</span>` : ''}</span></div>` : ''}
+      ${porQueSuya}
+      ${h.explicacion ? `<div class="idi-ver-bloque regla"><h5>📐 La regla, aplicada a esta frase</h5><p>${esc(h.explicacion)}</p></div>` : ''}
+      ${opciones}
+      ${(h.glosario || []).length ? `<div class="idi-ver-bloque glosario"><h5>📖 Vocabulario</h5><div class="idi-glos">${h.glosario.map((g) => `<span><b>${esc(g.palabra)}</b> ${esc(g.significado)}</span>`).join('')}</div></div>` : ''}
+    </div>`;
   };
 
   function siguiente() {
-    S.respuesta = ''; S.orden = [];
+    S.respuesta = '';
     if (S.i + 1 < S.items.length) { S.i += 1; pSesion(); } else terminar();
   }
 
@@ -605,7 +756,8 @@
       </div>
       ${r.some((x) => !x.ok) ? `<section class="idi-caja"><h3>Para revisar</h3><div class="idi-errores-rejilla">${r.filter((x) => !x.ok).map((x) => `<div class="idi-error">
         <div class="idi-cu-frase">${esc(x.frase)}</div><div class="idi-err-mal">✗ ${esc(x.respuesta || '(en blanco)')}</div><div class="idi-err-bien">✓ ${esc(x.correcta)}</div>
-        ${x.explicacion ? `<div class="idi-err-nota">${esc(x.explicacion)}</div>` : ''}</div>`).join('')}</div>
+        ${x.breve || x.explicacion ? `<div class="idi-err-nota">${esc(x.breve || x.explicacion)}</div>` : ''}
+        ${x.breve && x.explicacion ? `<details class="idi-mini"><summary>Explicación completa</summary><p>${esc(x.explicacion)}</p></details>` : ''}</div>`).join('')}</div>
         <p class="apagado idi-mini">Estos errores quedan en tu cuaderno y volverán a salir en los próximos repasos.</p></section>` : ''}
       <p class="idi-acciones centro"><button class="primario" id="idi-volver">Volver al inicio</button></p></div>`;
     raiz.querySelector('#idi-volver').onclick = () => { S = null; fin = null; ir('inicio'); };

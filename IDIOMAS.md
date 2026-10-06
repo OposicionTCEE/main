@@ -113,6 +113,11 @@ Ver `scripts/idiomas/encargos/fichas_comun.md`. Resumen: `id`, `titulo`, `titulo
 `explicacion` (bloques texto/tabla/lista, en español), `ejemplos` (frase + traducción), `errores_hispanohablantes` (mal/bien/nota),
 `ejercicios` (12–16: hueco, eleccion, transformar, corregir, ordenar; todas las respuestas válidas en `respuestas`; `origen` si viene de Tatoeba)
 y `fuente`.
+Desde v0.32 cada ficha lleva también `descripcion_larga_es`, `contexto` {que_es, por_que_importa, cuando_se_usa} y, en cada ejercicio,
+`explicacion` (ampliada, 3–6 frases), `explicacion_breve` (la de una línea), `traduccion`, `por_opcion` (elección), `errores_previstos`
+[{respuesta, explicacion}] y `glosario` [{palabra, significado}]. Se escribieron con el encargo `scripts/idiomas/encargos/enriquecer.md`,
+se comprueban con `scripts/idiomas/validar_enriq.js` (los errores previstos no pueden ser respuestas aceptadas) y se unen con `scripts/idiomas/unir_enriq.py`.
+Al escribirlas se revisaron de nuevo todas las fichas: unas 90 correcciones (respuestas válidas que faltaban, enunciados que no casaban, ejemplos discutibles).
 
 ## Pantalla (v0.31, 6/10/2026, con el usuario)
 
@@ -120,16 +125,24 @@ y `fuente`.
 - **Izquierda (1/3)**: *Empezar sesión* con las seis destrezas y competencias (Gramática, Léxico, Comprensión lectora, Comprensión auditiva,
   Expresión escrita, Expresión oral; las cuatro últimas, desactivadas hasta las fases 2–3) y, aparte, Repaso, Al azar y Examen.
   Debajo, el cuaderno de errores y las últimas sesiones.
-- **Derecha (2/3)**: fichas como tarjetas, solo las del nivel elegido (flechas ◀ ▶ y botones A1…C2 con la parte dominada) y del bloque elegido
+- **Derecha (2/3)**: fichas como tarjetas, solo las del nivel elegido (botones A1…C2 con la parte dominada; ● marca tu nivel; flechas del teclado) y del bloque elegido
   en el desplegable (Gramática, Léxico, Fonética, Destrezas o todas). Cada tarjeta: nivel, bloque, estado, título y descripción, progreso
   (última nota en un anillo con la media, sesiones, fecha de repaso) y marcas «CI» (rótulo del Core Inventory) y 📝 (tiene anotaciones).
 - **Idioma de las tarjetas**: por defecto, la lengua estudiada (`<lengua>/titulos.json` del paquete: `titulo_l`, `descripcion_l`, `oficial`);
   en Ajustes se puede pasar a castellano. Las explicaciones de dentro de la ficha siguen en castellano.
-  En inglés, `oficial` es el rótulo exacto del *Core Inventory for General English* cuando la materia coincide (78 de 125); en francés no hay
-  rótulo oficial verificable (no tenemos el texto del *Inventaire*), así que el título usa la terminología FLE habitual.
-- **Ficha**: siempre las mismas secciones y en el mismo orden, plegables: De qué trata · Reglas y claves · Ejemplos (con 🔊, voz del Mac) ·
-  Errores típicos de hispanohablantes · Material complementario (fuente, rótulo oficial, fichas relacionadas, enlaces de consulta) · Mis anotaciones
-  (se guardan solas en `anotaciones.json` del perfil).
+  `oficial` es el rótulo exacto del *Core Inventory for General English* (inglés, 78 de 125) o del *Inventaire linguistique des contenus clés
+  des niveaux du CECRL* (francés, 112 de 140, con `nivel_oficial`); en la tarjeta, 📘. La descripción de la tarjeta es la ampliada (`descripcion_larga_l` / `descripcion_larga_es`).
+- **Ficha**: siempre las mismas secciones y en el mismo orden, plegables: De qué trata (descripción ampliada + Qué es · Por qué importa · Cuándo se usa,
+  campo `contexto`) · Reglas y claves · Ejemplos (con 🔊, voz del Mac) · Errores típicos de hispanohablantes · Material complementario
+  (fuente, rótulo oficial, fichas relacionadas, enlaces de consulta).
+- **Anotaciones sobre la ficha** (v0.32): al seleccionar texto sale una barra para subrayar en cuatro colores o «✎ Nota» (subraya y abre un recuadro
+  debajo del bloque); clic en un subrayado para cambiar color, ver la nota o quitarlo; «＋ nota» en cada sección añade un recuadro al final.
+  Se guardan en `anotaciones.json` del perfil: `{id: {texto, marcas: [{id, k, inicio, cita, color, caja, nota}]}}` (`k` = bloque con `data-k`;
+  si la ficha cambia, la marca se recoloca buscando la cita).
+- **Respuestas siempre escritas** (v0.32): en «elige» las opciones y en «ordena» las palabras son solo pista; hay que escribir la respuesta.
+- **Corrección ampliada** (v0.32): tu respuesta frente a la correcta (lo que sobra, en rojo), la frase completa con traducción y 🔊, por qué tu
+  respuesta concreta vale o no (`por_opcion` / `errores_previstos`), la regla aplicada a esa frase (`explicacion`), todas las opciones una a una y
+  el vocabulario (`glosario`). Ver «Formato de las fichas».
 - **Práctica**: la ficha a la izquierda (plegable a una franja) y los ejercicios a la derecha, con una barra de puntos verde/rojo por ejercicio.
 - **Ejercicios según el nivel**: si la ficha está por debajo del nivel del usuario, salen primero los de producción (transformar, corregir, ordenar);
   si está por encima, primero los de reconocimiento (elegir, hueco). Con el mismo nivel, mezclados.
