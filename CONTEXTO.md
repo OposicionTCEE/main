@@ -96,3 +96,15 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
 7. Erratas de color que no compilan: `\textcolor{yellos}` (3), `\textcolor{redç}` (1) y 3 `\textcolor{\textbf{…}` sin color.
 8. Revisar con el usuario las semanas más débiles de la propuesta de la 2ª vuelta (`progreso/calendarios/propuesta-2a-vuelta-3.json`), por ejemplo las semanas 5 y 18.
 9. La carpeta `~/TCEE/_antiguos` del Mac se puede borrar cuando el usuario quiera.
+10. **Idiomas · diccionario de inglés incompleto** (pendiente de mejor conexión). Cobertura medida el 7/10/2026 con las listas de frecuencia de
+    EFLLex/FLELex (palabras más frecuentes que tienen entrada):
+    - inglés (30.937 entradas, solo Wikcionario en español): 98,4 % de las 1.000 más frecuentes, 97,0 % de 3.000, 88,7 % de 6.000, 73,4 % de 12.000;
+      faltan, por ejemplo, surprised, pleased, local, stare, angrily;
+    - francés (64.310 entradas): 99,8 % / 99,7 % / 99,7 % / 99,4 %.
+    Solución acordada: descargar `kaikki.org/dictionary/Spanish/kaikki.org-dictionary-Spanish.jsonl` (1,0 GB, palabras españolas con
+    traducción al inglés del Wiktionary en inglés), invertirlo y regenerar `en/diccionario.json` con `scripts/idiomas/diccionario.py`
+    (hay que ampliarlo para leer ese fichero). `es-extract.jsonl.gz` ya está guardado en `TCEE/.fuentes-idiomas/wiktionary/`.
+    Descargar con el navegador integrado (permiso del usuario) y procesar en la máquina virtual del Mac en pasos de menos de 3 minutos.
+11. **Idiomas · búsqueda «por significado» deficiente** («subida general de precios» no da inflation). Opciones planteadas al usuario
+    (de más a menos intensivas) en la conversación del 7/10/2026; resumen en `IDIOMAS.md`, apartado «Búsqueda por significado: opciones».
+

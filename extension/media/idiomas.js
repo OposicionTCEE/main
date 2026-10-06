@@ -66,7 +66,7 @@
 
   // ------------------------------------------------------------------ mensajes
   function recibir(m) {
-    if (m.tipo === 'idiDatos') { X = m.datos; if (!X.perfil) vista = 'nuevo'; else if (vista === 'nuevo') vista = 'inicio'; if (vista !== 'sesion' && vista !== 'ficha') pintarVista(); else if (vista === 'ficha') refrescarPieFicha(); }
+    if (m.tipo === 'idiDatos') { X = m.datos; if (!X.perfil) vista = 'nuevo'; else if (vista === 'nuevo') vista = 'inicio'; if (vista !== 'sesion' && vista !== 'ficha' && vista !== 'verbos') pintarVista(); else if (vista === 'ficha') refrescarPieFicha(); }
     if (m.tipo === 'idiFicha') { fichaAbierta = m.ficha; if (vista !== 'ficha') desdeVista = vista; vista = 'ficha'; pintarVista(); window.scrollTo(0, 0); }
     if (m.tipo === 'idiSesion') empezarSesion(m.sesion);
     if (m.tipo === 'idiCorreccion') corregido(m.clave, m.resultado);
@@ -75,6 +75,9 @@
     if (m.tipo === 'idiMiDicc') { X.miDiccionario = m.lista; if (vista === 'diccionario') pMiDicc(); else if (vista === 'inicio') pInicio(); }
     if (m.tipo === 'idiResultados') resultadosCajon(m);
     if (m.tipo === 'idiDefinicion') { const d = document.querySelector(`.idi-dlg [data-def="${m.clave}"]`); if (d && !d.value) { d.value = m.definicion; d.placeholder = m.definicion ? '' : 'Sin definición en el diccionario: escríbela tú'; } }
+    if (m.tipo === 'idiVerbos') { VB.info = m.info; if (vista === 'verbos' && VB.esperando) { VB.esperando = false; pVerbos(); } }
+    if (m.tipo === 'idiVerbosLista') listaVerbos(m);
+    if (m.tipo === 'idiVerbosSesion') { VB.ses = m.sesion; VB.i = 0; VB.res = []; VB.hecho = null; VB.t0 = Date.now(); pVerbos(); }
     if (m.tipo === 'idiLibreta') { libretaFichas = m.fichas; if (vista === 'libreta') pLibreta(); }
     // idiAnotado: lo guardado ya está en X.anotaciones (se actualiza al escribir); no se pisa con la respuesta, que puede llegar con retraso
   }
@@ -108,7 +111,7 @@
     }
     if (!X.perfil || vista === 'nuevo') { cajonEl.innerHTML = ''; return pNuevo(); }
     pintarCajon();
-    ({ inicio: pInicio, ajustes: pAjustes, ficha: pFicha, sesion: pSesion, fin: pFin, diccionario: pMiDicc, libreta: pLibreta })[vista]();
+    ({ inicio: pInicio, ajustes: pAjustes, ficha: pFicha, sesion: pSesion, fin: pFin, diccionario: pMiDicc, libreta: pLibreta, verbos: pVerbos })[vista]();
   }
   const ir = (v) => { vista = v; pintarVista(); window.scrollTo(0, 0); };
 
@@ -191,13 +194,15 @@
             <div class="idi-destrezas">${DESTREZAS.map(botonSesion).join('')}</div>
             <div class="idi-especiales">${ESPECIALES.map(botonSesion).join('')}</div>
           </section>
+          ${l === 'fr' ? '<button class="idi-barra-verbos" id="idi-verbos"><span class="idi-ico">🔁</span><b>Practica los verbos</b><small>Entrenador de conjugación · 7.000 verbos · fichas de los grupos</small><span class="idi-flecha">→</span></button>' : ''}
           ${cuadernoHtml(l)}
           ${cajasPersonales(l)}
           ${historialHtml(l)}
         </aside>
         <section class="idi-der">${fichasHtml(l)}</section>
       </div></div>`;
-    const sel = raiz.querySelector('#idi-lengua'); sel.onchange = () => { st().idiLengua = sel.value; ctx.guardar(); pInicio(); };
+    const sel = raiz.querySelector('#idi-lengua'); sel.onchange = () => { st().idiLengua = sel.value; ctx.guardar(); pInicio(); pintarCajon(); };
+    const bv = raiz.querySelector('#idi-verbos'); if (bv) bv.onclick = () => { VB.esperando = true; VB.ses = null; enviar({ tipo: 'idiVerbosInicio' }); ir('verbos'); };
     raiz.querySelector('#idi-ajustes').onclick = () => ir('ajustes');
     raiz.querySelectorAll('[data-tipo]').forEach((b) => b.onclick = () => enviar({ tipo: 'idiEmpezar', lengua: l, clase: b.dataset.tipo }));
     raiz.querySelectorAll('[data-materia]').forEach((b) => {
@@ -901,9 +906,10 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
     const nombre = X.lenguas[l] || l;
     cajonEl.className = 'idi-cajon';
     cajonEl.innerHTML = `<div class="idi-cajon-cab"><b>📚 Diccionario · ${esc(nombre)}</b><button id="idi-cajon-cerrar" title="Plegar">⟩</button></div>
-      <div class="segmentos idi-cajon-modos"><button data-modo="directo" class="${modo === 'directo' ? 'activo' : ''}" title="Escribe una palabra o expresión en ${esc(nombre.toLowerCase())}">${esc(nombre)} → castellano</button>
+      <div class="segmentos idi-cajon-modos"><button data-modo="directo" class="${modo === 'directo' ? 'activo' : ''}" title="Escribe una palabra o expresión en ${esc(nombre.toLowerCase())}">${esc(nombre)} → Español</button>
+        <button data-modo="espanol" class="${modo === 'espanol' ? 'activo' : ''}" title="Escribe una palabra en castellano y te da su traducción">Español → ${esc(nombre)}</button>
         <button data-modo="inverso" class="${modo === 'inverso' ? 'activo' : ''}" title="Describe en castellano lo que quieres decir y te propone palabras">Por significado</button></div>
-      <input id="idi-cq" type="search" placeholder="${modo === 'directo' ? `Palabra en ${esc(nombre.toLowerCase())}…` : 'Describe en castellano: «subida general de precios»…'}" value="${esc(q)}">
+      <input id="idi-cq" type="search" placeholder="${modo === 'directo' ? `Palabra en ${esc(nombre.toLowerCase())}…` : modo === 'espanol' ? 'Palabra en castellano: «paro», «ordenador»…' : 'Describe en castellano: «subida general de precios»…'}" value="${esc(q)}">
       <div class="idi-cajon-res" id="idi-cres">${X.hayDiccionario && X.hayDiccionario[l] ? '<p class="apagado idi-mini">Escribe para buscar. Con «＋» lo guardas en Mi diccionario.</p>'
         : '<p class="apagado idi-mini">El diccionario bilingüe de esta lengua aún no está en el paquete de idiomas.</p>'}</div>
       <div class="idi-cajon-pie">${l === 'en' ? '<a data-externo href="https://wantwords.net/">WantWords ↗</a> <span class="apagado">buscar palabras inglesas por su definición (en el navegador)</span><br>' : ''}
@@ -979,6 +985,28 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
   // ------------------------------------------------------------------ vista Libreta: todo lo subrayado y anotado, por ficha
   const SECCION = (k) => (/^(desc|ctx|resumen|sec-que)/.test(k) ? '🎯 De qué trata' : /^(r\d|sec-reglas)/.test(k) ? '📐 Reglas y claves' : /^(ej|sec-ejemplos)/.test(k) ? '💬 Ejemplos'
     : /^(err|sec-errores)/.test(k) ? '⚠️ Errores típicos' : k === 'sec-material' ? '📎 Material' : 'Ficha');
+  /** Contexto legible de un subrayado: en tablas, la fila con el nombre de cada columna; en listas, el punto; en textos, la frase o frases */
+  function contextoMarca(el, mk) {
+    const marca = (txt) => {
+      const i = txt.indexOf(mk.cita);
+      return i < 0 ? esc(txt)
+        : `${esc(txt.slice(0, i))}<mark class="idi-marca c-${mk.color}">${esc(mk.cita)}</mark>${esc(txt.slice(i + mk.cita.length))}`;
+    };
+    if (!el || !textoDe(el).includes(mk.cita)) return `<mark class="idi-marca c-${mk.color}">${esc(mk.cita)}</mark>`;
+    const fila = [...el.querySelectorAll('tbody tr')].find((tr) => tr.textContent.includes(mk.cita));
+    if (fila) {
+      const cab = [...el.querySelectorAll('thead th')].map((th) => th.textContent.trim());
+      return `<table class="idi-lb-fila">${[...fila.children].map((td, j) => `<tr><th>${esc(cab[j] || '')}</th><td>${marca(td.textContent.trim())}</td></tr>`).join('')}</table>`;
+    }
+    const li = [...el.querySelectorAll('li')].find((x) => x.textContent.includes(mk.cita));
+    if (li) return marca(li.textContent.trim());
+    const t = textoDe(el).replace(/\s+/g, ' ').trim();
+    const frases = t.match(/[^.!?…]+[.!?…]*\s*/g) || [t];
+    let pos = 0; const i = t.indexOf(mk.cita); const sel = [];
+    for (const f of frases) { const a = pos, b = pos + f.length; pos = b; if (i >= 0 && b > i && a < i + mk.cita.length) sel.push(f.trim()); }
+    const ctxTxt = (sel.join(' ') || t).slice(0, 400);
+    return marca(ctxTxt);
+  }
   function pLibreta() {
     const l = lengua();
     if (!libretaFichas) { vistaEl.innerHTML = '<p class="vacio">Cargando la libreta…</p>'; return; }
@@ -990,17 +1018,7 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
       const items = [];
       if (a.texto) items.push(`<div class="idi-lb-item"><div class="idi-lb-sec">📝 Nota general</div><div class="idi-recuadro c-amarillo"><p>${esc(a.texto)}</p></div></div>`);
       for (const mk of a.marcas || []) {
-        let extracto = '';
-        if (mk.cita) {
-          const el = tmp.querySelector(`[data-k="${CSS.escape(mk.k)}"]`);
-          const t = el ? textoDe(el) : '';
-          let i = t.substr(mk.inicio || 0, mk.cita.length) === mk.cita ? (mk.inicio || 0) : t.indexOf(mk.cita);
-          if (i < 0) extracto = `<mark class="idi-marca c-${mk.color}">${esc(mk.cita)}</mark>`;
-          else {
-            const a0 = Math.max(0, i - 90), b0 = Math.min(t.length, i + mk.cita.length + 90);
-            extracto = `${a0 > 0 ? '…' : ''}${esc(t.slice(a0, i))}<mark class="idi-marca c-${mk.color}">${esc(mk.cita)}</mark>${esc(t.slice(i + mk.cita.length, b0))}${b0 < t.length ? '…' : ''}`;
-          }
-        }
+        const extracto = mk.cita ? contextoMarca(tmp.querySelector(`[data-k="${CSS.escape(mk.k)}"]`), mk) : '';
         items.push(`<div class="idi-lb-item"><div class="idi-lb-sec">${SECCION(mk.k)}</div>
           ${extracto ? `<blockquote class="idi-lb-cita">${extracto}</blockquote>` : ''}
           ${mk.nota ? `<div class="idi-recuadro c-${mk.color || 'amarillo'}"><p>${esc(mk.nota)}</p></div>` : ''}</div>`);
@@ -1015,6 +1033,159 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
       ${tarjetas.length ? tarjetas.join('') : '<p class="vacio">Aún no hay anotaciones. Abre una ficha, selecciona un texto y elige un color o «✎ Nota».</p>'}</div>`;
     vistaEl.querySelector('#idi-volver').onclick = () => ir('inicio');
     vistaEl.querySelectorAll('[data-abrir-ficha-lb]').forEach((b) => b.onclick = () => enviar({ tipo: 'idiFicha', lengua: l, id: b.dataset.abrirFichaLb }));
+  }
+
+  // ------------------------------------------------------------------ entrenador de verbos (francés): fichas de los grupos a la izquierda, entrenador a la derecha
+  const VB = { info: null, ses: null, i: 0, res: [], hecho: null, t0: 0, elegidos: [], focoInput: null };
+  const ACENTOS = ['é', 'è', 'ê', 'ë', 'à', 'â', 'ç', 'î', 'ï', 'ô', 'û', 'ù', 'ü', 'œ'];
+  const confVerbos = () => (st().idiVerbConf = st().idiVerbConf || { grupos: [1, 2, 3], tiempos: ['pres', 'pc', 'imp', 'fut'], frecuentes: true, modo: 'tabla', n: 15, ficha: 0 });
+  let claveVerbo = 0;
+  function pVerbos() {
+    const I2 = VB.info;
+    if (!I2) { vistaEl.innerHTML = '<p class="vacio">Cargando los verbos…</p>'; return; }
+    if (I2.falta) { vistaEl.innerHTML = '<div class="idi-centro"><p class="vacio">Falta la base de verbos en el paquete de idiomas. Ejecuta «Sincronizar».</p><p><a id="idi-volver">← Volver</a></p></div>'; vistaEl.querySelector('#idi-volver').onclick = () => ir('inicio'); return; }
+    const c = confVerbos(), plegada = !!st().idiVerbPlegada;
+    const fichas = I2.fichas || [], fi = fichas[Math.min(c.ficha || 0, fichas.length - 1)];
+    vistaEl.innerHTML = `<div class="idi-verbos">
+      <div class="idi-ficha-barra"><a id="idi-volver">← Volver</a><b>🔁 Practica los verbos · francés</b><span class="apagado idi-mini">${I2.total.toLocaleString('es-ES')} verbos (Verbiste)</span></div>
+      <div class="idi-practica ${plegada ? 'plegada' : ''}">
+        <aside class="idi-pr-ficha">
+          <div class="idi-pr-ficha-cab"><button id="idi-vplegar" title="${plegada ? 'Desplegar las fichas' : 'Plegar las fichas'}">${plegada ? '▶' : '◀'}</button>
+            ${plegada ? '<span class="idi-vertical">Fichas de conjugación</span>' : `<div class="idi-vtabs">${fichas.map((f, j) => `<button class="${j === (c.ficha || 0) ? 'activo' : ''}" data-vficha="${j}">${esc(f.titulo_es.replace(/^Verbos del? /, '').replace(/\s*\(.*\)$/, ''))}</button>`).join('')}</div>`}</div>
+          ${plegada || !fi ? '' : `<div class="idi-pr-ficha-cuerpo"><h3>${esc(fi.titulo)}</h3><p class="idi-ficha-sub">${esc(fi.titulo_es)}</p>${cuerpoFicha(fi, 'fr', { compacta: true })}</div>`}
+        </aside>
+        <section class="idi-pr-ej" id="idi-vzona"></section></div></div>`;
+    vistaEl.querySelector('#idi-volver').onclick = () => { VB.ses = null; ir('inicio'); };
+    vistaEl.querySelector('#idi-vplegar').onclick = () => { st().idiVerbPlegada = !plegada; ctx.guardar(); pVerbos(); };
+    vistaEl.querySelectorAll('[data-vficha]').forEach((b) => b.onclick = () => { c.ficha = Number(b.dataset.vficha); ctx.guardar(); pVerbos(); });
+    if (!plegada && fi) enlazarFicha(vistaEl.querySelector('.idi-pr-ficha-cuerpo'), fi, 'fr');
+    if (VB.ses) pintarEjercicioVerbo(); else pintarConfVerbos();
+  }
+
+  function pintarConfVerbos() {
+    const z = vistaEl.querySelector('#idi-vzona'), c = confVerbos(), I2 = VB.info;
+    const modos = [...new Set(I2.tiempos.map((t) => t[1]))];
+    z.innerHTML = `<div class="idi-ej-tarjeta idi-vconf">
+      <h3>Entrenador de conjugación</h3>
+      <div class="idi-vfila"><span class="idi-vlab">Grupos</span><div class="segmentos">${[1, 2, 3].map((g) => `<button data-vgrupo="${g}" class="${c.grupos.includes(g) ? 'activo' : ''}">${g}.º grupo <small>(${I2.grupos[g - 1]})</small></button>`).join('')}</div>
+        <label class="idi-revisar"><input type="checkbox" id="idi-vfrec" ${c.frecuentes ? 'checked' : ''}> solo verbos frecuentes</label></div>
+      <div class="idi-vfila col"><span class="idi-vlab">Tiempos <a data-vt="basicos">básicos</a> · <a data-vt="todos">todos</a> · <a data-vt="ninguno">ninguno</a></span>
+        <div class="idi-vtiempos">${modos.map((md) => `<div class="idi-vmodo"><b>${esc(md)}</b>${I2.tiempos.filter((t) => t[1] === md).map((t) => `<label><input type="checkbox" data-vtiempo="${t[0]}" ${c.tiempos.includes(t[0]) ? 'checked' : ''}> ${esc(t[2])}</label>`).join('')}</div>`).join('')}</div></div>
+      <div class="idi-vfila col"><span class="idi-vlab">Verbos</span>
+        <div class="idi-vbusca"><input type="search" id="idi-vq" placeholder="Busca un verbo (p. ej. prendre) y elígelo…" autocomplete="off"><div id="idi-vsug" class="idi-vsug"></div></div>
+        <div class="idi-vchips">${VB.elegidos.map((v) => `<span class="idi-vchip">${esc(v)} <button data-vquitar="${esc(v)}">✕</button></span>`).join('') || '<span class="apagado idi-mini">Sin verbos elegidos: se escogerán 3 al azar.</span>'}</div></div>
+      <div class="idi-vfila"><span class="idi-vlab">Modo</span><div class="segmentos"><button data-vmodo="tabla" class="${c.modo === 'tabla' ? 'activo' : ''}" title="Un verbo y un tiempo: las seis personas">Tabla (6 personas)</button><button data-vmodo="mezcla" class="${c.modo === 'mezcla' ? 'activo' : ''}" title="Una forma por pregunta, verbos y tiempos mezclados">Mezcla (una forma)</button></div>
+        ${c.modo === 'mezcla' ? `<label>· <input type="number" id="idi-vn" min="5" max="60" value="${c.n || 15}"> preguntas</label>` : ''}</div>
+      <p class="idi-acciones"><button class="primario" id="idi-vempezar">▶ Empezar${VB.elegidos.length ? '' : ' con 3 verbos al azar'}</button>
+        ${VB.elegidos.length ? '<button id="idi-vazar">🎲 3 al azar</button>' : ''}
+        ${I2.debiles.length ? '<button id="idi-vdebiles" title="Las combinaciones verbo + tiempo que más fallas">⚠ Lo que más fallo</button>' : ''}</p>
+      ${I2.debiles.length ? `<p class="idi-mini apagado">Más flojos: ${I2.debiles.map((d) => `${esc(d.verbo)} (${esc((I2.tiempos.find((t) => t[0] === d.tiempo) || [])[2] || d.tiempo)}) ${d.pct} %`).join(' · ')}</p>` : ''}
+    </div>`;
+    const guardar = () => ctx.guardar();
+    z.querySelectorAll('[data-vgrupo]').forEach((b) => b.onclick = () => { const g = Number(b.dataset.vgrupo); c.grupos = c.grupos.includes(g) ? c.grupos.filter((x) => x !== g) : [...c.grupos, g].sort(); if (!c.grupos.length) c.grupos = [g]; guardar(); pintarConfVerbos(); });
+    z.querySelector('#idi-vfrec').onchange = (e) => { c.frecuentes = e.target.checked; guardar(); };
+    z.querySelectorAll('[data-vtiempo]').forEach((x) => x.onchange = () => { c.tiempos = [...z.querySelectorAll('[data-vtiempo]:checked')].map((y) => y.dataset.vtiempo); guardar(); });
+    z.querySelectorAll('[data-vt]').forEach((a) => a.onclick = () => { c.tiempos = a.dataset.vt === 'todos' ? I2.tiempos.map((t) => t[0]) : a.dataset.vt === 'ninguno' ? [] : ['pres', 'pc', 'imp', 'fut']; guardar(); pintarConfVerbos(); });
+    z.querySelectorAll('[data-vmodo]').forEach((b) => b.onclick = () => { c.modo = b.dataset.vmodo; guardar(); pintarConfVerbos(); });
+    const vn = z.querySelector('#idi-vn'); if (vn) vn.onchange = () => { c.n = Number(vn.value) || 15; guardar(); };
+    z.querySelectorAll('[data-vquitar]').forEach((b) => b.onclick = () => { VB.elegidos = VB.elegidos.filter((v) => v !== b.dataset.vquitar); pintarConfVerbos(); });
+    const q = z.querySelector('#idi-vq'); let tq = null;
+    q.oninput = () => { clearTimeout(tq); tq = setTimeout(() => enviar({ tipo: 'idiVerbosBuscar', clave: ++claveVerbo, q: q.value }), 150); };
+    const pedir = (extra) => {
+      if (!c.tiempos.length) { if (ctx.aviso) ctx.aviso('Elige al menos un tiempo.'); return; }
+      enviar({ tipo: 'idiVerbosSesion', grupos: c.grupos, tiempos: c.tiempos, frecuentes: c.frecuentes, modo: c.modo, n: c.n, elegidos: VB.elegidos, ...extra });
+    };
+    z.querySelector('#idi-vempezar').onclick = () => pedir({ aleatorios: VB.elegidos.length ? 0 : 3 });
+    const az = z.querySelector('#idi-vazar'); if (az) az.onclick = () => { VB.elegidos = []; pedir({ aleatorios: 3 }); };
+    const db = z.querySelector('#idi-vdebiles'); if (db) db.onclick = () => pedir({ debiles: true });
+  }
+  function listaVerbos(m) {
+    if (m.clave !== claveVerbo) return;
+    const box = vistaEl.querySelector('#idi-vsug'); if (!box) return;
+    box.innerHTML = m.lista.map((x) => `<button data-velegir="${esc(x.verbo)}"><b>${esc(x.verbo)}</b> <span class="apagado">${x.grupo}.º · ${esc(x.trad || '')}</span></button>`).join('');
+    box.querySelectorAll('[data-velegir]').forEach((b) => b.onclick = () => { if (!VB.elegidos.includes(b.dataset.velegir)) VB.elegidos.push(b.dataset.velegir); pintarConfVerbos(); const q = vistaEl.querySelector('#idi-vq'); if (q) q.focus(); });
+  }
+
+  const tecladoAcentos = () => `<div class="idi-acentos">${ACENTOS.map((a) => `<button data-acento="${a}" tabindex="-1">${a}</button>`).join('')}</div>`;
+  function enlazarAcentos(z) {
+    z.querySelectorAll('input.idi-vresp').forEach((i) => i.addEventListener('focus', () => { VB.focoInput = i; }));
+    z.querySelectorAll('[data-acento]').forEach((b) => {
+      b.addEventListener('mousedown', (e) => e.preventDefault());
+      b.onclick = () => { const i = VB.focoInput; if (!i || i.disabled) return; const a = i.selectionStart, c = i.selectionEnd; i.value = i.value.slice(0, a) + b.dataset.acento + i.value.slice(c); i.setSelectionRange(a + 1, a + 1); i.focus(); };
+    });
+  }
+  const norm = (x) => String(x || '').toLowerCase().replace(/[’`´]/g, "'").replace(/\s+/g, ' ').trim();
+  const quitaAc = (x) => x.normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const corregirV = (resp, esc2) => { const r = norm(esc2); if (!r) return { ok: false, casi: false }; if (resp.some((x) => norm(x) === r)) return { ok: true }; return { ok: false, casi: resp.some((x) => quitaAc(norm(x)) === quitaAc(r)) }; };
+  const pronTxt = (p) => (/'$/.test(p) ? p : `${p} `);
+
+  const IRREG = new Set('être avoir aller faire dire pouvoir vouloir savoir devoir venir voir prendre'.split(' '));
+  const fichaPara = (it) => (['pc', 'pqp', 'fproche', 'fant', 'subjpasse', 'subjpqp', 'condpasse', 'impepasse'].includes(it.tiempo) ? 4 : IRREG.has(it.verbo) ? 3 : (it.grupo || 1) - 1);
+  function pintarEjercicioVerbo() {
+    const S2 = VB.ses, it = S2.items[VB.i], total = S2.items.length;
+    const c = confVerbos(), fd = fichaPara(it);
+    if (!st().idiVerbPlegada && c.ficha !== fd && VB.fichaAuto !== `${VB.i}`) { VB.fichaAuto = `${VB.i}`; c.ficha = fd; return pVerbos(); }
+    const z = vistaEl.querySelector('#idi-vzona');
+    const cab = `<div class="idi-pr-cab"><span class="idi-pr-tipo">${S2.modo === 'tabla' ? 'Tabla' : 'Mezcla'} · ${VB.i + 1} de ${total}</span>
+      <span class="apagado">⏱ ${reloj((Date.now() - VB.t0) / 1000)}</span><button id="idi-vsalir">Terminar</button></div>
+      <div class="idi-pr-puntos">${S2.items.map((x, j) => { const r = VB.res.filter((y) => y.idx === j); const ok = r.length && r.every((y) => y.ok); return `<i class="${r.length ? (ok ? 'ok' : 'mal') : j === VB.i ? 'actual' : ''}"></i>`; }).join('')}</div>`;
+    const h = VB.hecho;
+    if (S2.modo === 'tabla') {
+      z.innerHTML = `${cab}<div class="idi-ej-tarjeta">
+        <p class="idi-ej-num"><span>${esc(it.nombreTiempo)}</span>${vozDisponible() ? `<button class="idi-voz" data-decir="${esc(it.verbo)}">🔊</button>` : ''}</p>
+        <h2 class="idi-vverbo">${esc(it.verbo)} <small class="apagado">${esc(it.trad || '')}</small></h2>
+        <div class="idi-vtabla">${it.filas.map((f, k) => {
+          const r = h && h[k];
+          return `<label class="idi-vfilaej ${r ? (r.ok ? 'ok' : 'mal') : ''}"><span class="idi-vpron">${esc(f.pronombre)}</span>
+            <input class="idi-vresp" data-k="${k}" autocomplete="off" spellcheck="false" ${r ? 'disabled' : ''} value="${esc(r ? r.escrito : '')}">
+            ${r ? `<span class="idi-vsol">${r.ok ? '✓' : `${r.casi ? '≈ ' : '✗ '}<b>${esc(f.respuestas[0])}</b>`}${f.respuestas.length > 1 ? ` <span class="apagado">(${esc(f.respuestas.slice(1).join(' · '))})</span>` : ''}</span>` : ''}</label>`;
+        }).join('')}</div>
+        ${h ? '' : tecladoAcentos()}
+        <div class="idi-ej-botones">${h ? `<button class="primario" id="idi-vsig">${VB.i + 1 < total ? 'Siguiente →' : 'Ver resultado'}</button>` : '<button class="primario" id="idi-vcomp">Comprobar</button>'}</div>
+        ${h && h.some((r) => !r.ok) ? '<p class="idi-mini apagado">Consulta la ficha del grupo a la izquierda para repasar la regla. ≈ = solo fallan los acentos.</p>' : ''}</div>`;
+    } else {
+      const r = h && h[0];
+      z.innerHTML = `${cab}<div class="idi-ej-tarjeta">
+        <p class="idi-ej-num"><span>${esc(it.nombreTiempo)}</span></p>
+        <h2 class="idi-vverbo">${esc(it.verbo)} <small class="apagado">${esc(it.trad || '')}</small></h2>
+        <label class="idi-vfilaej grande ${r ? (r.ok ? 'ok' : 'mal') : ''}"><span class="idi-vpron">${esc(it.pronombre)}</span>
+          <input class="idi-vresp" data-k="0" autocomplete="off" spellcheck="false" ${r ? 'disabled' : ''} value="${esc(r ? r.escrito : '')}"></label>
+        ${r ? `<div class="idi-ver ${r.ok ? 'ok' : 'mal'}"><b>${r.ok ? '✓ Correcto' : r.casi ? '≈ Casi: revisa los acentos' : '✗ No es correcto'}</b>
+          <div class="idi-ver-frase">${vozDisponible() ? `<button class="idi-voz" data-decir="${esc(pronTxt(it.pronombre).replace(/[()]/g, '') + it.respuestas[0])}">🔊</button>` : ''}<span><b>${esc(pronTxt(it.pronombre) + it.respuestas[0])}</b>${it.respuestas.length > 1 ? ` <span class="apagado">· también ${esc(it.respuestas.slice(1).join(' · '))}</span>` : ''}</span></div></div>` : tecladoAcentos()}
+        <div class="idi-ej-botones">${r ? `<button class="primario" id="idi-vsig">${VB.i + 1 < total ? 'Siguiente →' : 'Ver resultado'}</button>` : '<button class="primario" id="idi-vcomp">Comprobar</button><button id="idi-vnose">No lo sé</button>'}</div></div>`;
+    }
+    z.querySelector('#idi-vsalir').onclick = terminarVerbos;
+    z.querySelectorAll('[data-decir]').forEach((b) => b.onclick = () => decir(b.dataset.decir, 'fr'));
+    enlazarAcentos(z);
+    const ins = [...z.querySelectorAll('input.idi-vresp:not([disabled])')];
+    ins.forEach((i, k) => i.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); if (ins[k + 1]) ins[k + 1].focus(); else comprobarVerbo(); } }));
+    if (ins[0]) ins[0].focus();
+    const comp = z.querySelector('#idi-vcomp'); if (comp) comp.onclick = comprobarVerbo;
+    const ns = z.querySelector('#idi-vnose'); if (ns) ns.onclick = () => { z.querySelector('input.idi-vresp').value = ''; comprobarVerbo(true); };
+    const sg = z.querySelector('#idi-vsig'); if (sg) { sg.focus({ preventScroll: true }); sg.onclick = () => { VB.hecho = null; if (VB.i + 1 < total) { VB.i += 1; pintarEjercicioVerbo(); } else terminarVerbos(); }; }
+  }
+  function comprobarVerbo(enBlanco) {
+    const z = vistaEl.querySelector('#idi-vzona'), it = VB.ses.items[VB.i];
+    const ins = [...z.querySelectorAll('input.idi-vresp')];
+    if (!enBlanco && ins.every((i) => !i.value.trim())) return;
+    const filas = VB.ses.modo === 'tabla' ? it.filas : [it];
+    VB.hecho = filas.map((f, k) => ({ escrito: ins[k] ? ins[k].value : '', ...corregirV(f.respuestas, ins[k] ? ins[k].value : '') }));
+    VB.hecho.forEach((r, k) => VB.res.push({ idx: VB.i, verbo: it.verbo, tiempo: it.tiempo, persona: filas[k].persona, ok: !!r.ok }));
+    pintarEjercicioVerbo();
+  }
+  function terminarVerbos() {
+    const res = VB.res, seg = (Date.now() - VB.t0) / 1000, inicio = VB.ses && VB.ses.inicio;
+    if (res.length) enviar({ tipo: 'idiVerbosTerminar', resultados: res.map(({ verbo, tiempo, persona, ok }) => ({ verbo, tiempo, persona, ok })), segundos: seg, inicio });
+    const ok = res.filter((x) => x.ok).length, pct = res.length ? Math.round((100 * ok) / res.length) : 0;
+    const porComb = {};
+    for (const r of res) { const k = `${r.verbo}|${r.tiempo}`; (porComb[k] = porComb[k] || { ok: 0, n: 0 }); porComb[k].n += 1; if (r.ok) porComb[k].ok += 1; }
+    VB.ses = null;
+    const z = vistaEl.querySelector('#idi-vzona');
+    z.innerHTML = res.length ? `<div class="idi-tarjeta-grande centro"><span class="idi-anillo grande" style="--p:${pct}"><b>${pct}%</b></span>
+        <h2>${ok} de ${res.length} formas</h2><p class="apagado">${reloj(seg)} de práctica</p>
+        <div class="idi-fin-fichas">${Object.entries(porComb).map(([k, x]) => { const [v, t] = k.split('|'); return `<div><b>${esc(v)}</b><span>${x.ok}/${x.n}</span><span class="apagado">${esc((VB.info.tiempos.find((y) => y[0] === t) || [])[2] || t)}</span></div>`; }).join('')}</div>
+        <p class="idi-acciones centro"><button class="primario" id="idi-votra">Otra ronda</button></p></div>` : '';
+    const o = z.querySelector('#idi-votra'); if (o) o.onclick = () => pintarConfVerbos(); else pintarConfVerbos();
   }
 
   window.TCEE_IDI = { pintar, recibir };

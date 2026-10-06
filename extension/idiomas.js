@@ -188,4 +188,84 @@ function explicarRespuesta(ej, respuesta) {
   return null;
 }
 
-module.exports = { NIVELES, nivelNum, normalizar, corregir, explicarRespuesta, repasar, valoracion, estadoMateria, elegirEjercicios, estimarNivel, recomendar, compromisos, textoRegla, barajar, slug };
+// ------------------------------------------------------------------ Conjugación francesa (entrenador de verbos; datos de Verbiste en idiomas/fr/verbos.json)
+const TIEMPOS_FR = [
+  ['pres', 'Indicatif', 'Présent'], ['imp', 'Indicatif', 'Imparfait'], ['ps', 'Indicatif', 'Passé simple'], ['fut', 'Indicatif', 'Futur simple'],
+  ['pc', 'Indicatif', 'Passé composé'], ['pqp', 'Indicatif', 'Plus-que-parfait'], ['fproche', 'Indicatif', 'Futur proche'], ['fant', 'Indicatif', 'Futur antérieur'],
+  ['subj', 'Subjonctif', 'Présent'], ['subjimp', 'Subjonctif', 'Imparfait'], ['subjpasse', 'Subjonctif', 'Passé'], ['subjpqp', 'Subjonctif', 'Plus-que-parfait'],
+  ['cond', 'Conditionnel', 'Présent'], ['condpasse', 'Conditionnel', 'Passé'],
+  ['impe', 'Impératif', 'Présent'], ['impepasse', 'Impératif', 'Passé'],
+];
+const AUX_DE = { pc: 'pres', pqp: 'imp', fant: 'fut', subjpasse: 'subj', subjpqp: 'subjimp', condpasse: 'cond', impepasse: 'impe' };
+const CON_ETRE = new Set('aller arriver venir devenir revenir parvenir intervenir survenir advenir provenir redevenir partir repartir rester tomber retomber naître renaître mourir décéder'.split(' '));
+const DOBLE_AUX = new Set('descendre redescendre monter remonter sortir ressortir passer repasser rentrer retourner entrer apparaître demeurer ressusciter'.split(' '));
+const PRONOMBRES = ['je', 'tu', 'il', 'nous', 'vous', 'ils'];
+
+/** Formas simples de un verbo en un tiempo (clave de verbos.json): lista por persona de [formas aceptadas] o null si no existe */
+function formasSimples(datos, verbo, clave) {
+  const v = datos.porVerbo.get(verbo); if (!v) return null;
+  const [inf, raiz, tpl] = v; const p = datos.plantillas[tpl]; if (!p || !p[clave]) return null;
+  return p[clave].map((t) => {
+    if (t == null) return null;
+    const f = [raiz + t];
+    if (tpl === 'pa:yer' && /^i/.test(t)) f.push(`${raiz}y${t.slice(1)}`);                       // je paie / je paye
+    if (tpl === 'réf:érer' && (clave === 'fut' || clave === 'cond')) f.push(`${raiz}è${t.slice(1)}`);  // préférerai / préfèrerai (1990)
+    return f;
+  });
+}
+/** Conjugación de un verbo en un tiempo del entrenador: [{persona, pronombre, respuestas: [..]}] (3 personas en imperativo) */
+function conjugar(datos, verbo, tiempo) {
+  const v = datos.porVerbo.get(verbo); if (!v) return null;
+  const imper = tiempo === 'impe' || tiempo === 'impepasse';
+  const personas = imper ? [1, 3, 4] : [0, 1, 2, 3, 4, 5];
+  const pp = formasSimples(datos, verbo, 'pp');
+  const ppDe = (i) => (pp && pp[i] ? pp[i][0] : null);
+  let filas;
+  if (AUX_DE[tiempo] || tiempo === 'fproche') {
+    filas = personas.map((per, k) => {
+      if (tiempo === 'fproche') { const a = formasSimples(datos, 'aller', 'pres'); return [`${a[per][0]} ${verbo}`]; }
+      const auxT = AUX_DE[tiempo];
+      const idx = imper ? k : per;
+      const conAvoir = () => { const a = formasSimples(datos, 'avoir', auxT); return a && a[idx] && ppDe(0) ? [`${a[idx][0]} ${ppDe(0)}`] : []; };
+      const conEtre = () => {
+        const a = formasSimples(datos, 'être', auxT); if (!a || !a[idx] || !ppDe(0)) return [];
+        // concordancia con el sujeto: je/tu masc. o fem.; nous/vous plural (vous también singular de cortesía); il masc. sing.; ils masc. pl.
+        const pl = per >= 3;
+        const g = per === 2 ? [ppDe(0)] : per === 5 ? [ppDe(1) || ppDe(0)] : pl ? [ppDe(1), ppDe(3)] : [ppDe(0), ppDe(2)];
+        if (per === 4) g.push(ppDe(0), ppDe(2));
+        return [...new Set(g.filter(Boolean))].map((x) => `${a[idx][0]} ${x}`);
+      };
+      const r = CON_ETRE.has(verbo) ? conEtre() : DOBLE_AUX.has(verbo) ? [...conEtre(), ...conAvoir()] : conAvoir();
+      return r.length ? r : null;
+    });
+  } else {
+    const fs = formasSimples(datos, verbo, tiempo); if (!fs) return null;
+    filas = imper ? fs.slice(0, 3) : fs;
+  }
+  return personas.map((per, k) => {
+    const resp = filas[k]; if (!resp) return null;
+    return { persona: per, pronombre: pronombre(datos, verbo, tiempo, per, resp[0]), respuestas: resp };
+  }).filter(Boolean);
+}
+/** Pronombre que se muestra: elisión (j', qu'il) ante vocal o h muda; «que» en subjuntivo; entre paréntesis en imperativo */
+function pronombre(datos, verbo, tiempo, per, forma) {
+  if (tiempo === 'impe' || tiempo === 'impepasse') return `(${PRONOMBRES[per]})`;
+  const v = datos.porVerbo.get(verbo);
+  const vocal = /^[aeiouyàâäéèêëîïôöùûüœ]/i.test(forma) || (/^h/i.test(forma) && !(v && v[5]));   // v[5]: h aspirada (je hais)
+  const subj = tiempo.startsWith('subj');
+  if (per === 0) return `${subj ? 'que ' : ''}${vocal ? "j'" : 'je'}`;
+  if (subj) return `${per === 2 || per === 5 ? (`qu'${PRONOMBRES[per]}`) : `que ${PRONOMBRES[per]}`}`;
+  return PRONOMBRES[per];
+}
+/** Corrige una forma: exacta (sin distinguir mayúsculas ni espacios de más) o «casi» si solo fallan acentos */
+function corregirForma(respuestas, escrito) {
+  const n = (x) => String(x || '').toLowerCase().replace(/[’`´]/g, "'").replace(/\s+/g, ' ').trim();
+  const r = n(escrito);
+  if (!r) return { ok: false, casi: false };
+  if (respuestas.some((x) => n(x) === r)) return { ok: true, casi: false };
+  return { ok: false, casi: respuestas.some((x) => sinAcentos(n(x)) === sinAcentos(r)) };
+}
+/** Prepara los datos de verbos.json para conjugar */
+function prepararVerbos(d) { return { ...d, porVerbo: new Map(d.verbos.map((v) => [v[0], v])) }; }
+
+module.exports = { TIEMPOS_FR, conjugar, corregirForma, prepararVerbos, NIVELES, nivelNum, normalizar, corregir, explicarRespuesta, repasar, valoracion, estadoMateria, elegirEjercicios, estimarNivel, recomendar, compromisos, textoRegla, barajar, slug };
