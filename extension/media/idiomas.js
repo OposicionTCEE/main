@@ -1014,7 +1014,7 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
     const tmp = document.createElement('div');
     const tarjetas = fichas.map((f) => {
       const a = X.anotaciones[f.id], m = materia(l, f.id) || {};
-      tmp.innerHTML = cuerpoFicha(f, l);
+      tmp.innerHTML = f.formato === 'conjugacion' ? cuerpoConjugacion(f) : cuerpoFicha(f, l);
       const items = [];
       if (a.texto) items.push(`<div class="idi-lb-item"><div class="idi-lb-sec">📝 Nota general</div><div class="idi-recuadro c-amarillo"><p>${esc(a.texto)}</p></div></div>`);
       for (const mk of a.marcas || []) {
@@ -1052,14 +1052,66 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
         <aside class="idi-pr-ficha">
           <div class="idi-pr-ficha-cab"><button id="idi-vplegar" title="${plegada ? 'Desplegar las fichas' : 'Plegar las fichas'}">${plegada ? '▶' : '◀'}</button>
             ${plegada ? '<span class="idi-vertical">Fichas de conjugación</span>' : `<div class="idi-vtabs">${fichas.map((f, j) => `<button class="${j === (c.ficha || 0) ? 'activo' : ''}" data-vficha="${j}">${esc(f.titulo_es.replace(/^Verbos del? /, '').replace(/\s*\(.*\)$/, ''))}</button>`).join('')}</div>`}</div>
-          ${plegada || !fi ? '' : `<div class="idi-pr-ficha-cuerpo"><h3>${esc(fi.titulo)}</h3><p class="idi-ficha-sub">${esc(fi.titulo_es)}</p>${cuerpoFicha(fi, 'fr', { compacta: true })}</div>`}
+          ${plegada || !fi ? '' : `<div class="idi-pr-ficha-cuerpo"><h3>${esc(fi.titulo)}</h3><p class="idi-ficha-sub">${esc(fi.titulo_es)}</p>${fi.formato === 'conjugacion' ? cuerpoConjugacion(fi) : cuerpoFicha(fi, 'fr', { compacta: true })}</div>`}
         </aside>
         <section class="idi-pr-ej" id="idi-vzona"></section></div></div>`;
     vistaEl.querySelector('#idi-volver').onclick = () => { VB.ses = null; ir('inicio'); };
     vistaEl.querySelector('#idi-vplegar').onclick = () => { st().idiVerbPlegada = !plegada; ctx.guardar(); pVerbos(); };
     vistaEl.querySelectorAll('[data-vficha]').forEach((b) => b.onclick = () => { c.ficha = Number(b.dataset.vficha); ctx.guardar(); pVerbos(); });
-    if (!plegada && fi) enlazarFicha(vistaEl.querySelector('.idi-pr-ficha-cuerpo'), fi, 'fr');
+    if (!plegada && fi) {
+      const cont = vistaEl.querySelector('.idi-pr-ficha-cuerpo');
+      cont.querySelectorAll('[data-vmodelo]').forEach((b) => b.onclick = () => { st().idiVerbModelo = { ...(st().idiVerbModelo || {}), [fi.id]: Number(b.dataset.vmodelo) }; ctx.guardar(); pVerbos(); });
+      enlazarFicha(cont, fi, 'fr');
+    }
     if (VB.ses) pintarEjercicioVerbo(); else pintarConfVerbos();
+  }
+
+  // Ficha de conjugación (diseño «por modos»): cabecera breve, pestañas de verbos modelo y, por modo, las tablas de todos los tiempos
+  const MODOS_V = [['Indicatif', 'Indicativo', 'iB', ['pres', 'imp', 'ps', 'fut', 'pc', 'pqp', 'pant', 'fant', 'fproche']], ['Conditionnel', 'Condicional', 'iok', ['cond', 'condpasse']],
+    ['Subjonctif', 'Subjuntivo', 'iC', ['subj', 'subjimp', 'subjpasse', 'subjpqp']], ['Impératif', 'Imperativo', 'iaviso', ['impe', 'impepasse']]];
+  const NOMBRE_T = { pres: 'Présent', imp: 'Imparfait', ps: 'Passé simple', fut: 'Futur simple', pc: 'Passé composé', pqp: 'Plus-que-parfait', pant: 'Passé antérieur',
+    fant: 'Futur antérieur', fproche: 'Futur proche', cond: 'Présent', condpasse: 'Passé', subj: 'Présent', subjimp: 'Imparfait', subjpasse: 'Passé', subjpqp: 'Plus-que-parfait', impe: 'Présent', impepasse: 'Passé' };
+  const negrita = (t) => esc(t).replace(/«([^»]+)»/g, '<b>$1</b>');
+  /** «suis parti / partie» → «suis parti(e)»; «sommes partis / parties» → «sommes parti(e)s» */
+  function compactar(formas) {
+    if (formas.length < 2) return formas[0] || '';
+    const pref = formas[0].includes(' ') ? formas[0].slice(0, formas[0].lastIndexOf(' ') + 1) : '';
+    if (!formas.every((f) => f.startsWith(pref))) return formas.join(' / ');
+    const fin = formas.map((f) => f.slice(pref.length));
+    const base = fin.map((f) => f.replace(/e?s?$/, '')).reduce((a, b) => (b.length < a.length ? b : a));
+    if (!fin.every((f) => f.replace(/e?s?$/, '') === base || f === base)) return formas.join(' / ');
+    const conE = fin.some((f) => /es?$/.test(f.slice(base.length))), todasS = fin.every((f) => /s$/.test(f.slice(base.length))), algunaS = fin.some((f) => /s$/.test(f.slice(base.length)));
+    return `${pref}${base}${conE ? '(e)' : ''}${todasS ? 's' : algunaS ? '(s)' : ''}`;
+  }
+  /** Forma con la raíz en gris y la terminación en color; en compuestos, el auxiliar en otro color */
+  function formaColor(f, raiz) {
+    const i = f.lastIndexOf(' ');
+    const aux = i > 0 ? f.slice(0, i + 1) : '', resto = i > 0 ? f.slice(i + 1) : f;
+    const r = raiz && resto.startsWith(raiz) ? raiz : '';
+    return `${aux ? `<span class="idi-vaux">${esc(aux)}</span>` : ''}${r ? `<span class="idi-vraiz">${esc(r)}</span>` : ''}<b class="idi-vterm">${esc(resto.slice(r.length))}</b>`;
+  }
+  function cuerpoConjugacion(fc) {
+    const P = (VB.info && VB.info.paradigmas) || {};
+    const idx = Math.min(((st().idiVerbModelo || {})[fc.id]) || 0, (fc.modelos || []).length - 1);
+    const mod = (fc.modelos || [])[idx] || {}, par = P[mod.verbo];
+    const tabs = (fc.modelos || []).length > 1 ? `<div class="idi-vmodelos">${fc.modelos.map((m, j) => `<button class="${j === idx ? 'activo' : ''}" data-vmodelo="${j}">${esc(m.verbo)}</button>`).join('')}</div>` : '';
+    const tabla = (k) => {
+      const filas = par.tiempos[k] || []; if (!filas.length) return '';
+      return `<div class="idi-vt" data-k="t-${k}"><h5>${esc(NOMBRE_T[k])}</h5>${filas.map((x) => `<div class="idi-vt-f"><span class="idi-vt-p">${esc(x.pronombre)}</span><span>${formaColor(compactar(x.formas), par.raiz)}</span></div>`).join('')}
+        ${(fc.notas || {})[k] ? `<div class="idi-vt-nota" data-k="n-${k}">${negrita(fc.notas[k])}</div>` : ''}</div>`;
+    };
+    return `<ul class="idi-vcab" data-k="cab">${(fc.cabecera || []).map((c) => `<li>${negrita(c)}</li>`).join('')}</ul>
+      ${tabs}
+      ${par ? `<div class="idi-vmodelo-cab"><b>${esc(par.verbo)}</b> <span class="apagado">${esc(par.trad || '')}</span>
+          <span class="idi-vchipaux" title="Auxiliar de los tiempos compuestos">aux. ${esc(par.auxiliar)}</span>
+          ${mod.nota ? `<div class="idi-mini apagado" data-k="mn">${negrita(mod.nota)}</div>` : ''}</div>
+        ${MODOS_V.map(([m, es, color, ks]) => `<section class="idi-vbloque" style="--mc:var(--${color})"><h4>${m} <small>${es}</small></h4><div class="idi-vrejilla">${ks.map(tabla).join('')}</div></section>`).join('')}
+        <div class="idi-vt-nota" data-k="part"><b>Participes:</b> présent <b>${esc(par.participios.presente)}</b> · passé <b>${esc(par.participios.pasado.join(', '))}</b></div>`
+    : '<p class="apagado">Falta la base de verbos.</p>'}
+      ${(fc.notas_finales || []).map((n, j) => `<div class="idi-vt-nota" data-k="nf${j}">${negrita(n)}</div>`).join('')}
+      ${(fc.extra || []).map((e, j) => `<details class="idi-sec s-material" ${j === 0 ? 'open' : ''}><summary><span class="idi-sec-ico">📌</span>${esc(e.titulo || '')}</summary><div class="idi-sec-cuerpo" data-k="x${j}">
+        ${e.tipo === 'tabla' ? `<div class="idi-tabla-env"><table class="idi-tabla"><thead><tr>${(e.cabecera || []).map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${(e.filas || []).map((r) => `<tr>${r.map((c) => `<td>${negrita(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`
+          : `<ul class="idi-lista">${(e.items || []).map((x) => `<li>${negrita(x)}</li>`).join('')}</ul>`}</div></details>`).join('')}`;
   }
 
   function pintarConfVerbos() {
@@ -1124,7 +1176,13 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
   function pintarEjercicioVerbo() {
     const S2 = VB.ses, it = S2.items[VB.i], total = S2.items.length;
     const c = confVerbos(), fd = fichaPara(it);
-    if (!st().idiVerbPlegada && c.ficha !== fd && VB.fichaAuto !== `${VB.i}`) { VB.fichaAuto = `${VB.i}`; c.ficha = fd; return pVerbos(); }
+    if (!st().idiVerbPlegada && VB.fichaAuto !== `${VB.i}`) {
+      VB.fichaAuto = `${VB.i}`;
+      const fc = (VB.info.fichas || [])[fd]; const jm = fc ? (fc.modelos || []).findIndex((m) => m.verbo === it.verbo) : -1;
+      const cambia = c.ficha !== fd || (jm >= 0 && ((st().idiVerbModelo || {})[fc.id] || 0) !== jm);
+      if (jm >= 0) st().idiVerbModelo = { ...(st().idiVerbModelo || {}), [fc.id]: jm };
+      if (cambia) { c.ficha = fd; return pVerbos(); }
+    }
     const z = vistaEl.querySelector('#idi-vzona');
     const cab = `<div class="idi-pr-cab"><span class="idi-pr-tipo">${S2.modo === 'tabla' ? 'Tabla' : 'Mezcla'} · ${VB.i + 1} de ${total}</span>
       <span class="apagado">⏱ ${reloj((Date.now() - VB.t0) / 1000)}</span><button id="idi-vsalir">Terminar</button></div>
