@@ -351,7 +351,10 @@ function crearIdiomas({ raiz, globalState }) {
     const debiles = Object.entries(st).filter(([, x]) => x.i >= 2 && x.a / x.i < 0.8).sort((a, b) => a[1].a / a[1].i - b[1].a / b[1].i).slice(0, 8)
       .map(([k, x]) => { const [verbo, tiempo] = k.split('|'); return { verbo, tiempo, pct: Math.round((100 * x.a) / x.i), i: x.i }; });
     const practicadas = Object.values(st).reduce((a, x) => a + x.i, 0);
-    return { tiempos: I.TIEMPOS_FR, fichas: fichasConjugacion(), total: d.verbos.length, debiles, practicadas,
+    const fichas = fichasConjugacion();
+    const paradigmas = {};
+    for (const fc of fichas) for (const m of fc.modelos || []) if (!paradigmas[m.verbo]) { const p = I.paradigma(d, m.verbo); if (p) paradigmas[m.verbo] = { ...p, trad: traduccion(m.verbo) }; }
+    return { tiempos: I.TIEMPOS_FR, fichas, paradigmas, total: d.verbos.length, debiles, practicadas,
       grupos: [1, 2, 3].map((g) => d.verbos.filter((v) => v[3] === g).length) };
   }
   function verbosBuscar({ q }) {

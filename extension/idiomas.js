@@ -191,12 +191,12 @@ function explicarRespuesta(ej, respuesta) {
 // ------------------------------------------------------------------ Conjugación francesa (entrenador de verbos; datos de Verbiste en idiomas/fr/verbos.json)
 const TIEMPOS_FR = [
   ['pres', 'Indicatif', 'Présent'], ['imp', 'Indicatif', 'Imparfait'], ['ps', 'Indicatif', 'Passé simple'], ['fut', 'Indicatif', 'Futur simple'],
-  ['pc', 'Indicatif', 'Passé composé'], ['pqp', 'Indicatif', 'Plus-que-parfait'], ['fproche', 'Indicatif', 'Futur proche'], ['fant', 'Indicatif', 'Futur antérieur'],
+  ['pc', 'Indicatif', 'Passé composé'], ['pqp', 'Indicatif', 'Plus-que-parfait'], ['pant', 'Indicatif', 'Passé antérieur'], ['fant', 'Indicatif', 'Futur antérieur'], ['fproche', 'Indicatif', 'Futur proche'],
   ['subj', 'Subjonctif', 'Présent'], ['subjimp', 'Subjonctif', 'Imparfait'], ['subjpasse', 'Subjonctif', 'Passé'], ['subjpqp', 'Subjonctif', 'Plus-que-parfait'],
   ['cond', 'Conditionnel', 'Présent'], ['condpasse', 'Conditionnel', 'Passé'],
   ['impe', 'Impératif', 'Présent'], ['impepasse', 'Impératif', 'Passé'],
 ];
-const AUX_DE = { pc: 'pres', pqp: 'imp', fant: 'fut', subjpasse: 'subj', subjpqp: 'subjimp', condpasse: 'cond', impepasse: 'impe' };
+const AUX_DE = { pc: 'pres', pqp: 'imp', pant: 'ps', fant: 'fut', subjpasse: 'subj', subjpqp: 'subjimp', condpasse: 'cond', impepasse: 'impe' };
 const CON_ETRE = new Set('aller arriver venir devenir revenir parvenir intervenir survenir advenir provenir redevenir partir repartir rester tomber retomber naître renaître mourir décéder'.split(' '));
 const DOBLE_AUX = new Set('descendre redescendre monter remonter sortir ressortir passer repasser rentrer retourner entrer apparaître demeurer ressusciter'.split(' '));
 const PRONOMBRES = ['je', 'tu', 'il', 'nous', 'vous', 'ils'];
@@ -265,7 +265,16 @@ function corregirForma(respuestas, escrito) {
   if (respuestas.some((x) => n(x) === r)) return { ok: true, casi: false };
   return { ok: false, casi: respuestas.some((x) => sinAcentos(n(x)) === sinAcentos(r)) };
 }
+/** Paradigma completo de un verbo para las fichas de consulta: todos los tiempos, raíz y participios */
+function paradigma(datos, verbo) {
+  const v = datos.porVerbo.get(verbo); if (!v) return null;
+  const tiempos = {};
+  for (const [k] of TIEMPOS_FR) tiempos[k] = (conjugar(datos, verbo, k) || []).map((x) => ({ pronombre: x.pronombre, formas: x.respuestas }));
+  const pp = formasSimples(datos, verbo, 'pp') || [], ppres = formasSimples(datos, verbo, 'ppres') || [];
+  return { verbo, raiz: v[1], grupo: v[3], tiempos, participios: { presente: (ppres[0] || [])[0] || '', pasado: pp.map((x) => (x ? x[0] : null)).filter(Boolean) },
+    auxiliar: CON_ETRE.has(verbo) ? 'être' : DOBLE_AUX.has(verbo) ? 'être / avoir' : 'avoir' };
+}
 /** Prepara los datos de verbos.json para conjugar */
 function prepararVerbos(d) { return { ...d, porVerbo: new Map(d.verbos.map((v) => [v[0], v])) }; }
 
-module.exports = { TIEMPOS_FR, conjugar, corregirForma, prepararVerbos, NIVELES, nivelNum, normalizar, corregir, explicarRespuesta, repasar, valoracion, estadoMateria, elegirEjercicios, estimarNivel, recomendar, compromisos, textoRegla, barajar, slug };
+module.exports = { TIEMPOS_FR, conjugar, paradigma, corregirForma, prepararVerbos, NIVELES, nivelNum, normalizar, corregir, explicarRespuesta, repasar, valoracion, estadoMateria, elegirEjercicios, estimarNivel, recomendar, compromisos, textoRegla, barajar, slug };

@@ -198,6 +198,10 @@ Al escribirlas se revisaron de nuevo todas las fichas: unas 90 correcciones (res
   - Izquierda, plegable: cinco fichas de consulta (`idiomas/fr/conjugacion/`: grupo1, grupo2, grupo3, irregulares, compuestos), con el
     formato de las fichas (sin ejercicios), subrayables y anotables; se abre sola la del grupo del verbo o la de compuestos.
     Las formas de sus tablas se generaron y comprobaron con Verbiste; pouvoir: «pu» invariable (Verbiste da «pue»).
+  - v0.35: las fichas de conjugación tienen formato propio (`"formato": "conjugacion"`: cabecera de 2–4 viñetas, `modelos` con pestañas,
+    `notas` por tiempo bajo su tabla, `notas_finales`, `extra`). El panel genera con Verbiste las tablas de TODOS los tiempos del verbo
+    modelo (también passé antérieur, compuestos y futur proche), agrupadas por modos con su color; raíz en gris, terminación en naranja,
+    auxiliar en azul; «parti(e)s» cuando hay concordancia. Sin ejemplos ni errores típicos. Encargo: `encargos/fichas_conjugacion_v2.md`.
 
 ## Búsqueda por significado: opciones (pendiente, 7/10/2026)
 
