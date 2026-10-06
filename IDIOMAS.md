@@ -34,8 +34,8 @@ Mantener este documento y el código a la vez.
 
 | Fase | Contenido | Estado |
 |---|---|---|
-| 0 | Repositorio `idiomas`, este documento, *Sincronizar* lo descarga, tarea «Descargar fuentes de idiomas» | En curso |
-| 1 | Perfil, Ajustes, compromisos; índice A1→C2; fichas de gramática y ejercicios con respuesta fija; léxico; sesiones Gramática, Léxico, Repaso y Al azar; mapa de materias, cuaderno de errores, repaso y primer ajuste de nivel | En curso |
+| 0 | Repositorio `idiomas`, este documento, *Sincronizar* lo descarga, tarea «Descargar fuentes de idiomas» | Hecha (6/10/2026) |
+| 1 | Perfil, Ajustes, compromisos; índice A1→C2; fichas de gramática y ejercicios con respuesta fija; léxico; sesiones Gramática, Léxico, Repaso y Al azar; mapa de materias, cuaderno de errores, repaso y primer ajuste de nivel | Hecha (v0.30) |
 | 2 | Biblioteca de textos (nivel, tema, palabras clave), longitud flexible, Escucha (voz del Mac), Escrito (plantillas y rúbrica, LanguageTool y modelo local), instalador de Ollama | Pendiente |
 | 3 | Oral (whisper, métricas), tribunal (preguntas con voz), sesión tipo examen, vídeo | Pendiente |
 | 4 | Descarga semanal de medios de pago; informe de progreso opcional en «Rehacer informes» | Pendiente |
@@ -86,3 +86,57 @@ repaso.json        estado del repaso de cada ficha (ts-fsrs)
 errores.json       cuaderno de errores: frase, corrección, ficha, fecha, veces
 escritos/, audio/  lo que el usuario escribe y graba (fases 2–3)
 ```
+
+## Estado del paquete (fase 1, 6 de octubre de 2026)
+
+- Índice: 140 materias de francés y 125 de inglés (`scripts/idiomas/indice.py`).
+- 232 fichas con 4.198 respuestas aceptadas en sus ejercicios:
+  - **Francés:** gramática A1–C2 (73 adaptadas de Tex's French Grammar con frases de Tatoeba, más 13 propias de B2–C2) y léxico A1–C2 (38).
+  - **Inglés:** gramática A1–C2 (70) y léxico A1–C2 (39).
+- Fonética y destrezas aún sin ficha (fases 2–3): en el mapa salen como «ficha en preparación».
+- Las fichas las escribieron varios agentes de Claude con el encargo de `scripts/idiomas/encargos/`. Un **segundo análisis independiente**
+  revisó todos los ejercicios: 177 cambios, la mayoría respuestas válidas que faltaban y opciones ambiguas.
+  Las dudas de norma frente a uso (après que + indicativo, «des bons amis»…) se resolvieron enseñando la norma y avisándolo en la explicación.
+- Comprobación automática: `scripts/idiomas/validar_fichas.py <carpeta idiomas>` (formato, niveles, una sola laguna por hueco, respuesta entre las opciones,
+  palabras de «ordenar»…). Además, cada respuesta aceptada pasa el corrector del panel (`corregir` en `extension/idiomas.js`).
+- Pendiente para la fase 2: usar EFLLex/FLELex (`TCEE/.fuentes-idiomas/cefrlex/`) para medir la dificultad de los textos y el nivel del vocabulario usado.
+
+## Formato de las fichas
+
+Ver `scripts/idiomas/encargos/fichas_comun.md`. Resumen: `id`, `titulo`, `titulo_es`, `descripcion_es`, `nivel`, `resumen`,
+`explicacion` (bloques texto/tabla/lista, en español), `ejemplos` (frase + traducción), `errores_hispanohablantes` (mal/bien/nota),
+`ejercicios` (12–16: hueco, eleccion, transformar, corregir, ordenar; todas las respuestas válidas en `respuestas`; `origen` si viene de Tatoeba)
+y `fuente`.
+
+## Cómo funciona la pestaña (fase 1)
+
+Código: `extension/idiomas.js` (lógica sin VS Code), `extension/idiomasPanel.js` (datos) y `extension/media/idiomas.js` (pantalla).
+Para el repaso se usa ts-fsrs, copiado en `extension/lib/ts-fsrs.cjs` (MIT).
+
+- **Corrección** (`corregir`):
+  - Se comparan minúsculas, sin comas ni punto final, con apóstrofos y comillas unificados.
+  - Los acentos cuentan; si solo fallan los acentos, el aviso dice «Casi», pero se cuenta como fallo.
+  - Las respuestas nunca se mandan a la pantalla: se corrige en la extensión.
+- **Elección de ejercicios:** primero los fallados (cuaderno de errores), luego los no vistos y luego los vistos hace más tiempo.
+- **Repaso:**
+  - Cada ficha trabajada recibe una fecha de repaso (ts-fsrs, sin pasos intradía).
+  - La nota de la sesión se convierte en valoración: ≥ 90 % fácil, ≥ 70 % bien, ≥ 50 % difícil y, por debajo, otra vez.
+- **Estado de una materia:**
+  - *nueva*;
+  - *aprendiendo*;
+  - *dominada*: media ≥ 0,8 en las 3 últimas notas y al menos 2 sesiones;
+  - *para repasar*: repaso vencido.
+- **Recomendación** («Gramática», «Léxico», «Al azar»), en este orden:
+  1. repasos vencidos;
+  2. materias flojas;
+  3. nuevas del nivel indicado;
+  4. nuevas del nivel inferior (para no dejar huecos);
+  5. nuevas del superior.
+- **Nivel estimado** (por bloque):
+  - Es el nivel más alto con media ≥ 0,75 en al menos 3 materias, sin niveles inferiores por debajo de 0,6.
+  - Si no coincide con el indicado, aparece un aviso con el botón «Cambiar mi nivel».
+  - Las materias flojas de niveles inferiores salen antes.
+- **Compromisos:**
+  - Cada regla mide su periodo: el día, la semana o el bloque de N semanas contado desde que se creó.
+  - Con minutos, se cumple al llegar a esos minutos; sin minutos, con una sesión.
+  - Si la regla tiene días fijados, «toca hoy» solo en esos días.
