@@ -267,6 +267,8 @@ en la pantalla principal, decisión del usuario del 7/10/2026) y comparten corre
 ### Herramientas locales (`extension/idiomasHerramientas.js`)
 - Instalación: botón *Instalar herramientas* en Ajustes de Idiomas, que abre un terminal con `scripts/idiomas/instalar_herramientas.sh`
   (Homebrew: `languagetool` con su Java, `ollama`, modelo `qwen2.5:3b` de 1,9 GB; comprueba ffmpeg, whisper y las voces). Sin tarea de VS Code.
+  Si `ollama pull` falla («no such host», 7/10/2026 en el Mac del usuario), el script arranca un servidor limpio y, si sigue fallando,
+  baja el mismo modelo en GGUF de Hugging Face (Qwen2.5-3B-Instruct Q4_K_M, 2,1 GB) y lo registra en Ollama con `ollama create`.
 - LanguageTool (puerto 8081) y Ollama (11434) se arrancan solo al corregir, **de uno en uno** (al arrancar uno se para el otro) y se paran
   tras 8 minutos sin uso; el modelo se descarga de la memoria a los 4 minutos (Mac de 8 GB).
 

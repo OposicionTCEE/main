@@ -31,19 +31,45 @@ instalar languagetool "LanguageTool"
 echo "== 3/5 Ollama (modelo de lenguaje local)"
 instalar ollama "Ollama"
 
-echo "== 4/5 Modelo $MODELO (~1,9 GB)"
+echo "== 4/5 Modelo $MODELO (~2 GB)"
+GGUF_URL="https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-GGUF/resolve/main/qwen2.5-3b-instruct-q4_k_m.gguf"
+servidor() {   # arranca un «ollama serve» propio y limpio (el de Homebrew o uno antiguo a veces no resuelve nombres de internet)
+  pkill -f "ollama serve" 2>/dev/null; "$BREW" services stop ollama >/dev/null 2>&1; sleep 1
+  GODEBUG=netdns=cgo OLLAMA_HOST=127.0.0.1:11434 OLLAMA_KEEP_ALIVE=1m "$BIN/ollama" serve >/tmp/tcee-ollama.log 2>&1 &
+  SERVIDOR=$!
+  for i in $(seq 1 30); do curl -s -m 1 http://127.0.0.1:11434/api/tags >/dev/null && return 0; sleep 1; done
+  echo "❌ Ollama no arranca. Copia a Claude estas líneas:"; tail -5 /tmp/tcee-ollama.log; return 1
+}
 if "$BIN/ollama" list 2>/dev/null | grep -q "^${MODELO}"; then
   echo "✓ Ya descargado"
 else
-  ARRANCADO=""
-  if ! curl -s -m 2 http://127.0.0.1:11434/api/tags >/dev/null; then
-    OLLAMA_KEEP_ALIVE=1m "$BIN/ollama" serve >/dev/null 2>&1 &
-    ARRANCADO=$!
-    for i in $(seq 1 30); do curl -s -m 1 http://127.0.0.1:11434/api/tags >/dev/null && break; sleep 1; done
+  servidor || exit 1
+  echo "Descargando el modelo desde Ollama…"
+  if "$BIN/ollama" pull "$MODELO"; then
+    echo "✓ Modelo descargado"
+  else
+    # plan B: el mismo modelo (Qwen2.5 3B Instruct, cuantizado Q4_K_M) desde Hugging Face, con curl, y se registra en Ollama con su nombre
+    echo "La descarga desde Ollama ha fallado (suele ser un problema de nombres de dominio con el servidor de Ollama)."
+    echo "Plan B: lo descargo de Hugging Face (2,1 GB; si se corta, repite la instalación y continuará donde lo dejó)…"
+    DIR="$HOME/.tcee/modelos"; mkdir -p "$DIR"; F="$DIR/qwen2.5-3b-instruct-q4_k_m.gguf"
+    curl -L --fail --progress-bar -C - -o "$F.part" "$GGUF_URL" && mv "$F.part" "$F" || { echo "❌ La descarga de Hugging Face también ha fallado. Copia a Claude lo que pone arriba."; kill $SERVIDOR 2>/dev/null; exit 1; }
+    cat > "$DIR/Modelfile-qwen" <<'MODELFILE'
+FROM ./qwen2.5-3b-instruct-q4_k_m.gguf
+TEMPLATE """{{- if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}{{- range .Messages }}<|im_start|>{{ .Role }}
+{{ .Content }}<|im_end|>
+{{ end }}<|im_start|>assistant
+"""
+PARAMETER stop "<|im_start|>"
+PARAMETER stop "<|im_end|>"
+MODELFILE
+    echo "Registrando el modelo en Ollama…"
+    (cd "$DIR" && "$BIN/ollama" create "$MODELO" -f Modelfile-qwen) || { echo "❌ No se pudo registrar el modelo. Copia a Claude lo que pone arriba."; kill $SERVIDOR 2>/dev/null; exit 1; }
+    rm -f "$F" "$DIR/Modelfile-qwen"   # Ollama ya guardó su copia: se borra la descargada para no ocupar 2 GB de más
+    echo "✓ Modelo instalado (desde Hugging Face)"
   fi
-  echo "Descargando el modelo (si se corta, repite la instalación y continuará donde lo dejó)…"
-  "$BIN/ollama" pull "$MODELO" || { echo "❌ La descarga del modelo falló. Repite la instalación."; [ -n "$ARRANCADO" ] && kill "$ARRANCADO"; exit 1; }
-  [ -n "$ARRANCADO" ] && kill "$ARRANCADO" 2>/dev/null
+  kill $SERVIDOR 2>/dev/null
 fi
 
 echo "== 5/5 Grabación, transcripción y voces"
