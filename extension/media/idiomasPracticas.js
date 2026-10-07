@@ -28,6 +28,7 @@
       } else if (m.tipo === 'idiPProgreso') { const e = esperas.get(m.clave); if (e && e.alProgreso) e.alProgreso(m.texto); }
       else if (m.tipo === 'idiOral') { O.estado = m.estado; alEstadoOral(); }
       else if (m.tipo === 'idiClaseEstado') alEstadoClase(m.estado);
+      else if (m.tipo === 'idiVoz') recibirVoz(m);
     }
     const fallo = (e) => A.aviso(String(e.message || e), true);
     const P = { modo: 'lectura' };    // estado de las vistas de esta parte
@@ -41,43 +42,101 @@
     const conReloj = (fn) => { clearInterval(tic); tic = setInterval(fn, 1000); };
     function parar() { clearInterval(tic); tic = null; Lector.parar(); clearInterval(O.sondeo); O.sondeo = null; if (typeof K !== 'undefined') { clearInterval(K.sondeo); K.sondeo = null; } }
 
-    // ================================================================== voz del Mac (speechSynthesis, frase a frase)
+    // ================================================================== voz: neuronal (Piper, si está instalada) o la del sistema, frase a frase
+    const NV = { info: null, elegida: {}, fallo: false, handlers: new Map() };   // elegida: voz del texto en curso, por lengua
+    const confVoz = () => { const t = (A.st().idiVoz = A.st().idiVoz || {}); t[l()] = { motor: 'piper', voz: 'azar', velocidad: 0.95, ...(t[l()] || {}) }; return t[l()]; };
+    const usarPiper = () => !NV.fallo && confVoz().motor !== 'mac' && NV.info && NV.info.disponible && NV.info.voces.some((v) => v.lengua === l());
+    async function cargarVoces() { try { NV.info = await pedir('idiPVoces'); } catch (e) { NV.info = { disponible: false, voces: [] }; } return NV.info; }
+    /** Pide a la extensión el audio de unas frases con la voz del texto en curso (la elige al azar la primera vez) */
+    async function vozPiper(frases) {
+      const c = confVoz(), el = NV.elegida[l()];
+      const voz = c.voz !== 'azar' ? c.voz : el ? el.voz : 'azar';
+      const { voz: r } = await pedir('idiPVoz', { lengua: l(), frases, voz, hablante: el && el.voz === voz ? el.hablante : undefined, velocidad: c.velocidad || 0.95 });
+      NV.elegida[l()] = { voz: r.voz, hablante: r.hablante, nombre: r.nombre };
+      return r;
+    }
+    function falloVoz(msg) { NV.fallo = true; A.aviso(`Voz neuronal: ${msg}. Uso la voz del sistema.`, true); }
+    function recibirVoz(m) { const h = NV.handlers.get(m.clave); if (h) h(m); }
+
     const Lector = {
-      frases: [], i: 0, activo: false, alCambiar: null,
+      frases: [], i: 0, activo: false, alCambiar: null, audio: null, prep: null, espera: null,
       voces() { return (window.speechSynthesis ? window.speechSynthesis.getVoices() : []).filter((v) => v.lang && v.lang.replace('_', '-').toLowerCase().startsWith(l())); },
       cargar(parrafos) {
-        this.parar(); this.i = 0;
+        this.parar(); this.i = 0; this.prep = null; NV.elegida[l()] = null;   // cada texto, una voz nueva (si está «al azar»)
         this.frases = [];
         parrafos.forEach((p, k) => String(p).split(/(?<=[.!?…»"”])\s+(?=[A-ZÀ-ÖØ-Þ«"“(0-9])/).forEach((f) => { if (f.trim()) this.frases.push({ t: f.trim(), p: k }); }));
       },
+      /** Una frase suelta (pregunta del tribunal, dictado, ejemplos) */
       hablar(texto, alFin) {
+        if (usarPiper()) {
+          vozPiper([texto]).then((r) => {
+            NV.handlers.set(r.clave, (m) => {
+              if (m.error) { NV.handlers.delete(r.clave); falloVoz(m.error); this.hablar(texto, alFin); return; }
+              if (m.i !== 0) return; NV.handlers.delete(r.clave);
+              this.sonar(m.url, () => alFin && alFin());
+            });
+          }).catch((e) => { falloVoz(e.message); this.hablar(texto, alFin); });
+          return;
+        }
         if (!window.speechSynthesis) { A.aviso('Este VS Code no tiene voz sintética disponible.', true); return; }
         const u = new SpeechSynthesisUtterance(texto);
-        const conf = (A.st().idiVoz || {})[l()] || {};
+        const conf = confVoz();
         u.lang = l() === 'fr' ? 'fr-FR' : 'en-GB';
-        const v = this.voces().find((x) => x.name === conf.nombre) || this.voces().find((x) => /premium|enhanced|mejorada/i.test(x.name)) || this.voces()[0];
+        const v = this.voces().find((x) => x.name === conf.nombreMac) || this.voces().find((x) => /premium|enhanced|mejorada/i.test(x.name)) || this.voces()[0];
         if (v) u.voice = v;
         u.rate = conf.velocidad || 0.95;
         this.u = u;   // se guarda: si no, Chromium puede liberarlo y no llega nunca onend
         u.onend = () => { if (this.u === u) this.u = null; if (alFin) alFin(); }; u.onerror = () => { if (this.u === u) this.u = null; if (alFin) alFin(true); };
         window.speechSynthesis.speak(u);
       },
-      play(desde) {
-        if (desde !== undefined) this.i = desde;
+      sonar(url, alFin) {
+        if (this.audio) { this.audio.onended = null; this.audio.pause(); }
+        const a = new Audio(url); this.audio = a;
+        a.onended = () => { if (this.audio === a) alFin(); };
+        a.onerror = () => { if (this.audio === a) alFin(true); };
+        a.play().catch(() => alFin(true));
+      },
+      async play(desde) {
+        if (desde !== undefined) { this.i = desde; this.cortarAudio(); }
         if (this.i >= this.frases.length) this.i = 0;
-        window.speechSynthesis.cancel(); this.activo = true; this.paso();
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        this.activo = true;
+        if (usarPiper() && !this.prep) {
+          this.notificar();
+          try {
+            const r = await vozPiper(this.frases.map((f) => f.t));
+            this.prep = { clave: r.clave, urls: [], nombre: r.nombre };
+            NV.handlers.set(r.clave, (m) => {
+              if (m.error) { falloVoz(m.error); this.prep = null; if (this.activo) this.paso(); return; }
+              if (!this.prep || this.prep.clave !== r.clave) return;
+              this.prep.urls[m.i] = m.url;
+              if (this.activo && this.espera === m.i) { this.espera = null; this.paso(); }
+            });
+          } catch (e) { falloVoz(e.message); }
+        }
+        this.paso();
       },
       paso() {
         if (!this.activo) return;
         if (this.i >= this.frases.length) { this.activo = false; this.notificar(true); return; }
         this.notificar();
         const yo = this.i;
-        this.hablar(this.frases[yo].t, (err) => { if (!this.activo || this.i !== yo) return; if (err && !this.activo) return; this.i += 1; this.paso(); });
+        const siguiente = (err) => { if (!this.activo || this.i !== yo) return; this.i += 1; this.paso(); };
+        if (this.prep && usarPiper()) {
+          const url = this.prep.urls[yo];
+          if (url) this.sonar(url, siguiente); else this.espera = yo;   // aún se está generando: se espera
+          return;
+        }
+        this.hablar(this.frases[yo].t, siguiente);
       },
-      pausa() { this.activo = false; if (window.speechSynthesis) window.speechSynthesis.cancel(); this.notificar(); },
-      parar() { this.activo = false; if (window.speechSynthesis) window.speechSynthesis.cancel(); },
+      cortarAudio() { if (this.audio) { this.audio.onended = null; this.audio.pause(); this.audio = null; } this.espera = null; },
+      pausa() { this.activo = false; this.cortarAudio(); if (window.speechSynthesis) window.speechSynthesis.cancel(); this.notificar(); },
+      parar() { this.activo = false; this.cortarAudio(); if (window.speechSynthesis) window.speechSynthesis.cancel(); },
+      /** Cambió la voz o la velocidad: se vuelve a generar desde la frase actual */
+      reiniciar(otraVoz) { const a = this.activo; this.pausa(); this.prep = null; if (otraVoz) NV.elegida[l()] = null; if (a) this.play(); else this.notificar(); },
       atras() { const a = this.activo; this.pausa(); this.i = Math.max(0, this.i - 1); if (a) this.play(); else this.notificar(); },
       notificar(fin) { if (this.alCambiar) this.alCambiar(fin); },
+      nombreVoz() { return usarPiper() ? (NV.elegida[l()] ? NV.elegida[l()].nombre : 'voz neuronal al azar') : 'voz del sistema'; },
     };
     if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = () => {};
 
@@ -87,7 +146,7 @@
       vEl().innerHTML = `<div class="idi-p">${cab(modo === 'escucha' ? '🎧 Comprensión auditiva' : '📖 Comprensión lectora',
         `<div class="segmentos idi-p-modos"><button data-modo="lectura" class="${modo === 'lectura' ? 'activo' : ''}">📖 Comprensión lectora</button><button data-modo="escucha" class="${modo === 'escucha' ? 'activo' : ''}">🎧 Comprensión auditiva</button></div>`)}
         <p class="ayuda">${modo === 'escucha'
-    ? 'Como en el examen escrito: la voz del Mac te lee el texto (no lo ves), tomas notas y luego escribes el resumen en la lengua del texto. Después puedes contestar preguntas, hacer un dictado y ver el texto.'
+    ? 'Como en el examen escrito: una voz te lee el texto (no lo ves), tomas notas y luego escribes el resumen en la lengua del texto. Después puedes contestar preguntas, hacer un dictado y ver el texto.'
     : 'Lees el texto, tomas notas y escribes un resumen en la lengua del texto. Después puedes contestar preguntas de comprensión y repasar el vocabulario.'}</p>
         <div id="idi-bib"><p class="apagado">Cargando la biblioteca…</p></div>${modo === 'escucha' ? cajaMedios() : ''}</div>`;
       enlazarVolver(vEl()); enlazarUrls(vEl());
@@ -226,13 +285,14 @@
 
     function eEscuchar(z) {
       const T = P.T, x = T.texto;
-      const conf = ((A.st().idiVoz = A.st().idiVoz || {})[l()] = (A.st().idiVoz[l()] || { velocidad: 0.95 }));
+      const conf = confVoz();
       const voces = Lector.voces();
+      const neuronales = ((NV.info && NV.info.voces) || []).filter((v) => v.lengua === l());
       z.innerHTML = `<div class="idi-p-dos">
         <section class="idi-caja idi-reproductor">
           <h3>🎧 Escucha el texto</h3>
           <p class="ayuda">En el examen te lo leen una vez, hasta 15 minutos. Puedes escucharlo las veces que quieras, pero intenta hacerlo como en el examen.</p>
-          ${x.audio ? `<div class="segmentos"><button data-fuente="voz" class="${T.audioOriginal ? '' : 'activo'}">Voz del Mac</button><button data-fuente="original" class="${T.audioOriginal ? 'activo' : ''}">Audio original (VOA)</button></div>` : ''}
+          ${x.audio ? `<div class="segmentos"><button data-fuente="voz" class="${T.audioOriginal ? '' : 'activo'}">Voz sintética</button><button data-fuente="original" class="${T.audioOriginal ? 'activo' : ''}">Audio original (VOA)</button></div>` : ''}
           <div id="idi-rep"></div>
           <p class="idi-acciones"><button class="primario" data-seguir>He terminado de escuchar →</button></p></section>
         <div>${notasHtml(T, 'Toma notas mientras escuchas: ideas, cifras, nombres, conectores…')}</div></div>`;
@@ -244,25 +304,36 @@
         rep.innerHTML = `<audio controls preload="none" src="${esc(x.audio)}" style="width:100%"></audio><p class="idi-mini apagado">Audio de VOA Learning English (dominio público). Necesita conexión a internet.</p>`;
         return;
       }
-      if (!window.speechSynthesis) { rep.innerHTML = '<p class="idi-aviso">No hay voz sintética disponible en este VS Code.</p>'; return; }
+      if (!window.speechSynthesis && !neuronales.length) { rep.innerHTML = '<p class="idi-aviso">No hay voz sintética disponible: instala las voces neuronales en ⚙ Ajustes › Instalar herramientas.</p>'; return; }
+      const valorVoz = conf.motor === 'mac' ? `mac:${conf.nombreMac || ''}` : `piper:${conf.voz || 'azar'}`;
       rep.innerHTML = `<div class="idi-rep-mandos"><button data-atras title="Frase anterior">⏮</button><button class="primario grande" data-play>▶ Escuchar</button></div>
         <div class="idi-rep-barra"><i style="width:0%"></i></div><p class="idi-mini apagado centro" id="idi-rep-pos"></p>
         <div class="idi-form idi-rep-conf">
-          <label>Voz <select data-voz>${voces.map((v) => `<option ${v.name === conf.nombre ? 'selected' : ''}>${esc(v.name)}</option>`).join('') || '<option>(la del sistema)</option>'}</select></label>
+          <label>Voz <select data-voz>${neuronales.length ? `<optgroup label="Voces neuronales (Piper)"><option value="piper:azar">Al azar (una distinta en cada texto)</option>${neuronales.map((v) => `<option value="piper:${esc(v.id)}">${esc(v.nombre)}</option>`).join('')}</optgroup>` : ''}
+            <optgroup label="Voces del sistema">${voces.map((v) => `<option value="mac:${esc(v.name)}">${esc(v.name)}</option>`).join('') || '<option value="mac:">La del sistema</option>'}</optgroup></select></label>
           <label>Velocidad <select data-vel>${[0.8, 0.85, 0.9, 0.95, 1, 1.05, 1.1].map((v) => `<option value="${v}" ${Number(conf.velocidad) === v ? 'selected' : ''}>${v === 1 ? 'normal' : `× ${v}`}</option>`).join('')}</select></label></div>
-        <p class="idi-mini apagado">Voces más naturales: Ajustes del Sistema › Accesibilidad › Contenido leído › Voz del sistema › Gestionar voces (por ejemplo, las «mejoradas» o «premium»).</p>`;
+        <p class="idi-mini" id="idi-voz-actual"></p>
+        ${neuronales.length ? '' : '<p class="idi-mini apagado">Voces más naturales: instala las voces neuronales en ⚙ Ajustes › Instalar herramientas.</p>'}`;
+      const sv = rep.querySelector('[data-voz]'); sv.value = [...sv.options].some((o) => o.value === valorVoz) ? valorVoz : sv.options[0].value;
       const pos = rep.querySelector('#idi-rep-pos'), barra = rep.querySelector('.idi-rep-barra i'), play = rep.querySelector('[data-play]');
       Lector.alCambiar = (fin) => {
         const n = Lector.frases.length; barra.style.width = `${Math.round((100 * Lector.i) / Math.max(1, n))}%`;
         pos.textContent = fin ? 'Fin del texto.' : `Frase ${Math.min(Lector.i + 1, n)} de ${n} · párrafo ${((Lector.frases[Lector.i] || {}).p || 0) + 1} de ${x.parrafos.length}`;
         play.textContent = Lector.activo ? '⏸ Pausa' : fin ? '↺ Otra vez' : Lector.i ? '▶ Seguir' : '▶ Escuchar';
         if (fin) T.escuchas = (T.escuchas || 0) + 1;
+        const va = rep.querySelector('#idi-voz-actual');
+        if (va) va.innerHTML = `🗣 ${esc(Lector.nombreVoz())}${usarPiper() && confVoz().voz === 'azar' ? ' <a data-otra-voz>· otra voz</a>' : ''}`;
+        const ov = rep.querySelector('[data-otra-voz]'); if (ov) ov.onclick = () => Lector.reiniciar(true);
       };
       Lector.notificar();
       play.onclick = () => (Lector.activo ? Lector.pausa() : Lector.play());
       rep.querySelector('[data-atras]').onclick = () => Lector.atras();
-      rep.querySelector('[data-voz]').onchange = (e) => { conf.nombre = e.target.value; A.guardar(); };
-      rep.querySelector('[data-vel]').onchange = (e) => { conf.velocidad = Number(e.target.value); A.guardar(); };
+      sv.onchange = () => {
+        const [motor, ...resto] = sv.value.split(':'); const v = resto.join(':');
+        if (motor === 'mac') { conf.motor = 'mac'; conf.nombreMac = v; } else { conf.motor = 'piper'; conf.voz = v || 'azar'; NV.fallo = false; }
+        A.guardar(); Lector.reiniciar(true);
+      };
+      rep.querySelector('[data-vel]').onchange = (e) => { conf.velocidad = Number(e.target.value); A.guardar(); Lector.reiniciar(false); };
       rep.querySelector('.idi-rep-barra').onclick = (e) => { const r = e.currentTarget.getBoundingClientRect(); Lector.play(Math.floor(((e.clientX - r.left) / r.width) * Lector.frases.length)); };
     }
 
@@ -756,9 +827,12 @@
       cont.innerHTML = '<h3>Herramientas locales</h3><p class="apagado">Comprobando…</p>';
       try {
         const { estado: e } = await pedir('idiPHerramientas');
+        const vz = await cargarVoces();
+        if (!vz.disponible) e.falta = [...e.falta, 'voces neuronales'];
         const fila = (ok, nombre, uso) => `<li class="${ok ? 'ok' : 'falta'}">${ok ? '✓' : '✗'} <b>${nombre}</b> <span class="apagado idi-mini">${uso}</span></li>`;
         cont.innerHTML = `<h3>Herramientas locales</h3><ul class="idi-herr">
           ${fila(e.lt, 'LanguageTool', 'corrector gramatical de los escritos')}${fila(e.ollama && e.modelo, `Modelo local (${esc(e.nombreModelo)})`, 'valora resúmenes, escritos y el oral')}
+          ${fila(vz.disponible, `Voces neuronales (Piper)${vz.voces.length ? `: ${vz.voces.length}` : ''}`, 'leen los textos con voz natural; sin ellas, la del sistema')}
           ${fila(e.ffmpeg, 'ffmpeg', 'graba el micrófono')}${fila(e.whisper, 'whisper', 'transcribe el oral (mismo modelo que el cante)')}</ul>
           ${e.falta.length ? `<p class="ayuda">Falta: ${esc(e.falta.join(', '))}. La instalación tarda unos minutos y descarga unos 2,5 GB; se puede repetir sin problema.</p>
             <p class="idi-acciones"><button class="primario" data-instalar>Instalar herramientas</button></p>` : '<p class="apagado idi-mini">Todo instalado. LanguageTool y el modelo se arrancan solo cuando hacen falta y se paran a los pocos minutos.</p>'}`;
@@ -1144,7 +1218,9 @@
       else if (tipo === 'examen') { P.E = null; A.ir('examen'); }
       else if (tipo === 'clases') A.ir('clases');
     }
-    return { pintar, recibir, empezar, cajaHerramientas, cajaMedios, enlazarUrls, vistas: ['biblioteca', 'texto', 'escritura', 'escribir', 'escrito', 'oral', 'examen', 'clases', 'clase'], ocupado: () => !!(P.T || P.E || (O.estado && O.estado.grabando)) };
+    cargarVoces();
+    const decir = (texto) => { Lector.cortarAudio(); Lector.hablar(texto, () => {}); };
+    return { decir, pintar, recibir, empezar, cajaHerramientas, cajaMedios, enlazarUrls, vistas: ['biblioteca', 'texto', 'escritura', 'escribir', 'escrito', 'oral', 'examen', 'clases', 'clase'], ocupado: () => !!(P.T || P.E || (O.estado && O.estado.grabando)) };
   }
   window.TCEE_IDI_PR = { crear };
 }());

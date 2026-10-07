@@ -13,6 +13,7 @@ const { crearIdiomas } = require('./idiomasPanel');
 const { crearPracticas } = require('./idiomasPracticas');
 const { crearHerramientas } = require('./idiomasHerramientas');
 const { crearClases } = require('./idiomasClases');
+const { crearVoz } = require('./idiomasVoz');
 
 function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
   let panel = null;
@@ -44,6 +45,12 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     avisar: (texto, error) => { if (panel) panel.webview.postMessage({ tipo: 'aviso', texto, error: !!error }); },
     alCambiar: () => { if (panel) panel.webview.postMessage({ tipo: 'idiOral', estado: practicas.estadoOral() }); },
   });
+  // Voces neuronales (Piper): cada frase lista se manda a la pantalla con su dirección
+  const voz = crearVoz({
+    guion: () => path.join(raiz(), 'main', 'scripts', 'idiomas', 'voz.py'),
+    alListo: (x) => { if (panel) panel.webview.postMessage({ tipo: 'idiVoz', clave: x.clave, i: x.i, error: x.error, url: x.fichero ? panel.webview.asWebviewUri(vscode.Uri.file(x.fichero)).toString() : undefined }); },
+  });
+  context.subscriptions.push({ dispose: () => voz.parar() });
   // Clases con profesores (main/IDIOMAS.md, «Clases»): audio, ficheros y transcripción en la carpeta del perfil
   const clases = crearClases({
     dirPerfil: () => idiomas.dirActivo(),
@@ -252,7 +259,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
 
   /** Idiomas, fases 2–3: biblioteca de textos, escritura, oral y examen (idiomasPracticas.js). Las respuestas llevan la clave del que pregunta */
   async function mensajePracticas(m, responder) {
-    const r = (x) => responder('idiPRespuesta', { clave: m.clave, accion: m.tipo, ...x });
+    const r = (x) => responder('idiPRespuesta', { accion: m.tipo, ...x, clave: m.clave });
     const aviso = (texto) => responder('idiPProgreso', { clave: m.clave, texto });
     try {
       switch (m.tipo) {
@@ -281,6 +288,8 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
         case 'idiPValorarOral': { const x = await practicas.valorarOral(m, aviso); r({ grabacion: x }); return responder('idiDatos', { datos: idiomas.datos() }); }
         case 'idiPGrabaciones': return r({ lista: practicas.grabaciones(m) });
         case 'idiPAudio': { const f = practicas.rutaAudio(m.id); return r({ url: f && fs.existsSync(f) ? panel.webview.asWebviewUri(vscode.Uri.file(f)).toString() : null }); }
+        case 'idiPVoces': return r({ disponible: voz.disponible(), voces: voz.voces() });
+        case 'idiPVoz': return r({ voz: voz.preparar(m) });   // va dentro de «voz»: su «clave» no debe pisar la de la petición
         case 'idiPClases': return r({ lista: clases.lista(m) });
         case 'idiPClaseCrear': return r({ clase: clases.crear(m) });
         case 'idiPClase': return r({ clase: clases.clase(m.id), estado: clases.estado() });
@@ -384,7 +393,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
       if (panel) { panel.reveal(); refrescar(); return; }
       panel = vscode.window.createWebviewPanel('tceeOposicion', 'Panel Oposición', vscode.ViewColumn.Active, {
         enableScripts: true, retainContextWhenHidden: true,
-        localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media'), vscode.Uri.file(test.carpeta()), vscode.Uri.file(raiz())],
+        localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media'), vscode.Uri.file(test.carpeta()), vscode.Uri.file(raiz()), vscode.Uri.file((fs.mkdirSync(voz.carpetaCache, { recursive: true }), voz.carpetaCache))],
       });
       panel.iconPath = vscode.Uri.joinPath(context.extensionUri, 'media', 'tcee.svg');
       panel.webview.html = html(panel.webview);

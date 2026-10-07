@@ -2,12 +2,13 @@
 # Instala lo que necesitan la expresión escrita y la oral de la pestaña Idiomas (ver main/IDIOMAS.md, «Herramientas locales»):
 #   - LanguageTool (corrector gramatical sin conexión; trae su propio Java) — unos 450 MB con Java
 #   - Ollama y el modelo qwen2.5:3b (corrige escritos, valora el oral y hace de tribunal, sin conexión) — unos 2,2 GB
+#   - Piper y seis voces neuronales (tres por idioma) para leer los textos con voz natural — unos 520 MB
 #   - comprueba ffmpeg y whisper.cpp (los mismos que el cante; si faltan, los instala) y las voces del Mac
 # Lo lanza el botón «Instalar herramientas» de la pestaña Idiomas. Se puede repetir: lo que ya esté instalado se salta.
 
 MODELO="${TCEE_MODELO_IDIOMAS:-qwen2.5:3b}"
 
-echo "== 1/5 Homebrew"
+echo "== 1/6 Homebrew"
 for d in /opt/homebrew/bin /usr/local/bin; do [ -x "$d/brew" ] && BREW="$d/brew"; done
 if [ -z "$BREW" ]; then
   echo "No está instalado. Se instala ahora: te pedirá la CONTRASEÑA DEL MAC (no se ve al escribirla) y que pulses Intro."
@@ -25,13 +26,13 @@ instalar() {   # instalar <paquete> <qué es>
   "$BREW" install "$1" || { echo "❌ No se pudo instalar $2. Repite la instalación; si vuelve a fallar, copia este mensaje a Claude."; exit 1; }
 }
 
-echo "== 2/5 LanguageTool (corrector gramatical; incluye Java)"
+echo "== 2/6 LanguageTool (corrector gramatical; incluye Java)"
 instalar languagetool "LanguageTool"
 
-echo "== 3/5 Ollama (modelo de lenguaje local)"
+echo "== 3/6 Ollama (modelo de lenguaje local)"
 instalar ollama "Ollama"
 
-echo "== 4/5 Modelo $MODELO (~2 GB)"
+echo "== 4/6 Modelo $MODELO (~2 GB)"
 GGUF_URL="https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-GGUF/resolve/main/qwen2.5-3b-instruct-q4_k_m.gguf"
 servidor() {   # arranca un «ollama serve» propio y limpio (el de Homebrew o uno antiguo a veces no resuelve nombres de internet)
   pkill -f "ollama serve" 2>/dev/null; "$BREW" services stop ollama >/dev/null 2>&1; sleep 1
@@ -72,7 +73,39 @@ MODELFILE
   kill $SERVIDOR 2>/dev/null
 fi
 
-echo "== 5/5 Grabación, transcripción y voces"
+echo "== 5/6 Voces neuronales (Piper; tres por idioma, ~460 MB)"
+PIPER="$HOME/.tcee/piper"; VOCES="$HOME/.tcee/voces"; mkdir -p "$VOCES"
+if [ ! -x "$PIPER/bin/python" ] || ! "$PIPER/bin/python" -c "import piper" >/dev/null 2>&1; then
+  echo "Instalando Piper (programa de voz, ~60 MB)…"
+  rm -rf "$PIPER"
+  PY=/usr/bin/python3
+  if ! "$PY" -m venv "$PIPER" >/dev/null 2>&1 || ! "$PIPER/bin/pip" install -q --upgrade pip piper-tts >/dev/null 2>&1; then
+    echo "Con el Python del Mac no ha funcionado; instalo uno más nuevo con Homebrew…"
+    rm -rf "$PIPER"; instalar python@3.12 "Python 3.12"
+    PY="$("$BREW" --prefix python@3.12)/bin/python3.12"
+    "$PY" -m venv "$PIPER" && "$PIPER/bin/pip" install -q --upgrade pip piper-tts || { echo "❌ No se pudo instalar Piper. Copia a Claude lo que pone arriba."; exit 1; }
+  fi
+  echo "✓ Piper instalado"
+else
+  echo "✓ Piper ya instalado"
+fi
+HF="https://huggingface.co/rhasspy/piper-voices/resolve/main"
+for V in en/en_GB/cori/high/en_GB-cori-high en/en_GB/alan/medium/en_GB-alan-medium en/en_GB/vctk/medium/en_GB-vctk-medium \
+         fr/fr_FR/siwis/medium/fr_FR-siwis-medium fr/fr_FR/tom/medium/fr_FR-tom-medium fr/fr_FR/mls/medium/fr_FR-mls-medium; do
+  N="$(basename "$V")"
+  if [ -s "$VOCES/$N.onnx" ] && [ -s "$VOCES/$N.onnx.json" ]; then echo "✓ Voz $N"; continue; fi
+  echo "Descargando la voz $N…"
+  curl -L --fail --progress-bar -C - -o "$VOCES/$N.onnx.part" "$HF/$V.onnx" && mv "$VOCES/$N.onnx.part" "$VOCES/$N.onnx" \
+    && curl -L --fail -s -o "$VOCES/$N.onnx.json" "$HF/$V.onnx.json" || { echo "❌ No se pudo descargar la voz $N. Repite la instalación."; exit 1; }
+done
+# prueba: una frase con la primera voz
+if echo '{"id":"p","modelo":"'"$VOCES"'/en_GB-alan-medium.onnx","frases":["Hello."],"dir":"/tmp/tcee-voz-prueba"}' | "$PIPER/bin/python" "$(dirname "$0")/voz.py" | grep -q '"fin"'; then
+  echo "✓ Las voces funcionan"; rm -rf /tmp/tcee-voz-prueba
+else
+  echo "⚠️  Piper está instalado pero la prueba de voz ha fallado. Copia a Claude lo que pone arriba."
+fi
+
+echo "== 6/6 Grabación, transcripción y voces del sistema"
 instalar ffmpeg "ffmpeg (grabación)"
 instalar whisper-cpp "whisper.cpp (transcripción)"
 if [ -f "$HOME/.tcee/modelos/ggml-large-v3-turbo.bin" ]; then echo "✓ Modelo de whisper (el del cante; entiende inglés y francés)"
