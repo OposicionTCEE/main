@@ -271,4 +271,4 @@ function crearCante({ raiz, progreso, avisar, alCambiar }) {
     empezar, terminar, lista, leer, eliminar, rutaAudio, encolar, cancelar, retomar, estado };
 }
 
-module.exports = { crearCante, herramientas, elegirMicro, pista, nivel, ALUCINACIONES };
+module.exports = { crearCante, herramientas, microfonos, elegirMicro, pista, nivel, ALUCINACIONES };

@@ -107,4 +107,6 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
     Descargar con el navegador integrado (permiso del usuario) y procesar en la máquina virtual del Mac en pasos de menos de 3 minutos.
 11. **Idiomas · búsqueda «por significado» deficiente** («subida general de precios» no da inflation). Opciones planteadas al usuario
     (de más a menos intensivas) en la conversación del 7/10/2026; resumen en `IDIOMAS.md`, apartado «Búsqueda por significado: opciones».
-
+12. **Idiomas · fases 2–3 (v0.37)**: hechas el 7/10/2026 sin probar en el Mac. Al probar: instalar herramientas (botón en Ajustes de
+    Idiomas), comprobar voces, micrófono, tiempos y calidad del modelo `qwen2.5:3b`. Detalle y pendientes en `IDIOMAS.md`, «Fases 2–3».
+    La fase 4 (medios de suscripción) sigue pendiente.

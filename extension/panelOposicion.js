@@ -10,6 +10,8 @@ const { crearRelaciones } = require('./relacionesPanel');
 const { crearCante } = require('./cante');
 const { crearTest } = require('./testPanel');
 const { crearIdiomas } = require('./idiomasPanel');
+const { crearPracticas } = require('./idiomasPracticas');
+const { crearHerramientas } = require('./idiomasHerramientas');
 
 function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
   let panel = null;
@@ -31,6 +33,15 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
   const relaciones = crearRelaciones({ raiz, desarrollos });
   const test = crearTest({ raiz, progreso });
   const idiomas = crearIdiomas({ raiz, globalState: context.globalState });
+  // Idiomas, fases 2–3: textos, escritura, oral y examen; LanguageTool y Ollama se arrancan solo cuando hacen falta
+  const herrIdiomas = crearHerramientas();
+  context.subscriptions.push({ dispose: () => herrIdiomas.cerrarTodo() });
+  const practicas = crearPracticas({
+    dirPaquete: () => path.join(raiz(), 'idiomas'), dirPerfil: () => idiomas.dirActivo(), perfil: () => idiomas.perfil(), herramientas: herrIdiomas,
+    cante: () => { try { return cante.estado(); } catch (e) { return null; } },
+    avisar: (texto, error) => { if (panel) panel.webview.postMessage({ tipo: 'aviso', texto, error: !!error }); },
+    alCambiar: () => { if (panel) panel.webview.postMessage({ tipo: 'idiOral', estado: practicas.estadoOral() }); },
+  });
   // Cante: grabación y transcripción (main/CANTE.md). alCambiar(ligero): solo el estado en vivo (nivel, % transcrito) o todo el panel
   const cante = crearCante({
     raiz, progreso,
@@ -38,6 +49,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     alCambiar: (ligero) => { if (!panel) return; if (ligero) panel.webview.postMessage({ tipo: 'canteEstado', estado: cante.estado() }); else enviar(); },
   });
   setTimeout(() => { try { cante.retomar(); } catch (e) { /* sin carpeta aún */ } }, 5000);
+  setTimeout(() => { try { practicas.retomar(); } catch (e) { /* sin perfil aún */ } }, 8000);
   let latido = null;   // mientras se graba, el nivel del micrófono se envía cada medio segundo
   const vigilarGrabacion = () => {
     const g = panel && cante.estado().grabando;
@@ -196,6 +208,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     const responder = (tipo, x) => panel.webview.postMessage({ tipo, ...x });
     try {
       if (m.tipo === 'idiCargar') return responder('idiDatos', { datos: idiomas.datos() });
+      if (m.tipo.startsWith('idiP')) return mensajePracticas(m, responder);
       if (m.tipo === 'idiCrearPerfil') { idiomas.crearPerfil(m.perfil); return responder('idiDatos', { datos: idiomas.datos() }); }
       if (m.tipo === 'idiGuardarPerfil') { idiomas.guardarPerfil(m.cambios); responder('aviso', { texto: 'Ajustes guardados.' }); return responder('idiDatos', { datos: idiomas.datos() }); }
       if (m.tipo === 'idiElegirPerfil') { await idiomas.elegirPerfil(m.dir); return responder('idiDatos', { datos: idiomas.datos() }); }
@@ -226,6 +239,43 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
       }
       if (m.tipo === 'idiDescartarError') { idiomas.descartarError(m); return responder('idiDatos', { datos: idiomas.datos() }); }
     } catch (e) { responder('aviso', { texto: String(e.message || e), error: true }); }
+  }
+
+  /** Idiomas, fases 2–3: biblioteca de textos, escritura, oral y examen (idiomasPracticas.js). Las respuestas llevan la clave del que pregunta */
+  async function mensajePracticas(m, responder) {
+    const r = (x) => responder('idiPRespuesta', { clave: m.clave, accion: m.tipo, ...x });
+    const aviso = (texto) => responder('idiPProgreso', { clave: m.clave, texto });
+    try {
+      switch (m.tipo) {
+        case 'idiPBiblioteca': return r({ datos: practicas.biblioteca(m) });
+        case 'idiPAbrir': return r({ texto: practicas.abrir(m) });
+        case 'idiPResponder': return r({ resultado: await practicas.responder(m) });
+        case 'idiPDictado': return r({ resultado: practicas.dictado(m) });
+        case 'idiPTerminarTexto': r({ registro: practicas.terminarTexto(m) }); return responder('idiDatos', { datos: idiomas.datos() });
+        case 'idiPCorregir': { const x = await practicas.corregirEscrito(m, aviso); r({ escrito: x }); return responder('idiDatos', { datos: idiomas.datos() }); }
+        case 'idiPAutoevaluar': return r({ escrito: practicas.autoevaluar(m) });
+        case 'idiPEscritos': return r({ lista: practicas.escritos(m) });
+        case 'idiPEscrito': return r({ escrito: practicas.escrito(m) });
+        case 'idiPTareas': return r({ tareas: practicas.listaTareas(m), expresiones: practicas.expresiones(m) });
+        case 'idiPTarea': return r({ tarea: practicas.tarea(m) });
+        case 'idiPHerramientas': return r({ estado: await herrIdiomas.estado() });
+        case 'idiPInstalar': {
+          const t = vscode.window.createTerminal({ name: 'Herramientas de idiomas', cwd: raiz() });
+          t.show(); t.sendText(`bash "${path.join(raiz(), 'main', 'scripts', 'idiomas', 'instalar_herramientas.sh')}"`);
+          return r({ ok: true });
+        }
+        case 'idiPTribunal': return r({ preguntas: practicas.preguntasTribunal(m) });
+        case 'idiPGrabar': return r({ grabacion: await practicas.grabar(m), estado: practicas.estadoOral() });
+        case 'idiPParar': return r({ id: await practicas.pararGrabacion(m), estado: practicas.estadoOral() });
+        case 'idiPEstadoOral': return r({ estado: practicas.estadoOral() });
+        case 'idiPTranscribir': return r({ estado: practicas.transcribir(m) });
+        case 'idiPValorarOral': { const x = await practicas.valorarOral(m, aviso); r({ grabacion: x }); return responder('idiDatos', { datos: idiomas.datos() }); }
+        case 'idiPGrabaciones': return r({ lista: practicas.grabaciones(m) });
+        case 'idiPAudio': { const f = practicas.rutaAudio(m.id); return r({ url: f && fs.existsSync(f) ? panel.webview.asWebviewUri(vscode.Uri.file(f)).toString() : null }); }
+        case 'idiPGuardarExamen': { const id = practicas.guardarExamen(m.examen); r({ id }); return responder('idiDatos', { datos: idiomas.datos() }); }
+        default: return null;
+      }
+    } catch (e) { return r({ error: String(e.message || e) }); }
   }
 
   async function mensajeCante(m) {
@@ -270,7 +320,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     const nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
     const url = (f) => webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', f));
     return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; font-src ${webview.cspSource}; img-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; font-src ${webview.cspSource}; img-src ${webview.cspSource}; media-src ${webview.cspSource} https://voa-audio.voanews.eu https://*.voanews.eu; script-src 'nonce-${nonce}';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="${url('katex/katex.min.css')}"><link rel="stylesheet" href="${url('panel.css')}"><title>Panel Oposición</title></head>
 <body><div id="app"><p class="vacio">Calculando los temas…</p></div>
@@ -280,6 +330,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
 <script nonce="${nonce}" src="${url('relaciones.js')}"></script>
 <script nonce="${nonce}" src="${url('cante.js')}"></script>
 <script nonce="${nonce}" src="${url('test.js')}"></script>
+<script nonce="${nonce}" src="${url('idiomasPracticas.js')}"></script>
 <script nonce="${nonce}" src="${url('idiomas.js')}"></script>
 <script nonce="${nonce}" src="${url('panel.js')}"></script></body></html>`;
   }
@@ -289,7 +340,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
       if (panel) { panel.reveal(); refrescar(); return; }
       panel = vscode.window.createWebviewPanel('tceeOposicion', 'Panel Oposición', vscode.ViewColumn.Active, {
         enableScripts: true, retainContextWhenHidden: true,
-        localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media'), vscode.Uri.file(test.carpeta())],
+        localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media'), vscode.Uri.file(test.carpeta()), vscode.Uri.file(raiz())],
       });
       panel.iconPath = vscode.Uri.joinPath(context.extensionUri, 'media', 'tcee.svg');
       panel.webview.html = html(panel.webview);

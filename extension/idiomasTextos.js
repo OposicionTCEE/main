@@ -1,0 +1,245 @@
+// Pestaña Idiomas, fases 2–3: lógica sin VS Code de la biblioteca de textos, los resúmenes, la escritura y el oral.
+// (Cortar textos por párrafos, preguntas de comprensión, dictados, comparación palabra a palabra, métricas del oral e instrucciones para el
+// modelo local.) Reglas: main/IDIOMAS.md
+'use strict';
+const I = require('./idiomas');
+
+// ---------------------------------------------------------------- longitud flexible (siempre por párrafos enteros)
+const LONGITUDES = { corto: 150, estandar: 400, largo: 800, completo: Infinity };
+/** Cuántos párrafos tomar (desde el principio) para acercarse a la longitud pedida sin pasarse mucho: al menos 1 */
+function parrafosPara(parrafos, longitud) {
+  const meta = typeof longitud === 'number' ? longitud : (LONGITUDES[longitud] || LONGITUDES.estandar);
+  let total = 0, k = 0;
+  for (const p of parrafos) {
+    const n = palabras(p);
+    if (k && total + n > meta * 1.15) break;
+    total += n; k += 1;
+    if (total >= meta * 0.9) break;
+  }
+  return Math.max(1, k);
+}
+const palabras = (s) => String(s || '').split(/\s+/).filter(Boolean).length;
+
+/** Texto recortado: párrafos, preguntas e ideas de esa parte; resumen modelo solo si es el texto entero */
+function recortar(t, longitud) {
+  const k = parrafosPara(t.parrafos || [], longitud);
+  const entero = k >= (t.parrafos || []).length;
+  return {
+    k, entero, parrafos: t.parrafos.slice(0, k), palabras: t.parrafos.slice(0, k).reduce((a, p) => a + palabras(p), 0),
+    preguntas: (t.preguntas || []).filter((p) => (p.parrafo || 0) < k),
+    ideas: (t.ideas_clave || []).filter((x) => (x.parrafos || [0]).some((i) => i < k)),
+    glosario: (t.glosario || []).filter((g) => (g.parrafo || 0) < k),
+    resumenModelo: entero ? t.resumen_modelo || '' : '',
+  };
+}
+
+// ---------------------------------------------------------------- comparación palabra a palabra (dictado, lectura en voz alta)
+const tokens = (s) => String(s || '').replace(/[’`]/g, "'").split(/\s+/).map((w) => w.trim()).filter((w) => /[\p{L}\p{N}]/u.test(w));   // sin guiones ni signos sueltos
+const clave = (w) => I.normalizar(w).replace(/^[«"'(\[¿¡]+|[»"'),.;:!?\]…]+$/g, '');
+const claveSinAcentos = (w) => clave(w).normalize('NFD').replace(/[̀-ͯ]/g, '');
+/**
+ * Alinea el texto original con lo escrito u oído (distancia de edición por palabras).
+ * Devuelve [{o: palabra original | null, e: palabra escrita | null, tipo: ok | acento | mal | falta | sobra}] y el resumen.
+ */
+function comparar(original, escrito) {
+  const A = tokens(original), B = tokens(escrito);
+  const a = A.map(clave), b = B.map(clave);
+  const as = A.map(claveSinAcentos), bs = B.map(claveSinAcentos);
+  const n = A.length, m = B.length;
+  // matriz de costes (n y m pequeños: frases de dictado, o párrafos en la lectura en voz alta)
+  const D = Array.from({ length: n + 1 }, () => new Uint32Array(m + 1));
+  for (let i = 0; i <= n; i++) D[i][0] = i;
+  for (let j = 0; j <= m; j++) D[0][j] = j;
+  const coste = (i, j) => (a[i] === b[j] ? 0 : as[i] === bs[j] ? 0.5 : 1);
+  for (let i = 1; i <= n; i++) for (let j = 1; j <= m; j++) {
+    D[i][j] = Math.min(D[i - 1][j] + 1, D[i][j - 1] + 1, D[i - 1][j - 1] + (coste(i - 1, j - 1) ? (coste(i - 1, j - 1) === 0.5 ? 1 : 2) : 0));
+  }
+  const out = [];
+  let i = n, j = m;
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0) {
+      const c = coste(i - 1, j - 1);
+      const diag = D[i - 1][j - 1] + (c ? (c === 0.5 ? 1 : 2) : 0);
+      if (D[i][j] === diag) { out.push({ o: A[i - 1], e: B[j - 1], tipo: c === 0 ? 'ok' : c === 0.5 ? 'acento' : 'mal' }); i--; j--; continue; }
+    }
+    if (i > 0 && D[i][j] === D[i - 1][j] + 1) { out.push({ o: A[i - 1], e: null, tipo: 'falta' }); i--; continue; }
+    out.push({ o: null, e: B[j - 1], tipo: 'sobra' }); j--;
+  }
+  out.reverse();
+  const cuenta = (t) => out.filter((x) => x.tipo === t).length;
+  const r = { ok: cuenta('ok'), acento: cuenta('acento'), mal: cuenta('mal'), falta: cuenta('falta'), sobra: cuenta('sobra'), total: n };
+  r.nota = n ? Math.max(0, (r.ok + 0.5 * r.acento - 0.5 * r.sobra) / n) : 0;
+  return { palabras: out, resumen: r };
+}
+
+/** Frases de dictado de una parte del texto: entre 6 y 22 palabras, repartidas por los párrafos */
+function frasesDictado(parrafos, n = 5, semilla) {
+  const frases = [];
+  parrafos.forEach((p, i) => {
+    for (const f of String(p).split(/(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Þ«"“])/)) {
+      const k = palabras(f);
+      if (k >= 6 && k <= 22 && !/\d{3,}|https?:/.test(f)) frases.push({ parrafo: i, frase: f.trim() });
+    }
+  });
+  if (frases.length <= n) return frases;
+  // reparto: una de cada tramo del texto, al azar dentro del tramo
+  const tramo = frases.length / n, out = [];
+  const azar = I.barajar(frases.map((_, x) => x), semilla);
+  for (let t = 0; t < n; t++) {
+    const desde = Math.floor(t * tramo), hasta = Math.floor((t + 1) * tramo);
+    const elegido = azar.find((x) => x >= desde && x < hasta);
+    out.push(frases[elegido !== undefined ? elegido : desde]);
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------- resumen: comprobaciones objetivas (sin modelo)
+/** Fragmentos copiados del texto (5 palabras seguidas o más), para avisar: en el examen se pide resumir con palabras propias */
+function copiado(texto, resumen, minimo = 5) {
+  const T = tokens(texto).map(clave), R = tokens(resumen);
+  const Rk = R.map(clave);
+  const grams = new Set();
+  for (let i = 0; i + minimo <= T.length; i++) grams.add(T.slice(i, i + minimo).join(' '));
+  const marcado = new Array(R.length).fill(false);
+  for (let i = 0; i + minimo <= Rk.length; i++) if (grams.has(Rk.slice(i, i + minimo).join(' '))) for (let j = i; j < i + minimo; j++) marcado[j] = true;
+  const trozos = []; let cur = [];
+  R.forEach((w, i) => { if (marcado[i]) cur.push(w); else if (cur.length) { trozos.push(cur.join(' ')); cur = []; } });
+  if (cur.length) trozos.push(cur.join(' '));
+  return { fragmentos: trozos, proporcion: R.length ? marcado.filter(Boolean).length / R.length : 0 };
+}
+/** Extensión recomendada del resumen: 20–30 % del texto, entre 60 y 400 palabras */
+function extensionResumen(palabrasTexto) {
+  const min = Math.max(60, Math.round(palabrasTexto * 0.2 / 10) * 10), max = Math.max(min + 40, Math.min(400, Math.round(palabrasTexto * 0.3 / 10) * 10));
+  return [min, max];
+}
+
+// ---------------------------------------------------------------- rúbrica (la misma para toda la escritura; 0–4 por criterio)
+const RUBRICA = [
+  { id: 'tarea', nombre: 'Cumplimiento de la tarea', resumen: 'Recoge las ideas principales, sin opiniones propias ni detalles accesorios, con la extensión pedida.',
+    otra: 'Responde a todo lo que pide el enunciado, al destinatario y con la extensión pedida.' },
+  { id: 'coherencia', nombre: 'Coherencia y cohesión', resumen: 'Orden lógico, párrafos y conectores variados; se entiende sin haber leído el texto.',
+    otra: 'Orden lógico, párrafos y conectores variados; progresión clara de las ideas.' },
+  { id: 'registro', nombre: 'Registro y adecuación', resumen: 'Registro formal e impersonal propio de un resumen.', otra: 'Registro adecuado a la situación y al destinatario; fórmulas propias del género.' },
+  { id: 'correccion', nombre: 'Corrección gramatical y ortográfica', resumen: 'Pocos errores y ninguno que dificulte la comprensión.', otra: 'Pocos errores y ninguno que dificulte la comprensión.' },
+  { id: 'vocabulario', nombre: 'Riqueza y precisión del vocabulario', resumen: 'Vocabulario variado y preciso; reformula en lugar de copiar.', otra: 'Vocabulario variado, preciso y adecuado al tema.' },
+];
+const BANDAS = ['Insuficiente', 'Flojo', 'Suficiente', 'Bien', 'Excelente'];
+/** Nota sobre 10 a partir de los cinco criterios (0–4) */
+const notaRubrica = (criterios) => {
+  const xs = RUBRICA.map((c) => Number((criterios[c.id] || {}).nota));
+  if (xs.some((x) => !Number.isFinite(x))) return null;
+  return Math.round((xs.reduce((a, b) => a + Math.max(0, Math.min(4, b)), 0) / (4 * RUBRICA.length)) * 100) / 10;
+};
+
+// ---------------------------------------------------------------- instrucciones para el modelo local (respuestas en JSON)
+const NOMBRE_LENGUA = { en: 'English', fr: 'French' };
+const SISTEMA = 'You are a strict but encouraging examiner for the language exam of the Spanish civil service competition «Técnico Comercial y Economista del Estado». '
+  + 'The candidate is a native Spanish speaker. Write ALL comments in Spanish (castellano), short and concrete. Quote the candidate\'s words when pointing out a problem. '
+  + 'Never invent errors: if something is correct, do not mark it. Answer ONLY with the JSON object requested.';
+
+const esquemaCriterios = () => ({ type: 'object', properties: Object.fromEntries(RUBRICA.map((c) => [c.id, { type: 'object', properties: { nota: { type: 'integer', minimum: 0, maximum: 4 }, comentario: { type: 'string' } }, required: ['nota', 'comentario'] }])), required: RUBRICA.map((c) => c.id) });
+const esquemaMejoras = { type: 'array', items: { type: 'object', properties: { original: { type: 'string' }, propuesta: { type: 'string' }, motivo: { type: 'string' } }, required: ['original', 'propuesta', 'motivo'] } };
+const listaErrores = (errores) => (errores || []).slice(0, 25).map((e) => `- «${e.fragmento}»: ${e.mensaje}${e.sugerencias && e.sugerencias.length ? ` → ${e.sugerencias.slice(0, 2).join(' / ')}` : ''}`).join('\n') || '(ninguno)';
+
+/** Corrección de un resumen frente a las ideas clave del texto */
+function promptResumen({ lengua, texto, ideas, resumen, errores, extension }) {
+  return {
+    sistema: SISTEMA,
+    mensaje: `TASK: The candidate listened to (or read) the following ${NOMBRE_LENGUA[lengua]} text and wrote a summary in ${NOMBRE_LENGUA[lengua]}.\n\n`
+      + `=== TEXT ===\n${texto}\n\n=== KEY IDEAS (numbered; * = essential) ===\n${ideas.map((x, i) => `${i + 1}.${x.principal ? '*' : ''} ${x.idea}`).join('\n')}\n\n`
+      + `=== CANDIDATE'S SUMMARY (${palabras(resumen)} words; recommended ${extension[0]}–${extension[1]}) ===\n${resumen}\n\n`
+      + `=== GRAMMAR/SPELLING ISSUES FOUND BY LANGUAGETOOL ===\n${listaErrores(errores)}\n\n`
+      + 'Return JSON: "ideas": for EACH key idea, its number and "estado" = "recogida" (clearly present, even if reworded), "parcial" or "falta"; '
+      + '"criterios": score 0-4 and a one-sentence Spanish comment for: tarea (coverage of essential ideas, no personal opinion, length), coherencia, registro (formal), correccion (grammar/spelling), vocabulario (variety, rewording instead of copying); '
+      + '"inexactitudes": statements in the summary that contradict the text (Spanish, max 3, empty if none); '
+      + '"mejoras": up to 6 concrete rewrites: "original" = exact words from the summary, "propuesta" = improved version in the same language, "motivo" = Spanish explanation; '
+      + '"comentario": 2-3 sentences in Spanish with the overall assessment and the single most useful advice.',
+    formato: { type: 'object', properties: {
+      ideas: { type: 'array', items: { type: 'object', properties: { n: { type: 'integer' }, estado: { type: 'string', enum: ['recogida', 'parcial', 'falta'] } }, required: ['n', 'estado'] } },
+      criterios: esquemaCriterios(), inexactitudes: { type: 'array', items: { type: 'string' } }, mejoras: esquemaMejoras, comentario: { type: 'string' } },
+    required: ['ideas', 'criterios', 'mejoras', 'comentario'] },
+  };
+}
+
+/** Corrección de una tarea de escritura (opinión, carta, correo…) */
+function promptEscrito({ lengua, tarea, texto, errores }) {
+  return {
+    sistema: SISTEMA,
+    mensaje: `TASK given to the candidate (${NOMBRE_LENGUA[lengua]}, level ${tarea.nivel}, register: ${tarea.registro}, ${tarea.palabras[0]}–${tarea.palabras[1]} words):\n${tarea.enunciado}\n\n`
+      + `=== CANDIDATE'S TEXT (${palabras(texto)} words) ===\n${texto}\n\n=== GRAMMAR/SPELLING ISSUES FOUND BY LANGUAGETOOL ===\n${listaErrores(errores)}\n\n`
+      + 'Return JSON: "criterios": score 0-4 and a one-sentence Spanish comment for: tarea (does it do everything the task asks, for the right reader, with the right length), coherencia, registro, correccion, vocabulario; '
+      + '"mejoras": up to 8 concrete rewrites ("original" = exact words from the text, "propuesta" = improved version, "motivo" = Spanish explanation); '
+      + '"comentario": 2-3 sentences in Spanish: overall assessment and the most useful advice.',
+    formato: { type: 'object', properties: { criterios: esquemaCriterios(), mejoras: esquemaMejoras, comentario: { type: 'string' } }, required: ['criterios', 'mejoras', 'comentario'] },
+  };
+}
+
+/** Respuesta abierta de comprensión frente a la respuesta modelo */
+function promptAbierta({ lengua, pregunta, modelo, cita, respuesta }) {
+  return {
+    sistema: SISTEMA,
+    mensaje: `Reading/listening comprehension question (${NOMBRE_LENGUA[lengua]}): ${pregunta}\nModel answer: ${modelo}\nEvidence in the text: ${cita || '-'}\n`
+      + `Candidate's answer: ${respuesta}\n\nJudge ONLY the content (not the grammar). Return JSON: "nota": 2 = correct, 1 = partly correct, 0 = wrong or empty; "comentario": one Spanish sentence explaining what is right or missing.`,
+    formato: { type: 'object', properties: { nota: { type: 'integer', minimum: 0, maximum: 2 }, comentario: { type: 'string' } }, required: ['nota', 'comentario'] },
+  };
+}
+
+/** Respuesta oral a una pregunta del tribunal (transcrita con whisper) */
+function promptTribunal({ lengua, pregunta, ideas, transcripcion, segundos, texto }) {
+  return {
+    sistema: SISTEMA,
+    mensaje: `ORAL exam, question from the board (${NOMBRE_LENGUA[lengua]}): ${pregunta}\n${ideas && ideas.length ? `Possible ideas: ${ideas.join(' / ')}\n` : ''}`
+      + `${texto ? `The question refers to this text:\n${texto.slice(0, 6000)}\n` : ''}`
+      + `Automatic transcription of the candidate's spoken answer (${Math.round(segundos || 0)} s; transcription may hide hesitations; ignore punctuation):\n${transcripcion}\n\n`
+      + 'Return JSON: "contenido": 0-4 (relevance and depth of the answer); "lengua": 0-4 (grammar and vocabulary as far as the transcription shows); '
+      + '"comentario": 2 Spanish sentences; "mejoras": up to 4 rewrites ("original" from the transcription, "propuesta", "motivo" in Spanish); '
+      + `"repregunta": one natural follow-up question the board could ask next, in ${NOMBRE_LENGUA[lengua]}.`,
+    formato: { type: 'object', properties: { contenido: { type: 'integer', minimum: 0, maximum: 4 }, lengua: { type: 'integer', minimum: 0, maximum: 4 },
+      comentario: { type: 'string' }, mejoras: esquemaMejoras, repregunta: { type: 'string' } }, required: ['contenido', 'lengua', 'comentario', 'repregunta'] },
+  };
+}
+
+/** Exposición oral sobre un texto (o lectura del propio resumen): cobertura de ideas y lengua */
+function promptExposicion({ lengua, texto, ideas, transcripcion, segundos }) {
+  return {
+    sistema: SISTEMA,
+    mensaje: `ORAL exam: after reading the text below, the candidate gave an oral presentation about it (${Math.round((segundos || 0) / 60)} min). `
+      + `Text (${NOMBRE_LENGUA[lengua]}):\n${texto.slice(0, 9000)}\n\nKey ideas (* = essential):\n${ideas.map((x, i) => `${i + 1}.${x.principal ? '*' : ''} ${x.idea}`).join('\n')}\n\n`
+      + `Automatic transcription of the presentation:\n${transcripcion}\n\n`
+      + 'Return JSON: "ideas": for each key idea, "n" and "estado" (recogida | parcial | falta); "criterios": 0-4 + Spanish comment for: tarea (coverage and personal contribution), coherencia (structure: introduction, development, conclusion), registro, correccion, vocabulario; '
+      + '"mejoras": up to 6 rewrites ("original" from the transcription, "propuesta", "motivo" in Spanish); "comentario": 2-3 Spanish sentences.',
+    formato: { type: 'object', properties: {
+      ideas: { type: 'array', items: { type: 'object', properties: { n: { type: 'integer' }, estado: { type: 'string', enum: ['recogida', 'parcial', 'falta'] } }, required: ['n', 'estado'] } },
+      criterios: esquemaCriterios(), mejoras: esquemaMejoras, comentario: { type: 'string' } }, required: ['ideas', 'criterios', 'comentario'] },
+  };
+}
+
+// ---------------------------------------------------------------- métricas del oral (a partir de la transcripción de whisper con tiempos)
+/**
+ * segmentos: [{t0, t1 (s), texto}] (de whisper, con -ml para trozos cortos). Devuelve palabras por minuto, pausas largas, muletillas y
+ * variedad léxica. Whisper suele borrar las muletillas: la cifra es un mínimo.
+ */
+const MULETILLAS = { en: /\b(uh+|um+|er+m?|hmm+|you know|i mean|like|sort of|kind of|basically|actually)\b/gi, fr: /\b(euh+|bah|ben|hein|bon|du coup|en fait|genre|voilà|quoi)\b/gi };
+function metricasOral(segmentos, lengua, duracion) {
+  const segs = (segmentos || []).filter((s) => s.texto && s.texto.trim());
+  const texto = segs.map((s) => s.texto.trim()).join(' ');
+  const ws = tokens(texto).map(clave).filter((w) => /\p{L}/u.test(w));
+  const habla = segs.reduce((a, s) => a + Math.max(0, (s.t1 || 0) - (s.t0 || 0)), 0);
+  const total = duracion || (segs.length ? segs[segs.length - 1].t1 : 0) || habla;
+  const pausas = [];
+  for (let i = 1; i < segs.length; i++) { const p = (segs[i].t0 || 0) - (segs[i - 1].t1 || 0); if (p >= 2) pausas.push({ en: segs[i - 1].t1, dura: Math.round(p * 10) / 10 }); }
+  const muletillas = (texto.match(MULETILLAS[lengua] || /$^/) || []).length;
+  const unicas = new Set(ws).size;
+  return {
+    palabras: ws.length, segundos: Math.round(total), ppm: total ? Math.round((ws.length / total) * 60) : 0,
+    ppmHablando: habla ? Math.round((ws.length / habla) * 60) : 0,
+    pausasLargas: pausas.length, pausaMax: pausas.reduce((a, p) => Math.max(a, p.dura), 0), pausas: pausas.slice(0, 20),
+    muletillas, variedad: ws.length ? Math.round((unicas / Math.sqrt(2 * ws.length)) * 100) / 100 : 0,   // índice de Guiraud corregido
+    texto,
+  };
+}
+/** Velocidad orientativa: lectura en voz alta y exposición de un hablante de C1 rondan 120–160 palabras por minuto */
+const valorarVelocidad = (ppm) => (ppm < 90 ? 'lenta' : ppm < 115 ? 'algo lenta' : ppm <= 170 ? 'adecuada' : 'rápida');
+
+module.exports = { LONGITUDES, parrafosPara, recortar, palabras, comparar, frasesDictado, copiado, extensionResumen, RUBRICA, BANDAS, notaRubrica,
+  promptResumen, promptEscrito, promptAbierta, promptTribunal, promptExposicion, metricasOral, valorarVelocidad };

@@ -37,17 +37,20 @@
   const DESTREZAS = [
     ['gramatica', '🧩', 'Gramática', 'Competencia gramatical'],
     ['lexico', '🔤', 'Léxico', 'Vocabulario y expresiones'],
-    ['lectura', '📖', 'Comprensión lectora', 'Fase 2', true],
-    ['escucha', '🎧', 'Comprensión auditiva', 'Fase 2', true],
-    ['escrito', '✍️', 'Expresión escrita', 'Fase 2', true],
-    ['oral', '🗣️', 'Expresión oral', 'Fase 3', true],
+    ['lectura', '📖', 'Comprensión lectora', 'Leer un texto y resumirlo'],
+    ['escucha', '🎧', 'Comprensión auditiva', 'Escuchar un texto y resumirlo'],
+    ['escrito', '✍️', 'Expresión escrita', 'Tareas con rúbrica y corrección'],
+    ['oral', '🗣️', 'Expresión oral', 'Exposición, lectura y tribunal'],
   ];
   const ESPECIALES = [
     ['repaso', '⟳', 'Repaso', 'Fichas con el repaso vencido'],
     ['azar', '🎲', 'Al azar', 'Según tus puntos débiles'],
-    ['examen', '🎓', 'Examen', 'Fase 3', true],
+    ['examen', '🎓', 'Examen', 'Escrito y oral, como el BOE'],
   ];
-  const NOMBRE_SESION = { gramatica: 'Gramática', lexico: 'Léxico', repaso: 'Repaso', azar: 'Al azar', ficha: 'Ficha', errores: 'Errores', examen: 'Examen' };
+  const NOMBRE_SESION = { gramatica: 'Gramática', lexico: 'Léxico', repaso: 'Repaso', azar: 'Al azar', ficha: 'Ficha', errores: 'Errores', examen: 'Examen',
+    lectura: 'Comprensión lectora', escucha: 'Comprensión auditiva', escrito: 'Escritura', oral: 'Oral', verbos: 'Verbos' };
+  const PRACTICAS = new Set(['lectura', 'escucha', 'escrito', 'oral', 'examen']);
+  let PR = null;   // fases 2–3 (idiomasPracticas.js)
   const DIAS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
   const VOZ = { fr: 'fr-FR', en: 'en-GB' };
 
@@ -66,7 +69,8 @@
 
   // ------------------------------------------------------------------ mensajes
   function recibir(m) {
-    if (m.tipo === 'idiDatos') { X = m.datos; if (!X.perfil) vista = 'nuevo'; else if (vista === 'nuevo') vista = 'inicio'; if (vista !== 'sesion' && vista !== 'ficha' && vista !== 'verbos') pintarVista(); else if (vista === 'ficha') refrescarPieFicha(); }
+    if (m.tipo && (m.tipo.startsWith('idiP') || m.tipo === 'idiOral')) { if (PR) PR.recibir(m); return; }
+    if (m.tipo === 'idiDatos') { X = m.datos; if (!X.perfil) vista = 'nuevo'; else if (vista === 'nuevo') vista = 'inicio'; if (vista !== 'sesion' && vista !== 'ficha' && vista !== 'verbos' && !(PR && PR.vistas.includes(vista))) pintarVista(); else if (vista === 'ficha') refrescarPieFicha(); }
     if (m.tipo === 'idiFicha') { fichaAbierta = m.ficha; if (vista !== 'ficha') desdeVista = vista; vista = 'ficha'; pintarVista(); window.scrollTo(0, 0); }
     if (m.tipo === 'idiSesion') empezarSesion(m.sesion);
     if (m.tipo === 'idiCorreccion') corregido(m.clave, m.resultado);
@@ -92,6 +96,10 @@
       return;
     }
     raiz = document.createElement('div'); raiz.className = 'idi-raiz'; e.appendChild(raiz);
+    if (!PR && window.TCEE_IDI_PR) {
+      PR = window.TCEE_IDI_PR.crear({ esc, st, guardar: () => ctx.guardar(), enviar, lengua, X: () => X, vistaEl: () => vistaEl, raiz: () => raiz, ir, reloj: (s) => reloj(s),
+        aviso: (t, err) => (ctx.aviso ? ctx.aviso(t, err) : null), nivelDecl, NIVELES, fechaCorta: (iso) => fechaCorta(iso) });
+    }
     vistaEl = document.createElement('div'); vistaEl.className = 'idi-vista'; raiz.appendChild(vistaEl);
     cajonEl = document.createElement('aside'); cajonEl.className = 'idi-cajon'; raiz.appendChild(cajonEl);
     habilitarSeleccionGeneral();
@@ -111,6 +119,7 @@
     }
     if (!X.perfil || vista === 'nuevo') { cajonEl.innerHTML = ''; return pNuevo(); }
     pintarCajon();
+    if (PR && PR.vistas.includes(vista)) return PR.pintar(vista);
     ({ inicio: pInicio, ajustes: pAjustes, ficha: pFicha, sesion: pSesion, fin: pFin, diccionario: pMiDicc, libreta: pLibreta, verbos: pVerbos })[vista]();
   }
   const ir = (v) => { vista = v; pintarVista(); window.scrollTo(0, 0); };
@@ -204,7 +213,7 @@
     const sel = raiz.querySelector('#idi-lengua'); sel.onchange = () => { st().idiLengua = sel.value; ctx.guardar(); pInicio(); pintarCajon(); };
     const bv = raiz.querySelector('#idi-verbos'); if (bv) bv.onclick = () => { VB.esperando = true; VB.ses = null; enviar({ tipo: 'idiVerbosInicio' }); ir('verbos'); };
     raiz.querySelector('#idi-ajustes').onclick = () => ir('ajustes');
-    raiz.querySelectorAll('[data-tipo]').forEach((b) => b.onclick = () => enviar({ tipo: 'idiEmpezar', lengua: l, clase: b.dataset.tipo }));
+    raiz.querySelectorAll('[data-tipo]').forEach((b) => b.onclick = () => (PRACTICAS.has(b.dataset.tipo) && PR ? PR.empezar(b.dataset.tipo) : enviar({ tipo: 'idiEmpezar', lengua: l, clase: b.dataset.tipo })));
     raiz.querySelectorAll('[data-materia]').forEach((b) => {
       b.onclick = () => enviar({ tipo: 'idiFicha', lengua: l, id: b.dataset.materia });
       b.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); b.click(); } };
@@ -379,6 +388,7 @@
           <button class="${P.ajustes.idiomaFichas === 'es' ? '' : 'activo'}" data-idfichas="lengua">Idioma estudiado</button>
           <button class="${P.ajustes.idiomaFichas === 'es' ? 'activo' : ''}" data-idfichas="es">Castellano</button></div>
         <p class="apagado idi-mini">Las explicaciones de dentro de la ficha están siempre en castellano.</p></section>
+      <section class="idi-caja doble" id="idi-herr"></section>
       <section class="idi-caja"><h3>Sesiones</h3>
         <label class="idi-fila">Ejercicios por sesión <input type="number" id="idi-n" min="4" max="40" value="${P.ajustes.ejercicios || 10}"></label></section>
       <section class="idi-caja doble"><h3>Compromisos</h3><div id="idi-reglas"></div></section>
@@ -389,6 +399,7 @@
       </div>
       <p class="idi-acciones"><button class="primario" id="idi-guardar">Guardar ajustes</button></p></div>`;
     pintarReglas(raiz.querySelector('#idi-reglas'), P.compromisos, () => {});
+    if (PR) PR.cajaHerramientas(raiz.querySelector('#idi-herr'));
     raiz.querySelector('#idi-volver').onclick = () => ir('inicio');
     raiz.querySelector('#idi-otro').onclick = () => ir('nuevo');
     raiz.querySelector('#idi-borrar').onclick = () => enviar({ tipo: 'idiEliminarPerfil', dir: actual.dir });

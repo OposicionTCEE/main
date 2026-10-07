@@ -874,3 +874,123 @@ body.vscode-high-contrast .idi-vterm, body.vscode-high-contrast-light .idi-vterm
 .idi-vpide-modo { background: var(--mc); color: #fff; padding: 4px 12px; font-weight: 700; }
 .idi-vpide-t { padding: 4px 14px; font-weight: 700; color: var(--tinta); background: color-mix(in srgb, var(--mc) 12%, transparent); }
 .idi-vvoz { margin-left: 8px; vertical-align: top; }
+
+/* ---------------- Idiomas, fases 2–3: textos, escritura, oral y examen (idiomasPracticas.js) ---------------- */
+  border-radius: 10px; border: 1px solid color-mix(in srgb, var(--acento) 45%, var(--borde)); background: color-mix(in srgb, var(--acento) 12%, var(--isup)); }
+.idi-p { max-width: 1400px; margin: 0 auto; }
+.idi-p-cab { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.idi-p-cab h2 { margin: 0; }
+.idi-p-cab a { cursor: pointer; }
+.idi-der-auto { margin-left: auto; }
+.idi-p-modos { margin-left: auto; }
+.idi-p-dos { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; align-items: start; }
+.idi-p-dos > div { display: flex; flex-direction: column; gap: 14px; }
+@media (max-width: 1000px) { .idi-p-dos { grid-template-columns: 1fr; } }
+.idi-filtros { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 12px 0; }
+.idi-textos { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 12px; }
+.idi-ctexto { display: flex; flex-direction: column; gap: 5px; padding: 12px 14px; border-radius: var(--iradio); border: 1px solid var(--borde);
+  border-top: 4px solid var(--n); background: var(--isup); cursor: pointer; transition: transform .12s, box-shadow .12s; }
+.idi-ctexto:hover, .idi-ctexto:focus { transform: translateY(-2px); box-shadow: 0 4px 14px color-mix(in srgb, var(--tinta) 12%, transparent); outline: none; }
+.idi-ctexto h4 { margin: 2px 0 0; }
+.idi-ctexto-es { margin: 0; color: var(--apagado); font-size: .9em; font-style: italic; }
+.idi-ctexto-pie { display: flex; justify-content: space-between; gap: 8px; font-size: .85em; margin-top: auto; }
+.idi-ctexto.hecho { border-left: 3px solid var(--iok); }
+.idi-ctexto.grande h4 { font-size: 1.15em; }
+.idi-rec { margin-bottom: 4px; }
+.idi-dlg.ancho { width: min(720px, 92vw); }
+.idi-dlg .segmentos small { opacity: .7; }
+.idi-checks { display: flex; gap: 14px; flex-wrap: wrap; }
+.idi-etapas { display: flex; list-style: none; padding: 0; margin: 4px 0 14px; gap: 4px; flex-wrap: wrap; }
+.idi-etapas li { padding: 3px 12px; border-radius: 12px; background: var(--isup2); color: var(--apagado); font-size: .9em; }
+.idi-etapas li.actual { background: var(--vscode-button-background); color: var(--vscode-button-foreground); font-weight: 600; }
+.idi-etapas li.hecha::before { content: '✓ '; color: var(--iok); }
+.idi-lectura { font-size: 1.08em; line-height: 1.65; }
+.idi-lectura.compacta { font-size: 1em; line-height: 1.5; max-height: 70vh; overflow-y: auto; padding-right: 6px; }
+.idi-par { position: relative; padding-left: 28px; margin: 0 0 .8em; border-radius: 4px; }
+.idi-par-n { position: absolute; left: 0; top: 2px; font-size: .75em; color: var(--apagado); width: 20px; text-align: right; }
+.idi-par.marcado { background: color-mix(in srgb, var(--iaviso) 18%, transparent); }
+.idi-par.sonando { background: color-mix(in srgb, var(--acento) 12%, transparent); }
+.idi-fuente { font-size: .85em; }
+.idi-fuente a { cursor: pointer; }
+.idi-notas textarea { min-height: 220px; }
+.idi-rep-mandos { display: flex; gap: 10px; justify-content: center; margin: 10px 0; }
+.idi-raiz button.grande { font-size: 1.15em; padding: 10px 26px; }
+.idi-rep-barra { height: 10px; border-radius: 5px; background: var(--borde); overflow: hidden; cursor: pointer; margin: 6px 0; }
+.idi-rep-barra i { display: block; height: 100%; background: var(--acento); transition: width .3s; }
+.idi-rep-conf { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.idi-contador { display: flex; justify-content: space-between; margin-top: 4px; font-size: .9em; }
+.idi-contador .corto { color: var(--iaviso); } .idi-contador .largo { color: var(--imal); } .idi-contador .bien { color: var(--iok); }
+.idi-progreso { padding: 8px 12px; border-radius: 8px; background: color-mix(in srgb, var(--acento) 10%, transparent); }
+.idi-progreso::before { content: '⏳ '; }
+.idi-preg { border-top: 1px solid var(--borde); padding: 12px 0; }
+.idi-preg:first-of-type { border-top: none; }
+.idi-preg.esperando { opacity: .6; }
+.idi-preg-cab { display: flex; gap: 8px; align-items: center; }
+.idi-preg-txt { font-weight: 600; margin: 6px 0; }
+.idi-opciones { display: flex; flex-direction: column; gap: 6px; }
+.idi-opciones button { text-align: left; }
+.idi-raiz button.activo:not(.segmentos button) { border-color: var(--acento); }
+.idi-raiz button.ok, .idi-opciones button.ok { background: color-mix(in srgb, var(--iok) 22%, transparent) !important; color: var(--tinta) !important; }
+.idi-raiz button.mal, .idi-opciones button.mal { background: color-mix(in srgb, var(--imal) 22%, transparent) !important; color: var(--tinta) !important; }
+.idi-ver.parcial { border-left-color: var(--iaviso); background: color-mix(in srgb, var(--iaviso) 10%, transparent); }
+.idi-cita { font-style: italic; border-left: 3px solid var(--borde); padding-left: 8px; }
+.idi-cita a, .idi-preg a { cursor: pointer; font-style: normal; margin-left: 6px; }
+.idi-dic-res { font-size: 1.1em; line-height: 2; margin: 8px 0; }
+.idi-dic-res span { padding: 1px 3px; border-radius: 3px; }
+.idi-dic-res .ok { color: var(--iok); }
+.idi-dic-res .acento { background: color-mix(in srgb, var(--iaviso) 25%, transparent); }
+.idi-dic-res .mal { background: color-mix(in srgb, var(--imal) 25%, transparent); }
+.idi-dic-res .falta { text-decoration: underline wavy var(--imal); color: var(--apagado); }
+.idi-dic-res .sobra { text-decoration: line-through; color: var(--imal); }
+.idi-p-final { display: flex; flex-direction: column; gap: 14px; }
+.idi-res-cifras { display: flex; gap: 22px; flex-wrap: wrap; }
+.idi-res-cifras div { display: flex; flex-direction: column; }
+.idi-res-cifras b { font-size: 1.6em; }
+.idi-res-cifras small { color: var(--apagado); }
+.idi-trib li { margin-bottom: 6px; }
+.idi-escrito h4 { margin: 14px 0 6px; }
+.idi-nota-grande { margin-left: auto; font-size: 1.6em; font-weight: 700; }
+.idi-nota-grande small { font-size: .55em; color: var(--apagado); }
+.idi-comentario { padding: 10px 14px; border-radius: 8px; background: color-mix(in srgb, var(--acento) 9%, transparent); }
+.idi-esc-dos { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; }
+@media (max-width: 1000px) { .idi-esc-dos { grid-template-columns: 1fr; } }
+.idi-esc-texto { line-height: 1.7; padding: 10px 12px; border: 1px solid var(--borde); border-radius: 8px; background: var(--fondo); }
+.lt-orto { text-decoration: underline wavy var(--imal); text-underline-offset: 3px; cursor: help; }
+.lt-gram { text-decoration: underline wavy var(--iaviso); text-underline-offset: 3px; cursor: help; }
+.copiado { background: color-mix(in srgb, var(--iC) 22%, transparent); }
+.idi-rubrica { width: 100%; border-collapse: collapse; }
+.idi-rubrica td { padding: 5px 4px; border-bottom: 1px solid var(--borde); vertical-align: top; }
+.idi-rubrica td:first-child { width: 45%; }
+.idi-ideas { list-style: none; padding: 0; }
+.idi-ideas li { display: grid; grid-template-columns: 120px auto 1fr; gap: 8px; align-items: start; padding: 5px 6px; border-radius: 6px; }
+.idi-ideas li.recogida { background: color-mix(in srgb, var(--iok) 12%, transparent); }
+.idi-ideas li.parcial { background: color-mix(in srgb, var(--iaviso) 12%, transparent); }
+.idi-ideas li.falta { background: color-mix(in srgb, var(--imal) 10%, transparent); }
+.idi-ideas b { color: var(--iaviso); }
+.idi-mejoras li { margin-bottom: 8px; }
+.idi-modelo { white-space: pre-wrap; line-height: 1.6; }
+.idi-enunciado { padding: 10px 14px; border-left: 4px solid var(--acento); background: var(--isup2); border-radius: 6px; margin-bottom: 8px; white-space: pre-wrap; }
+.idi-expr { padding-left: 18px; }
+.idi-oral-modos { display: flex; flex-direction: column; gap: 8px; }
+.idi-oral-modos button { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 10px; text-align: left; padding: 10px; }
+.idi-oral-modos .idi-ico { grid-row: span 2; font-size: 1.5em; align-self: center; }
+.idi-oral-modos small { color: var(--apagado); }
+.idi-reloj-grande { font-size: 1.4em; font-variant-numeric: tabular-nums; margin-left: auto; }
+.idi-nivel { height: 12px; border-radius: 6px; background: var(--borde); overflow: hidden; }
+.idi-nivel i { display: block; height: 100%; background: linear-gradient(90deg, var(--iok), var(--iaviso) 80%, var(--imal)); transition: width .3s; }
+.idi-repregunta { padding: 10px 12px; border-radius: 8px; background: var(--isup2); }
+.idi-preg-escrita { font-size: 1.1em; font-weight: 600; }
+.idi-preg-escrita.oculta { display: none; }
+.idi-herr { list-style: none; padding: 0; }
+.idi-herr li { padding: 3px 0; }
+.idi-herr li.ok { color: var(--tinta); } .idi-herr li.ok::first-letter { color: var(--iok); }
+.idi-herr li.falta { color: var(--imal); }
+.idi-ex-pasos li { margin-bottom: 4px; }
+.idi-notas-ro { white-space: pre-wrap; max-height: 60vh; overflow-y: auto; }
+.idi-medios { padding-left: 18px; } .idi-medios a { cursor: pointer; }
+.pasado { color: var(--imal); font-weight: 700; }
+.idi-escritos li { grid-template-columns: 54px 1fr 50px; cursor: pointer; }
+.idi-escritos li:hover, .idi-hist li[data-grab]:hover { background: var(--isup2); }
+.idi-hist li[data-grab] { cursor: pointer; grid-template-columns: 54px 1fr 90px 50px; }
+.idi-checks label, .idi-raiz label.idi-chk { display: inline-flex; flex-direction: row; align-items: center; gap: 6px; font-weight: normal; }
+.idi-checks input, .idi-raiz label.idi-chk input { width: auto; margin: 0; }
