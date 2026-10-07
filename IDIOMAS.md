@@ -37,8 +37,8 @@ Mantener este documento y el código a la vez.
 |---|---|---|
 | 0 | Repositorio `idiomas`, este documento, *Sincronizar* lo descarga, descarga de fuentes en el Mac | Hecha (6/10/2026) |
 | 1 | Perfil, Ajustes, compromisos; índice A1→C2; fichas de gramática y ejercicios con respuesta fija; léxico; sesiones Gramática, Léxico, Repaso y Al azar; mapa de materias, cuaderno de errores, repaso y primer ajuste de nivel | Hecha (v0.30) |
-| 2 | Biblioteca de textos (nivel, tema, palabras clave), longitud flexible, Escucha (voz del Mac), Escrito (plantillas y rúbrica, LanguageTool y modelo local), instalador de Ollama | Pendiente |
-| 3 | Oral (whisper, métricas), tribunal (preguntas con voz), sesión tipo examen, vídeo | Pendiente |
+| 2 | Biblioteca de textos (nivel, tema, palabras clave), longitud flexible, Escucha (voz del Mac), Escrito (plantillas y rúbrica, LanguageTool y modelo local), instalador de Ollama | Hecha (v0.37, 7/10/2026; sin probar aún en el Mac) |
+| 3 | Oral (whisper, métricas), tribunal (preguntas con voz), sesión tipo examen, vídeo | Hecha (v0.37, 7/10/2026; sin probar aún en el Mac) |
 | 4 | Descarga semanal de medios de pago; informe de progreso opcional en «Rehacer informes» | Pendiente |
 
 ## Fuentes y licencias
@@ -56,8 +56,10 @@ Las webs gratuitas pero con todos los derechos reservados (TV5Monde, BBC Learnin
 | wordfreq | Frecuencia de las palabras | Datos CC BY-SA 4.0 |
 | Core Inventory for General English (British Council–EAQUALS) | Solo como índice de materias (no se copia el texto) | © British Council |
 | Inventaire linguistique des contenus clés (Eaquals–CIEP) | Solo como índice de materias (no se copia el texto) | © Eaquals/CIEP |
-| VOA Learning English | Textos y audios en inglés (fase 2) | Dominio público |
-| Wikipedia, Wikinews, Vikidia, Wikisource | Textos de todos los temas (fase 2) | CC BY-SA / dominio público |
+| VOA Learning English | Textos y audios en inglés (fase 2; enlace al mp3 original) | Dominio público |
+| Wikipedia (en, fr), Simple English Wikipedia, Vikidia | Textos de la biblioteca (fase 2) | CC BY-SA 4.0 / 3.0 |
+| Wikinews (en, fr; cerrado en mayo de 2026, solo lectura) | Noticias de la biblioteca (fase 2) | CC BY 2.5 |
+| Artículos de análisis escritos por Claude | Prensa económica B2–C1, el hueco que no cubren las fuentes abiertas | CC0 |
 
 El entorno de Claude no llega a la mayoría de estas webs. Por eso `scripts/idiomas/descargar_fuentes.sh`
 las baja en el Mac a `TCEE/.fuentes-idiomas/` (fuera de GitHub). Ya no hay tarea de VS Code para ello (se quitó el 6/10/2026 por ser auxiliar):
@@ -77,6 +79,10 @@ idiomas/
     ejercicios/<id>.json           banco de ejercicios de respuesta fija, montado por programa
     lexico.json                    palabras por nivel y campo semántico, con pronunciación y ejemplos
     expresiones.json               expresiones por función (introducir, matizar, contraponer, concluir…)
+    textos.json                    índice de la biblioteca (lo rehace scripts/idiomas/textos.py)
+    textos/<id>.json               cada texto: párrafos, fuente y licencia, nivel, campo, ideas clave, resumen modelo, preguntas, tribunal, glosario
+    escritura.json                 tareas de expresión escrita con estructura, expresiones y texto modelo
+    tribunal.json                  preguntas generales del tribunal por bloques, con pistas, ideas y repreguntas
 ```
 
 Los `id` de materias y ejercicios **no cambian nunca**: el progreso del usuario se guarda con ellos.
@@ -92,7 +98,10 @@ anotaciones.json   anotaciones del usuario en cada ficha
 diccionario.json   Mi diccionario (palabras y estructuras guardadas)
 revision.json      preguntas marcadas para revisar con Claude
 verbos.json        estadística del entrenador de verbos: {"verbo|tiempo": {i, a, fallos por persona, u}}
-escritos/, audio/  lo que el usuario escribe y graba (fases 2–3)
+textos.json       lo hecho con cada texto: {id: {veces, ultima, modos, comprension[], dictado[], resumen[] (notas /10)}}
+escritos/<fecha>_<clase>.json   cada resumen o tarea corregida: texto, errores de LanguageTool, valoración del modelo, autoevaluación, nota
+audio/<fecha>_<clase>.m4a/.json   grabaciones del oral (solo en el Mac) y su ficha: transcripción, métricas, valoración
+examenes/<fecha>_examen.json   sesiones tipo examen: textos, escrito, grabaciones y notas
 ```
 
 ## Estado del paquete (fase 1, 6 de octubre de 2026)
@@ -207,6 +216,78 @@ Al escribirlas se revisaron de nuevo todas las fichas: unas 90 correcciones (res
     Perífrasis verbales), cada una con bloques de texto, tabla o lista. Encargo: `encargos/particularidades.md`.
     Las fichas de grupo solo llevan sus tablas por modos. Mitad y mitad (ficha / entrenador); tiempos como botones;
     colores por tipo de tema de VS Code (`body.vscode-light`, `vscode-dark`, alto contraste con subrayado).
+
+## Fases 2–3 (v0.37, 7/10/2026)
+
+El examen real (BOE-A-2025-26902, segundo ejercicio) marca el diseño: **escrito** = se lee en voz alta un texto (hasta 15 minutos), se toman
+notas y se escribe un resumen en esa lengua (90 minutos, con diccionario); **oral** = 10 minutos para preparar otro texto, lectura en voz alta,
+exposición (unos 10 minutos) y preguntas del tribunal, que además lee el escrito. **El usuario quiere practicar con el mismo peso «leer y
+resumir» y «escuchar y resumir»**: los dos son botones grandes, juntos, al principio de *Empezar sesión*, y comparten corrección.
+
+### Biblioteca de textos
+- 193 textos con material (104 en inglés, 89 en francés), de B1 a C1: Wikipedia, Simple English Wikipedia, Vikidia, Wikinews, VOA (con su
+  mp3 cuando la fecha cuadra) y 34 artículos de análisis originales (prensa económica, CC0). Se bajaron con el navegador integrado del Mac
+  (la nube no llega a esas webs) y se procesan con `scripts/idiomas/textos.py`:
+  - `preparar`: limpia (quita «Véase también», referencias, listas sin punto), corta por párrafos hasta 1.700 palabras y calcula el **nivel
+    léxico** con FLELex/EFLLex (parte del texto cubierta por el vocabulario de B1, umbrales por lengua calibrados con VOA ≈ B1–B2,
+    Vikidia ≈ A2–B1 y Wikipedia ≈ C1–C2; frases muy largas suben un nivel);
+  - los agentes de Claude escriben el material de cada texto con `encargos/textos.md` (y los artículos con `encargos/prensa.md`), que se
+    comprueba con `scripts/idiomas/validar_textos.py` (citas literales, párrafos en rango, ideas que cubren todo el texto…);
+  - `unir`: añade el material, aparta los textos sin él y rehace el índice. Se descartaron 6 textos desordenados o triviales.
+- Material de cada texto: título y resumen en castellano, campo, palabras clave, nivel (el agente puede corregir el léxico), **ideas clave**
+  por párrafo (las imprescindibles con ★), **resumen modelo**, 10–16 **preguntas** (verdadero/falso/no se dice, elegir, vocabulario en el
+  texto y respuesta breve; cada una con su párrafo, cita literal y explicación), 6–8 **preguntas de tribunal** y glosario.
+- **Longitud flexible**: corto (≈150), estándar (≈400), largo (≈800) o completo; siempre párrafos enteros desde el principio. Solo se
+  enseñan las preguntas, ideas y glosario de esa parte; el resumen modelo, solo con el texto completo.
+- Tarjetas por nivel, tema, tipo (prensa, noticia, divulgación, enciclopedia) y hechos/sin hacer. «Te propongo»: un texto de tu nivel o uno
+  más, sin hacer, de un campo distinto a los últimos y, a igualdad, de prensa.
+
+### Leer y resumir · Escuchar y resumir
+- Etapas: Lectura (texto con «🔊 Escucharlo») o Escucha (sin texto: voz del Mac frase a frase, con barra, frase anterior, voz y velocidad;
+  o el audio original de VOA) → Resumen → Preguntas → Dictado (solo escucha, opcional) → Resultado. Notas siempre a la derecha.
+- La voz es la del sistema (`speechSynthesis` del panel); las voces «mejoradas/premium» se descargan en Ajustes del Sistema › Accesibilidad.
+- En el resumen se ve el contador frente a la extensión recomendada (20–30 % del texto) y el diccionario del cajón (como en el examen).
+  En «leer», el texto se puede ocultar para resumir de memoria; en «escuchar», el texto se ve al final.
+- Preguntas: V/F y elegir se corrigen al pulsar; vocabulario se escribe (mismas reglas que las fichas, «oe» = «œ»); respuesta breve la valora
+  el modelo local (bien / a medias / mal) o, sin modelo, el usuario frente a la respuesta modelo. Tras corregir: cita y «ver en el texto».
+- Dictado: 5 frases repartidas por el texto; se comparan palabra a palabra (bien, acento, mal, falta, sobra).
+- Al terminar: nota del resumen, % de preguntas y dictado, el texto, el vocabulario y accesos al oral (exponerlo, leerlo, leer tu resumen,
+  preguntas del tribunal). Se guarda en `textos.json` y `sesiones.jsonl` (tipo `lectura` o `escucha`).
+
+### Expresión escrita y corrección
+- 27 tareas por lengua (`escritura.json`): opinión, carta, correo, réplica, informe, propuesta, crítica y nota, de B1 a C2, con estructura,
+  expresiones útiles y texto modelo (se enseña tras corregir). Banco de 20 funciones de expresiones (`expresiones.json`).
+- **Corrección** (resúmenes y tareas): LanguageTool (errores subrayados: ortografía en rojo, gramática en ámbar) + fragmentos copiados del
+  texto (5 palabras seguidas o más, en morado) + **modelo local** con la rúbrica fija de cinco criterios (0–4: tarea, coherencia, registro,
+  corrección, vocabulario; nota /10), ideas recogidas/a medias/que faltan, inexactitudes, propuestas de mejora y comentario, todo en castellano.
+  Instrucciones del modelo en `extension/idiomasTextos.js` (respuesta en JSON con esquema). El usuario puede cambiar la rúbrica y las ideas
+  («Guardar mi valoración»). Sin herramientas instaladas, se autoevalúa con la misma rúbrica.
+
+### Herramientas locales (`extension/idiomasHerramientas.js`)
+- Instalación: botón *Instalar herramientas* en Ajustes de Idiomas, que abre un terminal con `scripts/idiomas/instalar_herramientas.sh`
+  (Homebrew: `languagetool` con su Java, `ollama`, modelo `qwen2.5:3b` de 1,9 GB; comprueba ffmpeg, whisper y las voces). Sin tarea de VS Code.
+- LanguageTool (puerto 8081) y Ollama (11434) se arrancan solo al corregir, **de uno en uno** (al arrancar uno se para el otro) y se paran
+  tras 8 minutos sin uso; el modelo se descarga de la memoria a los 4 minutos (Mac de 8 GB).
+
+### Expresión oral, tribunal y examen
+- Grabación con ffmpeg y transcripción con whisper.cpp (el modelo `large-v3-turbo` del cante, multilingüe; `-l en|fr`), en
+  `idiomas-<nombre>/audio/`. A diferencia del cante, **se transcribe sola al terminar** (son grabaciones cortas y hace falta para valorarlas).
+- Métricas: palabras por minuto (orientativo: 115–170 adecuado), pausas de más de 2 s, palabras, variedad léxica (Guiraud) y, en la
+  lectura en voz alta y la de tu resumen, palabras bien leídas, saltadas y cambiadas frente al original. El modelo valora la exposición
+  (ideas cubiertas y rúbrica) y las respuestas al tribunal (contenido y lengua 0–4, mejoras y una **repregunta**, que se puede contestar).
+- Tribunal: la voz del Mac lee la pregunta (se puede ver escrita y pedir pista); mezcla preguntas del texto y generales de `tribunal.json`
+  (54 por lengua en 9 bloques, hasta un nivel por encima del tuyo).
+- **Sesión tipo examen**: escucha (una vez, hasta 15 min) → resumen (90 min; versión corta 30) → preparación de otro texto (10 min) →
+  lectura en voz alta → exposición → lectura de tu resumen → 4 preguntas del tribunal → informe. Los relojes avisan y nunca cortan.
+  La corrección del resumen arranca al entregarlo y las grabaciones se transcriben mientras sigues; el informe espera a todo y da una nota
+  orientativa (media de resumen, exposición y tribunal). Se guarda en `examenes/`.
+- Vídeo y audio en abierto: enlaces (VOA, BBC Learning English, The Economist, France 24, RFI français facile, TV5Monde, Arte, Le Monde…)
+  en *Escuchar y resumir*; se abren en el navegador.
+
+### Pendiente de las fases 2–3
+- Probarlo en el Mac: voces disponibles, permisos de micrófono, LanguageTool y Ollama de Homebrew, tiempos de corrección del modelo de 3B.
+- El modelo de 3B es modesto: si sus valoraciones no convencen, probar `qwen2.5:7b` (4,7 GB; justo con 8 GB) con `TCEE_MODELO_IDIOMAS`.
+- Más textos: hay 120 descargados sin material en `encargos/fase2/sin_material` del entorno de Claude (VOA y Wikinews sobre todo).
 
 ## Búsqueda por significado: opciones (pendiente, 7/10/2026)
 

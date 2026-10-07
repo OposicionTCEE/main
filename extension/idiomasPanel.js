@@ -425,7 +425,7 @@ function crearIdiomas({ raiz, globalState }) {
   }
   const olvidarPerfil = (dir) => (globalState.get('tcee.idiomasPerfil') === dir ? globalState.update('tcee.idiomasPerfil', undefined) : undefined);
 
-  return { datos, verbosInicio, verbosBuscar, verbosSesion, verbosTerminar, crearPerfil, anotar, marcarRevision, guardarEntrada, borrarEntrada, buscar, definir, fichasAnotadas, rutaPerfil, olvidarPerfil, guardarPerfil, empezar, responder, terminar, descartarError, ficha, elegirPerfil: (dir) => globalState.update('tcee.idiomasPerfil', dir), dirActivo };
+  return { datos, perfil, verbosInicio, verbosBuscar, verbosSesion, verbosTerminar, crearPerfil, anotar, marcarRevision, guardarEntrada, borrarEntrada, buscar, definir, fichasAnotadas, rutaPerfil, olvidarPerfil, guardarPerfil, empezar, responder, terminar, descartarError, ficha, elegirPerfil: (dir) => globalState.update('tcee.idiomasPerfil', dir), dirActivo };
 }
 
 module.exports = { crearIdiomas };
