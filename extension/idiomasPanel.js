@@ -324,11 +324,70 @@ function crearIdiomas({ raiz, globalState }) {
     return { resultados: ids.slice(0, 40).map((i) => entrada(D.ent[i])), fuente: D.fuente };
   }
   /** Definición breve para el diccionario personal: traducciones de la entrada exacta (o, si no hay, su primera definición) */
-  function definir({ lengua, texto }) {
-    const D = dicc(lengua); if (!D) return '';
-    const xs = (D.porPalabra.get(plano(texto)) || []).map((i) => entrada(D.ent[i]));
-    const trad = [...new Set(xs.flatMap((x) => x.trad))].slice(0, 5);
-    return trad.length ? trad.join(', ') : (xs[0] && xs[0].glosas[0]) || '';
+  /** Definición de una palabra o expresión: la forma tal cual y, si no está, su forma base (wielded → wield, levied → levy, chevaux → cheval…) */
+  function definirConLema({ lengua, texto }) {
+    const D = dicc(lengua); if (!D) return { definicion: '', lema: null };
+    const limpio = plano(texto).replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');   // sin comillas ni puntuación pegada a la selección
+    for (const k of [limpio, ...formasBase(lengua, limpio)]) {
+      const xs = (D.porPalabra.get(k) || []).map((i) => entrada(D.ent[i]));
+      const trad = [...new Set(xs.flatMap((x) => x.trad))].slice(0, 5);
+      const def = trad.length ? trad.join(', ') : (xs[0] && xs[0].glosas[0]) || '';
+      if (def) return { definicion: def, lema: k === limpio ? null : (xs[0] && xs[0].palabra) || k };
+    }
+    return { definicion: '', lema: null };
+  }
+  const definir = (m) => definirConLema(m).definicion;
+  // irregulares frecuentes del inglés (el diccionario trae algunos, como «went», pero no todos)
+  const IRREG_EN = { children: 'child', men: 'man', women: 'woman', people: 'person', feet: 'foot', teeth: 'tooth', mice: 'mouse', geese: 'goose', data: 'datum', criteria: 'criterion', phenomena: 'phenomenon',
+    was: 'be', were: 'be', been: 'be', is: 'be', are: 'be', had: 'have', has: 'have', did: 'do', done: 'do', does: 'do', made: 'make', said: 'say', took: 'take', taken: 'take', gave: 'give', given: 'give',
+    came: 'come', became: 'become', got: 'get', gotten: 'get', saw: 'see', seen: 'see', knew: 'know', known: 'know', thought: 'think', brought: 'bring', bought: 'buy', sought: 'seek', caught: 'catch', taught: 'teach',
+    fought: 'fight', held: 'hold', kept: 'keep', left: 'leave', lost: 'lose', meant: 'mean', met: 'meet', paid: 'pay', sold: 'sell', sent: 'send', spent: 'spend', told: 'tell', found: 'find', felt: 'feel', led: 'lead',
+    rose: 'rise', risen: 'rise', fell: 'fall', fallen: 'fall', grew: 'grow', grown: 'grow', drew: 'draw', drawn: 'draw', drove: 'drive', driven: 'drive', wrote: 'write', written: 'write', began: 'begin', begun: 'begin',
+    ran: 'run', shown: 'show', struck: 'strike', stood: 'stand', understood: 'understand', won: 'win', wore: 'wear', worn: 'wear', chose: 'choose', chosen: 'choose', spoke: 'speak', spoken: 'speak', broke: 'break',
+    broken: 'break', froze: 'freeze', frozen: 'freeze', hid: 'hide', hidden: 'hide', laid: 'lay', lain: 'lie', lay: 'lie', dealt: 'deal', built: 'build', lent: 'lend', bent: 'bend', shot: 'shoot', shut: 'shut',
+    set: 'set', cut: 'cut', put: 'put', hit: 'hit', let: 'let', cost: 'cost', spread: 'spread', bore: 'bear', borne: 'bear', tore: 'tear', torn: 'tear', swore: 'swear', sworn: 'swear', withdrew: 'withdraw',
+    withdrawn: 'withdraw', undertook: 'undertake', undertaken: 'undertake', overcame: 'overcome', forgave: 'forgive', forgiven: 'forgive', forgot: 'forget', forgotten: 'forget', better: 'good', best: 'good', worse: 'bad', worst: 'bad' };
+  /** Formas base candidatas (de más a menos probable). Solo reglas de flexión: no inventa palabras, se comprueban contra el diccionario. */
+  function formasBase(l, w) {
+    const c = [], add = (x) => { if (x && x !== w && x.length > 1 && !c.includes(x)) c.push(x); };
+    const cons = /[bcdfghjklmnpqrstvwxz]/;
+    if (l === 'en') {
+      add(IRREG_EN[w]);
+      if (/ies$/.test(w)) add(w.slice(0, -3) + 'y');
+      if (/ied$/.test(w)) add(w.slice(0, -3) + 'y');
+      if (/ves$/.test(w)) { add(w.slice(0, -3) + 'f'); add(w.slice(0, -3) + 'fe'); }
+      if (/(s|x|z|ch|sh|o)es$/.test(w)) add(w.slice(0, -2));
+      if (/s$/.test(w) && !/ss$/.test(w)) add(w.slice(0, -1));
+      for (const suf of ['ed', 'ing', 'er', 'est']) {
+        if (!w.endsWith(suf) || w.length <= suf.length + 2) continue;
+        const r = w.slice(0, -suf.length);
+        add(r); add(`${r}e`);
+        if (r.length > 2 && r[r.length - 1] === r[r.length - 2] && cons.test(r[r.length - 1])) add(r.slice(0, -1));   // stopped → stop
+        if (/i$/.test(r)) add(`${r.slice(0, -1)}y`);   // happier → happy
+      }
+      if (/ly$/.test(w)) { add(w.slice(0, -2)); if (/ily$/.test(w)) add(`${w.slice(0, -3)}y`); }
+    } else if (l === 'fr') {
+      const vb = verbos(); const inf = vb && formasVerbo(vb).get(w); if (inf) add(inf);
+      if (/aux$/.test(w)) { add(w.slice(0, -3) + 'al'); add(w.slice(0, -3) + 'ail'); }
+      if (/eaux$/.test(w)) add(w.slice(0, -1));
+      if (/[sx]$/.test(w)) add(w.slice(0, -1));
+      for (const [suf, por] of [['ées', 'er'], ['és', 'er'], ['ée', 'er'], ['é', 'er'], ['ies', 'ir'], ['is', 'ir'], ['ie', 'ir'], ['euses', 'eux'], ['euse', 'eux'], ['ives', 'if'], ['ive', 'if'],
+        ['elles', 'el'], ['elle', 'el'], ['ennes', 'en'], ['enne', 'en'], ['es', ''], ['e', '']]) if (w.endsWith(suf)) add(w.slice(0, -suf.length) + por);
+    }
+    return c;
+  }
+  /** Francés: forma conjugada → infinitivo, a partir de las conjugaciones de Verbiste (se calcula una vez) */
+  let cacheFormas = null;
+  function formasVerbo(d) {
+    if (cacheFormas && cacheFormas.d === d) return cacheFormas.m;
+    const m = new Map();
+    for (const v of d.verbos) {
+      const p = I.paradigma(d, v[0]); if (!p) continue;
+      const poner = (f) => { for (const x of String(f || '').split(/\s*[/,]\s*/)) { const k = plano(x.split(' ').pop()); if (k && !m.has(k)) m.set(k, v[0]); } };
+      for (const t of Object.values(p.tiempos)) for (const fila of t) for (const f of fila.formas || []) poner(f);
+      poner(p.participios.presente); p.participios.pasado.forEach(poner);
+    }
+    cacheFormas = { d, m }; return m;
   }
 
   // ---------------------------------------------------------------- entrenador de verbos (francés; idiomas/fr/verbos.json, Verbiste)
@@ -425,7 +484,7 @@ function crearIdiomas({ raiz, globalState }) {
   }
   const olvidarPerfil = (dir) => (globalState.get('tcee.idiomasPerfil') === dir ? globalState.update('tcee.idiomasPerfil', undefined) : undefined);
 
-  return { datos, perfil, verbosInicio, verbosBuscar, verbosSesion, verbosTerminar, crearPerfil, anotar, marcarRevision, guardarEntrada, borrarEntrada, buscar, definir, fichasAnotadas, rutaPerfil, olvidarPerfil, guardarPerfil, empezar, responder, terminar, descartarError, ficha, elegirPerfil: (dir) => globalState.update('tcee.idiomasPerfil', dir), dirActivo };
+  return { datos, perfil, verbosInicio, verbosBuscar, verbosSesion, verbosTerminar, crearPerfil, anotar, marcarRevision, guardarEntrada, borrarEntrada, buscar, definir, definirConLema, fichasAnotadas, rutaPerfil, olvidarPerfil, guardarPerfil, empezar, responder, terminar, descartarError, ficha, elegirPerfil: (dir) => globalState.update('tcee.idiomasPerfil', dir), dirActivo };
 }
 
 module.exports = { crearIdiomas };

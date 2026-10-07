@@ -124,7 +124,7 @@ function crearHerramientas({ avisar = () => {} } = {}) {
       for (let intento = 0; intento < 2; intento++) {
         const r = await pedir(`${URL_OLLAMA}/api/chat`, { metodo: 'POST', tiempo, cuerpo: {
           model: MODELO, stream: false, format: formato || 'json', keep_alive: '4m',
-          options: { temperature: temperatura, num_ctx: contexto },
+          options: { temperature: temperatura, num_ctx: contexto, repeat_penalty: 1.15, num_predict: 1200 },   // sin bucles de frases repetidas y con tope de longitud
           messages: [...(sistema ? [{ role: 'system', content: sistema }] : []), { role: 'user', content: mensaje }] } });
         programarParada('ollama');
         const txt = (r.message && r.message.content) || '';

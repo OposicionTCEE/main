@@ -43,61 +43,105 @@
     function parar() { clearInterval(tic); tic = null; Lector.parar(); clearInterval(O.sondeo); O.sondeo = null; if (typeof K !== 'undefined') { clearInterval(K.sondeo); K.sondeo = null; } }
 
     // ================================================================== voz: neuronal (Piper, si está instalada) o la del sistema, frase a frase
+    // VS Code solo deja sonar un audio si lo inicia un clic, y cada elemento de audio nuevo vuelve a pedirlo: por eso hay UN solo elemento,
+    // que se «desbloquea» con el primer clic en el panel (un instante de silencio) y en el que suenan todas las frases. Antes se creaba uno por
+    // frase y VS Code rechazaba todos los que no salían de un clic: sonaba la primera frase y se saltaban las demás (main/IDIOMAS.md, «Voces»).
+    // La velocidad se aplica al reproducir (playbackRate, conservando el tono): cambia al instante y no obliga a generar de nuevo el audio.
     const NV = { info: null, elegida: {}, fallo: false, handlers: new Map() };   // elegida: voz del texto en curso, por lengua
     const confVoz = () => { const t = (A.st().idiVoz = A.st().idiVoz || {}); t[l()] = { motor: 'piper', voz: 'azar', velocidad: 0.95, ...(t[l()] || {}) }; return t[l()]; };
+    const velocidad = () => Number(confVoz().velocidad) || 1;
+    const VELOCIDADES = [0.75, 0.8, 0.85, 0.9, 0.95, 1, 1.05, 1.1, 1.2];
+    const selectorVelocidad = () => `<select data-vel title="Velocidad de lectura">${VELOCIDADES.map((v) => `<option value="${v}" ${velocidad() === v ? 'selected' : ''}>${v === 1 ? 'normal' : `× ${v}`}</option>`).join('')}</select>`;
     const usarPiper = () => !NV.fallo && confVoz().motor !== 'mac' && NV.info && NV.info.disponible && NV.info.voces.some((v) => v.lengua === l());
     async function cargarVoces() { try { NV.info = await pedir('idiPVoces'); } catch (e) { NV.info = { disponible: false, voces: [] }; } return NV.info; }
-    /** Pide a la extensión el audio de unas frases con la voz del texto en curso (la elige al azar la primera vez) */
+    /** Pide a la extensión el audio de unas frases con la voz del texto en curso (la elige al azar la primera vez). Siempre a velocidad normal. */
     async function vozPiper(frases) {
       const c = confVoz(), el = NV.elegida[l()];
       const voz = c.voz !== 'azar' ? c.voz : el ? el.voz : 'azar';
-      const { voz: r } = await pedir('idiPVoz', { lengua: l(), frases, voz, hablante: el && el.voz === voz ? el.hablante : undefined, velocidad: c.velocidad || 0.95 });
+      const { voz: r } = await pedir('idiPVoz', { lengua: l(), frases, voz, hablante: el && el.voz === voz ? el.hablante : undefined, velocidad: 1 });
       NV.elegida[l()] = { voz: r.voz, hablante: r.hablante, nombre: r.nombre };
       return r;
     }
     function falloVoz(msg) { NV.fallo = true; A.aviso(`Voz neuronal: ${msg}. Uso la voz del sistema.`, true); }
     function recibirVoz(m) { const h = NV.handlers.get(m.clave); if (h) h(m); }
 
+    // el único elemento de audio
+    const AU = { el: null, libre: false, n: 0, url: null };
+    const SILENCIO = (() => {   // 0,05 s de silencio en WAV (para desbloquear el audio con el primer clic)
+      const n = 400, b = new Uint8Array(44 + 2 * n), d = new DataView(b.buffer), txt = (o, t) => [...t].forEach((c, i) => b[o + i] = c.charCodeAt(0));
+      txt(0, 'RIFF'); d.setUint32(4, 36 + 2 * n, true); txt(8, 'WAVEfmt '); d.setUint32(16, 16, true); d.setUint16(20, 1, true); d.setUint16(22, 1, true);
+      d.setUint32(24, 8000, true); d.setUint32(28, 16000, true); d.setUint16(32, 2, true); d.setUint16(34, 16, true); txt(36, 'data'); d.setUint32(40, 2 * n, true);
+      let s = ''; b.forEach((x) => s += String.fromCharCode(x)); return `data:audio/wav;base64,${btoa(s)}`;
+    })();
+    function audioEl() { if (!AU.el) { AU.el = new Audio(); AU.el.preload = 'auto'; try { AU.el.preservesPitch = true; } catch (e) { /* */ } } return AU.el; }
+    function desbloquear() {
+      if (AU.libre) return;
+      const a = audioEl(); if (AU.url) return;   // ya hay una frase en él (su play() del clic lo desbloquea)
+      a.src = SILENCIO; const pr = a.play(); if (pr) pr.then(() => { AU.libre = true; }).catch(() => { /* se reintenta en el siguiente clic */ });
+    }
+    document.addEventListener('pointerdown', desbloquear, true);
+    document.addEventListener('keydown', desbloquear, true);
+
     const Lector = {
-      frases: [], i: 0, activo: false, alCambiar: null, audio: null, prep: null, espera: null,
+      frases: [], i: 0, activo: false, alCambiar: null, prep: null, espera: null, pausada: null, avisado: false,
       voces() { return (window.speechSynthesis ? window.speechSynthesis.getVoices() : []).filter((v) => v.lang && v.lang.replace('_', '-').toLowerCase().startsWith(l())); },
       cargar(parrafos) {
-        this.parar(); this.i = 0; this.prep = null; NV.elegida[l()] = null;   // cada texto, una voz nueva (si está «al azar»)
+        this.parar(); this.i = 0; this.prep = null; this.avisado = false; NV.elegida[l()] = null;   // cada texto, una voz nueva (si está «al azar»)
         this.frases = [];
         parrafos.forEach((p, k) => String(p).split(/(?<=[.!?…»"”])\s+(?=[A-ZÀ-ÖØ-Þ«"“(0-9])/).forEach((f) => { if (f.trim()) this.frases.push({ t: f.trim(), p: k }); }));
       },
-      /** Una frase suelta (pregunta del tribunal, dictado, ejemplos) */
-      hablar(texto, alFin) {
+      /** Una frase suelta (pregunta del tribunal, dictado, ejemplos). vel: velocidad para esta frase (si no, la elegida). */
+      hablar(texto, alFin, vel) {
         if (usarPiper()) {
           vozPiper([texto]).then((r) => {
             NV.handlers.set(r.clave, (m) => {
-              if (m.error) { NV.handlers.delete(r.clave); falloVoz(m.error); this.hablar(texto, alFin); return; }
+              if (m.error) { NV.handlers.delete(r.clave); falloVoz(m.error); this.hablarSistema(texto, alFin, vel); return; }
               if (m.i !== 0) return; NV.handlers.delete(r.clave);
-              this.sonar(m.url, () => alFin && alFin());
+              this.sonar(m.url, (err) => { if (err) { this.avisarFallo(err); this.hablarSistema(texto, alFin, vel); } else if (alFin) alFin(); }, vel);
             });
-          }).catch((e) => { falloVoz(e.message); this.hablar(texto, alFin); });
+          }).catch((e) => { falloVoz(e.message); this.hablarSistema(texto, alFin, vel); });
           return;
         }
-        if (!window.speechSynthesis) { A.aviso('Este VS Code no tiene voz sintética disponible.', true); return; }
+        this.hablarSistema(texto, alFin, vel);
+      },
+      /** La voz del sistema (la del Mac): sin voces neuronales, o de respaldo para una frase que no se pudo reproducir */
+      hablarSistema(texto, alFin, vel) {
+        if (!window.speechSynthesis) { A.aviso('Este VS Code no tiene voz sintética disponible.', true); if (alFin) alFin(true); return; }
         const u = new SpeechSynthesisUtterance(texto);
         const conf = confVoz();
         u.lang = l() === 'fr' ? 'fr-FR' : 'en-GB';
         const v = this.voces().find((x) => x.name === conf.nombreMac) || this.voces().find((x) => /premium|enhanced|mejorada/i.test(x.name)) || this.voces()[0];
         if (v) u.voice = v;
-        u.rate = conf.velocidad || 0.95;
+        u.rate = vel || velocidad();
         this.u = u;   // se guarda: si no, Chromium puede liberarlo y no llega nunca onend
         u.onend = () => { if (this.u === u) this.u = null; if (alFin) alFin(); }; u.onerror = () => { if (this.u === u) this.u = null; if (alFin) alFin(true); };
         window.speechSynthesis.speak(u);
       },
-      sonar(url, alFin) {
-        if (this.audio) { this.audio.onended = null; this.audio.pause(); }
-        const a = new Audio(url); this.audio = a;
-        a.onended = () => { if (this.audio === a) alFin(); };
-        a.onerror = () => { if (this.audio === a) alFin(true); };
-        a.play().catch(() => alFin(true));
+      /** Pone una frase en el elemento de audio. alFin() al terminar; alFin(motivo) si no se puede reproducir. */
+      sonar(url, alFin, vel) {
+        const a = audioEl(), id = ++AU.n;
+        a.onended = () => { if (AU.n === id) { AU.url = null; alFin(); } };
+        a.onerror = () => { if (AU.n === id) { AU.url = null; alFin(a.error ? `código ${a.error.code}` : 'error de audio'); } };
+        AU.url = url; a.src = url;
+        a.defaultPlaybackRate = a.playbackRate = vel || velocidad();
+        const pr = a.play();
+        if (pr) pr.then(() => { AU.libre = true; }).catch((e) => { if (AU.n !== id || (e && e.name === 'AbortError')) return; AU.url = null; alFin(e ? e.name : 'no se pudo reproducir'); });
+      },
+      avisarFallo(motivo) {
+        if (this.avisado) return; this.avisado = true;
+        A.aviso(`Voz neuronal: una frase no se pudo reproducir (${motivo}). La leo con la voz del sistema para no saltarla; si se repite, cuéntaselo a Claude.`, true);
       },
       async play(desde) {
         if (desde !== undefined) { this.i = desde; this.cortarAudio(); }
+        // se reanuda en el punto exacto si la frase pausada sigue en el audio
+        const a = AU.el;
+        if (desde === undefined && this.pausada && this.pausada.i === this.i && a && AU.url === this.pausada.url && a.paused && !a.ended) {
+          this.activo = true; this.pausada = null; this.notificar();
+          a.playbackRate = velocidad();
+          a.play().catch((e) => { if (e && e.name !== 'AbortError') { this.pausada = null; this.cortarAudio(); this.paso(); } });
+          return;
+        }
+        this.pausada = null;
         if (this.i >= this.frases.length) this.i = 0;
         if (window.speechSynthesis) window.speechSynthesis.cancel();
         this.activo = true;
@@ -121,21 +165,32 @@
         if (this.i >= this.frases.length) { this.activo = false; this.notificar(true); return; }
         this.notificar();
         const yo = this.i;
-        const siguiente = (err) => { if (!this.activo || this.i !== yo) return; this.i += 1; this.paso(); };
+        const siguiente = () => { if (!this.activo || this.i !== yo) return; this.i += 1; this.paso(); };
         if (this.prep && usarPiper()) {
           const url = this.prep.urls[yo];
-          if (url) this.sonar(url, siguiente); else this.espera = yo;   // aún se está generando: se espera
+          // si una frase no se puede reproducir, se lee con la voz del sistema: nunca se salta en silencio
+          if (url) this.sonar(url, (err) => { if (!err) return siguiente(); if (!this.activo || this.i !== yo) return; this.avisarFallo(err); this.hablarSistema(this.frases[yo].t, siguiente); });
+          else this.espera = yo;   // aún se está generando: se espera
           return;
         }
         this.hablar(this.frases[yo].t, siguiente);
       },
-      cortarAudio() { if (this.audio) { this.audio.onended = null; this.audio.pause(); this.audio = null; } this.espera = null; },
-      pausa() { this.activo = false; this.cortarAudio(); if (window.speechSynthesis) window.speechSynthesis.cancel(); this.notificar(); },
+      cortarAudio() { AU.n += 1; AU.url = null; if (AU.el) AU.el.pause(); this.espera = null; this.pausada = null; },
+      /** Pausa: con la voz neuronal se queda en el punto exacto; con la del sistema, se repite la frase al seguir */
+      pausa() {
+        this.activo = false; this.espera = null;
+        if (AU.el && AU.url && !AU.el.paused) { this.pausada = { i: this.i, url: AU.url }; AU.el.pause(); } else this.cortarAudio();
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        this.notificar();
+      },
       parar() { this.activo = false; this.cortarAudio(); if (window.speechSynthesis) window.speechSynthesis.cancel(); },
-      /** Cambió la voz o la velocidad: se vuelve a generar desde la frase actual */
-      reiniciar(otraVoz) { const a = this.activo; this.pausa(); this.prep = null; if (otraVoz) NV.elegida[l()] = null; if (a) this.play(); else this.notificar(); },
-      atras() { const a = this.activo; this.pausa(); this.i = Math.max(0, this.i - 1); if (a) this.play(); else this.notificar(); },
+      /** Velocidad: se aplica al momento a la frase que suena (con la voz del sistema, desde la frase siguiente) */
+      cambiarVelocidad(v) { confVoz().velocidad = v; A.guardar(); if (AU.el) AU.el.defaultPlaybackRate = AU.el.playbackRate = v; },
+      /** Cambió la voz: se vuelve a generar desde la frase actual */
+      reiniciar(otraVoz) { const a = this.activo; this.parar(); this.prep = null; if (otraVoz) NV.elegida[l()] = null; if (a) this.play(); else this.notificar(); },
+      atras() { const a = this.activo; this.parar(); this.i = Math.max(0, this.i - 1); if (a) this.play(); else this.notificar(); },
       notificar(fin) { if (this.alCambiar) this.alCambiar(fin); },
+      textoBoton(fin, inicial) { return this.activo ? '⏸ Pausa' : fin ? '↺ Otra vez' : (this.i || this.pausada) ? '▶ Seguir' : inicial; },
       nombreVoz() { return usarPiper() ? (NV.elegida[l()] ? NV.elegida[l()].nombre : 'voz neuronal al azar') : 'voz del sistema'; },
     };
     if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = () => {};
@@ -262,6 +317,13 @@
         fondo.querySelector('[data-no]').focus();
       });
     }
+    /** Zona de la etapa en pantalla (null si el usuario está en otra vista, p. ej. una ficha del diccionario) */
+    const zonaEtapa = () => vEl().querySelector('#idi-etapa');
+    /** Al terminar algo largo (una corrección): pasa a la etapa siguiente si sigue en la misma; si está en otra vista, la deja preparada */
+    function avanzarDesde(T, nombre) {
+      if (P.T !== T || etapa() !== nombre) return;
+      if (zonaEtapa()) siguienteEtapa(); else { T.e += 1; T.tEtapa = Date.now(); }
+    }
     function siguienteEtapa() { P.T.e += 1; P.T.tEtapa = Date.now(); pTexto(); window.scrollTo(0, 0); }
     const parrafosHtml = (x, marcar) => x.parrafos.map((p, i) => `<p class="idi-par ${marcar === i ? 'marcado' : ''}" data-par="${i}"><span class="idi-par-n">${i + 1}</span>${esc(p)}</p>`).join('');
     const notasHtml = (T, ayuda) => `<section class="idi-caja idi-notas"><h3>📝 Notas</h3><textarea id="idi-notas" rows="14" placeholder="${esc(ayuda)}">${esc(T.notas)}</textarea></section>`;
@@ -270,7 +332,7 @@
     function eLeer(z) {
       const T = P.T, x = T.texto;
       z.innerHTML = `<div class="idi-p-dos">
-        <section class="idi-caja idi-lectura" lang="${l()}"><div class="idi-acciones"><button data-oir title="La voz del Mac lee el texto">🔊 Escucharlo</button></div>${parrafosHtml(x)}
+        <section class="idi-caja idi-lectura" lang="${l()}"><div class="idi-acciones"><button data-oir title="Lee el texto en voz alta">🔊 Escucharlo</button>${selectorVelocidad()}</div>${parrafosHtml(x)}
           <p class="idi-fuente apagado">Fuente: ${x.fuente.url ? `<a data-url="${esc(x.fuente.url)}">${esc(x.fuente.nombre)}</a>` : esc(x.fuente.nombre)} · ${esc(x.fuente.licencia || '')}${x.fuente.autor ? ` · ${esc(x.fuente.autor)}` : ''}</p></section>
         <div>${notasHtml(T, 'Ideas principales, datos, conectores… Te servirán para el resumen.')}
           <p class="idi-acciones"><button class="primario" data-seguir>He terminado de leer →</button></p>
@@ -278,7 +340,8 @@
       enlazarNotas(z); enlazarUrls(z);
       z.querySelector('[data-seguir]').onclick = siguienteEtapa;
       const oir = z.querySelector('[data-oir]');
-      Lector.alCambiar = () => { oir.textContent = Lector.activo ? '⏸ Pausa' : '🔊 Escucharlo'; z.querySelectorAll('.idi-par').forEach((p) => p.classList.toggle('sonando', Lector.activo && Number(p.dataset.par) === (Lector.frases[Lector.i] || {}).p)); };
+      z.querySelector('[data-vel]').onchange = (e) => Lector.cambiarVelocidad(Number(e.target.value));
+      Lector.alCambiar = (fin) => { oir.textContent = Lector.textoBoton(fin, '🔊 Escucharlo'); z.querySelectorAll('.idi-par').forEach((p) => p.classList.toggle('sonando', Lector.activo && Number(p.dataset.par) === (Lector.frases[Lector.i] || {}).p)); };
       oir.onclick = () => (Lector.activo ? Lector.pausa() : Lector.play());
     }
     const enlazarUrls = (z) => z.querySelectorAll('[data-url]').forEach((a) => a.onclick = (e) => { e.preventDefault(); A.enviar({ tipo: 'abrirUrl', url: a.dataset.url }); });
@@ -311,7 +374,7 @@
         <div class="idi-form idi-rep-conf">
           <label>Voz <select data-voz>${neuronales.length ? `<optgroup label="Voces neuronales (Piper)"><option value="piper:azar">Al azar (una distinta en cada texto)</option>${neuronales.map((v) => `<option value="piper:${esc(v.id)}">${esc(v.nombre)}</option>`).join('')}</optgroup>` : ''}
             <optgroup label="Voces del sistema">${voces.map((v) => `<option value="mac:${esc(v.name)}">${esc(v.name)}</option>`).join('') || '<option value="mac:">La del sistema</option>'}</optgroup></select></label>
-          <label>Velocidad <select data-vel>${[0.8, 0.85, 0.9, 0.95, 1, 1.05, 1.1].map((v) => `<option value="${v}" ${Number(conf.velocidad) === v ? 'selected' : ''}>${v === 1 ? 'normal' : `× ${v}`}</option>`).join('')}</select></label></div>
+          <label>Velocidad ${selectorVelocidad()}</label></div>
         <p class="idi-mini" id="idi-voz-actual"></p>
         ${neuronales.length ? '' : '<p class="idi-mini apagado">Voces más naturales: instala las voces neuronales en ⚙ Ajustes › Instalar herramientas.</p>'}`;
       const sv = rep.querySelector('[data-voz]'); sv.value = [...sv.options].some((o) => o.value === valorVoz) ? valorVoz : sv.options[0].value;
@@ -319,7 +382,7 @@
       Lector.alCambiar = (fin) => {
         const n = Lector.frases.length; barra.style.width = `${Math.round((100 * Lector.i) / Math.max(1, n))}%`;
         pos.textContent = fin ? 'Fin del texto.' : `Frase ${Math.min(Lector.i + 1, n)} de ${n} · párrafo ${((Lector.frases[Lector.i] || {}).p || 0) + 1} de ${x.parrafos.length}`;
-        play.textContent = Lector.activo ? '⏸ Pausa' : fin ? '↺ Otra vez' : Lector.i ? '▶ Seguir' : '▶ Escuchar';
+        play.textContent = Lector.textoBoton(fin, '▶ Escuchar');
         if (fin) T.escuchas = (T.escuchas || 0) + 1;
         const va = rep.querySelector('#idi-voz-actual');
         if (va) va.innerHTML = `🗣 ${esc(Lector.nombreVoz())}${usarPiper() && confVoz().voz === 'azar' ? ' <a data-otra-voz>· otra voz</a>' : ''}`;
@@ -333,7 +396,7 @@
         if (motor === 'mac') { conf.motor = 'mac'; conf.nombreMac = v; } else { conf.motor = 'piper'; conf.voz = v || 'azar'; NV.fallo = false; }
         A.guardar(); Lector.reiniciar(true);
       };
-      rep.querySelector('[data-vel]').onchange = (e) => { conf.velocidad = Number(e.target.value); A.guardar(); Lector.reiniciar(false); };
+      rep.querySelector('[data-vel]').onchange = (e) => Lector.cambiarVelocidad(Number(e.target.value));
       rep.querySelector('.idi-rep-barra').onclick = (e) => { const r = e.currentTarget.getBoundingClientRect(); Lector.play(Math.floor(((e.clientX - r.left) / r.width) * Lector.frases.length)); };
     }
 
@@ -345,10 +408,10 @@
         <section class="idi-caja">
           <h3>✍️ Tu resumen <span class="apagado idi-mini">en ${l() === 'fr' ? 'francés' : 'inglés'} · ${min}–${max} palabras</span></h3>
           <p class="ayuda">Con tus palabras, sin opiniones propias, en registro formal. Puedes usar el diccionario (📚, a la derecha), como en el examen.</p>
-          <textarea id="idi-resumen" rows="16" lang="${l()}" spellcheck="false" placeholder="${l() === 'fr' ? 'Ce texte traite de…' : 'The text deals with…'}">${esc(T.resumen)}</textarea>
+          <textarea id="idi-resumen" rows="16" lang="${l()}" spellcheck="false" ${T.corr ? 'readonly' : ''} placeholder="${l() === 'fr' ? 'Ce texte traite de…' : 'The text deals with…'}">${esc(T.resumen)}</textarea>
           <div class="idi-contador"><span id="idi-cuenta"></span><span class="apagado">⏱ resumen: <span id="idi-r-reloj"></span></span></div>
-          <div id="idi-corr-estado"></div>
-          <p class="idi-acciones"><button class="primario" data-corregir>Corregir mi resumen</button><button data-saltar>Seguir sin corregir</button></p></section>
+          <div id="idi-corr-estado">${T.corr ? `<p class="idi-progreso">${esc(T.corr.msg)}</p>` : ''}</div>
+          <p class="idi-acciones"><button class="primario" data-corregir ${T.corr ? 'disabled' : ''}>Corregir mi resumen</button><button data-saltar ${T.corr ? 'disabled' : ''}>Seguir sin corregir</button></p></section>
         <div>${T.modo === 'lectura' ? `<section class="idi-caja"><h3>📖 Texto <button class="idi-mini" data-ver>${verTexto ? 'Ocultar' : 'Mostrar'}</button></h3>
             ${verTexto ? `<div class="idi-lectura compacta" lang="${l()}">${parrafosHtml(x)}</div>` : '<p class="apagado idi-mini">Oculto: resume de memoria y con tus notas, como en el examen.</p>'}</section>` : ''}
           ${notasHtml(T, '')}</div></div>`;
@@ -362,17 +425,23 @@
       conReloj(() => { pintarR(); const r = vEl().querySelector('#idi-t-reloj'); if (r) r.textContent = reloj((Date.now() - T.t0) / 1000); });
       const v = z.querySelector('[data-ver]'); if (v) v.onclick = () => { T.verTexto = !T.verTexto; eResumen(z); };
       z.querySelector('[data-saltar]').onclick = siguienteEtapa;
-      z.querySelector('[data-corregir]').onclick = async (ev) => {
+      // la corrección sigue aunque se repinte la etapa (mostrar u ocultar el texto, abrir una ficha…): su estado vive en T.corr
+      z.querySelector('[data-corregir]').onclick = async () => {
+        if (T.corr) return;
         if (palabras(ta.value) < 20) { A.aviso('Escribe al menos unas frases (20 palabras).', true); return; }
-        ev.target.disabled = true;
-        const est = z.querySelector('#idi-corr-estado');
-        est.innerHTML = '<p class="idi-progreso">Corrigiendo…</p>';
+        T.resumen = ta.value; T.corr = { msg: 'Corrigiendo…' }; eResumen(z);
+        const pinta = () => { const est = P.T === T && vEl().querySelector('#idi-corr-estado'); if (est && T.corr) est.innerHTML = `<p class="idi-progreso">${esc(T.corr.msg)}</p>`; };
         try {
-          const r = await pedir('idiPCorregir', { lengua: l(), clase: 'resumen', id: x.id, k: x.k, texto: ta.value, segundos: (Date.now() - T.tEtapa) / 1000, modo: T.modo, notas: T.notas, sinSesion: true },
-            (txt) => { if (P.T === T) est.innerHTML = `<p class="idi-progreso">${esc(txt)}</p>`; });
-          if (P.T !== T) return;   // el usuario salió mientras se corregía
-          T.escrito = r.escrito; siguienteEtapa();
-        } catch (e) { if (P.T !== T) return; ev.target.disabled = false; est.innerHTML = ''; fallo(e); }
+          const r = await pedir('idiPCorregir', { lengua: l(), clase: 'resumen', id: x.id, k: x.k, texto: T.resumen, segundos: (Date.now() - T.tEtapa) / 1000, modo: T.modo, notas: T.notas, sinSesion: true },
+            (txt) => { if (T.corr) { T.corr.msg = txt; pinta(); } });
+          T.corr = null;
+          if (P.T !== T) return;   // el usuario salió del texto mientras se corregía
+          T.escrito = r.escrito; avanzarDesde(T, 'resumen');
+        } catch (e) {
+          T.corr = null; if (P.T !== T) return;
+          const zz = etapa() === 'resumen' && zonaEtapa(); if (zz) eResumen(zz);
+          fallo(e);
+        }
       };
     }
 
@@ -389,7 +458,7 @@
             else if (p.tipo === 'eleccion') campo = `<div class="idi-opciones">${(p.opciones || []).map((o) => `<button data-resp="${esc(o)}" class="${resp === o ? 'activo' : ''} ${r ? (r.respuestas.includes(o) ? 'ok' : resp === o ? 'mal' : '') : ''}" ${r ? 'disabled' : ''}>${esc(o)}</button>`).join('')}</div>`;
             else if (p.tipo === 'abierta') campo = `<textarea rows="3" data-escribe lang="${l()}" ${r ? 'disabled' : ''}>${esc(resp)}</textarea>`;
             else campo = `<input type="text" data-escribe autocomplete="off" spellcheck="false" lang="${l()}" value="${esc(resp)}" ${r ? 'disabled' : ''}>`;
-            return `<div class="idi-preg ${r ? (r.ok ? 'ok' : r.parcial ? 'parcial' : r.autoevaluar ? '' : 'mal') : ''}" data-preg="${esc(p.id)}">
+            return `<div class="idi-preg ${r ? (r.ok ? 'ok' : r.parcial ? 'parcial' : r.autoevaluar ? '' : 'mal') : (T.esperando || {})[p.id] ? 'esperando' : ''}" data-preg="${esc(p.id)}">
               <div class="idi-preg-cab"><b>${i + 1}.</b> <span class="idi-ej-tipo">${tipoTxt[p.tipo] || p.tipo}</span> <span class="apagado idi-mini">párrafo ${p.parrafo + 1}</span></div>
               ${p.enunciado ? `<p class="idi-enun">${esc(p.enunciado)}</p>` : ''}<p class="idi-preg-txt" lang="${l()}">${esc(p.pregunta)}</p>
               ${campo}
@@ -414,14 +483,19 @@
     }
     async function comprobarPregunta(id, z) {
       const T = P.T; if (T.resultados[id]) return;
+      T.esperando = T.esperando || {}; if (T.esperando[id]) return;   // ya se está comprobando: no se manda dos veces
       const resp = T.respuestas[id] || '';
       if (!String(resp).trim()) return;
+      T.esperando[id] = true;
       const el = z.querySelector(`[data-preg="${id}"]`); if (el) el.classList.add('esperando');
+      // se repinta la zona que haya en pantalla en ese momento (la etapa se ha podido repintar mientras tanto)
+      const repintar = () => { const zz = P.T === T && etapa() === 'preguntas' && zonaEtapa(); if (zz) ePreguntas(zz); };
       try {
         const { resultado } = await pedir('idiPResponder', { lengua: l(), id: T.texto.id, pregunta: id, respuesta: resp });
+        delete T.esperando[id];
         if (P.T !== T) return;
-        T.resultados[id] = resultado; if (resultado.aviso) A.aviso(resultado.aviso, true); ePreguntas(z);
-      } catch (e) { fallo(e); if (el) el.classList.remove('esperando'); }
+        T.resultados[id] = resultado; if (resultado.aviso) A.aviso(resultado.aviso, true); repintar();
+      } catch (e) { delete T.esperando[id]; fallo(e); repintar(); }
     }
     function veredicto(p, r) {
       if (r.autoevaluar && !r.autoevaluado) {
@@ -450,7 +524,7 @@
     : w.tipo === 'falta' ? `<span class="falta" title="Te faltó">${esc(w.o)}</span>` : w.tipo === 'sobra' ? `<span class="sobra" title="Sobra">${esc(w.e)}</span>` : `<span class="mal" title="Escribiste «${esc(w.e)}»">${esc(w.o)}</span>`).join(' ')}</div>
           <p class="apagado idi-mini">Verde: bien · ámbar: falla un acento · rojo: mal escrita (pasa el ratón para ver lo que pusiste) · tachado: sobra · subrayado: falta.</p>` : ''}
         <p class="idi-acciones">${hecho ? `<button class="primario" data-sig>${D.i + 1 < frases.length ? 'Siguiente frase →' : 'Terminar el dictado →'}</button>` : '<button class="primario" data-comprobar>Comprobar</button>'}</p></section>`;
-      const oir = (lento) => { Lector.parar(); const c = (A.st().idiVoz || {})[l()] || {}; const v0 = c.velocidad; if (lento) { c.velocidad = Math.max(0.6, (v0 || 0.95) - 0.25); } Lector.hablar(f.frase, () => {}); if (lento) c.velocidad = v0; };
+      const oir = (lento) => { Lector.parar(); Lector.hablar(f.frase, () => {}, lento ? Math.max(0.6, velocidad() - 0.25) : undefined); };
       z.querySelector('[data-oir]').onclick = () => oir(false);
       z.querySelector('[data-lento]').onclick = () => oir(true);
       const ta = z.querySelector('#idi-dic');
@@ -593,9 +667,9 @@
         <div class="idi-p-dos"><section class="idi-caja">
           <div class="idi-enunciado" lang="${l()}">${esc(t.enunciado)}</div>
           <p class="apagado idi-mini">${TIPOS_TAREA[t.tipo]} · registro ${esc(t.registro)} · ${t.palabras[0]}–${t.palabras[1]} palabras</p>
-          <textarea id="idi-w" rows="18" lang="${l()}" spellcheck="false">${esc(W.texto)}</textarea>
-          <div class="idi-contador"><span id="idi-w-cuenta"></span></div><div id="idi-w-estado"></div>
-          <p class="idi-acciones"><button class="primario" data-corregir>Corregir</button></p></section>
+          <textarea id="idi-w" rows="18" lang="${l()}" spellcheck="false" ${W.corr ? 'readonly' : ''}>${esc(W.texto)}</textarea>
+          <div class="idi-contador"><span id="idi-w-cuenta"></span></div><div id="idi-w-estado">${W.corr ? `<p class="idi-progreso">${esc(W.corr.msg)}</p>` : ''}</div>
+          <p class="idi-acciones"><button class="primario" data-corregir ${W.corr ? 'disabled' : ''}>Corregir</button></p></section>
         <div><section class="idi-caja"><h3>Estructura</h3><ol>${(t.estructura || []).map((x) => `<li>${esc(x)}</li>`).join('')}</ol></section>
           <section class="idi-caja"><h3>Expresiones útiles</h3><div class="idi-glos" lang="${l()}">${(t.expresiones || []).map((x) => `<span>${esc(x)}</span>`).join('')}</div>
           <p class="idi-mini apagado">Más en el banco de expresiones (abajo).</p></section>
@@ -606,14 +680,20 @@
       ta.oninput = contar; contar(); ta.focus();
       const pintaW = () => { const r = vEl().querySelector('#idi-w-reloj'); if (r) r.textContent = reloj((Date.now() - W.t0) / 1000); };
       pintaW(); conReloj(pintaW);
-      vEl().querySelector('[data-corregir]').onclick = async (ev) => {
+      // como en el resumen: el estado de la corrección vive en W.corr y sobrevive a que se repinte la pantalla
+      vEl().querySelector('[data-corregir]').onclick = async () => {
+        if (W.corr) return;
         if (palabras(ta.value) < 20) { A.aviso('Escribe al menos unas frases (20 palabras).', true); return; }
-        ev.target.disabled = true; const est = vEl().querySelector('#idi-w-estado'); est.innerHTML = '<p class="idi-progreso">Corrigiendo…</p>';
+        W.texto = ta.value; W.corr = { msg: 'Corrigiendo…' }; pEscribir();
+        const enPantalla = () => P.W === W && vEl().querySelector('#idi-w');
         try {
-          const { escrito } = await pedir('idiPCorregir', { lengua: l(), clase: 'tarea', tareaId: t.id, texto: ta.value, segundos: (Date.now() - W.t0) / 1000 }, (x) => { est.innerHTML = `<p class="idi-progreso">${esc(x)}</p>`; });
+          const { escrito } = await pedir('idiPCorregir', { lengua: l(), clase: 'tarea', tareaId: t.id, texto: W.texto, segundos: (Date.now() - W.t0) / 1000 },
+            (x) => { if (!W.corr) return; W.corr.msg = x; const est = enPantalla() && vEl().querySelector('#idi-w-estado'); if (est) est.innerHTML = `<p class="idi-progreso">${esc(x)}</p>`; });
+          W.corr = null;
           if (P.W !== W) return;
-          P.verEscrito = escrito; P.W = null; parar(); A.ir('escrito');
-        } catch (e) { if (P.W !== W) return; ev.target.disabled = false; est.innerHTML = ''; fallo(e); }
+          P.verEscrito = escrito; P.W = null;
+          if (enPantalla() || vEl().querySelector('#idi-w')) { parar(); A.ir('escrito'); } else A.aviso('Tu escrito ya está corregido: lo tienes en Expresión escrita › Mis escritos.');
+        } catch (e) { W.corr = null; if (P.W !== W) return; if (enPantalla()) pEscribir(); fallo(e); }
       };
     }
     function bancoExpresiones() {
@@ -1219,7 +1299,7 @@
       else if (tipo === 'clases') A.ir('clases');
     }
     cargarVoces();
-    const decir = (texto) => { Lector.cortarAudio(); Lector.hablar(texto, () => {}); };
+    const decir = (texto) => { if (Lector.activo) Lector.pausa(); else Lector.cortarAudio(); Lector.hablar(texto, () => {}); };
     return { decir, pintar, recibir, empezar, cajaHerramientas, cajaMedios, enlazarUrls, vistas: ['biblioteca', 'texto', 'escritura', 'escribir', 'escrito', 'oral', 'examen', 'clases', 'clase'], ocupado: () => !!(P.T || P.E || (O.estado && O.estado.grabando)) };
   }
   window.TCEE_IDI_PR = { crear };

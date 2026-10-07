@@ -75,6 +75,9 @@ function crearPracticas({ dirPaquete, dirPerfil, perfil, herramientas, cante = (
       const pr = X.promptAbierta({ lengua, pregunta: p.pregunta, modelo: p.respuestas[0], cita: p.cita, respuesta });
       let r;
       try { r = await herramientas.preguntar(pr); } catch (e) { return { ...base, autoevaluar: true, aviso: `Modelo local: ${e.message}` }; }
+      // control objetivo: una respuesta sin ninguna palabra con contenido en común con la respuesta modelo, la cita y la pregunta no puntúa
+      if (X.comunesRaices(respuesta, `${p.respuestas[0]} ${p.cita || ''} ${p.pregunta}`, lengua) === 0) { r.nota = 0; r.comentario = 'La respuesta no tiene relación con lo que se pregunta.'; }
+      r.comentario = X.limpiarComentario(r.comentario, 2);
       return { ...base, ok: r.nota === 2, parcial: r.nota === 1, nota: r.nota, comentario: r.comentario };
     }
     if (p.tipo === 'vf' || p.tipo === 'eleccion') {
@@ -130,15 +133,23 @@ function crearPracticas({ dirPaquete, dirPerfil, perfil, herramientas, cante = (
       aviso('Revisando la gramática y la ortografía con LanguageTool…');
       try { out.errores = await herramientas.corregirTexto(limpio, lengua); } catch (x) { out.avisos.push(`LanguageTool: ${x.message}`); out.errores = []; }
     } else { out.errores = null; out.avisos.push('LanguageTool no está instalado: sin corrección gramatical automática.'); }
-    if (e.ollama && e.modelo) {
+    // controles objetivos (sin modelo): un resumen que no trata del texto es un 0 y no hace falta preguntar al modelo
+    const control = clase === 'resumen' ? X.controlResumen({ lengua, texto: original, ideas, resumen: limpio, extension: out.extension }) : null;
+    if (control) out.control = control;
+    if (control && control.fueraDeTema) {
+      const a = X.ajustarResumen(null, control, ideas);
+      out.valoracion = a.valoracion; out.nota = a.nota; out.ideasEstado = a.ideasEstado; out.avisos.push(...a.avisos);
+    } else if (e.ollama && e.modelo) {
       aviso('Valorando con el modelo local (puede tardar uno o dos minutos)…');
       try {
         const pr = clase === 'resumen'
           ? X.promptResumen({ lengua, texto: original, ideas, resumen: limpio, errores: out.errores, extension: out.extension })
           : X.promptEscrito({ lengua, tarea, texto: limpio, errores: out.errores });
-        const v = await herramientas.preguntar(pr);
-        out.valoracion = v; out.nota = X.notaRubrica(v.criterios || {});
-        if (clase === 'resumen' && Array.isArray(v.ideas)) out.ideasEstado = Object.fromEntries(v.ideas.map((x) => [x.n, x.estado]));
+        const v = X.depurarValoracion(await herramientas.preguntar(pr), limpio, lengua);
+        const a = clase === 'resumen' ? X.ajustarResumen(v, control, ideas)
+          : X.ajustarEscrito(v, { lengua, enunciado: `${tarea.enunciado} ${tarea.titulo || ''}`, texto: limpio, extension: tarea.palabras });
+        out.valoracion = a.valoracion; out.nota = a.nota; out.avisos.push(...a.avisos);
+        if (a.ideasEstado) out.ideasEstado = a.ideasEstado;
       } catch (x) { out.avisos.push(`Modelo local: ${x.message}`); }
     } else out.avisos.push('El modelo local no está instalado: valora tú mismo las ideas y la rúbrica.');
     escribir(fp(path.join('escritos', `${out.id}.json`)), out);
@@ -322,11 +333,11 @@ function crearPracticas({ dirPaquete, dirPerfil, perfil, herramientas, cante = (
     if (e.ollama && e.modelo && (f.clase === 'exposicion' || f.clase === 'tribunal')) {
       aviso('Valorando con el modelo local…');
       try {
-        if (f.clase === 'tribunal') out.valoracion = await herramientas.preguntar(X.promptTribunal({ lengua: f.lengua, pregunta: r.pregunta, ideas: r.ideas, transcripcion: f.texto, segundos: f.segundos, texto: original }));
+        if (f.clase === 'tribunal') out.valoracion = X.depurarValoracion(await herramientas.preguntar(X.promptTribunal({ lengua: f.lengua, pregunta: r.pregunta, ideas: r.ideas, transcripcion: f.texto, segundos: f.segundos, texto: original })), f.texto, f.lengua);
         else {
           const t = texto(f.lengua, r.textoId) || {};
           const ideas = (t.ideas_clave || []).filter((x) => (x.parrafos || [0]).some((i) => i < (r.k || 1e9)));
-          out.valoracion = await herramientas.preguntar(X.promptExposicion({ lengua: f.lengua, texto: original, ideas, transcripcion: f.texto, segundos: f.segundos }));
+          out.valoracion = X.depurarValoracion(await herramientas.preguntar(X.promptExposicion({ lengua: f.lengua, texto: original, ideas, transcripcion: f.texto, segundos: f.segundos })), f.texto, f.lengua);
           out.ideas = ideas; out.nota = X.notaRubrica(out.valoracion.criterios || {});
         }
       } catch (x) { out.aviso = `Modelo local: ${x.message}`; }

@@ -174,7 +174,10 @@ Al escribirlas se revisaron de nuevo todas las fichas: unas 90 correcciones (res
   solo ejercicios fallados, de las fichas con más errores) y el detalle plegado.
 - **Mi diccionario** (`diccionario.json` del perfil): al seleccionar cualquier texto del panel sale «📖 Añadir a mi diccionario» / «🔎 Buscar»
   (en la ficha, junto a los colores). Entradas `{id, lengua, texto, definicion, tipo: palabra|estructura, campo, ficha, contexto, fecha}`;
-  la definición se rellena con el diccionario bilingüe. Vista: vocabulario por campo semántico y estructuras por ficha. Repaso: pendiente.
+  la definición se rellena con el diccionario bilingüe. Desde v0.40: si el diccionario la tiene, queda **fija** (no editable; se indica «Del
+  diccionario» y, si hizo falta, la forma base: wielded → wield, chevaux → cheval, mangeait → manger, con reglas de flexión y las conjugaciones de
+  Verbiste); si no, el campo queda libre. Al añadir desde el «Vocabulario del texto», la definición es la del vocabulario, fija. El contexto es la
+  frase que contiene la selección. Vista: vocabulario por campo semántico y estructuras por ficha. Repaso: pendiente.
 - **Libreta**: todos los subrayados y notas de las fichas, agrupados por ficha, con el fragmento subrayado y su contexto y la nota en recuadro.
 - **Cajón del diccionario** (fijo a la derecha, plegable): «lengua → castellano» (palabra exacta y por prefijo) o «Por significado»
   (describes en castellano y propone palabras: búsqueda inversa sobre traducciones y definiciones). Datos: `<l>/diccionario.json` del paquete,
@@ -263,6 +266,22 @@ en la pantalla principal, decisión del usuario del 7/10/2026) y comparten corre
   corrección, vocabulario; nota /10), ideas recogidas/a medias/que faltan, inexactitudes, propuestas de mejora y comentario, todo en castellano.
   Instrucciones del modelo en `extension/idiomasTextos.js` (respuesta en JSON con esquema). El usuario puede cambiar la rúbrica y las ideas
   («Guardar mi valoración»). Sin herramientas instaladas, se autoevalúa con la misma rúbrica.
+- **Controles objetivos (v0.40, 7/10/2026)**, porque el modelo de 3B es benévolo e incoherente: puso 7,5 a «Hi! This is just a test…» (24 palabras),
+  dio por recogidas todas las ideas, pidió escribir el resumen *en español* y propuso «mejoras» en castellano. Ahora, sin modelo
+  (`controlResumen`/`ajustarResumen`/`ajustarEscrito`/`depurarValoracion` en `extension/idiomasTextos.js`), y mandando sobre el modelo:
+  - **Fuera de tema → 0** en todo y sin preguntar al modelo: menos de 4 palabras con contenido en común con el texto o menos del 30 % de las
+    del resumen (raíces de 5 letras, sin palabras vacías).
+  - Cada idea: si el resumen apenas comparte su vocabulario (menos del 12 %) → «falta»; menos del 25 % → como mucho «a medias».
+  - Sin ninguna idea esencial → «tarea» 0 y nota máxima 2; falta alguna → «tarea» ≤ 2. Más corto que el mínimo → «tarea» ≤ 2; menos de la mitad
+    → «tarea» ≤ 1 y nota máxima 3. Escritos: sin relación con el enunciado → «tarea» ≤ 1 y nota máxima 3.
+  - Se descartan las «mejoras» cuyo original no está en el texto del alumno o cuya propuesta está en castellano, las frases repetidas y las
+    que piden escribir en castellano. Respuestas abiertas sin ninguna palabra en común con la respuesta modelo → 0.
+  - Instrucciones del modelo: el alumno escribe SIEMPRE en la lengua del examen; solo los comentarios van en castellano. `repeat_penalty` 1,15 y
+    tope de 1.200 fichas de salida (evita los bucles de frases repetidas y acorta la espera).
+- **Procesos largos y otros botones (v0.40)**: la corrección del resumen y del escrito guarda su estado (`T.corr`, `W.corr`) y sobrevive a que se
+  repinte la pantalla (mostrar u ocultar el texto, abrir una ficha…): el botón sigue desactivado con el progreso, no se manda dos veces
+  (el 7/10 se corrigió dos veces el mismo resumen) y al terminar pasa a la etapa siguiente, o la deja preparada si el usuario está en otra vista.
+  Lo mismo con las preguntas abiertas que se están comprobando.
 
 ### Herramientas locales (`extension/idiomasHerramientas.js`)
 - Instalación: botón *Instalar herramientas* en Ajustes de Idiomas, que abre un terminal con `scripts/idiomas/instalar_herramientas.sh`
@@ -306,6 +325,14 @@ en la pantalla principal, decisión del usuario del 7/10/2026) y comparten corre
 - Funcionamiento: `extension/idiomasVoz.js` mantiene vivo `scripts/idiomas/voz.py` (servidor de Piper) mientras se usa y lo para a los 5 minutos;
   genera el audio frase a frase (la primera, en menos de un segundo) en `~/.tcee/voz-cache/` (se borra lo de más de 3 días) y la pantalla lo
   reproduce según llega. Si Piper falla o no está, se usa la voz del sistema y se avisa.
+- **v0.40 (7/10/2026, fallo visto por el usuario y diagnosticado con un registro en su Mac)**: sonaba la primera frase y el resto se saltaba, o se
+  paraba. Causa: VS Code solo deja reproducir audio que inicia un clic, y el lector creaba un elemento de audio por frase; todos salvo el del clic
+  eran rechazados (`NotAllowedError: play() can only be initiated by a user gesture`) y el lector los daba por terminados. Ahora hay **un único
+  elemento de audio**, desbloqueado con el primer clic en el panel (50 ms de silencio en WAV; CSP `media-src … data:`), y todas las frases suenan
+  en él. Si una frase aun así no suena, se lee con la voz del sistema y se avisa una vez: nunca se salta en silencio.
+- **Pausa**: con la voz neuronal sigue desde el punto exacto (con la del sistema, desde el principio de la frase).
+- **Velocidad** (× 0,75 a × 1,2, por idioma) en Comprensión lectora (junto a *Escucharlo*) y auditiva: se aplica al reproducir (`playbackRate`
+  conservando el tono), al momento y sin volver a generar el audio; Piper genera siempre a velocidad normal. El dictado «más despacio» resta 0,25.
 
 ## Clases con profesores (v0.38, 7/10/2026, con el usuario)
 
