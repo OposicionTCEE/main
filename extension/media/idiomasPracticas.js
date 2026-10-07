@@ -83,8 +83,8 @@
     // ================================================================== biblioteca
     async function pBiblioteca() {
       const modo = P.modo;
-      vEl().innerHTML = `<div class="idi-p">${cab(modo === 'escucha' ? '🎧 Escuchar y resumir' : '📖 Leer y resumir',
-        `<div class="segmentos idi-p-modos"><button data-modo="lectura" class="${modo === 'lectura' ? 'activo' : ''}">📖 Leer y resumir</button><button data-modo="escucha" class="${modo === 'escucha' ? 'activo' : ''}">🎧 Escuchar y resumir</button></div>`)}
+      vEl().innerHTML = `<div class="idi-p">${cab(modo === 'escucha' ? '🎧 Comprensión auditiva' : '📖 Comprensión lectora',
+        `<div class="segmentos idi-p-modos"><button data-modo="lectura" class="${modo === 'lectura' ? 'activo' : ''}">📖 Comprensión lectora</button><button data-modo="escucha" class="${modo === 'escucha' ? 'activo' : ''}">🎧 Comprensión auditiva</button></div>`)}
         <p class="ayuda">${modo === 'escucha'
     ? 'Como en el examen escrito: la voz del Mac te lee el texto (no lo ves), tomas notas y luego escribes el resumen en la lengua del texto. Después puedes contestar preguntas, hacer un dictado y ver el texto.'
     : 'Lees el texto, tomas notas y escribes un resumen en la lengua del texto. Después puedes contestar preguntas de comprensión y repasar el vocabulario.'}</p>
@@ -500,7 +500,7 @@
       const xs = P.tareas.filter((t) => (!f.nivel || t.nivel === f.nivel) && (!f.tipo || t.tipo === f.tipo));
       z.innerHTML = `<div class="idi-cuerpo"><div>
           <section class="idi-caja"><h3>Resumir un texto</h3><p class="ayuda">Los resúmenes se hacen desde la biblioteca: así se corrigen frente a las ideas del texto.</p>
-            <p class="idi-acciones"><button data-bib="lectura">📖 Leer y resumir</button><button data-bib="escucha">🎧 Escuchar y resumir</button></p></section>
+            <p class="idi-acciones"><button data-bib="lectura">📖 Comprensión lectora</button><button data-bib="escucha">🎧 Comprensión auditiva</button></p></section>
           <section class="idi-caja"><h3>Mis escritos</h3>${P.escritos.length ? `<ul class="idi-hist idi-escritos">${P.escritos.map((e) => `<li data-escrito="${esc(e.id)}"><span>${A.fechaCorta(e.fecha)}</span>
             <span>${esc(e.clase === 'resumen' ? `Resumen · ${e.titulo || ''}` : e.titulo || '')}</span><span>${e.nota != null ? `${e.nota}/10` : '—'}</span></li>`).join('')}</ul>` : '<p class="apagado">Aún no has corregido ninguno.</p>'}</section>
         </div><section>
@@ -591,9 +591,16 @@
             <button data-om="lectura"><span class="idi-ico">📢</span><b>Leer en voz alta</b><small>Compara lo que dices con el texto: palabras saltadas o cambiadas</small></button></div>
             <p class="idi-mini apagado">Se graba con el micrófono del Mac (ffmpeg) y se transcribe sin conexión con whisper (el mismo del cante). El audio se guarda solo en tu carpeta de idiomas.</p></section></div>
         <section class="idi-caja"><h3>Mis grabaciones</h3>${grabs.length ? `<ul class="idi-hist">${grabs.map((g) => `<li data-grab="${esc(g.id)}"><span>${A.fechaCorta(g.fecha)}</span><span>${esc(NOMBRE_ORAL[g.clase] || g.clase)}</span>
-          <span>${g.metricas ? `${g.metricas.ppm} pal/min` : esc(g.estado)}</span><span class="apagado">${Math.round(g.segundos / 6) / 10} min</span></li>`).join('')}</ul>` : '<p class="apagado">Aún no hay grabaciones.</p>'}</section></div>`;
+          <span>${g.metricas ? `${g.metricas.ppm} pal/min` : g.estado === 'error' ? 'error' : 'sin corregir'}</span><span class="apagado">${Math.round(g.segundos / 6) / 10} min</span></li>`).join('')}</ul>` : '<p class="apagado">Aún no hay grabaciones.</p>'}</section></div>`;
       z.querySelectorAll('[data-om]').forEach((b) => b.onclick = () => elegirTextoOral(z, b.dataset.om));
       z.querySelectorAll('[data-grab]').forEach((li) => li.onclick = async () => {
+        const g0 = grabs.find((x) => x.id === li.dataset.grab);
+        if (g0 && g0.estado !== 'transcrito') {
+          z.innerHTML = `<section class="idi-caja" id="idi-grab"></section>`;
+          O.pre = { clase: g0.clase }; O.ref = g0.ref || {}; O.pide = g0.ref && g0.ref.pregunta ? { pregunta: g0.ref.pregunta, ideas: g0.ref.ideas || [] } : null;
+          O.actual = { id: g0.id, fase: 'grabado', clase: g0.clase, segundos: g0.segundos };
+          return pintarGrabador(z.querySelector('#idi-grab'));
+        }
         try { const { grabacion } = await pedir('idiPValorarOral', { id: li.dataset.grab }); O.actual = { id: grabacion.id, fase: 'hecho', clase: grabacion.clase, res: grabacion }; pintarResultadoOral(z, grabacion); } catch (e) { fallo(e); }
       });
     }
@@ -639,6 +646,15 @@
         z.querySelector('[data-descartar]').onclick = () => pararGrabacion(true);
         return;
       }
+      if (a && a.fase === 'grabado') {
+        z.innerHTML = `<h3>✓ Grabado${a.segundos ? ` <span class="apagado idi-mini">${reloj(a.segundos)}</span>` : ''}</h3>
+          <p class="ayuda">Al pulsar «Corregir» se transcribe en el Mac (whisper trabaja a tope un rato) y se valora.</p>
+          <p class="idi-acciones"><button class="primario" data-corregir-oral>Corregir</button><button data-escuchar-oral>▶ Escucharla</button><button data-otra-vez>Grabar otra vez</button></p><div id="idi-audio"></div>`;
+        z.querySelector('[data-corregir-oral]').onclick = async () => { try { const { estado } = await pedir('idiPTranscribir', { ids: [a.id] }); O.estado = estado; a.fase = 'transcribiendo'; pintarGrabador(z); alEstadoOral(); } catch (e) { fallo(e); } };
+        z.querySelector('[data-escuchar-oral]').onclick = async () => { const { url } = await pedir('idiPAudio', { id: a.id }); z.querySelector('#idi-audio').innerHTML = url ? `<audio controls autoplay src="${esc(url)}" style="width:100%"></audio>` : '<p class="apagado">Sin audio.</p>'; };
+        z.querySelector('[data-otra-vez]').onclick = () => { O.actual = null; pintarGrabador(z); };
+        return;
+      }
       if (a && a.fase === 'transcribiendo') {
         const t = e.transcribiendo; const pct = t && t.id === a.id ? t.pct : 0;
         z.innerHTML = `<h3>⏳ Transcribiendo… ${pct ? `${pct} %` : ''}</h3><div class="carga"><span style="width:${pct}%"></span></div><p class="apagado idi-mini">whisper trabaja en el Mac; suele tardar menos que la grabación.</p>`;
@@ -652,7 +668,7 @@
     async function empezarGrabacion() {
       try {
         const { estado } = await pedir('idiPGrabar', { lengua: l(), clase: O.pre.clase, ref: { ...(O.ref || {}), ...(O.pide ? { pregunta: O.pide.pregunta, ideas: O.pide.ideas } : {}) } });
-        O.estado = estado; O.actual = { fase: 'grabando', clase: O.pre.clase };
+        O.estado = estado; O.actual = { fase: 'grabando', clase: O.pre.clase }; O.inicioGrab = Date.now();
         clearInterval(O.sondeo);
         O.sondeo = setInterval(async () => { try { const r = await pedir('idiPEstadoOral'); O.estado = r.estado; pintarGrabador(vEl().querySelector('#idi-grab')); if (!r.estado.grabando) { clearInterval(O.sondeo); O.sondeo = null; } } catch (e) { clearInterval(O.sondeo); } }, 600);
         pintarGrabador(vEl().querySelector('#idi-grab'));
@@ -663,9 +679,8 @@
       try {
         const { id, estado } = await pedir('idiPParar', { descartar });
         O.estado = estado;
-        O.actual = id ? { id, fase: 'transcribiendo', clase: (O.pre || {}).clase } : null;
+        O.actual = id ? { id, fase: 'grabado', clase: (O.pre || {}).clase, segundos: O.inicioGrab ? (Date.now() - O.inicioGrab) / 1000 : 0 } : null;
         pintarGrabador(vEl().querySelector('#idi-grab'));
-        if (id) alEstadoOral();
       } catch (e) { fallo(e); }
     }
     async function valorarActual() {
@@ -854,9 +869,9 @@
       O.ref = { textoId: k === 'tuResumen' ? E.t1.id : E.t2.id, k: k === 'tuResumen' ? E.t1.k : E.t2.k, escrito: k === 'tuResumen' ? E.resumen : undefined };
       // en el examen no se espera a la transcripción: se valora todo en el informe
       const grab = vEl().querySelector('#idi-grab');
-      if (E.grab[k]) grab.innerHTML = '<h3>✓ Grabado</h3><p class="apagado idi-mini">Se transcribe en segundo plano; lo verás en el informe.</p>';
+      if (E.grab[k]) grab.innerHTML = '<h3>✓ Grabado</h3><p class="apagado idi-mini">Se corregirá en el informe, al final del examen.</p>';
       else pintarGrabador(grab);
-      const vigilar = setInterval(() => { if (!P.E || PASOS_EX[P.E.paso][0] !== k) { clearInterval(vigilar); return; } if (O.actual && O.actual.id && !E.grab[k]) { E.grab[k] = O.actual.id; O.actual.fase = 'hecho'; grab.innerHTML = '<h3>✓ Grabado</h3><p class="apagado idi-mini">Se transcribe en segundo plano; lo verás en el informe.</p>'; const s = z.querySelector('[data-seguir]'); if (s) s.disabled = false; } }, 500);
+      const vigilar = setInterval(() => { if (!P.E || PASOS_EX[P.E.paso][0] !== k) { clearInterval(vigilar); return; } if (O.actual && O.actual.id && !E.grab[k]) { E.grab[k] = O.actual.id; O.actual.fase = 'hecho'; grab.innerHTML = '<h3>✓ Grabado</h3><p class="apagado idi-mini">Se corregirá en el informe, al final del examen.</p>'; const s = z.querySelector('[data-seguir]'); if (s) s.disabled = false; } }, 500);
       z.querySelector('[data-seguir]').onclick = exSiguiente;
       z.querySelector('[data-saltar]').onclick = exSiguiente;
     }
@@ -883,6 +898,13 @@
     async function exInforme(z) {
       const E = P.E;
       clearInterval(tic);
+      const ids = [E.grab.lectura, E.grab.exposicion, E.grab.tuResumen, ...((E.trib && E.trib.grab) || []).filter(Boolean).map((g) => g.id)].filter(Boolean);
+      if (ids.length && !E.corrigiendoOral) {
+        z.innerHTML = `<section class="idi-caja"><h3>📊 Informe del examen</h3><p class="ayuda">Tienes ${ids.length} grabación(es). Al pulsar «Corregir» se transcriben en el Mac, una tras otra
+          (whisper trabaja a tope unos minutos), y se valoran junto con tu resumen.</p><p class="idi-acciones"><button class="primario" data-corregir-ex>Corregir</button></p></section>`;
+        z.querySelector('[data-corregir-ex]').onclick = async () => { try { await pedir('idiPTranscribir', { ids }); E.corrigiendoOral = true; exInforme(z); } catch (e) { fallo(e); } };
+        return;
+      }
       z.innerHTML = `<section class="idi-caja"><h3>📊 Informe del examen</h3><div id="idi-ex-estado"><p class="idi-progreso">Esperando la corrección del resumen y las transcripciones…</p></div></section><div id="idi-ex-res"></div>`;
       const est = z.querySelector('#idi-ex-estado'), res = z.querySelector('#idi-ex-res');
       if (E.corr) await E.corr;

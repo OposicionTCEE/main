@@ -222,7 +222,8 @@ Al escribirlas se revisaron de nuevo todas las fichas: unas 90 correcciones (res
 El examen real (BOE-A-2025-26902, segundo ejercicio) marca el diseño: **escrito** = se lee en voz alta un texto (hasta 15 minutos), se toman
 notas y se escribe un resumen en esa lengua (90 minutos, con diccionario); **oral** = 10 minutos para preparar otro texto, lectura en voz alta,
 exposición (unos 10 minutos) y preguntas del tribunal, que además lee el escrito. **El usuario quiere practicar con el mismo peso «leer y
-resumir» y «escuchar y resumir»**: los dos son botones grandes, juntos, al principio de *Empezar sesión*, y comparten corrección.
+resumir» y «escuchar y resumir»**: son los botones *Comprensión lectora* y *Comprensión auditiva* de *Empezar sesión* (sin botones nuevos
+en la pantalla principal, decisión del usuario del 7/10/2026) y comparten corrección.
 
 ### Biblioteca de textos
 - 193 textos con material (104 en inglés, 89 en francés), de B1 a C1: Wikipedia, Simple English Wikipedia, Vikidia, Wikinews, VOA (con su
@@ -242,7 +243,7 @@ resumir» y «escuchar y resumir»**: los dos son botones grandes, juntos, al pr
 - Tarjetas por nivel, tema, tipo (prensa, noticia, divulgación, enciclopedia) y hechos/sin hacer. «Te propongo»: un texto de tu nivel o uno
   más, sin hacer, de un campo distinto a los últimos y, a igualdad, de prensa.
 
-### Leer y resumir · Escuchar y resumir
+### Comprensión lectora (leer y resumir) · Comprensión auditiva (escuchar y resumir)
 - Etapas: Lectura (texto con «🔊 Escucharlo») o Escucha (sin texto: voz del Mac frase a frase, con barra, frase anterior, voz y velocidad;
   o el audio original de VOA) → Resumen → Preguntas → Dictado (solo escucha, opcional) → Resultado. Notas siempre a la derecha.
 - La voz es la del sistema (`speechSynthesis` del panel); las voces «mejoradas/premium» se descargan en Ajustes del Sistema › Accesibilidad.
@@ -271,7 +272,9 @@ resumir» y «escuchar y resumir»**: los dos son botones grandes, juntos, al pr
 
 ### Expresión oral, tribunal y examen
 - Grabación con ffmpeg y transcripción con whisper.cpp (el modelo `large-v3-turbo` del cante, multilingüe; `-l en|fr`), en
-  `idiomas-<nombre>/audio/`. A diferencia del cante, **se transcribe sola al terminar** (son grabaciones cortas y hace falta para valorarlas).
+  `idiomas-<nombre>/audio/`. Como en el cante, **no se transcribe sola**: al terminar se ofrece *Corregir* (transcribe y valora),
+  *Escucharla* o *Grabar otra vez* (decisión del usuario, 7/10/2026). En el examen, el informe empieza con un botón *Corregir* que transcribe
+  todas las grabaciones, una tras otra. Las sin corregir quedan en «Mis grabaciones» y se corrigen desde allí. El audio se guarda en mp3.
 - Métricas: palabras por minuto (orientativo: 115–170 adecuado), pausas de más de 2 s, palabras, variedad léxica (Guiraud) y, en la
   lectura en voz alta y la de tu resumen, palabras bien leídas, saltadas y cambiadas frente al original. El modelo valora la exposición
   (ideas cubiertas y rúbrica) y las respuestas al tribunal (contenido y lengua 0–4, mejoras y una **repregunta**, que se puede contestar).

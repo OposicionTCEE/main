@@ -200,21 +200,22 @@ function crearPracticas({ dirPaquete, dirPerfil, perfil, herramientas, cante = (
     const segundos = Math.round(Math.min((fin - m.inicio) / 1000, bytes / (HZ * 2) + 1));
     if (descartar || bytes < HZ * 2 * 2) { try { fs.unlinkSync(m.wav); } catch (e) { /* */ } return null; }
     escribir(path.join(dirAudio(), `${m.id}.json`), { id: m.id, lengua: m.lengua, clase: m.clase, ref: m.ref, fecha: new Date(m.inicio).toISOString(), segundos, audio: path.basename(m.wav), estado: 'pendiente' });
-    if (!cola.includes(m.id)) cola.push(m.id);
-    setTimeout(siguiente, 0);
-    return m.id;
+    return m.id;   // se transcribe al pulsar «Corregir» (decisión del usuario, 7/10/2026)
   }
-  /** Al abrir VS Code: cierra la grabación que se cortó y vuelve a poner en cola lo que quedó sin transcribir */
+  /** Al abrir VS Code: cierra la grabación que se cortó (queda pendiente de «Corregir»; nada se transcribe solo) */
   function retomar() {
-    try {
-      if (!dirPerfil()) return;
-      grabacionEnCurso();
-      for (const x of fs.readdirSync(dirAudio()).filter((n) => n.endsWith('.json') && n !== 'grabando.json')) {
-        const f = leer(path.join(dirAudio(), x), null);
-        if (f && f.estado === 'pendiente' && !cola.includes(f.id)) cola.push(f.id);
-      }
-      siguiente();
-    } catch (e) { /* sin carpeta de audio aún */ }
+    try { if (dirPerfil()) grabacionEnCurso(); } catch (e) { /* sin carpeta de audio aún */ }
+  }
+  /** «Corregir»: pone en cola la transcripción de una o varias grabaciones (una cada vez) */
+  function transcribir({ ids }) {
+    for (const id of [].concat(ids || [])) {
+      const f = ficha(id); if (!f) continue;
+      if (f.estado === 'transcrito' || cola.includes(id) || (transcribiendo && transcribiendo.id === id)) continue;
+      if (f.estado === 'error') escribir(path.join(dirAudio(), `${id}.json`), { ...f, estado: 'pendiente', error: undefined });
+      cola.push(id);
+    }
+    siguiente();
+    return estadoOral();
   }
   async function grabar({ lengua, clase, ref, micro }) {
     const h = C.herramientas();
@@ -306,7 +307,7 @@ function crearPracticas({ dirPaquete, dirPerfil, perfil, herramientas, cante = (
    */
   async function valorarOral({ id, ref, sinSesion }, aviso = () => {}) {
     const f = ficha(id); if (!f) throw new Error('Grabación no encontrada.');
-    if (f.estado !== 'transcrito') throw new Error(f.estado === 'error' ? `No se pudo transcribir: ${f.error}` : 'La grabación aún se está transcribiendo.');
+    if (f.estado !== 'transcrito') throw new Error(f.estado === 'error' ? `No se pudo transcribir: ${f.error}` : (cola.includes(id) || (transcribiendo && transcribiendo.id === id) ? 'La grabación aún se está transcribiendo.' : 'Grabación sin corregir: pulsa «Corregir».'));
     if (f.valoracionOral && !ref) return f;   // ya valorada: no se repite (ni se cuenta otra sesión)
     const r = { ...(f.ref || {}), ...(ref || {}) };
     const out = { metricas: f.metricas, velocidad: X.valorarVelocidad(f.metricas.ppm) };
@@ -351,7 +352,7 @@ function crearPracticas({ dirPaquete, dirPerfil, perfil, herramientas, cante = (
     return id;
   }
 
-  return { retomar, biblioteca, abrir, responder, dictado, terminarTexto, corregirEscrito, autoevaluar, escritos, escrito, listaTareas, expresiones,
+  return { retomar, transcribir, biblioteca, abrir, responder, dictado, terminarTexto, corregirEscrito, autoevaluar, escritos, escrito, listaTareas, expresiones,
     preguntasTribunal, grabar, pararGrabacion, estadoOral, valorarOral, grabaciones, rutaAudio, guardarExamen, tarea: ({ lengua, id }) => tareas(lengua).find((t) => t.id === id) || null };
 }
 

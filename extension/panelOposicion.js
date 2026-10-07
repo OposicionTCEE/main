@@ -268,6 +268,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
         case 'idiPGrabar': return r({ grabacion: await practicas.grabar(m), estado: practicas.estadoOral() });
         case 'idiPParar': return r({ id: await practicas.pararGrabacion(m), estado: practicas.estadoOral() });
         case 'idiPEstadoOral': return r({ estado: practicas.estadoOral() });
+        case 'idiPTranscribir': return r({ estado: practicas.transcribir(m) });
         case 'idiPValorarOral': { const x = await practicas.valorarOral(m, aviso); r({ grabacion: x }); return responder('idiDatos', { datos: idiomas.datos() }); }
         case 'idiPGrabaciones': return r({ lista: practicas.grabaciones(m) });
         case 'idiPAudio': { const f = practicas.rutaAudio(m.id); return r({ url: f && fs.existsSync(f) ? panel.webview.asWebviewUri(vscode.Uri.file(f)).toString() : null }); }

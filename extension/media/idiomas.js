@@ -37,8 +37,8 @@
   const DESTREZAS = [
     ['gramatica', '🧩', 'Gramática', 'Competencia gramatical'],
     ['lexico', '🔤', 'Léxico', 'Vocabulario y expresiones'],
-    ['lectura', '📖', 'Comprensión lectora', 'Leer y resumir; preguntas'],
-    ['escucha', '🎧', 'Comprensión auditiva', 'Escuchar y resumir; dictado'],
+    ['lectura', '📖', 'Comprensión lectora', 'Leer un texto y resumirlo'],
+    ['escucha', '🎧', 'Comprensión auditiva', 'Escuchar un texto y resumirlo'],
     ['escrito', '✍️', 'Expresión escrita', 'Tareas con rúbrica y corrección'],
     ['oral', '🗣️', 'Expresión oral', 'Exposición, lectura y tribunal'],
   ];
@@ -48,7 +48,7 @@
     ['examen', '🎓', 'Examen', 'Escrito y oral, como el BOE'],
   ];
   const NOMBRE_SESION = { gramatica: 'Gramática', lexico: 'Léxico', repaso: 'Repaso', azar: 'Al azar', ficha: 'Ficha', errores: 'Errores', examen: 'Examen',
-    lectura: 'Leer y resumir', escucha: 'Escuchar y resumir', escrito: 'Escritura', oral: 'Oral', verbos: 'Verbos' };
+    lectura: 'Comprensión lectora', escucha: 'Comprensión auditiva', escrito: 'Escritura', oral: 'Oral', verbos: 'Verbos' };
   const PRACTICAS = new Set(['lectura', 'escucha', 'escrito', 'oral', 'examen']);
   let PR = null;   // fases 2–3 (idiomasPracticas.js)
   const DIAS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
@@ -199,8 +199,6 @@
         <aside class="idi-izq">
           <section class="idi-caja">
             <h3>Empezar sesión</h3>
-            <div class="idi-resumir"><button data-tipo="lectura"><span>📖</span><b>Leer y resumir</b><small>Lees un texto y escribes su resumen</small></button>
-              <button data-tipo="escucha"><span>🎧</span><b>Escuchar y resumir</b><small>Te lo leen, tomas notas y lo resumes</small></button></div>
             <p class="idi-sub">Destrezas y competencias</p>
             <div class="idi-destrezas">${DESTREZAS.map(botonSesion).join('')}</div>
             <div class="idi-especiales">${ESPECIALES.map(botonSesion).join('')}</div>
