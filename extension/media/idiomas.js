@@ -69,7 +69,7 @@
 
   // ------------------------------------------------------------------ mensajes
   function recibir(m) {
-    if (m.tipo && (m.tipo.startsWith('idiP') || m.tipo === 'idiOral')) { if (PR) PR.recibir(m); return; }
+    if (m.tipo && (m.tipo.startsWith('idiP') || m.tipo === 'idiOral' || m.tipo === 'idiClaseEstado')) { if (PR) PR.recibir(m); return; }
     if (m.tipo === 'idiDatos') { X = m.datos; if (!X.perfil) vista = 'nuevo'; else if (vista === 'nuevo') vista = 'inicio'; if (vista !== 'sesion' && vista !== 'ficha' && vista !== 'verbos' && !(PR && PR.vistas.includes(vista))) pintarVista(); else if (vista === 'ficha') refrescarPieFicha(); }
     if (m.tipo === 'idiFicha') { fichaAbierta = m.ficha; if (vista !== 'ficha') desdeVista = vista; vista = 'ficha'; pintarVista(); window.scrollTo(0, 0); }
     if (m.tipo === 'idiSesion') empezarSesion(m.sesion);
@@ -192,6 +192,8 @@
   // ------------------------------------------------------------------ inicio
   function pInicio() {
     const l = lengua(), P = X.perfil;
+    // cada columna se desplaza por su cuenta: se conserva dónde estaba cada una al repintar
+    const previo = { izq: (raiz.querySelector('.idi-izq') || {}).scrollTop || 0, der: (raiz.querySelector('.idi-cartas') || {}).scrollTop || 0 };
     vistaEl.innerHTML = `<div class="idi2">
       ${barraSuperior(l, P)}
       ${avisosNivel(l, nivelDecl(l), X.nivel[l] || {})}
@@ -210,6 +212,9 @@
         </aside>
         <section class="idi-der">${fichasHtml(l)}</section>
       </div></div>`;
+    ajustarAlto();
+    const iz = raiz.querySelector('.idi-izq'), ca = raiz.querySelector('.idi-cartas');
+    if (iz) iz.scrollTop = previo.izq; if (ca) ca.scrollTop = previo.der;
     const sel = raiz.querySelector('#idi-lengua'); sel.onchange = () => { st().idiLengua = sel.value; ctx.guardar(); pInicio(); pintarCajon(); };
     const bv = raiz.querySelector('#idi-verbos'); if (bv) bv.onclick = () => { VB.esperando = true; VB.ses = null; enviar({ tipo: 'idiVerbosInicio' }); ir('verbos'); };
     raiz.querySelector('#idi-ajustes').onclick = () => ir('ajustes');
@@ -223,10 +228,19 @@
     raiz.querySelectorAll('[data-descartar]').forEach((b) => b.onclick = () => { const [m, ej] = b.dataset.descartar.split('|'); enviar({ tipo: 'idiDescartarError', materia: m, ejercicio: ej }); });
     raiz.querySelectorAll('[data-ajustar-nivel]').forEach((b) => b.onclick = () => enviar({ tipo: 'idiGuardarPerfil', cambios: { idiomas: { [l]: { nivel: b.dataset.ajustarNivel } } } }));
     const sb = raiz.querySelector('#idi-bloque'); sb.onchange = () => { st().idiBloque = sb.value; ctx.guardar(); pInicio(); };
+    const bc = raiz.querySelector('#idi-clases'); if (bc) bc.onclick = () => (PR ? PR.empezar('clases') : null);
     const np = raiz.querySelector('.idi-niv-puntos');
     if (np) np.onkeydown = (e) => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); verNivel(l, e.key === 'ArrowLeft' ? -1 : 1); const x = raiz.querySelector('.idi-punto.activo'); if (x) x.focus(); } };
     raiz.querySelectorAll('[data-nivel-ir]').forEach((b) => b.onclick = () => { st().idiNivelVista = { ...(st().idiNivelVista || {}), [l]: b.dataset.nivelIr }; ctx.guardar(); pInicio(); });
   }
+  /** Inicio: la barra superior queda fija y las dos columnas (izquierda y tarjetas) se desplazan cada una por su cuenta, en pantallas anchas */
+  function ajustarAlto() {
+    const cu = raiz && raiz.querySelector('.idi-cuerpo'); if (!cu) return;
+    if (window.innerWidth <= 1000) { cu.style.height = ''; cu.classList.remove('fijo'); return; }
+    const top = cu.getBoundingClientRect().top + window.scrollY;
+    cu.style.height = `${Math.max(320, window.innerHeight - top - 14)}px`; cu.classList.add('fijo');
+  }
+  window.addEventListener('resize', () => { if (vista === 'inicio') ajustarAlto(); });
   const verNivel = (l, paso) => {
     const i = NIVELES.indexOf(nivelVista(l)) + paso;
     if (i < 0 || i >= NIVELES.length) return;
@@ -332,6 +346,7 @@
     const dom = conFicha.filter((m) => m.estado === 'dominada').length;
     const porNivel = Object.fromEntries(NIVELES.map((n) => [n, paq.materias.filter((m) => (bloque === 'todas' || m.bloque === bloque) && m.nivel === n && m.ficha)]));
     return `<div class="idi-der-cab">
+        <button class="idi-btn-clases" id="idi-clases" title="Tus clases con profesores: audio, ficheros y transcripción">👩‍🏫 Clases</button>
         <select id="idi-bloque" class="idi-sel-grande" title="Mapa de materias">${[...BLOQUES, 'todas'].map((b) => `<option value="${b}" ${b === bloque ? 'selected' : ''}>${esc(t[b])}</option>`).join('')}</select>
         <div class="idi-niv-puntos" role="tablist" aria-label="Nivel">${NIVELES.map((n) => {
           const xs = porNivel[n], d = xs.filter((m) => m.estado === 'dominada').length;

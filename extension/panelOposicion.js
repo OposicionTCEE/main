@@ -12,6 +12,7 @@ const { crearTest } = require('./testPanel');
 const { crearIdiomas } = require('./idiomasPanel');
 const { crearPracticas } = require('./idiomasPracticas');
 const { crearHerramientas } = require('./idiomasHerramientas');
+const { crearClases } = require('./idiomasClases');
 
 function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
   let panel = null;
@@ -38,9 +39,17 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
   context.subscriptions.push({ dispose: () => herrIdiomas.cerrarTodo() });
   const practicas = crearPracticas({
     dirPaquete: () => path.join(raiz(), 'idiomas'), dirPerfil: () => idiomas.dirActivo(), perfil: () => idiomas.perfil(), herramientas: herrIdiomas,
-    cante: () => { try { return cante.estado(); } catch (e) { return null; } },
+    // un micrófono y un whisper cada vez entre el cante, el oral y las clases
+    cante: () => { try { const a = cante.estado(), b = clases.estado(); return { grabando: a.grabando || b.grabando, transcribiendo: a.transcribiendo || b.transcribiendo }; } catch (e) { return null; } },
     avisar: (texto, error) => { if (panel) panel.webview.postMessage({ tipo: 'aviso', texto, error: !!error }); },
     alCambiar: () => { if (panel) panel.webview.postMessage({ tipo: 'idiOral', estado: practicas.estadoOral() }); },
+  });
+  // Clases con profesores (main/IDIOMAS.md, «Clases»): audio, ficheros y transcripción en la carpeta del perfil
+  const clases = crearClases({
+    dirPerfil: () => idiomas.dirActivo(),
+    otroOcupado: () => { try { const a = cante.estado(), b = practicas.estadoOral(); return { grabando: a.grabando || b.grabando, transcribiendo: a.transcribiendo || b.transcribiendo }; } catch (e) { return null; } },
+    avisar: (texto, error) => { if (panel) panel.webview.postMessage({ tipo: 'aviso', texto, error: !!error }); },
+    alCambiar: () => { if (panel) panel.webview.postMessage({ tipo: 'idiClaseEstado', estado: clases.estado() }); },
   });
   // Cante: grabación y transcripción (main/CANTE.md). alCambiar(ligero): solo el estado en vivo (nivel, % transcrito) o todo el panel
   const cante = crearCante({
@@ -49,7 +58,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     alCambiar: (ligero) => { if (!panel) return; if (ligero) panel.webview.postMessage({ tipo: 'canteEstado', estado: cante.estado() }); else enviar(); },
   });
   setTimeout(() => { try { cante.retomar(); } catch (e) { /* sin carpeta aún */ } }, 5000);
-  setTimeout(() => { try { practicas.retomar(); } catch (e) { /* sin perfil aún */ } }, 8000);
+  setTimeout(() => { try { practicas.retomar(); clases.retomar(); } catch (e) { /* sin perfil aún */ } }, 8000);
   let latido = null;   // mientras se graba, el nivel del micrófono se envía cada medio segundo
   const vigilarGrabacion = () => {
     const g = panel && cante.estado().grabando;
@@ -272,6 +281,41 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
         case 'idiPValorarOral': { const x = await practicas.valorarOral(m, aviso); r({ grabacion: x }); return responder('idiDatos', { datos: idiomas.datos() }); }
         case 'idiPGrabaciones': return r({ lista: practicas.grabaciones(m) });
         case 'idiPAudio': { const f = practicas.rutaAudio(m.id); return r({ url: f && fs.existsSync(f) ? panel.webview.asWebviewUri(vscode.Uri.file(f)).toString() : null }); }
+        case 'idiPClases': return r({ lista: clases.lista(m) });
+        case 'idiPClaseCrear': return r({ clase: clases.crear(m) });
+        case 'idiPClase': return r({ clase: clases.clase(m.id), estado: clases.estado() });
+        case 'idiPClaseCambiar': return r({ clase: clases.cambiar(m) });
+        case 'idiPClaseImportar': {
+          const audio = m.que === 'audio';
+          const xs = await vscode.window.showOpenDialog({ canSelectMany: !audio, openLabel: audio ? 'Añadir audio' : 'Añadir ficheros',
+            filters: audio ? { 'Audio o vídeo': ['m4a', 'mp3', 'wav', 'aac', 'caf', 'aif', 'aiff', 'ogg', 'opus', 'flac', 'mp4', 'mov', 'm4v', 'webm'] } : undefined });
+          if (!xs || !xs.length) return r({ cancelado: true });
+          return r(await clases.importar({ id: m.id, rutas: xs.map((u) => u.fsPath) }, aviso));
+        }
+        case 'idiPClaseQuitarAdjunto': return r({ clase: clases.quitarAdjunto(m) });
+        case 'idiPClaseQuitarAudio': {
+          const si = await vscode.window.showWarningMessage('¿Borrar este audio de la clase y su transcripción?', { modal: true }, 'Borrar');
+          return r(si === 'Borrar' ? { clase: clases.quitarAudio(m) } : { cancelado: true });
+        }
+        case 'idiPClaseAdjunto': {
+          const x = clases.leerAdjunto(m);
+          if (x.texto === null || !/\.(txt|md|vtt|srt|csv)$/i.test(m.fichero)) { vscode.env.openExternal(vscode.Uri.file(x.ruta)); return r({ fuera: true }); }
+          return r({ texto: x.texto });
+        }
+        case 'idiPClaseCarpeta': vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(path.join(clases.ruta(m.id), 'clase.json'))); return r({});
+        case 'idiPClaseMicros': return r({ lista: await clases.microfonos() });
+        case 'idiPClaseGrabar': return r({ grabacion: await clases.grabar(m), estado: clases.estado() });
+        case 'idiPClaseParar': { aviso('Guardando y comprimiendo el audio…'); const a = await clases.parar(m); return r({ audio: a, estado: clases.estado() }); }
+        case 'idiPClaseEstado': return r({ estado: clases.estado() });
+        case 'idiPClaseTranscribir': return r({ estado: clases.transcribir(m) });
+        case 'idiPClaseAudioUrl': return r({ url: panel.webview.asWebviewUri(vscode.Uri.file(path.join(clases.ruta(m.id), path.basename(m.fichero)))).toString() });
+        case 'idiPClaseEliminar': {
+          const c = clases.clase(m.id); if (!c) return r({ cancelado: true });
+          const si = await vscode.window.showWarningMessage(`¿Eliminar la clase «${c.titulo}»?`, { modal: true, detail: 'Su carpeta (audio, ficheros y transcripción) irá a la Papelera del Mac.' }, 'Eliminar');
+          if (si !== 'Eliminar') return r({ cancelado: true });
+          await vscode.workspace.fs.delete(vscode.Uri.file(clases.eliminar(m)), { recursive: true, useTrash: true });
+          return r({ eliminada: true });
+        }
         case 'idiPGuardarExamen': { const id = practicas.guardarExamen(m.examen); r({ id }); return responder('idiDatos', { datos: idiomas.datos() }); }
         default: return null;
       }
