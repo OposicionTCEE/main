@@ -294,6 +294,19 @@ en la pantalla principal, decisión del usuario del 7/10/2026) y comparten corre
 - El modelo de 3B es modesto: si sus valoraciones no convencen, probar `qwen2.5:7b` (4,7 GB; justo con 8 GB) con `TCEE_MODELO_IDIOMAS`.
 - Más textos: hay 120 descargados sin material en `encargos/fase2/sin_material` del entorno de Claude (VOA y Wikinews sobre todo).
 
+## Voces (v0.39, 7/10/2026, con el usuario)
+
+- La voz del sistema que da el panel de VS Code suena muy artificial: por defecto los textos se leen con **voces neuronales de Piper**
+  (libres, sin conexión; funcionan también en Windows y Linux). Tres por idioma, instaladas por *Instalar herramientas* en `~/.tcee/voces`
+  (Piper en `~/.tcee/piper`, un entorno de Python): inglés británico Cori (mujer, calidad alta), Alan (hombre) y VCTK (109 hablantes);
+  francés Siwis (mujer), Tom (hombre) y MLS (125 hablantes). Unos 460 MB.
+- **Al azar** (por defecto): cada texto, una voz distinta y, en las de varios hablantes, un hablante al azar («· otra voz» cambia). Se puede fijar
+  una voz o elegir una del sistema en el selector de *Comprensión auditiva*. Las preguntas del tribunal, el dictado y los 🔊 de las fichas usan
+  la voz del texto en curso.
+- Funcionamiento: `extension/idiomasVoz.js` mantiene vivo `scripts/idiomas/voz.py` (servidor de Piper) mientras se usa y lo para a los 5 minutos;
+  genera el audio frase a frase (la primera, en menos de un segundo) en `~/.tcee/voz-cache/` (se borra lo de más de 3 días) y la pantalla lo
+  reproduce según llega. Si Piper falla o no está, se usa la voz del sistema y se avisa.
+
 ## Clases con profesores (v0.38, 7/10/2026, con el usuario)
 
 - Botón **👩‍🏫 Clases** a la derecha de la fila de niveles, encima de las tarjetas. Lista de clases del idioma y *+ Nueva clase* (tema, profesor, fecha).

@@ -69,7 +69,7 @@
 
   // ------------------------------------------------------------------ mensajes
   function recibir(m) {
-    if (m.tipo && (m.tipo.startsWith('idiP') || m.tipo === 'idiOral' || m.tipo === 'idiClaseEstado')) { if (PR) PR.recibir(m); return; }
+    if (m.tipo && (m.tipo.startsWith('idiP') || m.tipo === 'idiOral' || m.tipo === 'idiClaseEstado' || m.tipo === 'idiVoz')) { if (PR) PR.recibir(m); return; }
     if (m.tipo === 'idiDatos') { X = m.datos; if (!X.perfil) vista = 'nuevo'; else if (vista === 'nuevo') vista = 'inicio'; if (vista !== 'sesion' && vista !== 'ficha' && vista !== 'verbos' && !(PR && PR.vistas.includes(vista))) pintarVista(); else if (vista === 'ficha') refrescarPieFicha(); }
     if (m.tipo === 'idiFicha') { fichaAbierta = m.ficha; if (vista !== 'ficha') desdeVista = vista; vista = 'ficha'; pintarVista(); window.scrollTo(0, 0); }
     if (m.tipo === 'idiSesion') empezarSesion(m.sesion);
@@ -435,6 +435,7 @@
   // ------------------------------------------------------------------ ficha: estructura fija
   const vozDisponible = () => !!(window.speechSynthesis && window.SpeechSynthesisUtterance);
   function decir(texto, l) {
+    if (PR && PR.decir && l === lengua()) return PR.decir(texto);   // voz neuronal si está instalada
     if (!vozDisponible()) return;
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(texto); u.lang = VOZ[l] || l; u.rate = 0.92;
