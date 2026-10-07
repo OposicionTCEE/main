@@ -292,6 +292,27 @@ en la pantalla principal, decisión del usuario del 7/10/2026) y comparten corre
 - El modelo de 3B es modesto: si sus valoraciones no convencen, probar `qwen2.5:7b` (4,7 GB; justo con 8 GB) con `TCEE_MODELO_IDIOMAS`.
 - Más textos: hay 120 descargados sin material en `encargos/fase2/sin_material` del entorno de Claude (VOA y Wikinews sobre todo).
 
+## Clases con profesores (v0.38, 7/10/2026, con el usuario)
+
+- Botón **👩‍🏫 Clases** a la derecha de la fila de niveles, encima de las tarjetas. Lista de clases del idioma y *+ Nueva clase* (tema, profesor, fecha).
+- Cada clase (`idiomas-<nombre>/clases/<fecha>_<hora>_<lengua>-<tema>/clase.json`): datos, **notas** (se guardan solas), casilla
+  «Revisar esta clase con Claude» (para que Claude la lea por el puente y ajuste el panel), **ficheros** y **audio**.
+- Ficheros (`adjuntos/`): textos, PDF e imágenes tal cual; Word, RTF, Pages, HTML… se pasan a texto con `textutil` de macOS (ocupan menos y se leen
+  en el panel). Los vídeos o audios subidos van al audio.
+- Audio: *Grabar con el Mac* (ffmpeg con el micrófono elegido; convive con Meet o Teams, que siguen usando el micrófono; tope de 3 horas) o
+  *Subir audio (iPhone…)* (Notas de voz pasadas al Mac por AirDrop, o la grabación de Meet/Teams). Todo se guarda en **mp3 mono de 32 kbit/s**
+  (unos 14 MB por hora); el original no se copia.
+- Para grabar al profesor hay que oír la clase por los **altavoces** (con auriculares solo se graba al usuario). Avisar al profesor de que se graba.
+- **Transcribir** (botón; nunca solo): whisper con el idioma elegido (el de la clase, castellano o automático; whisper no separa voces ni idiomas
+  dentro de una misma grabación). Transcripción con marcas de tiempo (clic = se oye desde ahí), búsqueda, y copia en texto plano
+  (`audio-N.txt`) junto al audio. Un whisper y un micrófono cada vez entre cante, oral y clases.
+- *Eliminar* manda la carpeta de la clase a la Papelera.
+
+## Inicio: columnas con desplazamiento propio (v0.38)
+
+En pantallas anchas (más de 1.000 px) la barra superior queda fija y cada columna se desplaza por su cuenta: la izquierda (sesiones, verbos,
+cuaderno, diccionario, historial) y las tarjetas (con su cabecera de bloque, niveles y Clases fija). Al repintar se conserva la posición de cada una.
+
 ## Búsqueda por significado: opciones (pendiente, 7/10/2026)
 
 El problema: hoy solo se cruzan las palabras de la descripción con las traducciones y definiciones de cada entrada; «subida general de

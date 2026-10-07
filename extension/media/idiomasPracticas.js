@@ -27,6 +27,7 @@
         if (m.error) e.mal(new Error(m.error)); else e.ok(m);
       } else if (m.tipo === 'idiPProgreso') { const e = esperas.get(m.clave); if (e && e.alProgreso) e.alProgreso(m.texto); }
       else if (m.tipo === 'idiOral') { O.estado = m.estado; alEstadoOral(); }
+      else if (m.tipo === 'idiClaseEstado') alEstadoClase(m.estado);
     }
     const fallo = (e) => A.aviso(String(e.message || e), true);
     const P = { modo: 'lectura' };    // estado de las vistas de esta parte
@@ -38,7 +39,7 @@
     const reloj = (s) => A.reloj(Math.max(0, s));
     let tic = null;
     const conReloj = (fn) => { clearInterval(tic); tic = setInterval(fn, 1000); };
-    function parar() { clearInterval(tic); tic = null; Lector.parar(); clearInterval(O.sondeo); O.sondeo = null; }
+    function parar() { clearInterval(tic); tic = null; Lector.parar(); clearInterval(O.sondeo); O.sondeo = null; if (typeof K !== 'undefined') { clearInterval(K.sondeo); K.sondeo = null; } }
 
     // ================================================================== voz del Mac (speechSynthesis, frase a frase)
     const Lector = {
@@ -959,9 +960,178 @@
     };
     const cajaMedios = () => `<section class="idi-caja"><h3>📺 Vídeo y audio en abierto</h3><p class="ayuda">Se abren en el navegador (no se descargan).</p><ul class="idi-medios">${(MEDIOS[l()] || []).map(([n, u, d]) => `<li><a data-url="${esc(u)}">${esc(n)} ↗</a> <span class="apagado idi-mini">${esc(d)}</span></li>`).join('')}</ul></section>`;
 
+    // ================================================================== clases con profesores (Meet, Teams…): audio, ficheros y transcripción
+    const K = { estado: null, sondeo: null, clase: null, micros: null, buscar: '' };
+    function alEstadoClase(e) {
+      K.estado = e;
+      const z = vEl() && vEl().querySelector('#idi-k-audio'); if (z && K.clase) pintarAudioClase(z);
+      const t = K.estado && K.estado.transcribiendo;
+      if (!t && K.esperaTx && K.clase) { K.esperaTx = false; recargarClase(); }
+    }
+    async function pClases() {
+      vEl().innerHTML = `<div class="idi-p">${cab('👩‍🏫 Clases', '<button class="primario idi-der-auto" data-nueva>+ Nueva clase</button>')}
+        <p class="ayuda">Para tus clases con profesores (Meet, Teams…): apuntes, ficheros, el audio de la clase y su transcripción. Todo se guarda solo en este Mac,
+          en tu carpeta de idiomas, con el audio comprimido (unos 14 MB por hora).</p><div id="idi-k-lista"><p class="apagado">Cargando…</p></div></div>`;
+      enlazarVolver(vEl());
+      vEl().querySelector('[data-nueva]').onclick = () => nuevaClase();
+      try {
+        const { lista } = await pedir('idiPClases', { lengua: l() });
+        const z = vEl().querySelector('#idi-k-lista');
+        z.innerHTML = lista.length ? `<div class="idi-textos">${lista.map((c) => `<article class="idi-ctexto" data-clase="${esc(c.id)}" tabindex="0">
+            <div class="idi-carta-fila"><span class="idi-chip-bloque">${esc(A.fechaCorta(c.fecha))}</span>${c.profesor ? `<span class="apagado">${esc(c.profesor)}</span>` : ''}
+              <span class="apagado idi-der-auto">${c.minutos ? `🎙 ${c.minutos} min` : ''}${c.transcritos ? ' · 📝' : ''}${c.adjuntos.length ? ` · 📎 ${c.adjuntos.length}` : ''}</span></div>
+            <h4>${esc(c.titulo)}</h4>${c.notas ? `<p class="idi-carta-desc">${esc(c.notas)}</p>` : ''}</article>`).join('')}</div>`
+          : '<p class="vacio">Aún no hay clases de este idioma. Pulsa «+ Nueva clase».</p>';
+        z.querySelectorAll('[data-clase]').forEach((c) => c.onclick = () => abrirClase(c.dataset.clase));
+      } catch (e) { fallo(e); }
+    }
+    function nuevaClase() {
+      const fondo = document.createElement('div'); fondo.className = 'idi-dlg-fondo idi-raiz';
+      const hoy = new Date(); const iso = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+      fondo.innerHTML = `<div class="idi-dlg" role="dialog"><h3>👩‍🏫 Nueva clase · ${l() === 'fr' ? 'francés' : 'inglés'}</h3>
+        <label>Tema o título <input type="text" data-k="titulo" placeholder="Por ejemplo: resumen oral sobre la inflación"></label>
+        <label>Profesor o profesora <input type="text" data-k="profesor" value="${esc(A.st().idiUltimoProfe && A.st().idiUltimoProfe[l()] || '')}"></label>
+        <label>Fecha <input type="date" data-k="fecha" value="${iso}"></label>
+        <p class="idi-acciones"><button class="primario" data-crear>Crear</button><button data-cancelar>Cancelar</button></p></div>`;
+      document.body.appendChild(fondo);
+      const cerrar = () => fondo.remove();
+      fondo.querySelector('[data-cancelar]').onclick = cerrar;
+      fondo.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrar(); });
+      fondo.querySelector('[data-crear]').onclick = async () => {
+        const v = {}; fondo.querySelectorAll('[data-k]').forEach((i) => { v[i.dataset.k] = i.value; });
+        A.st().idiUltimoProfe = { ...(A.st().idiUltimoProfe || {}), [l()]: v.profesor }; A.guardar();
+        try { const { clase } = await pedir('idiPClaseCrear', { lengua: l(), ...v, fecha: v.fecha ? `${v.fecha}T12:00:00` : undefined }); cerrar(); K.clase = clase; A.ir('clase'); } catch (e) { fallo(e); }
+      };
+      fondo.querySelector('[data-k="titulo"]').focus();
+    }
+    async function abrirClase(id) { try { const r = await pedir('idiPClase', { id }); K.clase = r.clase; K.estado = r.estado; A.ir('clase'); } catch (e) { fallo(e); } }
+    async function recargarClase() { if (!K.clase) return; try { const r = await pedir('idiPClase', { id: K.clase.id }); K.clase = r.clase; K.estado = r.estado; if (vEl().querySelector('#idi-k')) pClase(); } catch (e) { /* */ } }
+    function pClase() {
+      const c = K.clase; if (!c) return A.ir('clases');
+      vEl().innerHTML = `<div class="idi-p" id="idi-k">${cab(`👩‍🏫 ${esc(c.titulo)}`, `<span class="apagado">${esc(A.fechaCorta(c.fecha))}${c.profesor ? ` · ${esc(c.profesor)}` : ''}</span>
+          <span class="idi-der-auto"><button data-carpeta title="Abrir la carpeta de la clase en el Finder">📁 Carpeta</button> <button class="peligro" data-eliminar>Eliminar</button></span>`)}
+        <div class="idi-p-dos"><div>
+          <section class="idi-caja" id="idi-k-audio"></section>
+          <section class="idi-caja"><h3>📝 Transcripción ${(c.transcripciones || []).length ? `<input type="search" id="idi-k-buscar" placeholder="Buscar en la transcripción…" value="${esc(K.buscar)}" class="idi-k-buscar">` : ''}</h3>
+            <div id="idi-k-tx">${transcripcionHtml(c)}</div></section></div>
+        <div>
+          <section class="idi-caja"><h3>Datos</h3><div class="idi-form">
+            <label>Tema o título <input type="text" data-c="titulo" value="${esc(c.titulo)}"></label>
+            <label>Profesor o profesora <input type="text" data-c="profesor" value="${esc(c.profesor)}"></label></div>
+            <label class="idi-chk"><input type="checkbox" data-c="revisar" ${c.revisar ? 'checked' : ''}> Revisar esta clase con Claude (para ajustar el panel)</label></section>
+          <section class="idi-caja"><h3>🗒 Notas</h3><textarea id="idi-k-notas" rows="10" placeholder="Correcciones del profesor, vocabulario, deberes…">${esc(c.notas || '')}</textarea>
+            <p class="idi-mini apagado" id="idi-k-guardado"></p></section>
+          <section class="idi-caja"><h3>📎 Ficheros <button class="idi-mini" data-anadir>+ Añadir</button></h3>
+            ${(c.adjuntos || []).length ? `<ul class="idi-k-adj">${c.adjuntos.map((a) => `<li><a data-adj="${esc(a.fichero)}">${esc(a.original || a.fichero)}</a>
+              <span class="apagado idi-mini">${a.tipo}${a.tipo === 'texto' && a.original && !/\.(txt|md|vtt|srt|csv)$/i.test(a.original) ? ' (convertido)' : ''} · ${tam(a.bytes)}</span>
+              <button class="idi-x" data-quitar-adj="${esc(a.fichero)}" title="Quitar">✕</button></li>`).join('')}</ul>` : '<p class="apagado idi-mini">Textos, PDF, documentos de Word (se guardan como texto) o imágenes.</p>'}
+            <div id="idi-k-ver"></div></section>
+        </div></div></div>`;
+      enlazarVolver(vEl(), 'clases');
+      vEl().querySelector('[data-volver]').textContent = '← Clases';
+      pintarAudioClase(vEl().querySelector('#idi-k-audio'));
+      let tNotas = null;
+      const notas = vEl().querySelector('#idi-k-notas');
+      notas.oninput = () => { clearTimeout(tNotas); tNotas = setTimeout(async () => { try { await pedir('idiPClaseCambiar', { id: c.id, cambios: { notas: notas.value } }); c.notas = notas.value; const g = vEl().querySelector('#idi-k-guardado'); if (g) g.textContent = 'Guardado.'; } catch (e) { fallo(e); } }, 700); };
+      vEl().querySelectorAll('[data-c]').forEach((i) => i.onchange = async () => { try { K.clase = (await pedir('idiPClaseCambiar', { id: c.id, cambios: { [i.dataset.c]: i.type === 'checkbox' ? i.checked : i.value } })).clase; } catch (e) { fallo(e); } });
+      vEl().querySelector('[data-anadir]').onclick = () => importarClase('ficheros');
+      vEl().querySelector('[data-carpeta]').onclick = () => pedir('idiPClaseCarpeta', { id: c.id }).catch(fallo);
+      vEl().querySelector('[data-eliminar]').onclick = async () => { try { const r = await pedir('idiPClaseEliminar', { id: c.id }); if (r.eliminada) { K.clase = null; A.ir('clases'); } } catch (e) { fallo(e); } };
+      vEl().querySelectorAll('[data-quitar-adj]').forEach((b) => b.onclick = async () => { try { K.clase = (await pedir('idiPClaseQuitarAdjunto', { id: c.id, fichero: b.dataset.quitarAdj })).clase; pClase(); } catch (e) { fallo(e); } });
+      vEl().querySelectorAll('[data-adj]').forEach((a) => a.onclick = async () => {
+        try { const r = await pedir('idiPClaseAdjunto', { id: c.id, fichero: a.dataset.adj }); if (r.texto != null) vEl().querySelector('#idi-k-ver').innerHTML = `<pre class="idi-k-pre">${esc(r.texto)}</pre>`; } catch (e) { fallo(e); }
+      });
+      const b = vEl().querySelector('#idi-k-buscar');
+      if (b) b.oninput = () => { K.buscar = b.value; vEl().querySelector('#idi-k-tx').innerHTML = transcripcionHtml(c); enlazarTx(); };
+      enlazarTx();
+    }
+    const tam = (n) => (n > 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round((n || 0) / 1e3))} KB`);
+    const mmss = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+    function transcripcionHtml(c) {
+      const ts = c.transcripciones || [];
+      if (!ts.length) return '<p class="apagado idi-mini">Cuando tengas el audio, pulsa «Transcribir». Se hace en el Mac y tarda más o menos un cuarto de lo que dure la clase.</p>';
+      const q = (K.buscar || '').trim().toLowerCase();
+      return ts.map((t) => `<h4>${esc(t.audio)} <span class="apagado idi-mini">${({ es: 'castellano', en: 'inglés', fr: 'francés', auto: 'idioma automático' })[t.idioma] || t.idioma}</span></h4>
+        <div class="idi-k-segs">${t.segmentos.filter((s) => !q || s.texto.toLowerCase().includes(q)).map((s) => `<p><a class="idi-k-t" data-audio="${esc(t.audio)}" data-t="${s.t}">${mmss(s.t)}</a> ${q ? esc(s.texto).replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), (x) => `<mark>${x}</mark>`) : esc(s.texto)}</p>`).join('') || '<p class="apagado">Sin resultados.</p>'}</div>`).join('');
+    }
+    function enlazarTx() {
+      vEl().querySelectorAll('.idi-k-t').forEach((a) => a.onclick = () => reproducir(a.dataset.audio, Number(a.dataset.t)));
+    }
+    async function reproducir(fichero, t) {
+      const z = vEl().querySelector(`[data-reproductor="${CSS.escape(fichero)}"]`);
+      if (!z) return;
+      let au = z.querySelector('audio');
+      if (!au) { const { url } = await pedir('idiPClaseAudioUrl', { id: K.clase.id, fichero }); z.innerHTML = `<audio controls preload="metadata" src="${esc(url)}" style="width:100%"></audio>`; au = z.querySelector('audio'); }
+      const ir2 = () => { au.currentTime = t || 0; au.play().catch(() => {}); };
+      if (au.readyState >= 1) ir2(); else au.addEventListener('loadedmetadata', ir2, { once: true });
+      z.scrollIntoView({ block: 'nearest' });
+    }
+    async function importarClase(que) {
+      const z = vEl().querySelector('#idi-k-audio');
+      try {
+        const r = await pedir('idiPClaseImportar', { id: K.clase.id, que }, (txt) => { const p = z && z.querySelector('.idi-k-prog'); if (p) p.innerHTML = `<p class="idi-progreso">${esc(txt)}</p>`; });
+        if (r.cancelado) return;
+        K.clase = r.clase; if ((r.resultado || []).length) A.aviso(`Añadido: ${r.resultado.join(' · ')}`);
+        pClase();
+      } catch (e) { fallo(e); }
+    }
+    function pintarAudioClase(z) {
+      const c = K.clase, e = K.estado || {}, g = e.grabando;
+      const tx = e.transcribiendo;
+      if (g && g.clase === c.id) {
+        const s = (Date.now() - g.inicio) / 1000; const nv = g.nivel == null ? 0 : Math.max(0, Math.min(100, (g.nivel + 60) * 1.8));
+        z.innerHTML = `<h3>🔴 Grabando la clase <span class="idi-reloj-grande">${mmss(s)}</span></h3><div class="idi-nivel"><i style="width:${nv}%"></i></div>
+          <p class="apagado idi-mini">${esc(g.micro || '')} · puedes seguir con Meet o Teams con normalidad</p>
+          <p class="idi-acciones"><button class="primario" data-parar>⏹ Terminar</button><button data-descartar>Descartar</button></p><div class="idi-k-prog"></div>`;
+        z.querySelector('[data-parar]').onclick = () => pararClase(false);
+        z.querySelector('[data-descartar]').onclick = () => pararClase(true);
+        if (!K.sondeo) K.sondeo = setInterval(async () => { try { const r = await pedir('idiPClaseEstado'); alEstadoClase(r.estado); if (!r.estado.grabando) { clearInterval(K.sondeo); K.sondeo = null; } } catch (x) { clearInterval(K.sondeo); K.sondeo = null; } }, 700);
+        return;
+      }
+      const auds = c.audios || [];
+      const tsx = new Set((c.transcripciones || []).map((t) => t.audio));
+      const micros = K.micros || [];
+      z.innerHTML = `<h3>🎙 Audio de la clase</h3>
+        ${auds.map((a) => { const enCola = (e.cola || []).some((x) => x.id === c.id && x.fichero === a.fichero); const ahora = tx && tx.id === c.id && tx.fichero === a.fichero;
+          return `<div class="idi-k-aud"><div class="idi-k-aud-cab"><b>${esc(a.nombre || a.fichero)}</b><span class="apagado idi-mini">${a.origen === 'grabado' ? 'grabado en el Mac' : 'subido'} · ${mmss(a.segundos || 0)} · ${tam(a.bytes)}</span>
+            <button class="idi-x" data-quitar-aud="${esc(a.fichero)}" title="Borrar este audio">✕</button></div>
+            <div data-reproductor="${esc(a.fichero)}"><button data-oir="${esc(a.fichero)}">▶ Escuchar</button></div>
+            ${ahora ? `<p class="idi-progreso">Transcribiendo… ${tx.pct || 0} %</p><div class="carga"><span style="width:${tx.pct || 0}%"></span></div>`
+    : enCola ? '<p class="idi-progreso">En cola para transcribir…</p>'
+    : `<p class="idi-acciones"><select data-idioma="${esc(a.fichero)}" title="Idioma que más se habla en la clase">${[[c.lengua, c.lengua === 'fr' ? 'Francés' : 'Inglés'], ['es', 'Castellano'], ['auto', 'Automático']].map(([k, n]) => `<option value="${k}">${n}</option>`).join('')}</select>
+              <button class="${tsx.has(a.fichero) ? '' : 'primario'}" data-transcribir="${esc(a.fichero)}">${tsx.has(a.fichero) ? 'Volver a transcribir' : 'Transcribir'}</button></p>`}</div>`; }).join('')}
+        <div class="idi-k-nuevo"><p class="idi-acciones"><button ${auds.length ? '' : 'class="primario"'} data-grabar>● Grabar con el Mac</button>
+          <select data-micro title="Micrófono">${micros.length ? micros.map((m) => `<option ${m.nombre === A.st().idiMicroClase ? 'selected' : ''}>${esc(m.nombre)}</option>`).join('') : '<option value="">Micrófono por defecto</option>'}</select>
+          <button data-subir>⬆ Subir audio (iPhone…)</button></p>
+          <details class="idi-mini"><summary>¿Cómo grabar la clase sin molestar a Meet o Teams?</summary>
+            <ul><li><b>Con el iPhone</b> (lo más sencillo): abre <i>Notas de voz</i>, ponlo cerca del Mac y escucha la clase por los <b>altavoces</b> (con auriculares el iPhone solo te oye a ti). Al acabar, pásalo al Mac (AirDrop o Compartir › Guardar en Archivos) y pulsa «Subir audio».</li>
+              <li><b>Con el Mac</b>: «Grabar con el Mac» usa el micrófono a la vez que Meet o Teams, sin cortarlos. También aquí hay que oír la clase por los altavoces para que se grabe al profesor.</li>
+              <li>Si Meet o Teams te dan su propia grabación o transcripción, súbela: el vídeo se queda solo en audio y la transcripción como fichero de texto.</li>
+              <li>Avisa a tu profesor de que grabas la clase para estudiar.</li></ul></details></div>
+        <div class="idi-k-prog"></div>`;
+      z.querySelectorAll('[data-oir]').forEach((b) => b.onclick = () => reproducir(b.dataset.oir, 0));
+      z.querySelectorAll('[data-quitar-aud]').forEach((b) => b.onclick = async () => { try { const r = await pedir('idiPClaseQuitarAudio', { id: c.id, fichero: b.dataset.quitarAud }); if (r.clase) { K.clase = r.clase; pClase(); } } catch (x) { fallo(x); } });
+      z.querySelectorAll('[data-transcribir]').forEach((b) => b.onclick = async () => {
+        const idioma = z.querySelector(`[data-idioma="${CSS.escape(b.dataset.transcribir)}"]`).value;
+        try { const r = await pedir('idiPClaseTranscribir', { id: c.id, fichero: b.dataset.transcribir, idioma }); K.esperaTx = true; alEstadoClase(r.estado); } catch (x) { fallo(x); }
+      });
+      z.querySelector('[data-grabar]').onclick = async () => {
+        const mic = z.querySelector('[data-micro]').value; A.st().idiMicroClase = mic; A.guardar();
+        try { const r = await pedir('idiPClaseGrabar', { id: c.id, micro: mic || undefined }); alEstadoClase(r.estado); } catch (x) { fallo(x); }
+      };
+      z.querySelector('[data-micro]').onchange = (ev) => { A.st().idiMicroClase = ev.target.value; A.guardar(); };
+      z.querySelector('[data-subir]').onclick = () => importarClase('audio');
+      if (!K.micros) pedir('idiPClaseMicros').then((r) => { K.micros = r.lista; if (!(K.estado || {}).grabando) { const s = z.querySelector('[data-micro]'); if (s) s.innerHTML = r.lista.map((m) => `<option ${m.nombre === A.st().idiMicroClase ? 'selected' : ''}>${esc(m.nombre)}</option>`).join('') || '<option value="">Micrófono por defecto</option>'; } }).catch(() => {});
+    }
+    async function pararClase(descartar) {
+      clearInterval(K.sondeo); K.sondeo = null;
+      const z = vEl().querySelector('#idi-k-audio'); if (z) z.innerHTML = '<p class="idi-progreso">Guardando y comprimiendo el audio…</p>';
+      try { await pedir('idiPClaseParar', { descartar }); await recargarClase(); } catch (e) { fallo(e); }
+    }
+
     // ================================================================== vistas
     function pintar(vista) {
-      const f = { biblioteca: pBiblioteca, texto: pTexto, escritura: pEscritura, escribir: pEscribir, escrito: pEscrito, oral: pOral, examen: pExamen }[vista];
+      const f = { biblioteca: pBiblioteca, texto: pTexto, escritura: pEscritura, escribir: pEscribir, escrito: pEscrito, oral: pOral, examen: pExamen, clases: pClases, clase: pClase }[vista];
       if (f) f();
       const z = vEl(); if (z) enlazarUrls(z);
     }
@@ -972,8 +1142,9 @@
       else if (tipo === 'escrito') A.ir('escritura');
       else if (tipo === 'oral') A.ir('oral');
       else if (tipo === 'examen') { P.E = null; A.ir('examen'); }
+      else if (tipo === 'clases') A.ir('clases');
     }
-    return { pintar, recibir, empezar, cajaHerramientas, cajaMedios, enlazarUrls, vistas: ['biblioteca', 'texto', 'escritura', 'escribir', 'escrito', 'oral', 'examen'], ocupado: () => !!(P.T || P.E || (O.estado && O.estado.grabando)) };
+    return { pintar, recibir, empezar, cajaHerramientas, cajaMedios, enlazarUrls, vistas: ['biblioteca', 'texto', 'escritura', 'escribir', 'escrito', 'oral', 'examen', 'clases', 'clase'], ocupado: () => !!(P.T || P.E || (O.estado && O.estado.grabando)) };
   }
   window.TCEE_IDI_PR = { crear };
 }());

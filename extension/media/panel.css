@@ -994,3 +994,23 @@ body.vscode-high-contrast .idi-vterm, body.vscode-high-contrast-light .idi-vterm
 .idi-hist li[data-grab] { cursor: pointer; grid-template-columns: 54px 1fr 90px 50px; }
 .idi-checks label, .idi-raiz label.idi-chk { display: inline-flex; flex-direction: row; align-items: center; gap: 6px; font-weight: normal; }
 .idi-checks input, .idi-raiz label.idi-chk input { width: auto; margin: 0; }
+/* Inicio de Idiomas: columnas con desplazamiento propio (la izquierda y las tarjetas; la cabecera de las tarjetas queda fija) */
+.idi-cuerpo.fijo { align-items: stretch; grid-template-rows: minmax(0, 1fr); }
+.idi-cuerpo.fijo > .idi-izq { overflow-y: auto; min-height: 0; padding-right: 4px; overscroll-behavior: contain; }
+.idi-cuerpo.fijo > .idi-der { display: flex; flex-direction: column; min-height: 0; }
+.idi-cuerpo.fijo > .idi-der > .idi-cartas, .idi-cuerpo.fijo > .idi-der > .vacio { flex: 1; overflow-y: auto; min-height: 0; padding: 4px 4px 12px 2px; overscroll-behavior: contain; align-content: start; }
+.idi-btn-clases { order: 9; margin-left: auto; font-weight: 600; padding: 6px 14px; border-color: color-mix(in srgb, var(--acento) 50%, var(--borde)); }
+/* Clases */
+.idi-k-buscar { width: auto !important; margin-left: auto; font-weight: normal; }
+.idi-k-segs p { margin: 0 0 6px; line-height: 1.5; }
+.idi-k-segs mark { background: color-mix(in srgb, var(--iaviso) 45%, transparent); color: inherit; }
+.idi-k-t { cursor: pointer; font-variant-numeric: tabular-nums; font-size: .85em; margin-right: 6px; }
+.idi-k-aud { border: 1px solid var(--borde); border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; }
+.idi-k-aud-cab { display: flex; align-items: center; gap: 8px; }
+.idi-k-aud-cab .idi-x { margin-left: auto; }
+.idi-k-adj { list-style: none; padding: 0; }
+.idi-k-adj li { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+.idi-k-adj a { cursor: pointer; }
+.idi-k-adj .idi-x { margin-left: auto; }
+.idi-k-pre { white-space: pre-wrap; max-height: 50vh; overflow-y: auto; background: var(--fondo); border: 1px solid var(--borde); border-radius: 6px; padding: 8px; font-family: inherit; }
+.idi-k-nuevo select { width: auto; max-width: 220px; }
