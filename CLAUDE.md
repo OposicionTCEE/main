@@ -18,7 +18,7 @@ La carpeta raíz (`TCEE/`) contiene:
   El estado de cada tema está en `main/ESTADO_COMPILACION.md`.
 - **Contenido, estilo, convenciones LaTeX, colores de las notas y protocolo para trabajar un tema: `main/GUIA_TEMAS.md`.**
   Es la única guía (la copia del proyecto de claude.ai, `claude/Guia_redaccion_temas_TCEE.md`, la reproduce); leerla antes de tocar un tema.
-  Lo esencial: ecuaciones con `$…$` y `$$…$$` (el `\eqblock` solo lo pone el usuario; los existentes no se tocan), remisiones `([\authorfont{Ver Tema 3.A.44}])`, autores en MAYÚSCULAS con año,
+  Lo esencial: ecuaciones con `$…$` y `$$…$$` (el `\eqblock` solo lo pone el usuario; los existentes no se tocan; Claude indica junto a cada ecuación su fuente: modelo, autores, año y variante), remisiones `([\authorfont{Ver Tema 3.A.44}])`, autores en MAYÚSCULAS con año,
   nunca Markdown dentro de un `.tex` (rompe la compilación: ha pasado en 4.B.15 y 4.B.25).
 - Antes de modificar varios temas a la vez, enseñar al usuario qué se va a cambiar y esperar su visto bueno.
 - Para sincronizar con GitHub (main + temario): `bash main/scripts/sincronizar_todo.sh` desde la carpeta TCEE.

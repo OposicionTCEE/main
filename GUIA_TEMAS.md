@@ -110,6 +110,8 @@ contenido se pierde por razones de forma.
 - **Autores en MAYÚSCULAS** con año: OATES (1972), WEINGAST, SHEPSLE y JOHNSEN (1981). El nombre de la revista no aparece en el texto.
 - **Ecuaciones**: `$…$` en el texto y `$$…$$` para las ecuaciones en su propia línea. Claude no usa `\eqblock`: lo pone el usuario cuando
   lo cree conveniente. Los `\eqblock` que ya existen no se tocan ni se convierten.
+  Cada ecuación en su propia línea va acompañada, en la frase que la presenta, de su fuente: modelo, autores con año y variante
+  (p. ej. «Modelo de SOLOW (1956), versión con progreso técnico aumentador del trabajo»). Con eso el usuario redacta el pie del `\eqblock`.
 - **Cifras en dígitos en modo matemático**: `$2,2\%$`, `$83.252$ millones`, `$-0,4\%$`; rangos `$35$-$40\%$`. Excepciones: los años no van
   en modo matemático; los números de ley o decreto tampoco (Ley 22/2009); los números escritos con letra en la narración se quedan en letra.
   Los números de artículo sí van en modo matemático (`art. $41$ CE`). Las variaciones de ratios se expresan en puntos, nunca en «%».
