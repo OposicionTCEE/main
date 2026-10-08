@@ -1015,3 +1015,11 @@ body.vscode-high-contrast .idi-vterm, body.vscode-high-contrast-light .idi-vterm
 .idi-k-adj .idi-x { margin-left: auto; }
 .idi-k-pre { white-space: pre-wrap; max-height: 50vh; overflow-y: auto; background: var(--fondo); border: 1px solid var(--borde); border-radius: 6px; padding: 8px; font-family: inherit; }
 .idi-k-nuevo select { width: auto; max-width: 220px; }
+/* Panel en la lengua estudiada (v0.41): castellano en gris y botón «ES» que enseña las traducciones ocultas */
+.idi-es { color: var(--vscode-descriptionForeground, #888); font-size: .9em; font-style: italic; }
+.idi-es::before { content: 'ES · '; font-style: normal; font-size: .8em; letter-spacing: .03em; opacity: .8; }
+.idi-es-btn { font-size: .72em; padding: 0 5px; margin-left: 6px; line-height: 1.5; border-radius: 3px; opacity: .7; vertical-align: middle; }
+.idi-es-btn:hover { opacity: 1; }
+.idi-es-oculta { display: none; }
+.idi-es-oculta.vista { display: block; }
+span.idi-es-oculta.vista { display: inline; }

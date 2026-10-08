@@ -383,6 +383,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
 <script nonce="${nonce}" src="${url('relaciones.js')}"></script>
 <script nonce="${nonce}" src="${url('cante.js')}"></script>
 <script nonce="${nonce}" src="${url('test.js')}"></script>
+<script nonce="${nonce}" src="${url('i18n-idiomas.js')}"></script>
 <script nonce="${nonce}" src="${url('idiomasPracticas.js')}"></script>
 <script nonce="${nonce}" src="${url('idiomas.js')}"></script>
 <script nonce="${nonce}" src="${url('panel.js')}"></script></body></html>`;

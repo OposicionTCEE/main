@@ -62,6 +62,10 @@
   const enviar = (m) => ctx.enviar(m);
   const lengua = () => (X && X.perfil && [ 'en', X.perfil.segundo ].includes(st().idiLengua) ? st().idiLengua : 'en');
   const L = () => (X && X.perfil && X.perfil.ajustes && X.perfil.ajustes.idiomaFichas === 'es' ? T.es : T[lengua()] || T.es);
+  /** Lengua de la interfaz: la estudiada (por defecto) o castellano, según Ajustes («Idioma del panel») */
+  const idiomaUI = () => (X && X.perfil && X.perfil.ajustes && X.perfil.ajustes.idiomaFichas === 'es' ? 'es' : lengua());
+  /** Texto de la interfaz en la lengua del panel: ui('Corregir') · ui('{0} palabras', n). Tabla en media/i18n-idiomas.js */
+  const ui = (s, ...a) => (window.TCEE_I18N_IDI ? window.TCEE_I18N_IDI.tr(idiomaUI(), s, a) : s);
   const nivelDecl = (l) => ((X.perfil.idiomas[l] || {}).nivel || 'B1');
   const tituloDe = (m) => (L() === T.es ? (m.titulo_es || m.titulo) : (m.titulo_l || m.titulo_es || m.titulo));
   const descDe = (m) => (L() === T.es ? (m.descripcion_larga_es || m.descripcion_es || m.descripcion) : (m.descripcion_larga_l || m.descripcion_l || m.descripcion_es || m.descripcion));
@@ -105,7 +109,7 @@
     raiz = document.createElement('div'); raiz.className = 'idi-raiz'; e.appendChild(raiz);
     if (!PR && window.TCEE_IDI_PR) {
       PR = window.TCEE_IDI_PR.crear({ esc, st, guardar: () => ctx.guardar(), enviar, lengua, X: () => X, vistaEl: () => vistaEl, raiz: () => raiz, ir, reloj: (s) => reloj(s),
-        aviso: (t, err) => (ctx.aviso ? ctx.aviso(t, err) : null), nivelDecl, NIVELES, fechaCorta: (iso) => fechaCorta(iso) });
+        aviso: (t, err) => (ctx.aviso ? ctx.aviso(t, err) : null), ui, idiomaUI, nivelDecl, NIVELES, fechaCorta: (iso) => fechaCorta(iso) });
     }
     vistaEl = document.createElement('div'); vistaEl.className = 'idi-vista'; raiz.appendChild(vistaEl);
     cajonEl = document.createElement('aside'); cajonEl.className = 'idi-cajon'; raiz.appendChild(cajonEl);
