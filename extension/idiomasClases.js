@@ -7,6 +7,7 @@ const os = require('os');
 const path = require('path');
 const { spawn, execFile } = require('child_process');
 const C = require('./cante');
+const { tr } = require('./media/i18n-idiomas.js');
 
 const HZ = 16000;
 const MAX_SEG = 3 * 3600;   // una clase no pasa de 3 horas
@@ -20,9 +21,11 @@ const TEXTO = /\.(txt|md|vtt|srt|csv)$/i;
 const CONVERTIBLE = /\.(docx?|rtf|rtfd|odt|html?|pages|webarchive)$/i;   // textutil (macOS) los pasa a texto
 const ALUCINACIONES = /thank(s| you) for watching|please subscribe|subtitles by|sous-titr|merci d'avoir regard|abonnez-vous|amara\.org|subt[ií]tulos (realizados|por)|gracias por ver/i;
 
-function crearClases({ dirPerfil, otroOcupado = () => null, avisar = () => {}, alCambiar = () => {} }) {
-  const dirClases = () => { const d = dirPerfil(); if (!d) throw new Error('Crea primero tu perfil.'); return path.join(d, 'clases'); };
-  const dirClase = (id) => { if (!/^[\w.-]+$/.test(String(id))) throw new Error('Clase no válida.'); return path.join(dirClases(), id); };
+/** idiomaUI(lengua): lengua del panel ('es' | 'en' | 'fr') para los textos que llegan a la pantalla (por defecto, castellano) */
+function crearClases({ dirPerfil, otroOcupado = () => null, avisar = () => {}, alCambiar = () => {}, idiomaUI = () => 'es' }) {
+  const T = (s, args, l) => tr(idiomaUI(l), s, args);
+  const dirClases = () => { const d = dirPerfil(); if (!d) throw new Error(T('Crea primero tu perfil.')); return path.join(d, 'clases'); };
+  const dirClase = (id) => { if (!/^[\w.-]+$/.test(String(id))) throw new Error(T('Clase no válida.')); return path.join(dirClases(), id); };
   const fClase = (id) => path.join(dirClase(id), 'clase.json');
   const clase = (id) => leer(fClase(id), null);
   const guardar = (c) => { escribir(fClase(c.id), c); return c; };
@@ -40,11 +43,11 @@ function crearClases({ dirPerfil, otroOcupado = () => null, avisar = () => {}, a
     const f = fecha ? new Date(fecha) : new Date();
     const id = `${f.getFullYear()}-${dos(f.getMonth() + 1)}-${dos(f.getDate())}_${dos(new Date().getHours())}${dos(new Date().getMinutes())}_${lengua}-${slug(titulo || profesor)}`;
     fs.mkdirSync(path.join(dirClases(), id, 'adjuntos'), { recursive: true });
-    return guardar({ id, lengua, titulo: String(titulo || '').trim() || 'Clase', profesor: String(profesor || '').trim(), fecha: f.toISOString(),
+    return guardar({ id, lengua, titulo: String(titulo || '').trim() || T('Clase', [], lengua), profesor: String(profesor || '').trim(), fecha: f.toISOString(),
       notas: '', adjuntos: [], audios: [], transcripciones: [], creada: new Date().toISOString() });
   }
   function cambiar({ id, cambios }) {
-    const c = clase(id); if (!c) throw new Error('Clase no encontrada.');
+    const c = clase(id); if (!c) throw new Error(T('Clase no encontrada.'));
     for (const k of ['titulo', 'profesor', 'notas', 'fecha', 'revisar']) if (cambios && k in cambios) c[k] = cambios[k];
     return guardar(c);
   }
@@ -53,16 +56,16 @@ function crearClases({ dirPerfil, otroOcupado = () => null, avisar = () => {}, a
   // ---------------------------------------------------------------- ficheros: texto y documentos (pequeños) o audio (comprimido)
   /** Añade ficheros elegidos por el usuario. Los audios se convierten a mp3 mono 32 kbit/s; Word y similares, a texto */
   async function importar({ id, rutas }, aviso = () => {}) {
-    const c = clase(id); if (!c) throw new Error('Clase no encontrada.');
+    const c = clase(id); if (!c) throw new Error(T('Clase no encontrada.'));
     const dAdj = path.join(dirClase(id), 'adjuntos'); fs.mkdirSync(dAdj, { recursive: true });
     const resultado = [];
     for (const r of rutas || []) {
       const base = path.basename(r);
       try {
         if (AUDIO.test(base)) {
-          aviso(`Comprimiendo el audio «${base}»…`);
+          aviso(T('Comprimiendo el audio «{0}»…', [base], c.lengua));
           const a = await anadirAudio(c, r, 'subido', base);
-          resultado.push(`${base}: audio de ${Math.round(a.segundos / 60)} min`);
+          resultado.push(T('{0}: audio de {1} min', [base, Math.round(a.segundos / 60)], c.lengua));
           continue;
         }
         let destino = path.join(dAdj, libre(dAdj, base)), tipo = 'fichero';
@@ -75,21 +78,21 @@ function crearClases({ dirPerfil, otroOcupado = () => null, avisar = () => {}, a
           tipo = TEXTO.test(base) ? 'texto' : /\.pdf$/i.test(base) ? 'pdf' : /\.(png|jpe?g|gif|webp|heic)$/i.test(base) ? 'imagen' : 'fichero';
         }
         c.adjuntos.push({ fichero: path.basename(destino), original: base, tipo, bytes: fs.statSync(destino).size, fecha: new Date().toISOString() });
-        resultado.push(`${base}${tipo === 'texto' && !TEXTO.test(base) ? ' (pasado a texto)' : ''}`);
-      } catch (e) { resultado.push(`${base}: no se pudo añadir (${String(e.message || e).slice(0, 120)})`); }
+        resultado.push(tipo === 'texto' && !TEXTO.test(base) ? T('{0} (pasado a texto)', [base], c.lengua) : base);
+      } catch (e) { resultado.push(T('{0}: no se pudo añadir ({1})', [base, String(e.message || e).slice(0, 120)], c.lengua)); }
     }
     guardar({ ...clase(id), adjuntos: c.adjuntos, audios: clase(id).audios });
     return { clase: clase(id), resultado };
   }
   const libre = (dir, nombre) => { let n = nombre, i = 2; while (fs.existsSync(path.join(dir, n))) { n = nombre.replace(/(\.[^.]*)?$/, `-${i++}$1`); } return n; };
   function quitarAdjunto({ id, fichero }) {
-    const c = clase(id); if (!c) throw new Error('Clase no encontrada.');
+    const c = clase(id); if (!c) throw new Error(T('Clase no encontrada.'));
     try { fs.unlinkSync(path.join(dirClase(id), 'adjuntos', path.basename(fichero))); } catch (e) { /* ya no está */ }
     c.adjuntos = c.adjuntos.filter((a) => a.fichero !== fichero);
     return guardar(c);
   }
   function quitarAudio({ id, fichero }) {
-    const c = clase(id); if (!c) throw new Error('Clase no encontrada.');
+    const c = clase(id); if (!c) throw new Error(T('Clase no encontrada.'));
     try { fs.unlinkSync(path.join(dirClase(id), path.basename(fichero))); } catch (e) { /* ya no está */ }
     c.audios = c.audios.filter((a) => a.fichero !== fichero);
     c.transcripciones = (c.transcripciones || []).filter((t) => t.audio !== fichero);
@@ -104,7 +107,7 @@ function crearClases({ dirPerfil, otroOcupado = () => null, avisar = () => {}, a
 
   async function anadirAudio(c, origen, como, nombre) {
     const h = C.herramientas();
-    if (!h.ffmpeg) throw new Error('Falta ffmpeg: pulsa «Instalar herramientas» en Ajustes de Idiomas.');
+    if (!h.ffmpeg) throw new Error(T('Falta ffmpeg: pulsa «Instalar herramientas» en Ajustes de Idiomas.', [], c && c.lengua));
     const n = (c.audios || []).length + 1;
     const fichero = `audio-${n}.mp3`;
     const destino = path.join(dirClase(c.id), fichero);
@@ -126,7 +129,7 @@ function crearClases({ dirPerfil, otroOcupado = () => null, avisar = () => {}, a
       let resto = '', ultimo = '';
       const leerSalida = (d) => { resto += d.toString(); const ls = resto.split(/\r|\n/); resto = ls.pop(); ls.forEach((l) => { if (l.trim()) ultimo = l; if (alLinea) alLinea(l); }); };
       p.stdout.on('data', leerSalida); p.stderr.on('data', leerSalida); p.on('error', mal);
-      p.on('close', (k) => (k === 0 ? ok() : mal(new Error(`${path.basename(prog)} terminó con error (${k}): ${ultimo.slice(0, 200)}`))));
+      p.on('close', (k) => (k === 0 ? ok() : mal(new Error(T('{0} terminó con error ({1}): {2}', [path.basename(prog), k, ultimo.slice(0, 200)])))));
     });
   }
 
@@ -140,14 +143,14 @@ function crearClases({ dirPerfil, otroOcupado = () => null, avisar = () => {}, a
   }
   async function microfonos() { const h = C.herramientas(); return h.ffmpeg ? C.microfonos(h.ffmpeg) : []; }
   async function grabar({ id, micro }) {
-    const c = clase(id); if (!c) throw new Error('Clase no encontrada.');
+    const c = clase(id); if (!c) throw new Error(T('Clase no encontrada.'));
     const h = C.herramientas();
-    if (!h.ffmpeg) throw new Error('Falta ffmpeg: pulsa «Instalar herramientas» en Ajustes de Idiomas.');
-    if (grabacionEnCurso()) throw new Error('Ya se está grabando una clase.');
-    const o = otroOcupado(); if (o && o.grabando) throw new Error('Hay otra grabación en marcha (cante u oral): termínala antes.');
+    if (!h.ffmpeg) throw new Error(T('Falta ffmpeg: pulsa «Instalar herramientas» en Ajustes de Idiomas.', [], c && c.lengua));
+    if (grabacionEnCurso()) throw new Error(T('Ya se está grabando una clase.', [], c.lengua));
+    const o = otroOcupado(); if (o && o.grabando) throw new Error(T('Hay otra grabación en marcha (cante u oral): termínala antes.', [], c.lengua));
     const lista = await C.microfonos(h.ffmpeg);
     const mic = lista.find((m) => m.nombre === micro) || C.elegirMicro(lista, null);
-    if (!mic) throw new Error('ffmpeg no encuentra ningún micrófono. Revisa Ajustes del Sistema › Privacidad y seguridad › Micrófono › Visual Studio Code.');
+    if (!mic) throw new Error(T('ffmpeg no encuentra ningún micrófono. Revisa Ajustes del Sistema › Privacidad y seguridad › Micrófono › Visual Studio Code.', [], c.lengua));
     const wav = path.join(dirClase(id), `grabando-${Date.now()}.wav`), registro = wav.replace(/\.wav$/, '.log');
     const fd = fs.openSync(registro, 'w');
     const p = spawn(h.ffmpeg, ['-hide_banner', '-nostdin', '-f', 'avfoundation', '-i', `:${mic.indice}`, '-t', String(MAX_SEG), '-af', 'ebur128=framelog=info',
@@ -155,7 +158,7 @@ function crearClases({ dirPerfil, otroOcupado = () => null, avisar = () => {}, a
     fs.closeSync(fd); p.unref();
     const m = { clase: id, pid: p.pid, inicio: Date.now(), wav, registro, micro: mic.nombre };
     escribir(marca(), m);
-    setTimeout(() => { if (!vivo(p.pid) && leer(marca(), {}).pid === p.pid) { cerrar(m); avisar('La grabación de la clase no ha arrancado: revisa el permiso de micrófono de Visual Studio Code.', true); alCambiar(); } }, 2500);
+    setTimeout(() => { if (!vivo(p.pid) && leer(marca(), {}).pid === p.pid) { cerrar(m); avisar(T('La grabación de la clase no ha arrancado: revisa el permiso de micrófono de Visual Studio Code.', [], c.lengua), true); alCambiar(); } }, 2500);
     return { inicio: m.inicio, micro: mic.nombre };
   }
   async function parar({ descartar } = {}) {
@@ -178,17 +181,17 @@ function crearClases({ dirPerfil, otroOcupado = () => null, avisar = () => {}, a
       let ok = false;
       try { await ejecutar(h.ffmpeg, ['-hide_banner', '-nostdin', '-y', '-i', m.wav, '-c:a', 'pcm_s16le', limpio]); ok = fs.statSync(limpio).size > bytes * 0.9; } catch (e) { ok = false; }
       if (!ok) await ejecutar(h.ffmpeg, ['-hide_banner', '-nostdin', '-y', '-f', 's16le', '-ar', String(HZ), '-ac', '1', '-i', m.wav, '-c:a', 'pcm_s16le', limpio]);
-      const a = await anadirAudio(c, limpio, 'grabado', `Grabación (${m.micro})`);
+      const a = await anadirAudio(c, limpio, 'grabado', T('Grabación ({0})', [m.micro], c.lengua));
       for (const x of [m.wav, limpio]) { try { fs.unlinkSync(x); } catch (e) { /* */ } }
       alCambiar();
       return a;
-    } catch (e) { avisar(`No se pudo guardar la grabación de la clase (el WAV sigue en su carpeta): ${e.message}`, true); alCambiar(); return null; }
+    } catch (e) { avisar(T('No se pudo guardar la grabación de la clase (el WAV sigue en su carpeta): {0}', [e.message], c.lengua), true); alCambiar(); return null; }
   }
 
   // ---------------------------------------------------------------- transcripción (al pulsar «Transcribir»; una cada vez)
   function transcribir({ id, fichero, idioma }) {
-    const c = clase(id); if (!c) throw new Error('Clase no encontrada.');
-    if (!c.audios.some((a) => a.fichero === fichero)) throw new Error('Audio no encontrado.');
+    const c = clase(id); if (!c) throw new Error(T('Clase no encontrada.'));
+    if (!c.audios.some((a) => a.fichero === fichero)) throw new Error(T('Audio no encontrado.', [], c.lengua));
     if (!cola.some((x) => x.id === id && x.fichero === fichero) && !(transcribiendo && transcribiendo.id === id && transcribiendo.fichero === fichero)) cola.push({ id, fichero, idioma: idioma || c.lengua });
     siguiente();
     return estado();
@@ -198,7 +201,7 @@ function crearClases({ dirPerfil, otroOcupado = () => null, avisar = () => {}, a
     const o = otroOcupado(); if (o && o.transcribiendo) { setTimeout(siguiente, 15000); return; }   // un whisper cada vez (8 GB)
     const t = cola.shift();
     const h = C.herramientas();
-    if (h.falta.length) { avisar(`No puedo transcribir: falta ${h.falta.join(', ')}.`, true); cola.length = 0; alCambiar(); return; }
+    if (h.falta.length) { avisar(T('No puedo transcribir: falta {0}.', [h.falta.join(', ')]), true); cola.length = 0; alCambiar(); return; }
     transcribiendo = { ...t, pct: 0 }; alCambiar(true);
     const base = path.join(os.tmpdir(), `tcee-clase-${Date.now()}`), wav = `${base}.wav`;
     try {
@@ -215,9 +218,9 @@ function crearClases({ dirPerfil, otroOcupado = () => null, avisar = () => {}, a
         guardar(c);
         // copia en texto plano (para leerla fuera del panel o revisarla con Claude)
         fs.writeFileSync(path.join(dirClase(t.id), t.fichero.replace(/\.mp3$/, '.txt')), segmentos.map((s) => `[${Math.floor(s.t / 60)}:${dos(Math.floor(s.t % 60))}] ${s.texto}`).join('\n') + '\n');
-        avisar(`Transcripción lista: ${c.titulo}.`);
+        avisar(T('Transcripción lista: {0}.', [c.titulo], c.lengua));
       }
-    } catch (e) { avisar(`No se pudo transcribir la clase: ${e.message}`, true); }
+    } catch (e) { avisar(T('No se pudo transcribir la clase: {0}', [e.message], (clase(t.id) || {}).lengua), true); }
     finally {
       for (const x of [wav, `${base}.json`]) { try { fs.unlinkSync(x); } catch (e) { /* */ } }
       transcribiendo = null; alCambiar(true); siguiente();

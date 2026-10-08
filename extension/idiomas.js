@@ -165,12 +165,15 @@ function compromisos(reglas, sesiones, hoy = new Date()) {
   });
 }
 
-/** Texto legible de una regla: «Francés · cada 2 semanas (martes) · 60 min» */
-function textoRegla(r, nombres = { fr: 'Francés', en: 'Inglés', cualquiera: 'Cualquier idioma' }) {
-  const D = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
-  const cada = r.cada === 'dia' ? 'cada día' : r.cada === 'semana' ? 'cada semana' : `cada ${Math.max(1, r.n || 2)} semanas`;
+/** Texto legible de una regla en la lengua del panel (es | en | fr): «Francés · cada 2 semanas (martes) · 60 min» */
+function textoRegla(r, lang = 'es') {
+  const { tr } = require('./media/i18n-idiomas.js');
+  const t = (s, args) => tr(typeof lang === 'string' ? lang : 'es', s, args);
+  const nombres = typeof lang === 'object' && lang ? lang : { fr: t('Francés'), en: t('Inglés'), cualquiera: t('Cualquier idioma') };   // compatibilidad: textoRegla(r, nombres)
+  const D = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'].map((d) => t(d));
+  const cada = r.cada === 'dia' ? t('cada día') : r.cada === 'semana' ? t('cada semana') : t('cada {0} semanas', [Math.max(1, r.n || 2)]);
   const dias = r.dias && r.dias.length ? ` (${r.dias.map((d) => D[d - 1]).join(', ')})` : '';
-  return `${nombres[r.lengua] || r.lengua} · ${cada}${dias} · ${r.minutos ? `${r.minutos} min` : 'sin duración fija'}`;
+  return `${nombres[r.lengua] || r.lengua} · ${cada}${dias} · ${r.minutos ? `${r.minutos} min` : t('sin duración fija')}`;
 }
 
 const slug = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'usuario';

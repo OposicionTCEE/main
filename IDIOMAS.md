@@ -334,6 +334,37 @@ en la pantalla principal, decisión del usuario del 7/10/2026) y comparten corre
 - **Velocidad** (× 0,75 a × 1,2, por idioma) en Comprensión lectora (junto a *Escucharlo*) y auditiva: se aplica al reproducir (`playbackRate`
   conservando el tono), al momento y sin volver a generar el audio; Piper genera siempre a velocidad normal. El dictado «más despacio» resta 0,25.
 
+## Panel en la lengua estudiada (v0.41, 8/10/2026, a petición del usuario)
+
+El usuario exige que TODO el panel (botones, ayudas, textos en gris, avisos, fichas, ejercicios, correcciones) salga en la lengua elegida en
+Ajustes, **«Idioma del panel»** (`perfil.ajustes.idiomaFichas`: la estudiada —por defecto— o castellano). En castellano todo sigue como antes.
+- **Interfaz**: `extension/media/i18n-idiomas.js` (tabla única: clave = texto en castellano, `{0}` huecos; ~870 textos en/fr). Pantalla: `ui('…')` e
+  `idiomaUI()` en `media/idiomas.js` (llegan a `media/idiomasPracticas.js` como `A.ui`/`A.idiomaUI`); extensión: `tr(idiomaUI(lengua), '…')`
+  (`idiomasPanel.js` `uiDe`/`idiomaUI`). Al añadir un texto visible hay que añadir su clave a la tabla.
+- **Datos**: el paquete trae copia traducida de todo lo que tenía explicaciones en castellano en `<l>/lengua/<misma ruta>` (232 fichas,
+  193 textos y su índice, tareas, tribunal, expresiones, materias, conjugación). Misma estructura e ids; solo cambian las cadenas en castellano.
+  La extensión las lee con `rutaPaquete(l, rel)` si el panel está en la lengua estudiada. Herramienta: `scripts/idiomas/lengua.py`
+  (`extraer` / `aplicar` mapa de traducciones / `validar`: estructura, campos protegidos —frases, respuestas, opciones, párrafos, `traduccion`,
+  `significado`…— y castellano sin traducir). Traducido por agentes el 8/10/2026 con las pautas de la conversación (enunciados en imperativo;
+  francés con «vous»; citas del castellano conservadas entre comillas; columnas de equivalentes: definición + «(es: …)»). Títulos de fichas y
+  materias de la copia = `titulos.json` `titulo_l`. Fuentes y autores, traducidos.
+- **Traducciones al castellano** (`traduccion` de ejemplos y ejercicios, traducciones de verbos): ocultas tras un botón «ES» (decisión del usuario).
+- **Vocabulario y diccionario**: definición en la lengua estudiada y debajo, en gris, el castellano (decisión del usuario: definiciones sacadas
+  de diccionarios, no generadas). Datos: `<l>/definiciones.json` (inglés: Open English WordNet 2024, CC BY 4.0, 46.875 palabras; francés:
+  Wiktionnaire vía kaikki.org fr-extract, CC BY-SA, 60.920 palabras, hasta 3 acepciones sin las de formas flexionadas) y `definicion_l` en el
+  vocabulario de las copias (`scripts/idiomas/definiciones.py glosarios`; hasta dos acepciones; en verbos -ed/-ing, las de verbo). Cubre el 62 %
+  del vocabulario inglés y el 48 % del francés de los textos y fichas; el resto se ve solo en castellano (gris). El cajón y el diálogo de
+  «Mi diccionario» reciben `definicion_l` de la extensión (`definicionL`, con forma base). Las categorías del diccionario se traducen al pintar.
+- **Diccionario inglés ampliado** (descarga autorizada por el usuario el 8/10/2026): 64.868 palabras inglesas más (de 30.937 a 95.805) con los
+  equivalentes del diccionario de español del Wiktionary en inglés (`kaikki.org-dictionary-Spanish.jsonl`, 1 GB) invertidos
+  (`definiciones.py ampliar-en`). Cobertura de las palabras más frecuentes de EFLLex: 6.000 → 87,6 % (antes 78,5 %); 12.000 → 66,5 % (54,1 %),
+  sin contar las formas flexionadas, que la búsqueda resuelve por la forma base. El orden de los equivalentes de esas palabras nuevas no es por
+  frecuencia (a veces sale primero uno raro).
+- Cómo se descargó (sin acceso desde el entorno de Claude a kaikki.org): con el navegador integrado del Mac, procesando el fichero en la propia
+  página (fetch en streaming, filtrado, gzip y base64) y trayendo el resultado en trozos de 240.000 caracteres. La lista de palabras francesas
+  necesarias se publicó en una rama temporal pública `tmp-diccionario` del repositorio `idiomas` (el entorno no puede borrarla: borrarla a mano).
+- **Comentarios del modelo local** en la lengua del panel; `limpiarComentario` quita también «in Spanish», «en espagnol».
+
 ## Clases con profesores (v0.38, 7/10/2026, con el usuario)
 
 - Botón **👩‍🏫 Clases** a la derecha de la fila de niveles, encima de las tarjetas. Lista de clases del idioma y *+ Nueva clase* (tema, profesor, fecha).

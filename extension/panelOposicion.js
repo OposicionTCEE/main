@@ -36,10 +36,14 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
   const test = crearTest({ raiz, progreso });
   const idiomas = crearIdiomas({ raiz, globalState: context.globalState });
   // Idiomas, fases 2–3: textos, escritura, oral y examen; LanguageTool y Ollama se arrancan solo cuando hacen falta
-  const herrIdiomas = crearHerramientas();
+  // textos de Idiomas para la pantalla en la lengua del panel (Ajustes «Idioma del panel»: la estudiada o castellano); main/IDIOMAS.md
+  const idiomaUI = (l) => idiomas.uiDe(l);
+  const tIdi = (s, args, l) => idiomas.t(s, args, l);
+  const herrIdiomas = crearHerramientas({ idiomaUI });
   context.subscriptions.push({ dispose: () => herrIdiomas.cerrarTodo() });
   const practicas = crearPracticas({
     dirPaquete: () => path.join(raiz(), 'idiomas'), dirPerfil: () => idiomas.dirActivo(), perfil: () => idiomas.perfil(), herramientas: herrIdiomas,
+    idiomaUI, rutaPaquete: (l, rel) => idiomas.rutaPaquete(l, rel),
     // un micrófono y un whisper cada vez entre el cante, el oral y las clases
     cante: () => { try { const a = cante.estado(), b = clases.estado(); return { grabando: a.grabando || b.grabando, transcribiendo: a.transcribiendo || b.transcribiendo }; } catch (e) { return null; } },
     avisar: (texto, error) => { if (panel) panel.webview.postMessage({ tipo: 'aviso', texto, error: !!error }); },
@@ -47,13 +51,13 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
   });
   // Voces neuronales (Piper): cada frase lista se manda a la pantalla con su dirección
   const voz = crearVoz({
-    guion: () => path.join(raiz(), 'main', 'scripts', 'idiomas', 'voz.py'),
+    guion: () => path.join(raiz(), 'main', 'scripts', 'idiomas', 'voz.py'), idiomaUI,
     alListo: (x) => { if (panel) panel.webview.postMessage({ tipo: 'idiVoz', clave: x.clave, i: x.i, error: x.error, url: x.fichero ? panel.webview.asWebviewUri(vscode.Uri.file(x.fichero)).toString() : undefined }); },
   });
   context.subscriptions.push({ dispose: () => voz.parar() });
   // Clases con profesores (main/IDIOMAS.md, «Clases»): audio, ficheros y transcripción en la carpeta del perfil
   const clases = crearClases({
-    dirPerfil: () => idiomas.dirActivo(),
+    dirPerfil: () => idiomas.dirActivo(), idiomaUI,
     otroOcupado: () => { try { const a = cante.estado(), b = practicas.estadoOral(); return { grabando: a.grabando || b.grabando, transcribiendo: a.transcribiendo || b.transcribiendo }; } catch (e) { return null; } },
     avisar: (texto, error) => { if (panel) panel.webview.postMessage({ tipo: 'aviso', texto, error: !!error }); },
     alCambiar: () => { if (panel) panel.webview.postMessage({ tipo: 'idiClaseEstado', estado: clases.estado() }); },
@@ -222,11 +226,13 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
   /** Pestaña Idiomas (main/IDIOMAS.md): los datos van y vienen solo cuando la pestaña los pide */
   async function mensajeIdiomas(m) {
     const responder = (tipo, x) => panel.webview.postMessage({ tipo, ...x });
+    idiomas.idiomaUI(m.lengua);   // recuerda la lengua de la pestaña para los mensajes que no la traen
     try {
       if (m.tipo === 'idiCargar') return responder('idiDatos', { datos: idiomas.datos() });
       if (m.tipo.startsWith('idiP')) return mensajePracticas(m, responder);
       if (m.tipo === 'idiCrearPerfil') { idiomas.crearPerfil(m.perfil); return responder('idiDatos', { datos: idiomas.datos() }); }
-      if (m.tipo === 'idiGuardarPerfil') { idiomas.guardarPerfil(m.cambios); responder('aviso', { texto: 'Ajustes guardados.' }); return responder('idiDatos', { datos: idiomas.datos() }); }
+      // tras cambiar «Idioma del panel», guardarPerfil vacía las cachés: idiDatos ya va con las fichas y títulos en la lengua nueva
+      if (m.tipo === 'idiGuardarPerfil') { idiomas.guardarPerfil(m.cambios); responder('aviso', { texto: tIdi('Ajustes guardados.') }); return responder('idiDatos', { datos: idiomas.datos() }); }
       if (m.tipo === 'idiElegirPerfil') { await idiomas.elegirPerfil(m.dir); return responder('idiDatos', { datos: idiomas.datos() }); }
       if (m.tipo === 'idiFicha') return responder('idiFicha', { ficha: idiomas.ficha(m.lengua, m.id) });
       if (m.tipo === 'idiEmpezar') return responder('idiSesion', { sesion: idiomas.empezar(m) });
@@ -245,12 +251,13 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
       if (m.tipo === 'idiAnotar') return responder('idiAnotado', { id: m.id, nota: idiomas.anotar(m) });
       if (m.tipo === 'idiEliminarPerfil') {
         const { ruta, nombre } = idiomas.rutaPerfil(m.dir);
-        const si = await vscode.window.showWarningMessage(`¿Eliminar el perfil «${nombre}»?`,
-          { modal: true, detail: `Se moverá a la Papelera la carpeta ${path.basename(ruta)} con todo su progreso, errores y anotaciones. Desde la Papelera se puede recuperar.` }, 'Eliminar');
-        if (si !== 'Eliminar') return;
+        const eliminar = tIdi('Eliminar');
+        const si = await vscode.window.showWarningMessage(tIdi('¿Eliminar el perfil «{0}»?', [nombre]),
+          { modal: true, detail: tIdi('Se moverá a la Papelera la carpeta {0} con todo su progreso, errores y anotaciones. Desde la Papelera se puede recuperar.', [path.basename(ruta)]) }, eliminar);
+        if (si !== eliminar) return;
         await vscode.workspace.fs.delete(vscode.Uri.file(ruta), { recursive: true, useTrash: true });
         await idiomas.olvidarPerfil(m.dir);
-        responder('aviso', { texto: `Perfil «${nombre}» eliminado (está en la Papelera).` });
+        responder('aviso', { texto: tIdi('Perfil «{0}» eliminado (está en la Papelera).', [nombre]) });
         return responder('idiDatos', { datos: idiomas.datos() });
       }
       if (m.tipo === 'idiDescartarError') { idiomas.descartarError(m); return responder('idiDatos', { datos: idiomas.datos() }); }
@@ -276,7 +283,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
         case 'idiPTarea': return r({ tarea: practicas.tarea(m) });
         case 'idiPHerramientas': return r({ estado: await herrIdiomas.estado() });
         case 'idiPInstalar': {
-          const t = vscode.window.createTerminal({ name: 'Herramientas de idiomas', cwd: raiz() });
+          const t = vscode.window.createTerminal({ name: tIdi('Herramientas de idiomas'), cwd: raiz() });
           t.show(); t.sendText(`bash "${path.join(raiz(), 'main', 'scripts', 'idiomas', 'instalar_herramientas.sh')}"`);
           return r({ ok: true });
         }
@@ -296,15 +303,16 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
         case 'idiPClaseCambiar': return r({ clase: clases.cambiar(m) });
         case 'idiPClaseImportar': {
           const audio = m.que === 'audio';
-          const xs = await vscode.window.showOpenDialog({ canSelectMany: !audio, openLabel: audio ? 'Añadir audio' : 'Añadir ficheros',
-            filters: audio ? { 'Audio o vídeo': ['m4a', 'mp3', 'wav', 'aac', 'caf', 'aif', 'aiff', 'ogg', 'opus', 'flac', 'mp4', 'mov', 'm4v', 'webm'] } : undefined });
+          const xs = await vscode.window.showOpenDialog({ canSelectMany: !audio, openLabel: audio ? tIdi('Añadir audio') : tIdi('Añadir ficheros'),
+            filters: audio ? { [tIdi('Audio o vídeo')]: ['m4a', 'mp3', 'wav', 'aac', 'caf', 'aif', 'aiff', 'ogg', 'opus', 'flac', 'mp4', 'mov', 'm4v', 'webm'] } : undefined });
           if (!xs || !xs.length) return r({ cancelado: true });
           return r(await clases.importar({ id: m.id, rutas: xs.map((u) => u.fsPath) }, aviso));
         }
         case 'idiPClaseQuitarAdjunto': return r({ clase: clases.quitarAdjunto(m) });
         case 'idiPClaseQuitarAudio': {
-          const si = await vscode.window.showWarningMessage('¿Borrar este audio de la clase y su transcripción?', { modal: true }, 'Borrar');
-          return r(si === 'Borrar' ? { clase: clases.quitarAudio(m) } : { cancelado: true });
+          const borrar = tIdi('Borrar');
+          const si = await vscode.window.showWarningMessage(tIdi('¿Borrar este audio de la clase y su transcripción?'), { modal: true }, borrar);
+          return r(si === borrar ? { clase: clases.quitarAudio(m) } : { cancelado: true });
         }
         case 'idiPClaseAdjunto': {
           const x = clases.leerAdjunto(m);
@@ -314,14 +322,15 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
         case 'idiPClaseCarpeta': vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(path.join(clases.ruta(m.id), 'clase.json'))); return r({});
         case 'idiPClaseMicros': return r({ lista: await clases.microfonos() });
         case 'idiPClaseGrabar': return r({ grabacion: await clases.grabar(m), estado: clases.estado() });
-        case 'idiPClaseParar': { aviso('Guardando y comprimiendo el audio…'); const a = await clases.parar(m); return r({ audio: a, estado: clases.estado() }); }
+        case 'idiPClaseParar': { aviso(tIdi('Guardando y comprimiendo el audio…')); const a = await clases.parar(m); return r({ audio: a, estado: clases.estado() }); }
         case 'idiPClaseEstado': return r({ estado: clases.estado() });
         case 'idiPClaseTranscribir': return r({ estado: clases.transcribir(m) });
         case 'idiPClaseAudioUrl': return r({ url: panel.webview.asWebviewUri(vscode.Uri.file(path.join(clases.ruta(m.id), path.basename(m.fichero)))).toString() });
         case 'idiPClaseEliminar': {
           const c = clases.clase(m.id); if (!c) return r({ cancelado: true });
-          const si = await vscode.window.showWarningMessage(`¿Eliminar la clase «${c.titulo}»?`, { modal: true, detail: 'Su carpeta (audio, ficheros y transcripción) irá a la Papelera del Mac.' }, 'Eliminar');
-          if (si !== 'Eliminar') return r({ cancelado: true });
+          const eliminar = tIdi('Eliminar', [], c.lengua);
+          const si = await vscode.window.showWarningMessage(tIdi('¿Eliminar la clase «{0}»?', [c.titulo], c.lengua), { modal: true, detail: tIdi('Su carpeta (audio, ficheros y transcripción) irá a la Papelera del Mac.', [], c.lengua) }, eliminar);
+          if (si !== eliminar) return r({ cancelado: true });
           await vscode.workspace.fs.delete(vscode.Uri.file(clases.eliminar(m)), { recursive: true, useTrash: true });
           return r({ eliminada: true });
         }
@@ -383,6 +392,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
 <script nonce="${nonce}" src="${url('relaciones.js')}"></script>
 <script nonce="${nonce}" src="${url('cante.js')}"></script>
 <script nonce="${nonce}" src="${url('test.js')}"></script>
+<script nonce="${nonce}" src="${url('i18n-idiomas.js')}"></script>
 <script nonce="${nonce}" src="${url('idiomasPracticas.js')}"></script>
 <script nonce="${nonce}" src="${url('idiomas.js')}"></script>
 <script nonce="${nonce}" src="${url('panel.js')}"></script></body></html>`;

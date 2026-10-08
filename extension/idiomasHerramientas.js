@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const { spawn } = require('child_process');
+const { tr } = require('./media/i18n-idiomas.js');
 
 const RUTAS_BIN = [process.env.TCEE_BIN, '/opt/homebrew/bin', '/usr/local/bin', '/usr/bin'].filter(Boolean);
 const existe = (f) => { try { fs.accessSync(f); return true; } catch (e) { return false; } };
@@ -37,7 +38,9 @@ function pedir(url, { metodo = 'GET', cuerpo, tipo, tiempo = 10000 } = {}) {
   });
 }
 
-function crearHerramientas({ avisar = () => {} } = {}) {
+/** idiomaUI(lengua): lengua del panel ('es' | 'en' | 'fr') para los errores que llegan a la pantalla (por defecto, castellano) */
+function crearHerramientas({ avisar = () => {}, idiomaUI = () => 'es' } = {}) {
+  const T = (s, args, l) => tr(idiomaUI(l), s, args);
   const procesos = { lt: null, ollama: null };
   const temporizadores = {};
   let ocupado = Promise.resolve();   // cola: una tarea pesada cada vez
@@ -66,7 +69,7 @@ function crearHerramientas({ avisar = () => {} } = {}) {
     if (ollamaActivo && !modelo) modelo = await modeloDescargado();
     // un Ollama o un LanguageTool ya en marcha (p. ej. la aplicación de Ollama) cuentan como instalados aunque no estén en Homebrew
     const e = { lt: !!r.lt || ltActivo, ollama: !!r.ollama || ollamaActivo, modelo: !!modelo, nombreModelo: MODELO, ffmpeg: !!r.ffmpeg, whisper: !!r.whisper && modeloWhisper, ltActivo, ollamaActivo };
-    e.falta = [!e.lt && 'LanguageTool', !e.ollama && 'Ollama', e.ollama && !e.modelo && `modelo ${MODELO}`, !e.ffmpeg && 'ffmpeg', !e.whisper && 'whisper'].filter(Boolean);
+    e.falta = [!e.lt && 'LanguageTool', !e.ollama && 'Ollama', e.ollama && !e.modelo && T('modelo {0}', [MODELO]), !e.ffmpeg && 'ffmpeg', !e.whisper && 'whisper'].filter(Boolean);
     return e;
   }
 
@@ -85,19 +88,21 @@ function crearHerramientas({ avisar = () => {} } = {}) {
     // una cosa pesada cada vez: si arranca el modelo, se para LanguageTool, y al revés
     parar(nombre === 'lt' ? 'ollama' : 'lt');
     if (nombre === 'lt') {
-      if (!r.lt) throw new Error('Falta LanguageTool: pulsa «Instalar herramientas» en Ajustes de Idiomas.');
+      if (!r.lt) throw new Error(T('Falta LanguageTool: pulsa «Instalar herramientas» en Ajustes de Idiomas.'));
       procesos.lt = spawn(r.lt, ['--port', String(PUERTO_LT), '--allow-origin', '*'], { stdio: 'ignore', env: { ...process.env, JAVA_TOOL_OPTIONS: '-Xmx700m' } });
     } else {
-      if (!r.ollama) throw new Error('Falta Ollama: pulsa «Instalar herramientas» en Ajustes de Idiomas.');
+      if (!r.ollama) throw new Error(T('Falta Ollama: pulsa «Instalar herramientas» en Ajustes de Idiomas.'));
       procesos.ollama = spawn(r.ollama, ['serve'], { stdio: 'ignore', env: { ...process.env, OLLAMA_KEEP_ALIVE: '4m', OLLAMA_MAX_LOADED_MODELS: '1', OLLAMA_NUM_PARALLEL: '1' } });
     }
     procesos[nombre].on('error', () => { procesos[nombre] = null; });
     for (let i = 0; i < 60; i++) { await dormir(500); if (await vivo(nombre)) { programarParada(nombre); return; } }
     parar(nombre);   // no se deja un proceso a medio arrancar ocupando memoria
-    throw new Error(nombre === 'lt' ? 'LanguageTool no arranca (¿falta Java?). Repite «Instalar herramientas».' : 'Ollama no arranca. Repite «Instalar herramientas».');
+    throw new Error(nombre === 'lt' ? T('LanguageTool no arranca (¿falta Java?). Repite «Instalar herramientas».') : T('Ollama no arranca. Repite «Instalar herramientas».'));
   }
 
-  const enCola = (fn) => { const r = ocupado.then(fn, fn); ocupado = r.catch(() => {}); return r; };
+  // «tiempo agotado» (de pedir) llega a la pantalla dentro de «Modelo local: …»: se traduce aquí
+  const traducirError = (e) => { if (e && e.message === 'tiempo agotado') e.message = T('tiempo agotado'); throw e; };
+  const enCola = (fn) => { const r = ocupado.then(fn, fn).catch(traducirError); ocupado = r.catch(() => {}); return r; };
 
   /** Corrector: errores de LanguageTool [{inicio, largo, mensaje, sugerencias, regla, categoria, tipo}] */
   function corregirTexto(texto, lengua) {
@@ -120,7 +125,7 @@ function crearHerramientas({ avisar = () => {} } = {}) {
   function preguntar({ sistema, mensaje, formato, temperatura = 0.2, contexto = 8192, tiempo = 240000 }) {
     return enCola(async () => {
       await arrancar('ollama');
-      if (!(await modeloDescargado())) throw new Error(`Falta el modelo ${MODELO}: pulsa «Instalar herramientas» en Ajustes de Idiomas.`);
+      if (!(await modeloDescargado())) throw new Error(T('Falta el modelo {0}: pulsa «Instalar herramientas» en Ajustes de Idiomas.', [MODELO]));
       for (let intento = 0; intento < 2; intento++) {
         const r = await pedir(`${URL_OLLAMA}/api/chat`, { metodo: 'POST', tiempo, cuerpo: {
           model: MODELO, stream: false, format: formato || 'json', keep_alive: '4m',
@@ -128,7 +133,7 @@ function crearHerramientas({ avisar = () => {} } = {}) {
           messages: [...(sistema ? [{ role: 'system', content: sistema }] : []), { role: 'user', content: mensaje }] } });
         programarParada('ollama');
         const txt = (r.message && r.message.content) || '';
-        try { return JSON.parse(txt); } catch (e) { if (intento) throw new Error('El modelo local no devolvió una respuesta válida. Prueba otra vez.'); }
+        try { return JSON.parse(txt); } catch (e) { if (intento) throw new Error(T('El modelo local no devolvió una respuesta válida. Prueba otra vez.')); }
       }
       return null;
     });
