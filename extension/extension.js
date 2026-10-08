@@ -602,7 +602,20 @@ async function notasConClaude(mostrado) {
   // se copia siempre: si la versión de Claude Code no admite el mensaje prellenado, basta con pegarlo
   await vscode.env.clipboard.writeText(encargo);
   let abierto = false;
-  try { abierto = await vscode.env.openExternal(vscode.Uri.parse('vscode://anthropic.claude-code/open?prompt=' + encodeURIComponent(encargo))); } catch (e) { /* abajo */ }
+  // en la barra lateral: «sidebar.open» fija la barra lateral como sitio preferido y «editor.open» en modo programático
+  // la respeta y le pasa el mensaje (Claude Code 2.1.29x). Si no existen esas órdenes, el enlace vscode:// lo abre en una pestaña.
+  const cmds = await vscode.commands.getCommands(true);
+  if (cmds.includes('claude-vscode.sidebar.open') && cmds.includes('claude-vscode.editor.open')) {
+    try {
+      await vscode.commands.executeCommand('claude-vscode.sidebar.open');
+      await vscode.commands.executeCommand('claude-vscode.editor.open', undefined, encargo, undefined, undefined, undefined,
+        { programmatic: 'honor-preferred-location' });
+      abierto = true;
+    } catch (e) { /* abajo */ }
+  }
+  if (!abierto) {
+    try { abierto = await vscode.env.openExternal(vscode.Uri.parse('vscode://anthropic.claude-code/open?prompt=' + encodeURIComponent(encargo))); } catch (e) { /* abajo */ }
+  }
   if (abierto) {
     vscode.window.showInformationMessage('Encargo escrito en Claude Code: añade al final qué quieres tratar y pulsa Intro. (Si no aparece escrito, está copiado: pégalo con ⌘V.)');
   } else {
