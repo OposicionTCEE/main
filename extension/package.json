@@ -2,7 +2,7 @@
   "name": "tcee-panel",
   "displayName": "Panel TCEE",
   "description": "Panel de trabajo para los temas de la oposición TCEE: acciones, tiempo restante, índice, calendario, relaciones y cante.",
-  "version": "0.39.0",
+  "version": "0.40.0",
   "publisher": "oposiciontcee",
   "license": "UNLICENSED",
   "repository": {

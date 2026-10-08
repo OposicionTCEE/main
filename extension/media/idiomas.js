@@ -78,7 +78,14 @@
     if (m.tipo === 'idiRevisionOk') { X.revision = m.revision; }
     if (m.tipo === 'idiMiDicc') { X.miDiccionario = m.lista; if (vista === 'diccionario') pMiDicc(); else if (vista === 'inicio') pInicio(); }
     if (m.tipo === 'idiResultados') resultadosCajon(m);
-    if (m.tipo === 'idiDefinicion') { const d = document.querySelector(`.idi-dlg [data-def="${m.clave}"]`); if (d && !d.value) { d.value = m.definicion; d.placeholder = m.definicion ? '' : 'Sin definición en el diccionario: escríbela tú'; } }
+    if (m.tipo === 'idiDefinicion') {
+      const d = document.querySelector(`.idi-dlg [data-def="${m.clave}"]`); if (!d || d.value) return;
+      if (m.definicion) {
+        d.value = m.definicion; d.readOnly = true; d.classList.add('idi-def-fija'); d.placeholder = '';
+        const o = d.closest('.idi-dlg').querySelector('[data-def-origen]'); if (o) o.textContent = m.lema ? `Del diccionario, como «${m.lema}» (forma base).` : 'Del diccionario.';
+        const c = d.closest('.idi-dlg').querySelector('[data-k="campo"]'); if (c && document.activeElement === d) c.focus();
+      } else d.placeholder = 'Sin definición en el diccionario: escríbela tú';
+    }
     if (m.tipo === 'idiVerbos') { VB.info = m.info; if (vista === 'verbos' && VB.esperando) { VB.esperando = false; pVerbos(); } }
     if (m.tipo === 'idiVerbosLista') listaVerbos(m);
     if (m.tipo === 'idiVerbosSesion') { VB.ses = m.sesion; VB.i = 0; VB.res = []; VB.hecho = null; VB.t0 = Date.now(); pVerbos(); }
@@ -851,10 +858,26 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
   }
 
   // ------------------------------------------------------------------ selección en cualquier parte: añadir a mi diccionario o buscar
+  /** Contexto de una selección: la frase que la contiene (no todo el párrafo ni varios elementos pegados) */
   function contextoDe(r) {
     const n = r.startContainer.nodeType === 1 ? r.startContainer : r.startContainer.parentElement;
-    const el = n.closest('p, li, td, .idi-ejemplo, .idi-error, .idi-frase, .idi-ver-bloque, .idi-cr, h4, div');
-    return el ? el.textContent.replace(/\s+/g, ' ').trim().slice(0, 240) : '';
+    const el = n.closest('.idi-glos > span, p, li, td, .idi-ejemplo, .idi-error, .idi-frase, .idi-ver-bloque, .idi-cr, h4, div');
+    if (!el) return '';
+    const pre = document.createRange(); pre.setStart(el, 0); pre.setEnd(r.startContainer, r.startOffset);
+    const t = el.textContent, pos = pre.toString().length;
+    const ini = Math.max(...['. ', '! ', '? ', '\n'].map((x) => t.lastIndexOf(x, pos - 1) + (t.lastIndexOf(x, pos - 1) >= 0 ? x.length : 0)), 0);
+    const finCands = ['. ', '! ', '? ', '\n'].map((x) => t.indexOf(x, pos)).filter((x) => x >= 0);
+    const fin = finCands.length ? Math.min(...finCands) + 1 : t.length;
+    const num = el.querySelector('.idi-par-n');   // el número de párrafo no forma parte de la frase
+    return t.slice(ini === 0 && num ? num.textContent.length : ini, fin).replace(/\s+/g, ' ').trim().slice(0, 300);
+  }
+  /** Si la selección es una palabra del vocabulario de un texto («wielded esgrimidos…»), su significado viene de ahí */
+  function definicionGlosario(r, texto) {
+    const n = r.startContainer.nodeType === 1 ? r.startContainer : r.startContainer.parentElement;
+    const g = n.closest('.idi-glos > span'); if (!g || !g.querySelector('b')) return '';
+    const b = g.querySelector('b').textContent.trim();
+    if (b.toLowerCase() !== String(texto).toLowerCase().replace(/^[^\p{L}]+|[^\p{L}]+$/gu, '')) return '';
+    const i = g.querySelector('i'); return g.textContent.slice(b.length).replace(i ? i.textContent : '', '').replace(/\s+/g, ' ').trim();
   }
   function habilitarSeleccionGeneral() {
     raiz.addEventListener('mouseup', (ev) => {
@@ -865,9 +888,9 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
         const r = sel.getRangeAt(0);
         if (!raiz.contains(r.commonAncestorContainer)) return;
         const texto = r.toString().replace(/\s+/g, ' ').trim(); if (!texto || texto.length > 160) return;
-        const contexto = contextoDe(r);
+        const contexto = contextoDe(r), glos = definicionGlosario(r, texto);
         const b = mostrarBarra(r.getBoundingClientRect(), '<button data-accion="dicc">📖 Añadir a mi diccionario</button><button data-accion="buscar">🔎 Buscar</button>');
-        b.querySelector('[data-accion="dicc"]').onclick = () => { quitarBarra(); sel.removeAllRanges(); abrirAlta({ texto, contexto }); };
+        b.querySelector('[data-accion="dicc"]').onclick = () => { quitarBarra(); sel.removeAllRanges(); abrirAlta({ texto, contexto: glos ? '' : contexto, ...(glos ? { definicion: glos, fija: 'vocabulario del texto' } : {}) }); };
         b.querySelector('[data-accion="buscar"]').onclick = () => { quitarBarra(); buscarEnCajon(texto); };
       }, 0);
     });
@@ -894,7 +917,8 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
     fondo.innerHTML = `<div class="idi-dlg" role="dialog" aria-label="Mi diccionario">
       <h3>📖 ${e.id ? 'Editar entrada' : 'Añadir a mi diccionario'} <span class="apagado">· ${esc(X.lenguas[l] || l)}</span></h3>
       <label>Palabra o estructura <input type="text" data-k="texto" value="${esc(ent.texto)}"></label>
-      <label>Definición o traducción <input type="text" data-k="definicion" data-def="${clave}" value="${esc(ent.definicion)}" placeholder="Buscando en el diccionario…"></label>
+      <label>Definición o traducción <input type="text" data-k="definicion" data-def="${clave}" value="${esc(ent.definicion)}" ${e.fija ? 'readonly class="idi-def-fija"' : ''} placeholder="Buscando en el diccionario…"></label>
+      <p class="idi-mini apagado" data-def-origen>${e.fija ? `Definición del ${esc(e.fija)}.` : ''}</p>
       <div class="idi-dlg-fila"><span>Tipo</span><div class="segmentos"><button data-tipo-ent="palabra" class="${ent.tipo === 'palabra' ? 'activo' : ''}">Palabra</button><button data-tipo-ent="estructura" class="${ent.tipo === 'estructura' ? 'activo' : ''}">Estructura</button></div></div>
       <label>${ent.tipo === 'palabra' ? 'Campo semántico' : 'Ficha o grupo'} <input type="text" data-k="campo" list="idi-campos" value="${esc(ent.campo)}"><datalist id="idi-campos">${campos.map((c) => `<option value="${esc(c)}">`).join('')}</datalist></label>
       ${ent.contexto ? `<p class="idi-mini apagado">Contexto: «${esc(ent.contexto)}»</p>` : ''}
@@ -911,7 +935,8 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
       enviar({ tipo: 'idiGuardarEntrada', entrada: ent }); cerrar();
       if (ctx.aviso) ctx.aviso(e.id ? 'Entrada actualizada.' : `«${ent.texto}» añadido a tu diccionario.`);
     };
-    if (!ent.definicion) enviar({ tipo: 'idiDefinir', clave, lengua: l, texto: ent.texto }); else fondo.querySelector('[data-def]').placeholder = '';
+    // definición del diccionario del paquete: fija (no se edita). Si no está, el campo queda libre para escribirla.
+    if (!ent.definicion && !e.id) enviar({ tipo: 'idiDefinir', clave, lengua: l, texto: ent.texto }); else fondo.querySelector('[data-def]').placeholder = ent.definicion ? '' : 'Escribe la definición';
     const t = fondo.querySelector(ent.definicion ? '[data-k="campo"]' : '[data-k="definicion"]'); t.focus();
   }
 
@@ -971,7 +996,8 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
     cont.querySelectorAll('[data-decir]').forEach((b) => b.onclick = () => decir(b.dataset.decir, l));
     cont.querySelectorAll('[data-mas]').forEach((b) => b.onclick = () => {
       const x = m.resultados[Number(b.dataset.mas)];
-      abrirAlta({ texto: x.palabra, definicion: x.trad.length ? x.trad.slice(0, 4).join(', ') : (x.glosas[0] || ''), contexto: '' });
+      const def = x.trad.length ? x.trad.slice(0, 4).join(', ') : (x.glosas[0] || '');
+      abrirAlta({ texto: x.palabra, definicion: def, contexto: '', ...(def ? { fija: 'diccionario' } : {}) });
     });
   }
 

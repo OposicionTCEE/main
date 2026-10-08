@@ -236,7 +236,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
       if (m.tipo === 'idiGuardarEntrada') return responder('idiMiDicc', { lista: idiomas.guardarEntrada(m.entrada) });
       if (m.tipo === 'idiBorrarEntrada') return responder('idiMiDicc', { lista: idiomas.borrarEntrada(m) });
       if (m.tipo === 'idiBuscar') return responder('idiResultados', { clave: m.clave, ...idiomas.buscar(m) });
-      if (m.tipo === 'idiDefinir') return responder('idiDefinicion', { clave: m.clave, definicion: idiomas.definir(m) });
+      if (m.tipo === 'idiDefinir') return responder('idiDefinicion', { clave: m.clave, ...idiomas.definirConLema(m) });
       if (m.tipo === 'idiVerbosInicio') return responder('idiVerbos', { info: idiomas.verbosInicio() });
       if (m.tipo === 'idiVerbosBuscar') return responder('idiVerbosLista', { clave: m.clave, lista: idiomas.verbosBuscar(m) });
       if (m.tipo === 'idiVerbosSesion') return responder('idiVerbosSesion', { sesion: idiomas.verbosSesion(m) });
@@ -373,7 +373,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     const nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
     const url = (f) => webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', f));
     return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; font-src ${webview.cspSource}; img-src ${webview.cspSource}; media-src ${webview.cspSource} https://voa-audio.voanews.eu https://*.voanews.eu; script-src 'nonce-${nonce}';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; font-src ${webview.cspSource}; img-src ${webview.cspSource}; media-src ${webview.cspSource} data: https://voa-audio.voanews.eu https://*.voanews.eu; script-src 'nonce-${nonce}';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="${url('katex/katex.min.css')}"><link rel="stylesheet" href="${url('panel.css')}"><title>Panel Oposición</title></head>
 <body><div id="app"><p class="vacio">Calculando los temas…</p></div>
