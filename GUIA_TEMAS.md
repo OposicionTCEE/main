@@ -108,8 +108,8 @@ contenido se pierde por razones de forma.
 ## 4. Convenciones de formato y de LaTeX
 
 - **Autores en MAYÚSCULAS** con año: OATES (1972), WEINGAST, SHEPSLE y JOHNSEN (1981). El nombre de la revista no aparece en el texto.
-- **Ecuaciones** con `\eqblock{<matemática en aligned>}{<pie>}`. El pie nombra el modelo («… Modelo de SOLOW»): el análisis de relaciones
-  entre temas depende de ello.
+- **Ecuaciones**: `$…$` en el texto y `$$…$$` para las ecuaciones en su propia línea. Claude no usa `\eqblock`: lo pone el usuario cuando
+  lo cree conveniente. Los `\eqblock` que ya existen no se tocan ni se convierten.
 - **Cifras en dígitos en modo matemático**: `$2,2\%$`, `$83.252$ millones`, `$-0,4\%$`; rangos `$35$-$40\%$`. Excepciones: los años no van
   en modo matemático; los números de ley o decreto tampoco (Ley 22/2009); los números escritos con letra en la narración se quedan en letra.
   Los números de artículo sí van en modo matemático (`art. $41$ CE`). Las variaciones de ratios se expresan en puntos, nunca en «%».
