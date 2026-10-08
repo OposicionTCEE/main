@@ -599,11 +599,13 @@ async function notasConClaude(mostrado) {
     + `Tema: ${codigo} (${rel}). Pasada: ${p.pasada}`
     + (p.pasada === 'segunda' ? ' (quita las etiquetas naranjas de la pasada anterior y no pongas nuevas)' : ' (etiqueta en naranja lo que no sea seguro)')
     + `. Notas magenta en el tema: ${c.magenta}. Empieza con el plan y espera mi visto bueno. Quiero tratar: `;
-  try {
-    await vscode.env.openExternal(vscode.Uri.parse('vscode://anthropic.claude-code/open?prompt=' + encodeURIComponent(encargo)));
-    vscode.window.showInformationMessage('Encargo escrito en Claude Code: añade al final qué quieres tratar y pulsa Intro.');
-  } catch (e) {
-    await vscode.env.clipboard.writeText(encargo);
+  // se copia siempre: si la versión de Claude Code no admite el mensaje prellenado, basta con pegarlo
+  await vscode.env.clipboard.writeText(encargo);
+  let abierto = false;
+  try { abierto = await vscode.env.openExternal(vscode.Uri.parse('vscode://anthropic.claude-code/open?prompt=' + encodeURIComponent(encargo))); } catch (e) { /* abajo */ }
+  if (abierto) {
+    vscode.window.showInformationMessage('Encargo escrito en Claude Code: añade al final qué quieres tratar y pulsa Intro. (Si no aparece escrito, está copiado: pégalo con ⌘V.)');
+  } else {
     vscode.window.showInformationMessage('Encargo copiado. Abre Claude Code, pégalo (⌘V), añade qué quieres tratar y pulsa Intro.');
   }
 }
