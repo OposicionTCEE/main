@@ -16,11 +16,10 @@ La carpeta raíz (`TCEE/`) contiene:
   Si compila, el PDF se copia también a iCloud (`OPO - TCEE/PDF temas/Tema-X.pdf`, configurable en `~/.tcee_carpeta_pdf`).
   Los PDF nunca se suben a GitHub. Para compilar todos: `bash main/scripts/compilar_todo.sh [3.A.43 …]`.
   El estado de cada tema está en `main/ESTADO_COMPILACION.md`.
-- Las ecuaciones se escriben con `\eqblock{<matemática en aligned>}{<pie>}`. El pie debe nombrar el modelo
-  ("… Modelo de SOLOW"): el análisis de relaciones entre temas depende de ello.
-- Remisiones a otros temas: `([\authorfont{Ver Tema 3.A.44}])`.
-- Autores en MAYÚSCULAS en el texto (SOLOW, MUNDELL-FLEMING), con año entre paréntesis.
-- No pegar nunca Markdown (`#`, `**`, `[Seguro]`) dentro de un `.tex`: rompe la compilación (ha pasado en 4.B.15 y 4.B.25).
+- **Contenido, estilo, convenciones LaTeX, colores de las notas y protocolo para trabajar un tema: `main/GUIA_TEMAS.md`.**
+  Es la única guía (la copia del proyecto de claude.ai, `claude/Guia_redaccion_temas_TCEE.md`, la reproduce); leerla antes de tocar un tema.
+  Lo esencial: `\eqblock{…}{pie que nombra el modelo}`, remisiones `([\authorfont{Ver Tema 3.A.44}])`, autores en MAYÚSCULAS con año,
+  nunca Markdown dentro de un `.tex` (rompe la compilación: ha pasado en 4.B.15 y 4.B.25).
 - Antes de modificar varios temas a la vez, enseñar al usuario qué se va a cambiar y esperar su visto bueno.
 - Para sincronizar con GitHub (main + temario): `bash main/scripts/sincronizar_todo.sh` desde la carpeta TCEE.
 - Para ver o deshacer cambios antiguos de un tema: `main/HISTORIAL.md`.
@@ -49,10 +48,11 @@ Notas al pie contraíbles (`notas.js`, ⌘⌥N; se contraen al abrir): las notas
 `scripts/notas_pie.js` reescribe las antiguas sin cambiar el PDF. Reglas en `main/NOTAS.md`.
 Escritura (`escritura.js`, reglas en `main/ESCRITURA.md`): ⌘B/⌘I/⌃H salen del grupo o quitan la orden; ⌘⌥U mayúsculas; `$` automático; `\color` → `\textcolor{}{}`;
 `\hl{}` (paquete soul); ⌃C rodea de color; ⌘⌥K y la acción «Atajos» muestran los atajos;
-`\lnum`/`\la` + Intro → lista; Intro en una lista añade `\item`; `\cita` → `\begin{cita}[Autor][Año][Obra]` (entorno definido en los 145 temas). Paleta en `config/colores.json`. **Para Claude**: `\textcolor{magenta}{…}` en un tema es una indicación
-del usuario para Claude; `red` = pendiente/OJO del usuario (no es una orden); `blue` = no cambiar sin preguntar; `orange` = dato por verificar.
+`\lnum`/`\la` + Intro → lista; Intro en una lista añade `\item`; `\cita` → `\begin{cita}[Autor][Año][Obra]` (entorno definido en los 145 temas). Paleta en `config/colores.json`. **Para Claude**: qué significa cada color en un tema
+(magenta = indicación para Claude; rojo = nota del usuario, no es una orden; azul = no cambiar; naranja = por verificar) y qué hacer con él: `main/GUIA_TEMAS.md` §7.
 Idiomas (pestaña del Panel Oposición; interfaz y datos en la lengua del panel: textos de interfaz en `media/i18n-idiomas.js` con `ui()`/`tr()`, datos traducidos en `<l>/lengua/` del paquete, definiciones en `<l>/definiciones.json`; fases 1–3 hechas: `idiomas.js`, `idiomasPanel.js`, `media/idiomas.js`; fases 2–3 en `idiomasPracticas.js`, `idiomasTextos.js`, `idiomasHerramientas.js`, `media/idiomasPracticas.js`; clases con profesores en `idiomasClases.js`; voces neuronales Piper en `idiomasVoz.js` + `scripts/idiomas/voz.py`): diseño, fases, fuentes, licencias y reglas en `main/IDIOMAS.md`. Contenido en el repositorio público `idiomas` (`TCEE/idiomas`; solo se descarga: tarea «Descargar o actualizar el paquete de idiomas» y *Sincronizar*);
 datos del usuario solo en local (`TCEE/idiomas-<nombre>/`; `revision.json` = preguntas que el usuario marcó para revisar contigo: léelas por el puente con su Mac cuando lo pida). Fuentes descargadas en el Mac con `scripts/idiomas/descargar_fuentes.sh` (`TCEE/.fuentes-idiomas/`; sin tarea: ver abajo).
+Acción Notas del tema con Claude (`tcee.notasClaude`): pide tema y pasada (primera/segunda; propone segunda si hay etiquetas naranjas) y abre Claude Code con el encargo prellenado (`vscode://anthropic.claude-code/open?prompt=…`; si falla, lo copia).
 Acción Rehacer informes (`tcee.rehacerInformes`): ejecuta `scripts/armonizacion.js estado` y copia el encargo para Claude Code. El progreso guarda además minutos por día (`dias`) en el fichero de cada Mac.
 Calendario de vueltas (pestaña Calendario): reglas y razonamiento en `main/CALENDARIO.md` (mantener código y documento a la vez).
 `calendario.js` (generar semanas temático/correlativo/aleatorio, reparto diario, librar días, mover cante), `afinidad.js` (relaciones entre temas),
@@ -82,7 +82,7 @@ verificados, propuesta y resumen por tema), con la huella de cada desarrollo par
 1. No abrir nunca dando la razón; la primera frase cuestiona una asunción, señala un riesgo u omisión, o hace una pregunta que revele una falla.
 2. Ante un desacuerdo: "No estoy de acuerdo porque [RAZÓN]. El riesgo de tu enfoque es [CONSECUENCIA ESPECÍFICA]."
 3. La verdad incómoda va primero.
-4. Etiquetar las afirmaciones propias como [Seguro], [Probable] o [Suposición] (en la conversación, no dentro del `.tex`).
+4. Etiquetar las afirmaciones propias como [Seguro], [Probable] o [Suposición] (en la conversación; dentro de un `.tex`, solo con el formato seguro de `GUIA_TEMAS.md` §8.2: `\textcolor{orange}{\textsuperscript{[Probable]}}`).
 5. Prohibido: "Buena pregunta", "Tienes toda la razón", "Eso tiene mucho sentido", "Por supuesto", "Definitivamente".
 6. Sin introducciones innecesarias.
 7. Mantener la postura salvo que el usuario aporte información genuinamente nueva.

@@ -167,6 +167,7 @@ class Acciones {
       item('Nueva nota', 'note', 'tcee.nota', 'Añade una nota al final de \\modificaciones del tema que elijas'),
       item('Panel Oposición', 'dashboard', 'tcee.panelOposicion', 'Calendario, tiempo restante de todos los temas y relaciones entre temas (se abre en una ventana aparte)'),
       item('Atajos', 'keyboard', 'tcee.atajos', 'Todos los atajos del Panel TCEE en una ventana (se cierra con Esc; ⚙ cambia un atajo). Atajo: ⌘⌥K', '⌘⌥K'),
+      item('Notas del tema con Claude', 'comment-discussion', 'tcee.notasClaude', 'Abre Claude Code con el encargo ya escrito (tema, pasada y documentos que debe leer: CLAUDE.md y GUIA_TEMAS.md). Solo tienes que añadir qué quieres tratar'),
       item('Rehacer informes', 'beaker', 'tcee.rehacerInformes', 'Comprueba qué informes faltan o están desactualizados (armonización de modelos y cobertura de las preguntas de test falladas) y prepara el encargo para Claude Code'),
     ];
   }
@@ -484,6 +485,9 @@ function activate(context) {
   // ---- Rehacer informes de armonización: estado con scripts/armonizacion.js y encargo a Claude Code (main/RELACIONES.md, apartado 4)
   context.subscriptions.push(vscode.commands.registerCommand('tcee.rehacerInformes', rehacerInformes));
 
+  // ---- Notas del tema con Claude: encargo prellenado en Claude Code (main/GUIA_TEMAS.md, §8)
+  context.subscriptions.push(vscode.commands.registerCommand('tcee.notasClaude', () => notasConClaude(indice.mostrado)));
+
   // ---- Panel Oposición (pestaña): calendario, tiempo restante de todos los temas y relaciones
   activarFormulas(context);
   activarNotas(context);
@@ -546,6 +550,62 @@ async function rehacerInformes() {
   if (abrir) { try { await vscode.commands.executeCommand(abrir); } catch (e) { /* se abre a mano */ } }
   vscode.window.showInformationMessage(abrir ? 'Encargo copiado: pégalo (⌘V) en Claude Code y pulsa Intro.'
     : 'Encargo copiado. Abre Claude Code, pégalo (⌘V) y pulsa Intro.');
+}
+
+/** Cuenta notas y etiquetas del tema (main/GUIA_TEMAS.md, §7 y §8.2) */
+function contarNotas(texto) {
+  const cuerpo = texto.slice(Math.max(0, texto.indexOf('\\begin{document}')));
+  const n = (rx) => (cuerpo.match(rx) || []).length;
+  return {
+    magenta: n(/\\textcolor\{magenta\}/g),
+    etiquetas: n(/\\textcolor\{orange\}\{\\textsuperscript\{\[(?:Probable|Suposici[óo]n)\]\}\}/g),
+  };
+}
+
+/** Abre Claude Code con el encargo de notas del tema ya escrito; el usuario añade qué quiere tratar */
+async function notasConClaude(mostrado) {
+  let uri = null;
+  const ed = vscode.window.activeTextEditor;
+  if (ed && codigoTema(ed.document.uri.fsPath)) uri = ed.document.uri;
+  else if (mostrado && codigoTema(mostrado.fsPath)) uri = mostrado;
+  if (!uri) {
+    const uris = await vscode.workspace.findFiles('temario/Ejercicio-*/Parte-*/*/main.tex');
+    const items = uris.map((u) => ({ label: codigoTema(u.fsPath), uri: u }))
+      .sort((a, b) => a.label.localeCompare(b.label, 'es', { numeric: true }));
+    const e = await vscode.window.showQuickPick(items, { title: 'Notas del tema con Claude (1/2): ¿qué tema?', placeHolder: 'Escribe el código, p. ej. 3.A.43' });
+    if (!e) return;
+    uri = e.uri;
+  }
+  const codigo = codigoTema(uri.fsPath);
+  const raiz = vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0].uri.fsPath;
+  const rel = raiz ? path.relative(raiz, uri.fsPath).split(path.sep).join('/') : uri.fsPath;
+  let c = { magenta: 0, etiquetas: 0 };
+  try {
+    const abierto = vscode.workspace.textDocuments.find((d) => d.uri.toString() === uri.toString());
+    c = contarNotas(abierto ? abierto.getText() : fs.readFileSync(uri.fsPath, 'utf8'));
+  } catch (e) { /* sin recuento */ }
+  const primera = { label: 'Primera pasada', pasada: 'primera',
+    detail: 'Primera vez que Claude trabaja estas notas: deja en naranja [Probable] / [Suposición] lo que no sea seguro' };
+  const segunda = { label: 'Segunda pasada', pasada: 'segunda',
+    detail: 'Ya revisaste la primera y dejaste notas nuevas: resuelve lo nuevo y quita las etiquetas naranjas anteriores' };
+  const opciones = c.etiquetas ? [segunda, primera] : [primera, segunda];
+  opciones[0].description = c.etiquetas ? `recomendada: hay ${c.etiquetas} etiquetas de la pasada anterior` : 'recomendada: no hay etiquetas anteriores';
+  const p = await vscode.window.showQuickPick(opciones, {
+    title: `Notas del tema con Claude (2/2): ${codigo} · ${c.magenta} ${c.magenta === 1 ? 'nota magenta' : 'notas magenta'}`,
+    placeHolder: '¿Qué pasada es?',
+  });
+  if (!p) return;
+  const encargo = `Lee main/CLAUDE.md y main/GUIA_TEMAS.md (sobre todo el §8, protocolo de trabajo) antes de empezar. `
+    + `Tema: ${codigo} (${rel}). Pasada: ${p.pasada}`
+    + (p.pasada === 'segunda' ? ' (quita las etiquetas naranjas de la pasada anterior y no pongas nuevas)' : ' (etiqueta en naranja lo que no sea seguro)')
+    + `. Notas magenta en el tema: ${c.magenta}. Empieza con el plan y espera mi visto bueno. Quiero tratar: `;
+  try {
+    await vscode.env.openExternal(vscode.Uri.parse('vscode://anthropic.claude-code/open?prompt=' + encodeURIComponent(encargo)));
+    vscode.window.showInformationMessage('Encargo escrito en Claude Code: añade al final qué quieres tratar y pulsa Intro.');
+  } catch (e) {
+    await vscode.env.clipboard.writeText(encargo);
+    vscode.window.showInformationMessage('Encargo copiado. Abre Claude Code, pégalo (⌘V), añade qué quieres tratar y pulsa Intro.');
+  }
 }
 
 /** Envuelve (o desenvuelve) las selecciones del editor activo en \<macro>{…} */
