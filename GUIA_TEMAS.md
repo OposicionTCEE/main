@@ -133,6 +133,11 @@ contenido se pierde por razones de forma.
 
 ## 5. Bibliografía
 
+- **Obligatorio e importantísimo: al terminar cada redacción (cada epígrafe trabajado), toda obra citada o utilizada que aún no figure
+  en la bibliografía del tema se añade en ese mismo momento**, en su bloque y en su orden, con las normas de este apartado. No se deja
+  para el final del tema ni se da por hecho: una cita en el texto sin su entrada en la bibliografía es un encargo incompleto. Antes de
+  añadirla se comprueba que no esté ya (una sola entrada por título). En el resumen del epígrafe (§8.1) se enumeran las entradas añadidas
+  y las que quedaron pendientes de verificar.
 - **APA 7 en español**, en tres bloques: **Legislación** (normas, tratados y jurisprudencia), **Investigación** (obras académicas e informes
   institucionales de carácter analítico) y **Complementario** (prensa, notas de prensa, datos y blogs).
 - Una sola entrada por título, solo con las obras efectivamente citadas o utilizadas. Orden alfabético; la legislación, por ámbito y fecha.
@@ -223,12 +228,19 @@ Los encargos se trocean para que el esfuerzo que exige una parte no se coma la c
 1. **Plan primero**: lista de las notas por epígrafe, con lo que exige cada una (aclarar, ampliar, construir un bloque nuevo, verificar) y una
    estimación de tamaño. Las grandes (un bloque nuevo, una revisión de literatura) se trocean a su vez. Se acuerda el orden con el usuario.
 2. **Un epígrafe por vez**, con parada al final (§8.1).
-3. **Nunca se acorta** texto existente que la nota no mande cambiar. Al cerrar cada epígrafe se comprueba con `git diff` que no se ha borrado
-   nada fuera de lo pedido y se avisa de cualquier eliminación.
-4. **Compilar al cerrar cada epígrafe** y arreglar los errores que haya introducido.
-5. **Una conversación por tema.** Si la conversación se alarga mucho (el asistente resume lo antiguo y pierde detalle), se propone seguir en
+3. **Nunca se acorta** texto existente que la nota no mande cambiar. Al cerrar cada epígrafe se revisa con `git diff` cada línea borrada y
+   se clasifica:
+   - **la propia nota magenta resuelta**: es lo esperado, no es una pérdida;
+   - **texto que la nota mandaba reformular o sustituir**: es lo esperado, pero se comprueba que cada idea, dato, autor o cita que contenía
+     sigue en la redacción nueva, salvo que la nota mandara quitarlo;
+   - **cualquier otra cosa** (texto ajeno a la nota, notas rojas o azules, otras notas magenta): es una pérdida; se restaura o se avisa
+     al usuario antes de seguir.
+   En el resumen del epígrafe se dice qué se borró de las dos primeras clases y, si se perdió algo de la redacción anterior, qué y por qué.
+4. **Bibliografía al cerrar cada epígrafe**: se añaden las referencias nuevas según §5 antes de dar el epígrafe por terminado.
+5. **Compilar al cerrar cada epígrafe** y arreglar los errores que haya introducido.
+6. **Una conversación por encargo** (un tema, o una sección si el tema tiene muchas notas). Si la conversación se alarga mucho (el asistente resume lo antiguo y pierde detalle), se propone seguir en
    una nueva y se deja escrito un relevo breve: qué está hecho, qué falta, decisiones tomadas.
-6. Si una parte exige más trabajo del previsto, se dice y se replantea el plan; nunca se compensa recortando otra.
+7. Si una parte exige más trabajo del previsto, se dice y se replantea el plan; nunca se compensa recortando otra.
 
 ### 8.5. Al terminar
 
