@@ -607,6 +607,9 @@ async function notasConClaude(mostrado) {
   const cmds = await vscode.commands.getCommands(true);
   if (cmds.includes('claude-vscode.sidebar.open') && cmds.includes('claude-vscode.editor.open')) {
     try {
+      // «sidebar.open» guarda la preferencia sin esperar: si no se espera aquí, «editor.open» aún lee «panel» y abre una pestaña
+      const conf = vscode.workspace.getConfiguration('claudeCode');
+      if (conf.get('preferredLocation') !== 'sidebar') await conf.update('preferredLocation', 'sidebar', vscode.ConfigurationTarget.Global);
       await vscode.commands.executeCommand('claude-vscode.sidebar.open');
       await vscode.commands.executeCommand('claude-vscode.editor.open', undefined, encargo, undefined, undefined, undefined,
         { programmatic: 'honor-preferred-location' });
