@@ -2,7 +2,7 @@
   "name": "tcee-panel",
   "displayName": "Panel TCEE",
   "description": "Panel de trabajo para los temas de la oposición TCEE: acciones, tiempo restante, índice, calendario, relaciones y cante.",
-  "version": "0.41.0",
+  "version": "0.42.0",
   "publisher": "oposiciontcee",
   "license": "UNLICENSED",
   "repository": {
@@ -106,6 +106,12 @@
         "title": "Ver de dónde sale el tiempo restante",
         "category": "TCEE",
         "icon": "$(info)"
+      },
+      {
+        "command": "tcee.notasClaude",
+        "title": "Notas del tema con Claude",
+        "category": "TCEE",
+        "icon": "$(comment-discussion)"
       },
       {
         "command": "tcee.rehacerInformes",
