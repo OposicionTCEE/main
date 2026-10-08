@@ -96,7 +96,7 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
 7. Erratas de color que no compilan: `\textcolor{yellos}` (3), `\textcolor{redç}` (1) y 3 `\textcolor{\textbf{…}` sin color.
 8. Revisar con el usuario las semanas más débiles de la propuesta de la 2ª vuelta (`progreso/calendarios/propuesta-2a-vuelta-3.json`), por ejemplo las semanas 5 y 18.
 9. La carpeta `~/TCEE/_antiguos` del Mac se puede borrar cuando el usuario quiera.
-10. **Idiomas · diccionario de inglés incompleto** (pendiente de mejor conexión). Cobertura medida el 7/10/2026 con las listas de frecuencia de
+10. ~~**Idiomas · diccionario de inglés incompleto**~~ HECHO el 8/10/2026 (v0.41; ver IDIOMAS.md, «Panel en la lengua estudiada»). Texto anterior: Cobertura medida el 7/10/2026 con las listas de frecuencia de
     EFLLex/FLELex (palabras más frecuentes que tienen entrada):
     - inglés (30.937 entradas, solo Wikcionario en español): 98,4 % de las 1.000 más frecuentes, 97,0 % de 3.000, 88,7 % de 6.000, 73,4 % de 12.000;
       faltan, por ejemplo, surprised, pleased, local, stare, angrily;

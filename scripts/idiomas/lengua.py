@@ -23,11 +23,15 @@ PROTEGIDAS = {
     'palabras_clave', 'licencia', 'autor', 'autores', 'nombre', 'fecha', 'parrafo', 'modelo', 'k', 'total', 'cobertura', 'entero', 'piezas',
 }
 SOLO_ES = set('el los las del y por para con es se lo al su sus como más pero sin sobre este esta estos estas esto muy ya cuando también '
-              'hay está están son puede pueden una uno unos unas porque aunque cuál qué dónde cómo frase texto verbo palabra significa '
+              'hay está están puede pueden una uno unos unas porque aunque cuál qué dónde cómo frase texto verbo palabra significa '
               'ejemplo ejemplos usa uso decir dice quiere elige completa escribe ordena corrige transforma respuesta correcta incorrecta '
               'explicar explica lenguaje cosas mismo misma entre desde hasta hacia otra otro otras otros cada todo toda solo nunca siempre '
               'tiene tienen hace ser estar mejor peor igual después antes ahora aquí donde mientras sino ni ante tras pasado futuro '
               'presente forma formas regla persona personas tiempo'.split())
+
+
+# palabras que también existen en francés (no cuentan como castellano en los textos franceses)
+TAMBIEN_FR = {'se', 'es', 'y', 'ni', 'entre', 'son', 'si', 'pour', 'ante', 'presente', 'forme', 'formes', 'personne', 'personnes', 'texte', 'verbe'}
 
 
 def palabras(s):
@@ -43,7 +47,7 @@ def es_castellano(s, l):
     ws = palabras(s)
     if not ws:
         return False
-    marcas = sum(w in SOLO_ES for w in ws)
+    marcas = sum(w in SOLO_ES and not (l == 'fr' and w in TAMBIEN_FR) for w in ws)
     return marcas >= 1 and (len(ws) <= 4 or marcas / len(ws) >= 0.12)
 
 
@@ -104,7 +108,7 @@ def estructura(a, b, ruta=''):
     if type(a) is not type(b):
         yield f'{ruta}: tipo distinto'
     elif isinstance(a, dict):
-        if set(a) != set(b):
+        if set(a) - {'definicion_l'} != set(b) - {'definicion_l'}:   # definicion_l la añade definiciones.py (vocabulario)
             yield f'{ruta}: claves distintas {sorted(set(a) ^ set(b))[:6]}'
         for k in a:
             if k in b:

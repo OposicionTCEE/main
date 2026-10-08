@@ -664,7 +664,7 @@
           <section class="idi-caja"><h3>${ui('Resumir un texto')}</h3><p class="ayuda">${ui('Los resúmenes se hacen desde la biblioteca: así se corrigen frente a las ideas del texto.')}</p>
             <p class="idi-acciones"><button data-bib="lectura">📖 ${ui('Comprensión lectora')}</button><button data-bib="escucha">🎧 ${ui('Comprensión auditiva')}</button></p></section>
           <section class="idi-caja"><h3>${ui('Mis escritos')}</h3>${P.escritos.length ? `<ul class="idi-hist idi-escritos">${P.escritos.map((e) => `<li data-escrito="${esc(e.id)}"><span>${A.fechaCorta(e.fecha)}</span>
-            <span>${esc(e.clase === 'resumen' ? `${ui('Resumen')} · ${e.titulo || ''}` : e.titulo || '')}</span><span>${e.nota != null ? `${e.nota}/10` : '—'}</span></li>`).join('')}</ul>` : `<p class="apagado">${ui('Aún no has corregido ninguno.')}</p>`}</section>
+            <span>${esc(e.clase === 'resumen' ? `${ui('Resumen')} · ${e.titulo || ''}` : tituloEscrito(e))}</span><span>${e.nota != null ? `${e.nota}/10` : '—'}</span></li>`).join('')}</ul>` : `<p class="apagado">${ui('Aún no has corregido ninguno.')}</p>`}</section>
         </div><section>
           <div class="idi-filtros"><select data-f="nivel"><option value="">${ui('Todos los niveles')}</option>${A.NIVELES.map((n) => `<option ${f.nivel === n ? 'selected' : ''}>${n}</option>`).join('')}</select>
             <select data-f="tipo"><option value="">${ui('Todos los tipos')}</option>${Object.entries(TIPOS_TAREA).map(([k, v]) => `<option value="${k}" ${f.tipo === k ? 'selected' : ''}>${ui(v)}</option>`).join('')}</select></div>
@@ -719,9 +719,11 @@
       return `<section class="idi-caja"><h3>${ui('Banco de expresiones')}</h3>${P.expresiones.map((f) => `<details><summary>${esc((enL() ? f.titulo || f.titulo_es : f.titulo_es) || '')}</summary>
         <ul class="idi-expr" lang="${l()}">${f.expresiones.map((x) => `<li><b>${esc(x.texto)}</b> <span class="apagado idi-mini">${esc(x.registro ? ui(x.registro) : '')}${x.nota_es ? ` · ${esc(x.nota_es)}` : ''}</span></li>`).join('')}</ul></details>`).join('')}</section>`;
     }
+    /** Título de un escrito guardado: el de la tarea en la lengua del panel (el guardado es el que había al corregir) */
+    const tituloEscrito = (e) => { const t = e.tareaId && (P.tareas || []).find((x) => x.id === e.tareaId); return (t && (t.titulo_es || t.titulo)) || e.titulo || ''; };
     function pEscrito() {
       const e = P.verEscrito; if (!e) return A.ir('escritura');
-      vEl().innerHTML = `<div class="idi-p">${cab(`✍️ ${esc(e.clase === 'resumen' ? `${ui('Resumen')} · ${e.titulo || ''}` : e.titulo || ui('Escrito'))}`, `<span class="apagado">${A.fechaCorta(e.fecha)}</span>`)}
+      vEl().innerHTML = `<div class="idi-p">${cab(`✍️ ${esc(e.clase === 'resumen' ? `${ui('Resumen')} · ${e.titulo || ''}` : tituloEscrito(e) || ui('Escrito'))}`, `<span class="apagado">${A.fechaCorta(e.fecha)}</span>`)}
         <div id="idi-esc-res"></div>
         <p class="idi-acciones"><button data-volver-esc>← ${ui('Mis escritos')}</button>${e.clase === 'resumen' ? `<button data-leer>🗣️ ${ui('Leerlo en voz alta')}</button>` : ''}</p></div>`;
       enlazarVolver(vEl());

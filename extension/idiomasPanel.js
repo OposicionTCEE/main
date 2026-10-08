@@ -356,20 +356,40 @@ function crearIdiomas({ raiz, globalState }) {
       while (lo < hi) { const mid = (lo + hi) >> 1; if (D.claves[mid] < t) lo = mid + 1; else hi = mid; }
       for (let j = lo; j < D.claves.length && D.claves[j].startsWith(t) && ids.length < 40; j++) if (D.claves[j] !== t) ids.push(...D.porPalabra.get(D.claves[j]));
     }
-    return { resultados: ids.slice(0, 40).map((i) => entrada(D.ent[i])), fuente: D.fuente };
+    const enL = uiDe(lengua) !== 'es';
+    return { resultados: ids.slice(0, 40).map((i) => { const x = entrada(D.ent[i]); if (enL) x.definicion_l = definicionL(lengua, x.palabra); return x; }), fuente: D.fuente };
   }
   /** Definición breve para el diccionario personal: traducciones de la entrada exacta (o, si no hay, su primera definición) */
   /** Definición de una palabra o expresión: la forma tal cual y, si no está, su forma base (wielded → wield, levied → levy, chevaux → cheval…) */
+  // definiciones en la lengua estudiada (<l>/definiciones.json: Open English WordNet / Wiktionnaire), para el panel en esa lengua
+  const cacheDefs = {};
+  function defsL(l) {
+    const fp = path.join(dirPaquete(), l, 'definiciones.json');
+    let m = 0; try { m = fs.statSync(fp).mtimeMs; } catch (e) { return null; }
+    if (cacheDefs[l] && cacheDefs[l].m === m) return cacheDefs[l].d;
+    const d = leer(fp, { definiciones: {} }).definiciones || {};
+    cacheDefs[l] = { m, d }; return d;
+  }
+  /** Primera definición en la lengua estudiada de una palabra (o de su forma base), o '' */
+  function definicionL(l, palabra) {
+    const D = defsL(l); if (!D) return '';
+    const w = plano(palabra).replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');
+    const crudo = String(palabra || '').toLowerCase().trim();
+    for (const k of [crudo, w, ...formasBase(l, w)]) if (D[k] && D[k].length) return D[k][0][1];
+    return '';
+  }
   function definirConLema({ lengua, texto }) {
     const D = dicc(lengua); if (!D) return { definicion: '', lema: null };
     const limpio = plano(texto).replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');   // sin comillas ni puntuación pegada a la selección
+    // con el panel en la lengua estudiada: definición en esa lengua (y el castellano aparte, en gris)
+    const conL = (r) => (uiDe(lengua) !== 'es' ? { ...r, definicion_l: definicionL(lengua, r.lema || texto) } : r);
     for (const k of [limpio, ...formasBase(lengua, limpio)]) {
       const xs = (D.porPalabra.get(k) || []).map((i) => entrada(D.ent[i]));
       const trad = [...new Set(xs.flatMap((x) => x.trad))].slice(0, 5);
       const def = trad.length ? trad.join(', ') : (xs[0] && xs[0].glosas[0]) || '';
-      if (def) return { definicion: def, lema: k === limpio ? null : (xs[0] && xs[0].palabra) || k };
+      if (def) return conL({ definicion: def, lema: k === limpio ? null : (xs[0] && xs[0].palabra) || k });
     }
-    return { definicion: '', lema: null };
+    return conL({ definicion: '', lema: null });
   }
   const definir = (m) => definirConLema(m).definicion;
   // irregulares frecuentes del inglés (el diccionario trae algunos, como «went», pero no todos)

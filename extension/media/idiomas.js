@@ -75,6 +75,8 @@
   const ocultaEs = (t, tag = 'span', clase = '') => `<${tag} class="idi-es idi-es-oculta ${clase}">${esc(t)}</${tag}>`;
   /** Subtítulo en castellano (título de la ficha, traducción de un verbo): igual, pero sin nada si no hay texto */
   const subEs = (t) => (t ? trEs(t, esc(t)) : '');
+  // subtítulo con el título en castellano de una ficha: en la lengua estudiada no se pone (los datos de la ficha ya vienen en esa lengua)
+  const subTit = (t) => (idiomaUI() === 'es' ? subEs(t) : '');
   const trEs = (t, comoHoy, tag = 'span') => (idiomaUI() === 'es' ? comoHoy : `${btnEs()}${ocultaEs(t, tag)}`);
   /** Significado en castellano de una palabra (glosario, diccionario): en la lengua estudiada, primero definicion_l y el castellano en gris */
   const sigEs = (defL, es) => (idiomaUI() === 'es' ? esc(es) : `${defL ? `${esc(defL)} ` : ''}${es ? `<span class="idi-es">${esc(es)}</span>` : ''}`);
@@ -691,7 +693,7 @@
       <div class="idi-carta-fila"><span class="idi-chip-niv">${esc(f.nivel)}</span><span class="idi-chip-bloque">${esc(t[m.bloque] || '')}</span>
         <span class="idi-chip-est">${esc(t[m.estado] || t.nueva)}</span></div>
       <h2>${esc(m.titulo_l || f.titulo)}</h2>
-      <p class="idi-ficha-sub">${subEs(f.titulo_es || m.titulo_es)}</p>
+      <p class="idi-ficha-sub">${subTit(f.titulo_es || m.titulo_es)}</p>
       <div class="idi-ficha-stats">
         ${r && r.sesiones ? `<span>${ui('{0} sesiones', `<b>${r.sesiones}</b>`)}</span><span>${ui('última nota {0}', `<b>${Math.round(100 * r.notas[r.notas.length - 1])} %</b>`)}</span>
           ${r.due ? `<span>${ui('próximo repaso {0}', `<b>${fechaCorta(r.due)}</b>`)}</span>` : ''}` : `<span>${ui('Aún sin practicar')}</span>`}
@@ -737,7 +739,7 @@
       vistaEl.innerHTML = `<div class="idi-practica ${plegada ? 'plegada' : ''}">
         <aside class="idi-pr-ficha">
           <div class="idi-pr-ficha-cab"><button id="idi-plegar" title="${esc(plegada ? ui('Desplegar la ficha') : ui('Plegar la ficha'))}">${plegada ? '▶' : '◀'}</button>
-            ${plegada ? `<span class="idi-vertical">${ui('Ficha')}</span>` : `<span class="idi-chip-niv n-${b.ficha.nivel}">${esc(b.ficha.nivel)}</span><b>${esc(m.titulo_l || b.ficha.titulo)}</b>${idiomaUI() === 'es' ? '' : subEs(b.ficha.titulo_es)}`}</div>
+            ${plegada ? `<span class="idi-vertical">${ui('Ficha')}</span>` : `<span class="idi-chip-niv n-${b.ficha.nivel}">${esc(b.ficha.nivel)}</span><b>${esc(m.titulo_l || b.ficha.titulo)}</b>`}</div>
           ${plegada ? '' : `<div class="idi-pr-ficha-cuerpo">${idiomaUI() === 'es' ? `<p class="idi-ficha-sub">${esc(b.ficha.titulo_es || '')}</p>` : ''}${cuerpoFicha(b.ficha, l, { compacta: true })}</div>`}
         </aside>
         <section class="idi-pr-ej" id="idi-pr-ej"></section></div>`;
@@ -1028,6 +1030,21 @@ ${ui('¿Cuándo se utiliza «{0}» en un contexto como este y qué regla lo expl
     st().idiCajon = true; st().idiCajonModo = 'directo'; ctx.guardar(); pintarCajon();
     const inp = cajonEl.querySelector('#idi-cq'); inp.value = texto; lanzarBusqueda();
   }
+  // categorías gramaticales del diccionario (vienen en castellano de Wiktionary): palabra a palabra a la lengua del panel
+  const CAT = { sustantivo: ['noun', 'nom'], sustantiva: ['noun', 'nominale'], adjetivo: ['adjective', 'adjectif'], adjetiva: ['adjectival', 'adjectivale'],
+    verbo: ['verb', 'verbe'], verbal: ['verbal', 'verbale'], masculino: ['masculine', 'masculin'], masculina: ['masculine', 'masculine'], femenino: ['feminine', 'féminin'],
+    femenina: ['feminine', 'féminine'], propio: ['proper', 'propre'], propia: ['proper', 'propre'], nombre: ['noun', 'nom'], adverbio: ['adverb', 'adverbe'],
+    adverbial: ['adverbial', 'adverbiale'], transitivo: ['transitive', 'transitif'], intransitivo: ['intransitive', 'intransitif'], locución: ['phrase', 'locution'],
+    interjección: ['interjection', 'interjection'], interjectiva: ['interjectional', 'interjective'], pronombre: ['pronoun', 'pronom'], pronominal: ['pronominal', 'pronominal'],
+    preposición: ['preposition', 'préposition'], preposicional: ['prepositional', 'prépositionnelle'], conjunción: ['conjunction', 'conjonction'],
+    conjuntiva: ['conjunctive', 'conjonctive'], contracción: ['contraction', 'contraction'], sigla: ['acronym', 'sigle'], sufijo: ['suffix', 'suffixe'],
+    prefijo: ['prefix', 'préfixe'], expresión: ['expression', 'expression'], abreviatura: ['abbreviation', 'abréviation'], auxiliar: ['auxiliary', 'auxiliaire'],
+    plural: ['plural', 'pluriel'], neutro: ['neuter', 'neutre'], impersonal: ['impersonal', 'impersonnel'], refrán: ['proverb', 'proverbe'], letra: ['letter', 'lettre'],
+    forma: ['form', 'forme'], modo: ['manner', 'manière'], tiempo: ['time', 'temps'], lugar: ['place', 'lieu'], cantidad: ['quantity', 'quantité'],
+    cardinal: ['cardinal', 'cardinal'], ordinal: ['ordinal', 'ordinal'], personal: ['personal', 'personnel'], demostrativo: ['demonstrative', 'démonstratif'],
+    posesivo: ['possessive', 'possessif'], interrogativo: ['interrogative', 'interrogatif'], indeterminado: ['indefinite', 'indéfini'], comparativo: ['comparative', 'comparatif'],
+    onomatopeya: ['onomatopoeia', 'onomatopée'], negación: ['negation', 'négation'], y: ['and', 'et'], e: ['and', 'et'], de: ['of', 'de'] };
+  const catUI = (c) => (idiomaUI() === 'es' || !c ? c : String(c).replace(/[a-záéíóúñ]+/gi, (w) => { const x = CAT[w.toLowerCase()]; return x ? x[idiomaUI() === 'fr' ? 1 : 0] : w; }));
   function resultadosCajon(m) {
     if (m.clave !== claveBusq) return;
     const cont = cajonEl.querySelector('#idi-cres'); if (!cont) return;
@@ -1035,7 +1052,7 @@ ${ui('¿Cuándo se utiliza «{0}» en un contexto como este y qué regla lo expl
     const l = lengua();
     cont.innerHTML = m.resultados.length ? m.resultados.map((x, i) => `<div class="idi-cr">
         <div class="idi-cr-cab">${vozDisponible() ? `<button class="idi-voz" data-decir="${esc(x.palabra)}">🔊</button>` : ''}<b>${esc(x.palabra)}</b>
-          ${x.cat ? `<i>${esc(x.cat)}</i>` : ''}${x.ipa ? `<span class="apagado">${esc(x.ipa)}</span>` : ''}<button class="idi-cr-mas" data-mas="${i}" title="${esc(ui('Añadir a mi diccionario'))}">＋</button></div>
+          ${x.cat ? `<i>${esc(catUI(x.cat))}</i>` : ''}${x.ipa ? `<span class="apagado">${esc(x.ipa)}</span>` : ''}<button class="idi-cr-mas" data-mas="${i}" title="${esc(ui('Añadir a mi diccionario'))}">＋</button></div>
         ${idiomaUI() === 'es' ? (x.trad.length ? `<div class="idi-cr-trad">${x.trad.slice(0, 8).map(esc).join(' · ')}</div>` : '')
           : x.definicion_l || x.trad.length ? `<div class="idi-cr-trad">${sigEs(x.definicion_l, x.trad.slice(0, 8).join(' · '))}</div>` : ''}
         ${x.glosas.length ? `<ol class="idi-cr-glosas${idiomaUI() === 'es' ? '' : ' idi-gris'}">${x.glosas.slice(0, 3).map((g) => `<li>${esc(g)}</li>`).join('')}</ol>` : ''}</div>`).join('')
@@ -1057,7 +1074,7 @@ ${ui('¿Cuándo se utiliza «{0}» en un contexto como este y qué regla lo expl
     const vis = xs.filter((x) => !filtro || `${x.texto} ${x.definicion} ${x.definicion_es || ''} ${x.campo}`.toLowerCase().includes(filtro));
     const grupo = (tipo, titulo, sub) => {
       const ys = vis.filter((x) => x.tipo === tipo);
-      const porCampo = {}; for (const y of ys) (porCampo[y.campo] = porCampo[y.campo] || []).push(y);
+      const porCampo = {}; for (const y of ys) { const c = ['General', 'Général'].includes(y.campo) ? ui('General') : y.campo; (porCampo[c] = porCampo[c] || []).push(y); }   // «General» guardado en otra lengua cuenta como el mismo grupo
       return `<section class="idi-caja"><h3>${titulo} <span class="idi-num gris">${ys.length}</span></h3><p class="idi-sub">${sub}</p>
         ${ys.length ? Object.entries(porCampo).sort((a, b) => a[0].localeCompare(b[0], 'es')).map(([c, zs]) => `<div class="idi-dg"><h4>${esc(c)} <span class="apagado">(${zs.length})</span></h4>
           <div class="idi-de-rejilla">${zs.sort((a, b) => a.texto.localeCompare(b.texto, l)).map((z) => `<div class="idi-de" title="${esc(z.contexto ? ui('Contexto: «{0}»', z.contexto) : '')}">
@@ -1125,7 +1142,7 @@ ${ui('¿Cuándo se utiliza «{0}» en un contexto como este y qué regla lo expl
           ${mk.nota ? `<div class="idi-recuadro c-${mk.color || 'amarillo'}"><p>${esc(mk.nota)}</p></div>` : ''}</div>`);
       }
       return `<article class="idi-lb-ficha n-${f.nivel}"><div class="idi-lb-cab"><span class="idi-chip-niv">${esc(f.nivel)}</span>
-        <b>${esc(m.titulo_l || f.titulo)}</b><span class="apagado">${subEs(f.titulo_es)}</span><button data-abrir-ficha-lb="${esc(f.id)}">${ui('Abrir la ficha')}</button></div>
+        <b>${esc(m.titulo_l || f.titulo)}</b><span class="apagado">${subTit(f.titulo_es)}</span><button data-abrir-ficha-lb="${esc(f.id)}">${ui('Abrir la ficha')}</button></div>
         ${items.join('')}</article>`;
     });
     vistaEl.innerHTML = `<div class="idi-centro ancho idi-libreta"><p><a id="idi-volver">← ${ui('Volver')}</a></p>
@@ -1153,7 +1170,7 @@ ${ui('¿Cuándo se utiliza «{0}» en un contexto como este y qué regla lo expl
         <aside class="idi-pr-ficha">
           <div class="idi-pr-ficha-cab"><button id="idi-vplegar" title="${esc(plegada ? ui('Desplegar las fichas') : ui('Plegar las fichas'))}">${plegada ? '▶' : '◀'}</button>
             ${plegada ? `<span class="idi-vertical">${ui('Fichas de conjugación')}</span>` : `<div class="idi-vtabs">${fichas.map((f, j) => `<button class="${j === (c.ficha || 0) ? 'activo' : ''}" data-vficha="${j}">${esc(f.formato === 'particularidades' || idiomaUI() !== 'es' ? f.titulo : f.titulo_es.replace(/^Verbos del? /, '').replace(/\s*\(.*\)$/, ''))}</button>`).join('')}</div>`}</div>
-          ${plegada || !fi ? '' : `<div class="idi-pr-ficha-cuerpo">${fi.formato === 'particularidades' ? cuerpoParticularidades(fi) : `<h3>${esc(fi.titulo)}</h3><p class="idi-ficha-sub">${subEs(fi.titulo_es)}</p>${fi.formato === 'conjugacion' ? cuerpoConjugacion(fi) : cuerpoFicha(fi, 'fr', { compacta: true })}`}</div>`}
+          ${plegada || !fi ? '' : `<div class="idi-pr-ficha-cuerpo">${fi.formato === 'particularidades' ? cuerpoParticularidades(fi) : `<h3>${esc(fi.titulo)}</h3><p class="idi-ficha-sub">${subTit(fi.titulo_es)}</p>${fi.formato === 'conjugacion' ? cuerpoConjugacion(fi) : cuerpoFicha(fi, 'fr', { compacta: true })}`}</div>`}
         </aside>
         <section class="idi-pr-ej" id="idi-vzona"></section></div></div>`;
     vistaEl.querySelector('#idi-volver').onclick = () => { VB.ses = null; ir('inicio'); };
