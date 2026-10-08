@@ -61,11 +61,31 @@
   const st = () => ctx.estado;
   const enviar = (m) => ctx.enviar(m);
   const lengua = () => (X && X.perfil && [ 'en', X.perfil.segundo ].includes(st().idiLengua) ? st().idiLengua : 'en');
-  const L = () => (X && X.perfil && X.perfil.ajustes && X.perfil.ajustes.idiomaFichas === 'es' ? T.es : T[lengua()] || T.es);
   /** Lengua de la interfaz: la estudiada (por defecto) o castellano, según Ajustes («Idioma del panel») */
   const idiomaUI = () => (X && X.perfil && X.perfil.ajustes && X.perfil.ajustes.idiomaFichas === 'es' ? 'es' : lengua());
+  const L = () => T[idiomaUI()] || T.es;
+  /** Locale de fechas y números en la lengua del panel */
+  const loc = () => L().loc;
   /** Texto de la interfaz en la lengua del panel: ui('Corregir') · ui('{0} palabras', n). Tabla en media/i18n-idiomas.js */
-  const ui = (s, ...a) => (window.TCEE_I18N_IDI ? window.TCEE_I18N_IDI.tr(idiomaUI(), s, a) : s);
+  const ui = (s, ...a) => (window.TCEE_I18N_IDI ? window.TCEE_I18N_IDI.tr(idiomaUI(), s, a) : a.reduce((x, v, i) => x.split(`{${i}}`).join(v), s));
+  /** Nombre de una lengua (X.lenguas: «Inglés», «Francés») en la lengua del panel */
+  const nomL = (k) => ui((X && X.lenguas && X.lenguas[k]) || k);
+  /** Traducción al castellano de un dato: en castellano, tal cual (comoHoy); con el panel en la lengua estudiada, oculta tras un botón «ES» */
+  const btnEs = () => `<button class="idi-es-btn" data-es-ver title="${esc(ui('Ver u ocultar la traducción al castellano'))}">ES</button>`;
+  const ocultaEs = (t, tag = 'span', clase = '') => `<${tag} class="idi-es idi-es-oculta ${clase}">${esc(t)}</${tag}>`;
+  /** Subtítulo en castellano (título de la ficha, traducción de un verbo): igual, pero sin nada si no hay texto */
+  const subEs = (t) => (t ? trEs(t, esc(t)) : '');
+  const trEs = (t, comoHoy, tag = 'span') => (idiomaUI() === 'es' ? comoHoy : `${btnEs()}${ocultaEs(t, tag)}`);
+  /** Significado en castellano de una palabra (glosario, diccionario): en la lengua estudiada, primero definicion_l y el castellano en gris */
+  const sigEs = (defL, es) => (idiomaUI() === 'es' ? esc(es) : `${defL ? `${esc(defL)} ` : ''}${es ? `<span class="idi-es">${esc(es)}</span>` : ''}`);
+  // botón «ES»: muestra u oculta la traducción que le sigue (un solo manejador para toda la pestaña, también idiomasPracticas.js)
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest && e.target.closest('[data-es-ver]'); if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    let t = b.nextElementSibling;
+    for (let p = b.parentElement, i = 0; (!t || !t.classList.contains('idi-es-oculta')) && p && i < 3; p = p.parentElement, i += 1) t = p.querySelector('.idi-es-oculta');
+    if (t && t.classList.contains('idi-es-oculta')) t.classList.toggle('vista');
+  }, true);
   const nivelDecl = (l) => ((X.perfil.idiomas[l] || {}).nivel || 'B1');
   const tituloDe = (m) => (L() === T.es ? (m.titulo_es || m.titulo) : (m.titulo_l || m.titulo_es || m.titulo));
   const descDe = (m) => (L() === T.es ? (m.descripcion_larga_es || m.descripcion_es || m.descripcion) : (m.descripcion_larga_l || m.descripcion_l || m.descripcion_es || m.descripcion));
@@ -84,11 +104,13 @@
     if (m.tipo === 'idiResultados') resultadosCajon(m);
     if (m.tipo === 'idiDefinicion') {
       const d = document.querySelector(`.idi-dlg [data-def="${m.clave}"]`); if (!d || d.value) return;
-      if (m.definicion) {
-        d.value = m.definicion; d.readOnly = true; d.classList.add('idi-def-fija'); d.placeholder = '';
-        const o = d.closest('.idi-dlg').querySelector('[data-def-origen]'); if (o) o.textContent = m.lema ? `Del diccionario, como «${m.lema}» (forma base).` : 'Del diccionario.';
+      if (m.definicion || m.definicion_l) {
+        const enL = idiomaUI() !== 'es' && m.definicion_l;
+        d.value = enL ? m.definicion_l : m.definicion; d.readOnly = true; d.classList.add('idi-def-fija'); d.placeholder = '';
+        if (enL && m.definicion) ponerDefEs(d.closest('.idi-dlg'), m.definicion);
+        const o = d.closest('.idi-dlg').querySelector('[data-def-origen]'); if (o) o.textContent = m.lema ? ui('Del diccionario, como «{0}» (forma base).', m.lema) : ui('Del diccionario.');
         const c = d.closest('.idi-dlg').querySelector('[data-k="campo"]'); if (c && document.activeElement === d) c.focus();
-      } else d.placeholder = 'Sin definición en el diccionario: escríbela tú';
+      } else d.placeholder = ui('Sin definición en el diccionario: escríbela tú');
     }
     if (m.tipo === 'idiVerbos') { VB.info = m.info; if (vista === 'verbos' && VB.esperando) { VB.esperando = false; pVerbos(); } }
     if (m.tipo === 'idiVerbosLista') listaVerbos(m);
@@ -109,7 +131,7 @@
     raiz = document.createElement('div'); raiz.className = 'idi-raiz'; e.appendChild(raiz);
     if (!PR && window.TCEE_IDI_PR) {
       PR = window.TCEE_IDI_PR.crear({ esc, st, guardar: () => ctx.guardar(), enviar, lengua, X: () => X, vistaEl: () => vistaEl, raiz: () => raiz, ir, reloj: (s) => reloj(s),
-        aviso: (t, err) => (ctx.aviso ? ctx.aviso(t, err) : null), ui, idiomaUI, nivelDecl, NIVELES, fechaCorta: (iso) => fechaCorta(iso) });
+        aviso: (t, err) => (ctx.aviso ? ctx.aviso(t, err) : null), ui, idiomaUI, trEs, nivelDecl, NIVELES, fechaCorta: (iso) => fechaCorta(iso) });
     }
     vistaEl = document.createElement('div'); vistaEl.className = 'idi-vista'; raiz.appendChild(vistaEl);
     cajonEl = document.createElement('aside'); cajonEl.className = 'idi-cajon'; raiz.appendChild(cajonEl);
@@ -120,11 +142,11 @@
 
   function pintarVista() {
     if (!raiz) return;
-    if (!X) { vistaEl.innerHTML = '<p class="vacio">Cargando idiomas…</p>'; return; }
+    if (!X) { vistaEl.innerHTML = `<p class="vacio">${ui('Cargando idiomas…')}</p>`; return; }
     if (!X.hayPaquete) {
-      vistaEl.innerHTML = `<div class="idi-centro"><div class="idi-tarjeta-grande"><h2>Falta el paquete de idiomas</h2>
-        <p>Ejecuta la tarea <b>Descargar o actualizar el paquete de idiomas</b> (o <b>Sincronizar</b>) y pulsa el botón.</p>
-        <button class="primario" id="idi-recargar">Volver a mirar</button></div></div>`;
+      vistaEl.innerHTML = `<div class="idi-centro"><div class="idi-tarjeta-grande"><h2>${ui('Falta el paquete de idiomas')}</h2>
+        <p>${ui('Ejecuta la tarea {0} (o {1}) y pulsa el botón.', `<b>${ui('Descargar o actualizar el paquete de idiomas')}</b>`, `<b>${ui('Sincronizar')}</b>`)}</p>
+        <button class="primario" id="idi-recargar">${ui('Volver a mirar')}</button></div></div>`;
       raiz.querySelector('#idi-recargar').onclick = () => enviar({ tipo: 'idiCargar' });
       return;
     }
@@ -139,20 +161,20 @@
   function pNuevo() {
     const borrador = st().idiBorrador || { nombre: '', segundo: 'fr', niveles: { en: 'B1', fr: 'B1' }, compromisos: [] };
     vistaEl.innerHTML = `<div class="idi-centro"><div class="idi-tarjeta-grande">
-      ${X.perfil ? '<p><a id="idi-volver">← Volver</a></p>' : ''}
-      <h2>${X.perfil ? 'Nuevo perfil' : 'Bienvenido a Idiomas'}</h2>
-      <p class="ayuda">Tu perfil y todo tu progreso se guardan solo en este Mac, en la carpeta <code>TCEE/idiomas-&lt;nombre&gt;</code>.
-        El nivel que indiques es orientativo: el panel lo irá ajustando con tus resultados y te avisará si encaja mejor otro.</p>
+      ${X.perfil ? `<p><a id="idi-volver">← ${ui('Volver')}</a></p>` : ''}
+      <h2>${X.perfil ? ui('Nuevo perfil') : ui('Bienvenido a Idiomas')}</h2>
+      <p class="ayuda">${ui('Tu perfil y todo tu progreso se guardan solo en este Mac, en la carpeta {0}.', '<code>TCEE/idiomas-&lt;nombre&gt;</code>')}
+        ${ui('El nivel que indiques es orientativo: el panel lo irá ajustando con tus resultados y te avisará si encaja mejor otro.')}</p>
       <div class="idi-form">
-        <label>Nombre <input id="idi-nombre" type="text" value="${esc(borrador.nombre)}" placeholder="Tu nombre"></label>
-        <label>Segundo idioma <select id="idi-segundo">${Object.entries(X.lenguas).filter(([k]) => k !== 'en').map(([k, v]) => `<option value="${k}" ${borrador.segundo === k ? 'selected' : ''}>${v}</option>`).join('')}</select>
-          <small>El inglés es obligatorio.</small></label>
-        ${['en', borrador.segundo].map((l) => `<label>Nivel aproximado de ${X.lenguas[l].toLowerCase()} ${selectorNivel(`idi-nv-${l}`, borrador.niveles[l] || 'B1')}</label>`).join('')}
+        <label>${ui('Nombre')} <input id="idi-nombre" type="text" value="${esc(borrador.nombre)}" placeholder="${esc(ui('Tu nombre'))}"></label>
+        <label>${ui('Segundo idioma')} <select id="idi-segundo">${Object.keys(X.lenguas).filter((k) => k !== 'en').map((k) => `<option value="${k}" ${borrador.segundo === k ? 'selected' : ''}>${esc(nomL(k))}</option>`).join('')}</select>
+          <small>${ui('El inglés es obligatorio.')}</small></label>
+        ${['en', borrador.segundo].map((l) => `<label>${ui('Nivel aproximado de {0}', l === 'en' ? ui('inglés') : l === 'fr' ? ui('francés') : esc(nomL(l).toLowerCase()))} ${selectorNivel(`idi-nv-${l}`, borrador.niveles[l] || 'B1')}</label>`).join('')}
       </div>
-      <h3>Compromiso (opcional)</h3>
-      <p class="ayuda">Puedes no poner ninguno: siempre podrás empezar una sesión cuando quieras. También se cambia luego en Ajustes.</p>
+      <h3>${ui('Compromiso (opcional)')}</h3>
+      <p class="ayuda">${ui('Puedes no poner ninguno: siempre podrás empezar una sesión cuando quieras. También se cambia luego en Ajustes.')}</p>
       <div id="idi-reglas"></div>
-      <p class="idi-acciones"><button class="primario" id="idi-crear">Crear perfil</button></p></div></div>`;
+      <p class="idi-acciones"><button class="primario" id="idi-crear">${ui('Crear perfil')}</button></p></div></div>`;
     pintarReglas(raiz.querySelector('#idi-reglas'), borrador.compromisos, () => {});
     const leerBorrador = () => {
       borrador.nombre = raiz.querySelector('#idi-nombre').value; borrador.segundo = raiz.querySelector('#idi-segundo').value;
@@ -164,22 +186,23 @@
     const v = raiz.querySelector('#idi-volver'); if (v) v.onclick = () => ir('ajustes');
     raiz.querySelector('#idi-crear').onclick = () => { leerBorrador(); enviar({ tipo: 'idiCrearPerfil', perfil: borrador }); delete st().idiBorrador; ctx.guardar(); vista = 'inicio'; };
   }
-  const selectorNivel = (id, actual) => `<select id="${id}">${NIVELES.map((n) => `<option value="${n}" ${n === actual ? 'selected' : ''}>${n} · ${DESC_NIVEL[n]}</option>`).join('')}</select>`;
+  const selectorNivel = (id, actual) => `<select id="${id}">${NIVELES.map((n) => `<option value="${n}" ${n === actual ? 'selected' : ''}>${n} · ${esc(ui(DESC_NIVEL[n]))}</option>`).join('')}</select>`;
 
   /** Editor de reglas de compromiso: cada una «idioma · cada… · días · minutos», todas opcionales */
   function pintarReglas(cont, reglas, alCambiar) {
-    const lenguas = { cualquiera: 'Cualquier idioma', ...X.lenguas };
+    const lenguas = { cualquiera: ui('Cualquier idioma'), ...Object.fromEntries(Object.keys(X.lenguas).map((k) => [k, nomL(k)])) };
+    const dias = ui('L,M,X,J,V,S,D').split(',');
     const fila = (r, i) => `<div class="idi-regla" data-i="${i}">
-      <select data-k="lengua">${Object.entries(lenguas).map(([k, v]) => `<option value="${k}" ${r.lengua === k ? 'selected' : ''}>${v}</option>`).join('')}</select>
-      <select data-k="cada"><option value="dia" ${r.cada === 'dia' ? 'selected' : ''}>cada día</option><option value="semana" ${r.cada === 'semana' ? 'selected' : ''}>cada semana</option>
-        <option value="semanas" ${r.cada === 'semanas' ? 'selected' : ''}>cada varias semanas</option></select>
-      ${r.cada === 'semanas' ? `<label>cada <input type="number" min="2" max="8" data-k="n" value="${r.n || 2}"> semanas</label>` : ''}
-      ${r.cada !== 'dia' ? `<span class="idi-dias" title="Días concretos (opcional)">${DIAS.map((d, j) => `<label><input type="checkbox" data-dia="${j + 1}" ${(r.dias || []).includes(j + 1) ? 'checked' : ''}>${d}</label>`).join('')}</span>` : ''}
+      <select data-k="lengua">${Object.entries(lenguas).map(([k, v]) => `<option value="${k}" ${r.lengua === k ? 'selected' : ''}>${esc(v)}</option>`).join('')}</select>
+      <select data-k="cada"><option value="dia" ${r.cada === 'dia' ? 'selected' : ''}>${ui('cada día')}</option><option value="semana" ${r.cada === 'semana' ? 'selected' : ''}>${ui('cada semana')}</option>
+        <option value="semanas" ${r.cada === 'semanas' ? 'selected' : ''}>${ui('cada varias semanas')}</option></select>
+      ${r.cada === 'semanas' ? `<label>${ui('cada {0} semanas', `<input type="number" min="2" max="8" data-k="n" value="${r.n || 2}">`)}</label>` : ''}
+      ${r.cada !== 'dia' ? `<span class="idi-dias" title="${esc(ui('Días concretos (opcional)'))}">${DIAS.map((d, j) => `<label><input type="checkbox" data-dia="${j + 1}" ${(r.dias || []).includes(j + 1) ? 'checked' : ''}>${esc(dias[j] || d)}</label>`).join('')}</span>` : ''}
       <label><input type="number" min="0" max="600" step="5" data-k="minutos" value="${r.minutos || ''}" placeholder="—"> min</label>
-      <button class="idi-x" data-quitar="${i}" title="Quitar">✕</button></div>`;
+      <button class="idi-x" data-quitar="${i}" title="${esc(ui('Quitar'))}">✕</button></div>`;
     const repintar = () => {
-      cont.innerHTML = `${reglas.map(fila).join('') || '<p class="apagado">Sin compromisos: sesiones cuando quieras.</p>'}
-        <p class="apagado idi-mini">Minutos vacíos = basta con hacer una sesión.</p><button id="idi-nueva-regla">+ Añadir compromiso</button>`;
+      cont.innerHTML = `${reglas.map(fila).join('') || `<p class="apagado">${ui('Sin compromisos: sesiones cuando quieras.')}</p>`}
+        <p class="apagado idi-mini">${ui('Minutos vacíos = basta con hacer una sesión.')}</p><button id="idi-nueva-regla">${ui('+ Añadir compromiso')}</button>`;
       cont.querySelector('#idi-nueva-regla').onclick = () => { reglas.push({ lengua: X.perfil ? X.perfil.segundo : 'fr', cada: 'semana', dias: [], minutos: 30, desde: hoyIso() }); repintar(); alCambiar(); };
       cont.querySelectorAll('[data-quitar]').forEach((b) => b.onclick = () => { reglas.splice(Number(b.dataset.quitar), 1); repintar(); alCambiar(); });
       cont.querySelectorAll('.idi-regla').forEach((f) => {
@@ -197,8 +220,7 @@
     repintar();
   }
   const hoyIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
-  const fechaCorta = (iso, loc = 'es-ES') => new Date(iso).toLocaleDateString(loc, { day: 'numeric', month: 'short' });
-  const hora = (iso) => new Date(iso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  const fechaCorta = (iso, lc) => new Date(iso).toLocaleDateString(lc || loc(), { day: 'numeric', month: 'short' });
 
   // ------------------------------------------------------------------ inicio
   function pInicio() {
@@ -211,12 +233,12 @@
       <div class="idi-cuerpo">
         <aside class="idi-izq">
           <section class="idi-caja">
-            <h3>Empezar sesión</h3>
-            <p class="idi-sub">Destrezas y competencias</p>
+            <h3>${ui('Empezar sesión')}</h3>
+            <p class="idi-sub">${ui('Destrezas y competencias')}</p>
             <div class="idi-destrezas">${DESTREZAS.map(botonSesion).join('')}</div>
             <div class="idi-especiales">${ESPECIALES.map(botonSesion).join('')}</div>
           </section>
-          ${l === 'fr' ? '<button class="idi-barra-verbos" id="idi-verbos"><span class="idi-ico">🔁</span><b>Practica los verbos</b><small>Entrenador de conjugación · 7.000 verbos · fichas de los grupos</small><span class="idi-flecha">→</span></button>' : ''}
+          ${l === 'fr' ? `<button class="idi-barra-verbos" id="idi-verbos"><span class="idi-ico">🔁</span><b>${ui('Practica los verbos')}</b><small>${ui('Entrenador de conjugación · 7.000 verbos · fichas de los grupos')}</small><span class="idi-flecha">→</span></button>` : ''}
           ${cuadernoHtml(l)}
           ${cajasPersonales(l)}
           ${historialHtml(l)}
@@ -262,69 +284,71 @@
   function barraSuperior(l, P) {
     const ini = (P.nombre || '?').trim().charAt(0).toUpperCase();
     return `<header class="idi-top">
-      <div class="idi-top-izq"><label for="idi-lengua">IDIOMA:</label>
-        <select id="idi-lengua" class="idi-sel-grande">${['en', P.segundo].map((k) => `<option value="${k}" ${k === l ? 'selected' : ''}>${esc(X.lenguas[k])}</option>`).join('')}</select></div>
+      <div class="idi-top-izq"><label for="idi-lengua">${ui('IDIOMA:')}</label>
+        <select id="idi-lengua" class="idi-sel-grande">${['en', P.segundo].map((k) => `<option value="${k}" ${k === l ? 'selected' : ''}>${esc(nomL(k))}</option>`).join('')}</select></div>
       <div class="idi-top-der">
         <div class="idi-perfil">
           <span class="idi-avatar">${esc(ini)}</span>
-          <span><b>${esc(P.nombre)}</b><small>${['en', P.segundo].map((k) => `${esc(X.lenguas[k])} ${esc(nivelDecl(k))}`).join(' · ')}</small></span>
-          <button id="idi-ajustes" title="Perfil, niveles, compromisos y preferencias">⚙ Ajustes</button>
+          <span><b>${esc(P.nombre)}</b><small>${['en', P.segundo].map((k) => `${esc(nomL(k))} ${esc(nivelDecl(k))}`).join(' · ')}</small></span>
+          <button id="idi-ajustes" title="${esc(ui('Perfil, niveles, compromisos y preferencias'))}">⚙ ${ui('Ajustes')}</button>
         </div>
         ${compromisosHtml()}
       </div></header>`;
   }
 
-  function botonSesion([k, icono, nombre, desc, off]) {
+  function botonSesion([k, icono, nombre0, desc0, off]) {
     const n = k === 'repaso' ? X.pendientes[lengua()] || 0 : 0;
+    const nombre = ui(nombre0), desc = ui(desc0);
     return `<button class="idi-sesion-btn ${off ? 'off' : ''} ${k === 'repaso' && n ? 'avisa' : ''}" data-tipo="${k}" ${off || (k === 'repaso' && !n) ? 'disabled' : ''}
-      title="${esc(off ? `${nombre}: llegará en la ${desc.toLowerCase()}` : desc)}">
-      <span class="idi-ico">${icono}</span><b>${esc(nombre)}${k === 'repaso' && n ? ` <span class="idi-num">${n}</span>` : ''}</b><small>${esc(k === 'repaso' && !n ? 'Nada pendiente hoy' : desc)}</small></button>`;
+      title="${esc(off ? ui('{0}: próximamente', nombre) : desc)}">
+      <span class="idi-ico">${icono}</span><b>${esc(nombre)}${k === 'repaso' && n ? ` <span class="idi-num">${n}</span>` : ''}</b><small>${esc(k === 'repaso' && !n ? ui('Nada pendiente hoy') : desc)}</small></button>`;
   }
 
   /** Aviso cuando el nivel estimado (gramática o léxico) difiere del indicado, y huecos de niveles inferiores */
   function avisosNivel(l, decl, est) {
     const out = [];
-    for (const [b, t] of [['gramatica', 'gramática'], ['lexico', 'léxico']]) {
+    for (const [b, t0] of [['gramatica', 'gramática'], ['lexico', 'léxico']]) {
       const e = est[b]; if (!e) continue;
+      const t = ui(t0);
       if (e.nivel && e.nivel !== decl) {
         const sube = NIVELES.indexOf(e.nivel) > NIVELES.indexOf(decl);
-        out.push(`<div class="idi-aviso">💡 Tus resultados en <b>${t}</b> (${e.materias} materias trabajadas) encajan mejor con <b>${e.nivel}</b> que con ${decl}.
-          ${sube ? 'Podrías subir el material.' : 'Conviene reforzar la base.'} <button data-ajustar-nivel="${e.nivel}">Cambiar mi nivel a ${e.nivel}</button></div>`);
+        out.push(`<div class="idi-aviso">💡 ${ui('Tus resultados en {0} ({1} materias trabajadas) encajan mejor con {2} que con {3}.', `<b>${t}</b>`, e.materias, `<b>${e.nivel}</b>`, decl)}
+          ${sube ? ui('Podrías subir el material.') : ui('Conviene reforzar la base.')} <button data-ajustar-nivel="${e.nivel}">${ui('Cambiar mi nivel a {0}', e.nivel)}</button></div>`);
       }
-      if (e.huecos && e.huecos.length) out.push(`<div class="idi-aviso suave">En ${t} hay ${e.huecos.length} materia(s) de niveles inferiores que aún flojean: aparecerán antes en tus sesiones.</div>`);
+      if (e.huecos && e.huecos.length) out.push(`<div class="idi-aviso suave">${ui('En {0} hay {1} materia(s) de niveles inferiores que aún flojean: aparecerán antes en tus sesiones.', t, e.huecos.length)}</div>`);
     }
     return out.length ? `<div class="idi-avisos">${out.join('')}</div>` : '';
   }
 
   function compromisosHtml() {
     const cs = X.compromisos || [];
-    if (!cs.length) return '<p class="idi-sin-reglas">Sin compromisos fijados <span>(Añádelos en ⚙ Ajustes.)</span></p>';
+    if (!cs.length) return `<p class="idi-sin-reglas">${ui('Sin compromisos fijados')} <span>${ui('(Añádelos en ⚙ Ajustes.)')}</span></p>`;
     return `<div class="idi-reglas-estado">${cs.map((c) => {
       const pct = c.regla.minutos ? Math.min(100, Math.round(100 * c.minutos / c.regla.minutos)) : (c.cumplido ? 100 : 0);
-      return `<div class="idi-regla-est ${c.cumplido ? 'ok' : c.tocaHoy ? 'hoy' : ''}" title="${esc(c.texto)}"><b>${esc(c.texto)}</b>
-        <span>${c.regla.minutos ? `${c.minutos} de ${c.regla.minutos} min` : `${c.sesiones} sesión(es)`} ${c.regla.cada === 'dia' ? 'hoy' : `del ${fecha(c.desde)} al ${fecha(c.hasta)}`}${c.cumplido ? ' ✓' : c.tocaHoy ? ' · toca hoy' : ''}</span>
+      return `<div class="idi-regla-est ${c.cumplido ? 'ok' : c.tocaHoy ? 'hoy' : ''}" title="${esc((c.textos && c.textos[idiomaUI()]) || c.texto)}"><b>${esc((c.textos && c.textos[idiomaUI()]) || c.texto)}</b>
+        <span>${c.regla.minutos ? ui('{0} de {1} min', c.minutos, c.regla.minutos) : ui('{0} sesión(es)', c.sesiones)} ${c.regla.cada === 'dia' ? ui('hoy') : ui('del {0} al {1}', fecha(c.desde), fecha(c.hasta))}${c.cumplido ? ' ✓' : c.tocaHoy ? ` · ${ui('toca hoy')}` : ''}</span>
         <div class="carga"><span style="width:${pct}%"></span></div></div>`;
     }).join('')}</div>`;
   }
-  const fecha = (iso) => { const [a, m, d] = iso.split('-').map(Number); return new Date(a, m - 1, d).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }); };
+  const fecha = (iso) => { const [a, m, d] = iso.split('-').map(Number); return new Date(a, m - 1, d).toLocaleDateString(loc(), { day: 'numeric', month: 'short' }); };
 
   /** Cuaderno de errores compacto: barra de acumulación (más llena y más roja cuantos más errores) y repaso conjunto; el detalle, plegado */
   function cuadernoHtml(l) {
     const errs = (X.errores || []).filter((e) => e.lengua === l);
     const porMateria = {};
     for (const e of errs) (porMateria[e.materia] = porMateria[e.materia] || []).push(e);
-    const titulo = (id) => { const m = materia(l, id); return m ? (m.titulo_es || m.titulo) : id; };
+    const titulo = (id) => { const m = materia(l, id); return m ? tituloDe(m) : id; };
     const n = errs.length, carga = Math.min(100, Math.round((100 * n) / 40));
     const nivelCarga = n === 0 ? 'vacia' : n < 10 ? 'baja' : n < 25 ? 'media' : 'alta';
-    const aviso = n === 0 ? 'Sin errores pendientes.' : n < 10 ? 'Pocos errores: repásalos cuando quieras.' : n < 25 ? 'Se van acumulando: conviene un repaso.' : 'Muchos errores acumulados: haz un repaso ya.';
-    return `<section class="idi-caja"><h3>Cuaderno de errores <span class="idi-num ${n ? 'rojo' : 'gris'}">${n}</span></h3>
-      <div class="idi-acum ${nivelCarga}" title="${n} errores pendientes"><i style="width:${carga}%"></i></div>
+    const aviso = n === 0 ? ui('Sin errores pendientes.') : n < 10 ? ui('Pocos errores: repásalos cuando quieras.') : n < 25 ? ui('Se van acumulando: conviene un repaso.') : ui('Muchos errores acumulados: haz un repaso ya.');
+    return `<section class="idi-caja"><h3>${ui('Cuaderno de errores')} <span class="idi-num ${n ? 'rojo' : 'gris'}">${n}</span></h3>
+      <div class="idi-acum ${nivelCarga}" title="${esc(ui('{0} errores pendientes', n))}"><i style="width:${carga}%"></i></div>
       <p class="idi-mini apagado">${aviso}</p>
-      ${n ? `<p class="idi-acciones"><button class="primario" data-practicar-errores="">⟳ Repasar los errores</button></p>
-      <details class="idi-cuaderno"><summary>Ver el detalle por ficha</summary>${Object.entries(porMateria).sort((a, b) => b[1].length - a[1].length).map(([id, es]) => `<details>
-        <summary><span class="idi-cu-tit">${esc(titulo(id))}</span><span class="idi-num rojo">${es.length}</span><button data-practicar-errores="${esc(id)}" title="Repetir estos ejercicios">Practicar</button></summary>
-        <ul>${es.map((e) => `<li><div class="idi-cu-frase">${esc(e.frase || '')}</div><span class="idi-mal">${esc(e.respuesta || '(en blanco)')}</span> → <span class="idi-bien">${esc(e.correcta)}</span>
-          ${e.veces > 1 ? `<span class="apagado"> · ${e.veces} veces</span>` : ''} <a class="idi-quitar" data-descartar="${esc(id)}|${esc(e.ejercicio)}" title="Ya lo tengo claro: quitar del cuaderno">quitar</a></li>`).join('')}</ul></details>`).join('')}</details>` : ''}</section>`;
+      ${n ? `<p class="idi-acciones"><button class="primario" data-practicar-errores="">⟳ ${ui('Repasar los errores')}</button></p>
+      <details class="idi-cuaderno"><summary>${ui('Ver el detalle por ficha')}</summary>${Object.entries(porMateria).sort((a, b) => b[1].length - a[1].length).map(([id, es]) => `<details>
+        <summary><span class="idi-cu-tit">${esc(titulo(id))}</span><span class="idi-num rojo">${es.length}</span><button data-practicar-errores="${esc(id)}" title="${esc(ui('Repetir estos ejercicios'))}">${ui('Practicar')}</button></summary>
+        <ul>${es.map((e) => `<li><div class="idi-cu-frase">${esc(e.frase || '')}</div><span class="idi-mal">${esc(e.respuesta || ui('(en blanco)'))}</span> → <span class="idi-bien">${esc(e.correcta)}</span>
+          ${e.veces > 1 ? `<span class="apagado"> · ${ui('{0} veces', e.veces)}</span>` : ''} <a class="idi-quitar" data-descartar="${esc(id)}|${esc(e.ejercicio)}" title="${esc(ui('Ya lo tengo claro: quitar del cuaderno'))}">${ui('quitar')}</a></li>`).join('')}</ul></details>`).join('')}</details>` : ''}</section>`;
   }
 
   /** Mi diccionario y Libreta: accesos con su recuento */
@@ -332,18 +356,18 @@
     const d = (X.miDiccionario || []).filter((x) => x.lengua === l);
     const notas = Object.entries(X.anotaciones || {}).filter(([id]) => id.startsWith(`${l}.`)).reduce((a, [, x]) => a + (x.marcas || []).length + (x.texto ? 1 : 0), 0);
     return `<section class="idi-caja idi-personales">
-      <button class="idi-personal" data-abrir-vista="diccionario"><span class="idi-ico">📖</span><b>Mi diccionario</b><small>${d.length} ${d.length === 1 ? 'entrada' : 'entradas'} · selecciona cualquier texto para añadir</small></button>
-      <button class="idi-personal" data-abrir-vista="libreta"><span class="idi-ico">📒</span><b>Libreta</b><small>${notas} ${notas === 1 ? 'subrayado o nota' : 'subrayados y notas'} de tus fichas</small></button>
+      <button class="idi-personal" data-abrir-vista="diccionario"><span class="idi-ico">📖</span><b>${ui('Mi diccionario')}</b><small>${d.length === 1 ? ui('{0} entrada', d.length) : ui('{0} entradas', d.length)} · ${ui('selecciona cualquier texto para añadir')}</small></button>
+      <button class="idi-personal" data-abrir-vista="libreta"><span class="idi-ico">📒</span><b>${ui('Libreta')}</b><small>${notas === 1 ? ui('{0} subrayado o nota de tus fichas', notas) : ui('{0} subrayados y notas de tus fichas', notas)}</small></button>
     </section>`;
   }
 
   function historialHtml(l) {
     const ss = (X.sesiones || []).filter((s) => s.lengua === l).slice(-6).reverse();
     if (!ss.length) return '';
-    return `<section class="idi-caja"><h3>Últimas sesiones</h3><ul class="idi-hist">${ss.map((s) => {
+    return `<section class="idi-caja"><h3>${ui('Últimas sesiones')}</h3><ul class="idi-hist">${ss.map((s) => {
       const pct = s.ejercicios ? Math.round((100 * s.aciertos) / s.ejercicios) : 0;
-      return `<li><span>${fechaCorta(s.fecha)}</span><span>${esc(NOMBRE_SESION[s.tipo] || s.tipo)}</span>
-        <span class="idi-hist-barra" title="${s.aciertos} de ${s.ejercicios}"><i style="width:${pct}%"></i></span><span>${pct} %</span><span class="apagado">${Math.round(s.minutos)} min</span></li>`;
+      return `<li><span>${fechaCorta(s.fecha)}</span><span>${esc(NOMBRE_SESION[s.tipo] ? ui(NOMBRE_SESION[s.tipo]) : s.tipo)}</span>
+        <span class="idi-hist-barra" title="${esc(ui('{0} de {1}', s.aciertos, s.ejercicios))}"><i style="width:${pct}%"></i></span><span>${pct} %</span><span class="apagado">${Math.round(s.minutos)} min</span></li>`;
     }).join('')}</ul></section>`;
   }
 
@@ -357,15 +381,15 @@
     const dom = conFicha.filter((m) => m.estado === 'dominada').length;
     const porNivel = Object.fromEntries(NIVELES.map((n) => [n, paq.materias.filter((m) => (bloque === 'todas' || m.bloque === bloque) && m.nivel === n && m.ficha)]));
     return `<div class="idi-der-cab">
-        <button class="idi-btn-clases" id="idi-clases" title="Tus clases con profesores: audio, ficheros y transcripción">👩‍🏫 Clases</button>
-        <select id="idi-bloque" class="idi-sel-grande" title="Mapa de materias">${[...BLOQUES, 'todas'].map((b) => `<option value="${b}" ${b === bloque ? 'selected' : ''}>${esc(t[b])}</option>`).join('')}</select>
-        <div class="idi-niv-puntos" role="tablist" aria-label="Nivel">${NIVELES.map((n) => {
+        <button class="idi-btn-clases" id="idi-clases" title="${esc(ui('Tus clases con profesores: audio, ficheros y transcripción'))}">👩‍🏫 ${ui('Clases')}</button>
+        <select id="idi-bloque" class="idi-sel-grande" title="${esc(ui('Mapa de materias'))}">${[...BLOQUES, 'todas'].map((b) => `<option value="${b}" ${b === bloque ? 'selected' : ''}>${esc(t[b])}</option>`).join('')}</select>
+        <div class="idi-niv-puntos" role="tablist" aria-label="${esc(ui('Nivel'))}">${NIVELES.map((n) => {
           const xs = porNivel[n], d = xs.filter((m) => m.estado === 'dominada').length;
           return `<button role="tab" aria-selected="${n === nv}" class="idi-punto n-${n} ${n === nv ? 'activo' : ''} ${n === decl ? 'tuyo' : ''}" data-nivel-ir="${n}"
-            title="${n}${n === decl ? ' (tu nivel)' : ''}: ${xs.length} fichas, ${d} dominadas">${n}${n === decl ? '<sup>●</sup>' : ''}<i style="width:${xs.length ? (100 * d) / xs.length : 0}%"></i></button>`;
+            title="${esc(`${n}${n === decl ? ` ${ui('(tu nivel)')}` : ''}: ${t.fichas(xs.length)}, ${t.dominadas(d)}`)}">${n}${n === decl ? '<sup>●</sup>' : ''}<i style="width:${xs.length ? (100 * d) / xs.length : 0}%"></i></button>`;
         }).join('')}</div>
       </div>
-      <p class="idi-der-res"><span>${esc(DESC_NIVEL[nv])}</span><span>${esc(t.fichas(conFicha.length))} · ${esc(t.dominadas(dom))}</span></p>
+      <p class="idi-der-res"><span>${esc(ui(DESC_NIVEL[nv]))}</span><span>${esc(t.fichas(conFicha.length))} · ${esc(t.dominadas(dom))}</span></p>
       ${ms.length ? `<div class="idi-cartas">${ms.map((m) => carta(m, t)).join('')}</div>` : `<p class="vacio">${esc(t.vacio)}</p>`}`;
   }
 
@@ -399,31 +423,30 @@
     const P = JSON.parse(JSON.stringify(X.perfil));
     P.compromisos = P.compromisos || []; P.medios = P.medios || []; P.ajustes = P.ajustes || {};
     const actual = X.perfiles.find((p) => p.nombre === P.nombre) || {};
-    vistaEl.innerHTML = `<div class="idi-centro ancho"><p><a id="idi-volver">← Volver</a></p><h2>Ajustes de idiomas</h2>
+    vistaEl.innerHTML = `<div class="idi-centro ancho"><p><a id="idi-volver">← ${ui('Volver')}</a></p><h2>${ui('Ajustes de idiomas')}</h2>
       <div class="idi-ajustes-rejilla">
-      <section class="idi-caja"><h3>Perfil</h3>
-        <p><b>${esc(P.nombre)}</b> <span class="apagado">· carpeta <code>${esc(actual.dir || '')}</code></span></p>
-        ${X.perfiles.length > 1 ? `<label class="idi-fila">Cambiar a <select id="idi-perfil">${X.perfiles.map((p) => `<option value="${esc(p.dir)}" ${p.dir === actual.dir ? 'selected' : ''}>${esc(p.nombre)}</option>`).join('')}</select></label>` : ''}
-        <p class="idi-acciones"><button id="idi-otro">+ Crear otro perfil</button> <button class="peligro" id="idi-borrar">Eliminar este perfil…</button></p>
-        <p class="apagado idi-mini">Al eliminarlo, su carpeta va a la Papelera del Mac (se puede recuperar desde allí).</p></section>
-      <section class="idi-caja"><h3>Nivel orientativo</h3>
-        <div class="idi-form">${['en', P.segundo].map((l) => `<label>${X.lenguas[l]} ${selectorNivel(`idi-nv-${l}`, (P.idiomas[l] || {}).nivel || 'B1')}</label>`).join('')}</div></section>
-      <section class="idi-caja"><h3>Tarjetas de las fichas</h3>
-        <p class="ayuda">Idioma del título, la descripción y el progreso de cada tarjeta.</p>
-        <div class="segmentos" role="radiogroup">
-          <button class="${P.ajustes.idiomaFichas === 'es' ? '' : 'activo'}" data-idfichas="lengua">Idioma estudiado</button>
-          <button class="${P.ajustes.idiomaFichas === 'es' ? 'activo' : ''}" data-idfichas="es">Castellano</button></div>
-        <p class="apagado idi-mini">Las explicaciones de dentro de la ficha están siempre en castellano.</p></section>
+      <section class="idi-caja"><h3>${ui('Perfil')}</h3>
+        <p><b>${esc(P.nombre)}</b> <span class="apagado">· ${ui('carpeta')} <code>${esc(actual.dir || '')}</code></span></p>
+        ${X.perfiles.length > 1 ? `<label class="idi-fila">${ui('Cambiar a')} <select id="idi-perfil">${X.perfiles.map((p) => `<option value="${esc(p.dir)}" ${p.dir === actual.dir ? 'selected' : ''}>${esc(p.nombre)}</option>`).join('')}</select></label>` : ''}
+        <p class="idi-acciones"><button id="idi-otro">${ui('+ Crear otro perfil')}</button> <button class="peligro" id="idi-borrar">${ui('Eliminar este perfil…')}</button></p>
+        <p class="apagado idi-mini">${ui('Al eliminarlo, su carpeta va a la Papelera del Mac (se puede recuperar desde allí).')}</p></section>
+      <section class="idi-caja"><h3>${ui('Nivel orientativo')}</h3>
+        <div class="idi-form">${['en', P.segundo].map((l) => `<label>${esc(nomL(l))} ${selectorNivel(`idi-nv-${l}`, (P.idiomas[l] || {}).nivel || 'B1')}</label>`).join('')}</div></section>
+      <section class="idi-caja"><h3>${ui('Idioma del panel')}</h3>
+        <p class="ayuda">${ui('Todo el panel —botones, fichas, explicaciones, correcciones— en la lengua que estudias, o en castellano.')}</p>
+        <div class="segmentos" role="radiogroup" aria-label="${esc(ui('Idioma del panel'))}">
+          <button class="${P.ajustes.idiomaFichas === 'es' ? '' : 'activo'}" data-idfichas="lengua">${ui('Idioma estudiado')}</button>
+          <button class="${P.ajustes.idiomaFichas === 'es' ? 'activo' : ''}" data-idfichas="es">${ui('Castellano')}</button></div>
+        <p class="apagado idi-mini">${ui('El cambio se aplica al guardar los ajustes.')}</p></section>
       <section class="idi-caja doble" id="idi-herr"></section>
-      <section class="idi-caja"><h3>Sesiones</h3>
-        <label class="idi-fila">Ejercicios por sesión <input type="number" id="idi-n" min="4" max="40" value="${P.ajustes.ejercicios || 10}"></label></section>
-      <section class="idi-caja doble"><h3>Compromisos</h3><div id="idi-reglas"></div></section>
-      <section class="idi-caja doble"><h3>Medios de suscripción <span class="apagado">(fase 4)</span></h3>
-        <p class="ayuda">Un enlace por línea (por ejemplo, la sección de un periódico). Solo se descargarán estos, una vez por semana, desde tu navegador
-          y con tu sesión iniciada; se borran al renovarse y no salen de este Mac. El riesgo frente a las condiciones de uso de cada medio es tuyo.</p>
+      <section class="idi-caja"><h3>${ui('Sesiones')}</h3>
+        <label class="idi-fila">${ui('Ejercicios por sesión')} <input type="number" id="idi-n" min="4" max="40" value="${P.ajustes.ejercicios || 10}"></label></section>
+      <section class="idi-caja doble"><h3>${ui('Compromisos')}</h3><div id="idi-reglas"></div></section>
+      <section class="idi-caja doble"><h3>${ui('Medios de suscripción')} <span class="apagado">${ui('(fase 4)')}</span></h3>
+        <p class="ayuda">${ui('Un enlace por línea (por ejemplo, la sección de un periódico). Solo se descargarán estos, una vez por semana, desde tu navegador y con tu sesión iniciada; se borran al renovarse y no salen de este Mac. El riesgo frente a las condiciones de uso de cada medio es tuyo.')}</p>
         <textarea id="idi-medios" rows="4" placeholder="https://www.economist.com/finance-and-economics">${esc(P.medios.join('\n'))}</textarea></section>
       </div>
-      <p class="idi-acciones"><button class="primario" id="idi-guardar">Guardar ajustes</button></p></div>`;
+      <p class="idi-acciones"><button class="primario" id="idi-guardar">${ui('Guardar ajustes')}</button></p></div>`;
     pintarReglas(raiz.querySelector('#idi-reglas'), P.compromisos, () => {});
     if (PR) PR.cajaHerramientas(raiz.querySelector('#idi-herr'));
     raiz.querySelector('#idi-volver').onclick = () => ir('inicio');
@@ -439,7 +462,9 @@
       const medios = raiz.querySelector('#idi-medios').value.split('\n').map((s) => s.trim()).filter((s) => /^https?:\/\//.test(s));
       enviar({ tipo: 'idiGuardarPerfil', cambios: { idiomas, compromisos: P.compromisos, medios,
         ajustes: { ejercicios: Number(raiz.querySelector('#idi-n').value) || 10, idiomaFichas: P.ajustes.idiomaFichas || 'lengua' } } });
-      vista = 'inicio';
+      // la pantalla entera pasa ya a la lengua elegida; la extensión responde con idiDatos (datos de las fichas en esa lengua) y se repinta otra vez
+      X.perfil.ajustes = { ...(X.perfil.ajustes || {}), idiomaFichas: P.ajustes.idiomaFichas || 'lengua' };
+      ir('inicio');
     };
   }
 
@@ -460,41 +485,41 @@
     const m = materia(l, f.id) || {};
     const bloques = f.explicacion || [];
     const sec = (clase, k, icono, titulo, html, abierta = true) => (html ? `<details class="idi-sec ${clase}" ${abierta ? 'open' : ''}>
-      <summary><span class="idi-sec-ico">${icono}</span>${titulo}<button class="idi-sec-nota" data-nota-sec="${k}" title="Añadir un recuadro de nota al final de esta sección">＋ nota</button></summary>
+      <summary><span class="idi-sec-ico">${icono}</span>${titulo}<button class="idi-sec-nota" data-nota-sec="${k}" title="${esc(ui('Añadir un recuadro de nota al final de esta sección'))}">＋ ${ui('nota')}</button></summary>
       <div class="idi-sec-cuerpo" data-k="${k}">${html}</div></details>` : '');
     const cx = f.contexto || {};
     const que = `<p class="idi-desc-es" data-k="desc">${esc(f.descripcion_larga_es || f.descripcion_es || m.descripcion_es || '')}</p>
       ${cx.que_es || cx.por_que_importa || cx.cuando_se_usa ? `<div class="idi-ctx-rejilla">${[['que_es', '🔎', 'Qué es'], ['por_que_importa', '⭐', 'Por qué importa'], ['cuando_se_usa', '🕒', 'Cuándo se usa']]
-        .filter(([c]) => cx[c]).map(([c, i, t]) => `<div class="idi-ctx"><h5>${i} ${t}</h5><p data-k="ctx-${c}">${esc(cx[c])}</p></div>`).join('')}</div>` : ''}
+        .filter(([c]) => cx[c]).map(([c, i, t]) => `<div class="idi-ctx"><h5>${i} ${ui(t)}</h5><p data-k="ctx-${c}">${esc(cx[c])}</p></div>`).join('')}</div>` : ''}
       ${f.resumen ? `<p class="idi-resumen" data-k="resumen">${esc(f.resumen)}</p>` : ''}`;
     const reglas = bloques.map((b, i) => (b.tipo === 'texto' ? `<div class="idi-clave" data-k="r${i}">${esc(b.texto)}</div>`
       : b.tipo === 'lista' ? `<ul class="idi-lista" data-k="r${i}">${b.items.map((x) => `<li>${resaltar(x)}</li>`).join('')}</ul>`
         : `<div class="idi-tabla-env" data-k="r${i}"><table class="idi-tabla"><thead><tr>${b.cabecera.map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${b.filas.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`)).join('');
     const ejemplos = (f.ejemplos || []).length ? `<div class="idi-ejemplos-rejilla">${f.ejemplos.map((e, i) => `<div class="idi-ejemplo" data-k="ej${i}">
-        <div class="idi-ej-frase">${vozDisponible() ? `<button class="idi-voz" data-decir="${esc(e.frase)}" title="Escuchar">🔊</button>` : ''}<b>${esc(e.frase)}</b></div>
-        ${e.traduccion ? `<div class="idi-ej-trad">${esc(e.traduccion)}</div>` : ''}</div>`).join('')}</div>` : '';
+        <div class="idi-ej-frase">${vozDisponible() ? `<button class="idi-voz" data-decir="${esc(e.frase)}" title="${esc(ui('Escuchar'))}">🔊</button>` : ''}<b>${esc(e.frase)}</b>${e.traduccion && idiomaUI() !== 'es' ? btnEs() : ''}</div>
+        ${e.traduccion ? (idiomaUI() === 'es' ? `<div class="idi-ej-trad">${esc(e.traduccion)}</div>` : ocultaEs(e.traduccion, 'div', 'idi-ej-trad')) : ''}</div>`).join('')}</div>` : '';
     const errores = (f.errores_hispanohablantes || []).length ? `<div class="idi-errores-rejilla">${f.errores_hispanohablantes.map((e, i) => `<div class="idi-error" data-k="err${i}">
         <div class="idi-err-mal">✗ ${esc(e.mal)}</div><div class="idi-err-bien">✓ ${esc(e.bien)}</div>${e.nota ? `<div class="idi-err-nota">${esc(e.nota)}</div>` : ''}</div>`).join('')}</div>` : '';
     const rel = relacionadas(l, m);
     const material = `${fuenteHtml(f.fuente)}
       ${m.oficial ? `<p>📘 <b>${l === 'fr' ? 'Inventaire linguistique des contenus clés des niveaux du CECRL' : 'Core Inventory for General English'}</b>
-        (${l === 'fr' ? 'Eaquals–CIEP' : 'British Council–EAQUALS'}): <i>${esc(m.oficial)}</i>${m.nivel_oficial ? ` · nivel ${esc(m.nivel_oficial)}` : ''}</p>` : ''}
-      ${rel.length ? `<p class="idi-rel-tit">Fichas relacionadas</p><div class="idi-rel">${rel.map((r) => `<button class="idi-rel-chip n-${r.nivel}" data-abrir-ficha="${esc(r.id)}"><span class="idi-chip-niv">${r.nivel}</span>${esc(r.titulo_es || r.titulo)}</button>`).join('')}</div>` : ''}
-      <p class="idi-rel-tit">Conjugar y escuchar</p><p class="idi-mini">${l === 'fr'
-        ? '<a href="https://leconjugueur.lefigaro.fr/" data-externo>Le Conjugueur</a> · <a href="https://tatoeba.org/fra/sentences/search?from=fra&to=spa" data-externo>Frases de Tatoeba</a> · <a href="https://forvo.com/languages/fr/" data-externo>Pronunciación (Forvo)</a>'
-        : '<a href="https://dictionary.cambridge.org/" data-externo>Cambridge Dictionary</a> · <a href="https://tatoeba.org/eng/sentences/search?from=eng&to=spa" data-externo>Frases de Tatoeba</a> · <a href="https://youglish.com/english" data-externo>YouGlish</a>'}</p>`;
-    return `<p class="idi-pista-marcas">✎ Selecciona cualquier texto de la ficha para <b>subrayarlo</b> o <b>anotarlo</b>; con «＋ nota» añades un recuadro al final de una sección.</p>
+        (${l === 'fr' ? 'Eaquals–CIEP' : 'British Council–EAQUALS'}): <i>${esc(m.oficial)}</i>${m.nivel_oficial ? ` · ${ui('nivel {0}', esc(m.nivel_oficial))}` : ''}</p>` : ''}
+      ${rel.length ? `<p class="idi-rel-tit">${ui('Fichas relacionadas')}</p><div class="idi-rel">${rel.map((r) => `<button class="idi-rel-chip n-${r.nivel}" data-abrir-ficha="${esc(r.id)}"><span class="idi-chip-niv">${r.nivel}</span>${esc(tituloDe(r))}</button>`).join('')}</div>` : ''}
+      <p class="idi-rel-tit">${ui('Conjugar y escuchar')}</p><p class="idi-mini">${l === 'fr'
+        ? `<a href="https://leconjugueur.lefigaro.fr/" data-externo>Le Conjugueur</a> · <a href="https://tatoeba.org/fra/sentences/search?from=fra&to=spa" data-externo>${ui('Frases de Tatoeba')}</a> · <a href="https://forvo.com/languages/fr/" data-externo>${ui('Pronunciación (Forvo)')}</a>`
+        : `<a href="https://dictionary.cambridge.org/" data-externo>Cambridge Dictionary</a> · <a href="https://tatoeba.org/eng/sentences/search?from=eng&to=spa" data-externo>${ui('Frases de Tatoeba')}</a> · <a href="https://youglish.com/english" data-externo>YouGlish</a>`}</p>`;
+    return `<p class="idi-pista-marcas">✎ ${ui('Selecciona cualquier texto de la ficha para {0} o {1}; con «＋ nota» añades un recuadro al final de una sección.', `<b>${ui('subrayarlo')}</b>`, `<b>${ui('anotarlo')}</b>`)}</p>
       <div class="idi-nota-general" data-k="general"></div>
-      ${sec('s-que', 'sec-que', '🎯', 'De qué trata', que)}
-      ${sec('s-reglas', 'sec-reglas', '📐', 'Reglas y claves', reglas)}
-      ${sec('s-ejemplos', 'sec-ejemplos', '💬', `Ejemplos <span class="apagado">(${(f.ejemplos || []).length})</span>`, ejemplos)}
-      ${sec('s-errores', 'sec-errores', '⚠️', `Errores típicos de hispanohablantes <span class="apagado">(${(f.errores_hispanohablantes || []).length})</span>`, errores)}
-      ${sec('s-material', 'sec-material', '📎', 'Material complementario', material, !compacta)}`;
+      ${sec('s-que', 'sec-que', '🎯', ui('De qué trata'), que)}
+      ${sec('s-reglas', 'sec-reglas', '📐', ui('Reglas y claves'), reglas)}
+      ${sec('s-ejemplos', 'sec-ejemplos', '💬', `${ui('Ejemplos')} <span class="apagado">(${(f.ejemplos || []).length})</span>`, ejemplos)}
+      ${sec('s-errores', 'sec-errores', '⚠️', `${ui('Errores típicos de hispanohablantes')} <span class="apagado">(${(f.errores_hispanohablantes || []).length})</span>`, errores)}
+      ${sec('s-material', 'sec-material', '📎', ui('Material complementario'), material, !compacta)}`;
   }
 
   // ------------------------------------------------------------------ anotaciones sobre la ficha: subrayados y recuadros de nota
   // Cada marca: {id, k (bloque con data-k), inicio, cita, color, caja (recuadro visible), nota}. Se guardan en anotaciones.json del perfil.
-  const COLORES = [['amarillo', 'Amarillo'], ['verde', 'Verde'], ['azul', 'Azul'], ['rosa', 'Rosa']];
+  const COLORES = [['amarillo', 'Subrayar en amarillo'], ['verde', 'Subrayar en verde'], ['azul', 'Subrayar en azul'], ['rosa', 'Subrayar en rosa']];
   const anotDe = (id) => { const a = (X.anotaciones || {})[id] || {}; return { texto: a.texto || '', marcas: (a.marcas || []).map((m) => ({ ...m })) }; };
   let tGuardar = null;
   function guardarAnot(id, a) {
@@ -527,8 +552,8 @@
   function recuadro(m, etiqueta) {
     const d = document.createElement('div');
     d.className = `idi-recuadro c-${m.color || 'amarillo'}`; d.dataset.caja = m.id;
-    d.innerHTML = `<div class="idi-recuadro-cab"><span>📝 ${etiqueta ? esc(etiqueta) : m.cita ? `«${esc(m.cita.length > 70 ? `${m.cita.slice(0, 70)}…` : m.cita)}»` : 'Nota'}</span>
-      <button data-quitar-caja="${esc(m.id)}" title="Quitar la nota">✕</button></div><textarea rows="2" placeholder="Escribe tu nota…" data-nota="${esc(m.id)}">${esc(m.nota || '')}</textarea>`;
+    d.innerHTML = `<div class="idi-recuadro-cab"><span>📝 ${etiqueta ? esc(etiqueta) : m.cita ? `«${esc(m.cita.length > 70 ? `${m.cita.slice(0, 70)}…` : m.cita)}»` : esc(ui('Nota'))}</span>
+      <button data-quitar-caja="${esc(m.id)}" title="${esc(ui('Quitar la nota'))}">✕</button></div><textarea rows="2" placeholder="${esc(ui('Escribe tu nota…'))}" data-nota="${esc(m.id)}">${esc(m.nota || '')}</textarea>`;
     return d;
   }
   /** Pinta (de nuevo) subrayados y recuadros de la ficha en el contenedor y engancha la barra de marcar */
@@ -538,7 +563,7 @@
     const a = anotDe(fid);
     const gen = cont.querySelector('[data-k="general"]');
     if (gen && a.texto) {
-      const d = recuadro({ id: '__general', nota: a.texto, color: 'amarillo' }, 'Nota general'); gen.appendChild(d);
+      const d = recuadro({ id: '__general', nota: a.texto, color: 'amarillo' }, ui('Nota general')); gen.appendChild(d);
     }
     for (const m of a.marcas) {
       const el = cont.querySelector(`[data-k="${CSS.escape(m.k)}"]`); if (!el) continue;
@@ -581,7 +606,7 @@
     barra.addEventListener('mousedown', (e) => e.preventDefault());   // no perder la selección
     return barra;
   }
-  const botonesColor = (actual) => COLORES.map(([c, t]) => `<button class="idi-bm-color c-${c} ${c === actual ? 'activo' : ''}" data-color="${c}" title="Subrayar en ${t.toLowerCase()}"></button>`).join('');
+  const botonesColor = (actual) => COLORES.map(([c, t]) => `<button class="idi-bm-color c-${c} ${c === actual ? 'activo' : ''}" data-color="${c}" title="${esc(ui(t))}"></button>`).join('');
   /** Selección de texto → barra para subrayar o anotar; clic en un subrayado → cambiar color, anotar o quitar */
   function habilitarMarcas(cont, fid) {
     cont.classList.add('idi-marcable');
@@ -599,8 +624,8 @@
         const pre = document.createRange(); pre.setStart(kA, 0); pre.setEnd(r.startContainer, r.startOffset);
         const aprox = pre.toString().length;
         const ctxTexto = contextoDe(r);
-        const b = mostrarBarra(r.getBoundingClientRect(), `${botonesColor('')}<button class="idi-bm-nota" data-accion="nota">✎ Nota</button>
-          <span class="idi-bm-sep"></span><button data-accion="dicc" title="Añadir a mi diccionario">📖</button><button data-accion="buscar" title="Buscar en el diccionario">🔎</button>`);
+        const b = mostrarBarra(r.getBoundingClientRect(), `${botonesColor('')}<button class="idi-bm-nota" data-accion="nota">✎ ${ui('Nota')}</button>
+          <span class="idi-bm-sep"></span><button data-accion="dicc" title="${esc(ui('Añadir a mi diccionario'))}">📖</button><button data-accion="buscar" title="${esc(ui('Buscar en el diccionario'))}">🔎</button>`);
         b.querySelector('[data-accion="dicc"]').onclick = () => { quitarBarra(); sel.removeAllRanges(); abrirAlta({ texto: cita, contexto: ctxTexto }); };
         b.querySelector('[data-accion="buscar"]').onclick = () => { quitarBarra(); buscarEnCajon(cita); };
         const crear = (color, caja) => {
@@ -620,7 +645,7 @@
       const mk = ev.target.closest('mark.idi-marca');
       if (!mk || !window.getSelection().isCollapsed) return;
       const a = anotDe(fid), m = a.marcas.find((x) => x.id === mk.dataset.m); if (!m) return;
-      const b = mostrarBarra(mk.getBoundingClientRect(), `${botonesColor(m.color)}<button class="idi-bm-nota" data-accion="nota">${m.caja ? '✎ Ver nota' : '✎ Nota'}</button><button data-accion="quitar" title="Quitar el subrayado y su nota">🗑</button>`);
+      const b = mostrarBarra(mk.getBoundingClientRect(), `${botonesColor(m.color)}<button class="idi-bm-nota" data-accion="nota">✎ ${m.caja ? ui('Ver nota') : ui('Nota')}</button><button data-accion="quitar" title="${esc(ui('Quitar el subrayado y su nota'))}">🗑</button>`);
       b.querySelectorAll('[data-color]').forEach((x) => x.onclick = () => { m.color = x.dataset.color; guardarAnot(fid, a); quitarBarra(); aplicarMarcas(cont, fid); });
       b.querySelector('[data-accion="nota"]').onclick = () => { m.caja = true; guardarAnot(fid, a); quitarBarra(); aplicarMarcas(cont, fid); const ta = cont.querySelector(`[data-nota="${m.id}"]`); if (ta) ta.focus(); };
       b.querySelector('[data-accion="quitar"]').onclick = () => { a.marcas = a.marcas.filter((x) => x.id !== m.id); guardarAnot(fid, a); quitarBarra(); aplicarMarcas(cont, fid); };
@@ -639,8 +664,8 @@
   /** Resalta en negrita lo que va antes de «:» en una lista de reglas */
   const resaltar = (s) => { const t = esc(s); const i = t.indexOf(':'); return i > 0 && i < 70 ? `<b>${t.slice(0, i)}</b>${t.slice(i)}` : t; };
   const fuenteHtml = (fu) => (fu && fu.nombre && fu.nombre !== 'propia'
-    ? `<p>📚 Fuente: <b>${esc(fu.nombre)}</b>${fu.autores ? `, ${esc(fu.autores)}` : ''}${fu.licencia ? ` (${esc(fu.licencia)})` : ''}${fu.url ? ` · <a href="${esc(fu.url)}" data-externo>ver la página original</a>` : ''}</p>`
-    : '<p class="apagado">Ficha propia del panel (CC BY-SA 4.0).</p>');
+    ? `<p>📚 ${ui('Fuente:')} <b>${esc(fu.nombre)}</b>${fu.autores ? `, ${esc(fu.autores)}` : ''}${fu.licencia ? ` (${esc(fu.licencia)})` : ''}${fu.url ? ` · <a href="${esc(fu.url)}" data-externo>${ui('ver la página original')}</a>` : ''}</p>`
+    : `<p class="apagado">${ui('Ficha propia del panel (CC BY-SA 4.0).')}</p>`);
   function relacionadas(l, m) {
     if (!m || !m.id) return [];
     const nv = NIVELES.indexOf(m.nivel);
@@ -666,11 +691,11 @@
       <div class="idi-carta-fila"><span class="idi-chip-niv">${esc(f.nivel)}</span><span class="idi-chip-bloque">${esc(t[m.bloque] || '')}</span>
         <span class="idi-chip-est">${esc(t[m.estado] || t.nueva)}</span></div>
       <h2>${esc(m.titulo_l || f.titulo)}</h2>
-      <p class="idi-ficha-sub">${esc(f.titulo_es || m.titulo_es || '')}</p>
+      <p class="idi-ficha-sub">${subEs(f.titulo_es || m.titulo_es)}</p>
       <div class="idi-ficha-stats">
-        ${r && r.sesiones ? `<span><b>${r.sesiones}</b> sesiones</span><span>última nota <b>${Math.round(100 * r.notas[r.notas.length - 1])} %</b></span>
-          ${r.due ? `<span>próximo repaso <b>${fechaCorta(r.due)}</b></span>` : ''}` : '<span>Aún sin practicar</span>'}
-        <span><b>${m.n || '?'}</b> ejercicios</span></div>
+        ${r && r.sesiones ? `<span>${ui('{0} sesiones', `<b>${r.sesiones}</b>`)}</span><span>${ui('última nota {0}', `<b>${Math.round(100 * r.notas[r.notas.length - 1])} %</b>`)}</span>
+          ${r.due ? `<span>${ui('próximo repaso {0}', `<b>${fechaCorta(r.due)}</b>`)}</span>` : ''}` : `<span>${ui('Aún sin practicar')}</span>`}
+        <span>${ui('{0} ejercicios', `<b>${m.n || '?'}</b>`)}</span></div>
     </div>`;
   }
   function pFicha() {
@@ -678,10 +703,10 @@
     if (!f) return ir('inicio');
     const l = lengua(), m = materia(l, f.id) || {};
     vistaEl.innerHTML = `<div class="idi-centro ancho idi-ficha">
-      <div class="idi-ficha-barra"><a id="idi-volver">← Volver a las fichas</a><button class="primario" id="idi-practicar">▶ Practicar esta ficha</button></div>
+      <div class="idi-ficha-barra"><a id="idi-volver">← ${ui('Volver a las fichas')}</a><button class="primario" id="idi-practicar">▶ ${ui('Practicar esta ficha')}</button></div>
       ${cabeceraFicha(f, l, m)}
       <div class="idi-ficha-cuerpo">${cuerpoFicha(f, l)}</div>
-      <p class="idi-acciones centro"><button class="primario" id="idi-practicar2">▶ Practicar esta ficha</button></p></div>`;
+      <p class="idi-acciones centro"><button class="primario" id="idi-practicar2">▶ ${ui('Practicar esta ficha')}</button></p></div>`;
     raiz.querySelector('#idi-volver').onclick = () => ir('inicio');
     const practicar = () => enviar({ tipo: 'idiEmpezar', lengua: l, clase: 'ficha', materia: f.id });
     raiz.querySelector('#idi-practicar').onclick = practicar; raiz.querySelector('#idi-practicar2').onclick = practicar;
@@ -711,9 +736,9 @@
     if (cambiaFicha) {
       vistaEl.innerHTML = `<div class="idi-practica ${plegada ? 'plegada' : ''}">
         <aside class="idi-pr-ficha">
-          <div class="idi-pr-ficha-cab"><button id="idi-plegar" title="${plegada ? 'Desplegar la ficha' : 'Plegar la ficha'}">${plegada ? '▶' : '◀'}</button>
-            ${plegada ? '<span class="idi-vertical">Ficha</span>' : `<span class="idi-chip-niv n-${b.ficha.nivel}">${esc(b.ficha.nivel)}</span><b>${esc(m.titulo_l || b.ficha.titulo)}</b>`}</div>
-          ${plegada ? '' : `<div class="idi-pr-ficha-cuerpo"><p class="idi-ficha-sub">${esc(b.ficha.titulo_es || '')}</p>${cuerpoFicha(b.ficha, l, { compacta: true })}</div>`}
+          <div class="idi-pr-ficha-cab"><button id="idi-plegar" title="${esc(plegada ? ui('Desplegar la ficha') : ui('Plegar la ficha'))}">${plegada ? '▶' : '◀'}</button>
+            ${plegada ? `<span class="idi-vertical">${ui('Ficha')}</span>` : `<span class="idi-chip-niv n-${b.ficha.nivel}">${esc(b.ficha.nivel)}</span><b>${esc(m.titulo_l || b.ficha.titulo)}</b>${idiomaUI() === 'es' ? '' : subEs(b.ficha.titulo_es)}`}</div>
+          ${plegada ? '' : `<div class="idi-pr-ficha-cuerpo">${idiomaUI() === 'es' ? `<p class="idi-ficha-sub">${esc(b.ficha.titulo_es || '')}</p>` : ''}${cuerpoFicha(b.ficha, l, { compacta: true })}</div>`}
         </aside>
         <section class="idi-pr-ej" id="idi-pr-ej"></section></div>`;
       S.fichaPintada = b.ficha.id; S.plegadaPintada = plegada;
@@ -722,22 +747,22 @@
     }
     const zona = raiz.querySelector('#idi-pr-ej');
     zona.innerHTML = `<div class="idi-pr-cab">
-        <span class="idi-pr-tipo">${esc(NOMBRE_SESION[S.sesion.tipo] || 'Sesión')}${S.sesion.bloques.length > 1 ? ` · ficha ${it.k + 1} de ${S.sesion.bloques.length}` : ''}</span>
+        <span class="idi-pr-tipo">${esc(ui(NOMBRE_SESION[S.sesion.tipo] || 'Sesión'))}${S.sesion.bloques.length > 1 ? ` · ${ui('ficha {0} de {1}', it.k + 1, S.sesion.bloques.length)}` : ''}</span>
         <span class="apagado">⏱ <span id="idi-reloj">${reloj((Date.now() - S.t0) / 1000)}</span></span>
-        <button id="idi-salir">Terminar</button></div>
+        <button id="idi-salir">${ui('Terminar')}</button></div>
       <div class="idi-pr-puntos">${S.items.map((x, j) => { const r = S.resultados.find((y) => y.indice === j); return `<i class="${r ? (r.ok ? 'ok' : 'mal') : j === S.i ? 'actual' : ''}"></i>`; }).join('')}</div>
       <div class="idi-ej-tarjeta">
-        <p class="idi-ej-num">Ejercicio ${S.i + 1} de ${S.items.length} <span class="idi-ej-tipo">${esc(TIPO_EJ[it.tipo] || it.tipo)}</span></p>
+        <p class="idi-ej-num">${ui('Ejercicio {0} de {1}', S.i + 1, S.items.length)} <span class="idi-ej-tipo">${esc(TIPO_EJ[it.tipo] ? ui(TIPO_EJ[it.tipo]) : it.tipo)}</span></p>
         <p class="idi-enun">${esc(it.enunciado || '')}</p>
         ${campoEjercicio(it, hecho)}
         <div id="idi-veredicto">${hecho ? veredicto(hecho) : ''}</div>
         ${hecho ? `<div class="idi-ver-pie">
-          <label class="idi-revisar" title="Solo la deja señalada (se guarda en tu perfil) para revisarla más adelante con Claude"><input type="checkbox" id="idi-revisar" ${(X.revision || []).includes(`${it.materia}|${it.id}`) ? 'checked' : ''}> Marcar para revisión</label>
-          <a id="idi-consultar" title="Abre Claude en el navegador con la pregunta ya escrita">Consultar</a></div>` : ''}
-        <div class="idi-ej-botones">${hecho ? `<button class="primario" id="idi-sig">${S.i + 1 < S.items.length ? 'Siguiente →' : 'Ver resultado'}</button>`
-          : '<button class="primario" id="idi-comprobar">Comprobar</button><button id="idi-nose">No lo sé</button>'}</div>
+          <label class="idi-revisar" title="${esc(ui('Solo la deja señalada (se guarda en tu perfil) para revisarla más adelante con Claude'))}"><input type="checkbox" id="idi-revisar" ${(X.revision || []).includes(`${it.materia}|${it.id}`) ? 'checked' : ''}> ${ui('Marcar para revisión')}</label>
+          <a id="idi-consultar" title="${esc(ui('Abre Claude en el navegador con la pregunta ya escrita'))}">${ui('Consultar')}</a></div>` : ''}
+        <div class="idi-ej-botones">${hecho ? `<button class="primario" id="idi-sig">${S.i + 1 < S.items.length ? ui('Siguiente →') : ui('Ver resultado')}</button>`
+          : `<button class="primario" id="idi-comprobar">${ui('Comprobar')}</button><button id="idi-nose">${ui('No lo sé')}</button>`}</div>
       </div>
-      <p class="apagado idi-mini centro">Intro = comprobar / siguiente</p>`;
+      <p class="apagado idi-mini centro">${ui('Intro = comprobar / siguiente')}</p>`;
     zona.querySelector('#idi-salir').onclick = () => terminar();
     const rv = zona.querySelector('#idi-revisar');
     if (rv) rv.onchange = () => {
@@ -754,26 +779,27 @@
   }
   /** Pregunta ya redactada para consultar fuera: «¿Cuándo se utiliza… en un contexto…? ¿Es correcto utilizar…?» */
   function preguntaConsulta(it, h, l, f) {
-    const L2 = { fr: 'francés', en: 'inglés' }[l] || l;
+    const L2 = { fr: ui('francés'), en: ui('inglés') }[l] || l;
     const buena = h.respuestas[0] || h.correcta || '';
-    const frase = it.tipo === 'ordenar' ? `(ordenar: ${(it.palabras || []).join(' / ')})` : `«${it.frase || ''}»`;
-    return `Estoy estudiando ${L2} (ficha «${f.titulo_es || f.titulo}», nivel ${f.nivel}). Ejercicio: ${it.enunciado || ''} ${frase}.
-La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí «${h.respuesta}»` : ''}.
-¿Cuándo se utiliza «${buena}» en un contexto como este y qué regla lo explica?${h.respuesta && !h.ok ? ` ¿Es correcto o aceptable utilizar «${h.respuesta}»? Si no, ¿por qué?` : ''} ¿Hay otras respuestas válidas? Responde en español, con ejemplos.`;
+    const frase = it.tipo === 'ordenar' ? `(${ui('ordenar:')} ${(it.palabras || []).join(' / ')})` : `«${it.frase || ''}»`;
+    const mal = h.respuesta && !h.ok;
+    return `${ui('Estoy estudiando {0} (ficha «{1}», nivel {2}).', L2, idiomaUI() === 'es' ? (f.titulo_es || f.titulo) : f.titulo, f.nivel)} ${ui('Ejercicio:')} ${it.enunciado || ''} ${frase}.
+${mal ? ui('La solución que me dan es «{0}» y yo respondí «{1}».', buena, h.respuesta) : ui('La solución que me dan es «{0}».', buena)}
+${ui('¿Cuándo se utiliza «{0}» en un contexto como este y qué regla lo explica?', buena)}${mal ? ` ${ui('¿Es correcto o aceptable utilizar «{0}»? Si no, ¿por qué?', h.respuesta)}` : ''} ${ui('¿Hay otras respuestas válidas? Responde en español, con ejemplos.')}`;
   }
-  const TIPO_EJ = { hueco: 'Completa', eleccion: 'Elige', transformar: 'Transforma', corregir: 'Corrige', ordenar: 'Ordena' };
+  const TIPO_EJ = { hueco: 'Completa', eleccion: 'Elige', transformar: 'Transforma', corregir: 'Corrige', ordenar: 'Ordena' };   // rótulos: ui() al pintar
 
   /** Siempre se escribe la respuesta: en «elige» las opciones y en «ordena» las palabras se muestran solo como pista */
   function campoEjercicio(it, hecho) {
     const frase = esc(it.frase || '').replace('___', '<span class="idi-hueco">____</span>');
     let pistas = '';
     if (it.tipo === 'eleccion') {
-      pistas = `<div class="idi-pistas"><small>Opciones (escríbela):</small>${(it.opciones || []).map((o) => `<span class="idi-pista ${hecho ? (hecho.respuestas.includes(o) ? 'ok' : normal(hecho.respuesta) === normal(o) ? 'mal' : '') : ''}">${esc(o)}</span>`).join('')}</div>`;
+      pistas = `<div class="idi-pistas"><small>${ui('Opciones (escríbela):')}</small>${(it.opciones || []).map((o) => `<span class="idi-pista ${hecho ? (hecho.respuestas.includes(o) ? 'ok' : normal(hecho.respuesta) === normal(o) ? 'mal' : '') : ''}">${esc(o)}</span>`).join('')}</div>`;
     } else if (it.tipo === 'ordenar') {
-      pistas = `<div class="idi-pistas"><small>Palabras:</small>${(it.palabras || []).map((w) => `<span class="idi-pista">${esc(w)}</span>`).join('')}</div>`;
+      pistas = `<div class="idi-pistas"><small>${ui('Palabras:')}</small>${(it.palabras || []).map((w) => `<span class="idi-pista">${esc(w)}</span>`).join('')}</div>`;
     }
-    const pista = it.tipo === 'hueco' || it.tipo === 'eleccion' ? 'Escribe lo que va en el hueco' : it.tipo === 'ordenar' ? 'Escribe la frase ordenada' : 'Escribe la frase completa';
-    return `${it.tipo === 'ordenar' ? '' : `<p class="idi-frase">${frase}</p>`}${pistas}<input id="idi-resp" class="idi-resp" type="text" autocomplete="off" spellcheck="false" placeholder="${pista}"
+    const pista = ui(it.tipo === 'hueco' || it.tipo === 'eleccion' ? 'Escribe lo que va en el hueco' : it.tipo === 'ordenar' ? 'Escribe la frase ordenada' : 'Escribe la frase completa');
+    return `${it.tipo === 'ordenar' ? '' : `<p class="idi-frase">${frase}</p>`}${pistas}<input id="idi-resp" class="idi-resp" type="text" autocomplete="off" spellcheck="false" placeholder="${esc(pista)}"
       value="${esc(hecho ? hecho.respuesta : S.respuesta || '')}" ${hecho ? 'disabled' : ''}>`;
   }
   const normal = (x) => String(x || '').toLowerCase().replace(/[’']/g, "'").replace(/\s+/g, ' ').replace(/[.!?]+$/, '').trim();
@@ -806,24 +832,24 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
     const buena = h.respuestas[0] || '';
     const completa = buena && /___/.test(h.frase || '') ? h.frase.replace('___', buena).replace(/\s*\([^)]*\)\s*([.!?…]?)\s*$/, '$1') : (h.tipo === 'ordenar' || h.tipo === 'transformar' || h.tipo === 'corregir' ? buena : '');
     const otras = h.respuestas.filter((x) => normal(x) !== normal(h.ok ? h.respuesta : buena));
-    const titulo = h.ok ? '✓ Correcto' : h.casi ? '✗ Casi: revisa los acentos o las mayúsculas' : h.respuesta ? '✗ No es correcto' : 'La respuesta era…';
-    const porQueSuya = h.suya ? `<div class="idi-ver-bloque suya"><h5>${h.ok ? '👍 Por qué tu respuesta es correcta' : `🔍 Por qué «${esc(h.respuesta)}» no vale`}</h5><p>${esc(h.suya)}</p></div>`
-      : !h.ok && h.respuesta ? `<div class="idi-ver-bloque suya"><h5>🔍 Qué cambia respecto a la solución</h5>
-        <p>${h.casi ? 'Las palabras son las correctas, pero falla algún acento o una mayúscula: en esta lengua el acento distingue palabras, así que cuenta como fallo.' : 'Las partes en rojo de tu respuesta no aparecen en la solución; compáralas con ella y relee la regla de abajo.'}</p></div>` : '';
-    const opciones = h.porOpcion ? `<details class="idi-ver-bloque opciones" ${h.ok ? '' : 'open'}><summary>🔁 Todas las opciones, una a una</summary><ul>${Object.entries(h.porOpcion).map(([o, t]) => `<li class="${h.respuestas.includes(o) ? 'ok' : 'mal'}">
+    const titulo = h.ok ? `✓ ${ui('Correcto')}` : h.casi ? `✗ ${ui('Casi: revisa los acentos o las mayúsculas')}` : h.respuesta ? `✗ ${ui('No es correcto')}` : ui('La respuesta era…');
+    const porQueSuya = h.suya ? `<div class="idi-ver-bloque suya"><h5>${h.ok ? `👍 ${ui('Por qué tu respuesta es correcta')}` : `🔍 ${ui('Por qué «{0}» no vale', esc(h.respuesta))}`}</h5><p>${esc(h.suya)}</p></div>`
+      : !h.ok && h.respuesta ? `<div class="idi-ver-bloque suya"><h5>🔍 ${ui('Qué cambia respecto a la solución')}</h5>
+        <p>${h.casi ? ui('Las palabras son las correctas, pero falla algún acento o una mayúscula: en esta lengua el acento distingue palabras, así que cuenta como fallo.') : ui('Las partes en rojo de tu respuesta no aparecen en la solución; compáralas con ella y relee la regla de abajo.')}</p></div>` : '';
+    const opciones = h.porOpcion ? `<details class="idi-ver-bloque opciones" ${h.ok ? '' : 'open'}><summary>🔁 ${ui('Todas las opciones, una a una')}</summary><ul>${Object.entries(h.porOpcion).map(([o, t]) => `<li class="${h.respuestas.includes(o) ? 'ok' : 'mal'}">
         <b>${h.respuestas.includes(o) ? '✓' : '✗'} ${esc(o)}</b> — ${esc(t)}</li>`).join('')}</ul></details>` : '';
     return `<div class="idi-ver ${h.ok ? 'ok' : 'mal'}">
       <div class="idi-ver-cab">${titulo}</div>
       <div class="idi-ver-par">
-        ${h.respuesta ? `<div><small>Tu respuesta</small><span class="${h.ok ? 'idi-bien' : 'idi-tuya-mal'}">${h.ok ? esc(h.respuesta) : marcarDiferencias(h.respuesta, buena)}</span></div>` : ''}
-        ${h.ok ? '' : `<div><small>Respuesta correcta</small><b class="idi-bien">${esc(buena)}</b></div>`}
-        ${otras.length ? `<div><small>También vale</small>${otras.map((x) => `<b>${esc(x)}</b>`).join(' · ')}</div>` : ''}
+        ${h.respuesta ? `<div><small>${ui('Tu respuesta')}</small><span class="${h.ok ? 'idi-bien' : 'idi-tuya-mal'}">${h.ok ? esc(h.respuesta) : marcarDiferencias(h.respuesta, buena)}</span></div>` : ''}
+        ${h.ok ? '' : `<div><small>${ui('Respuesta correcta')}</small><b class="idi-bien">${esc(buena)}</b></div>`}
+        ${otras.length ? `<div><small>${ui('También vale')}</small>${otras.map((x) => `<b>${esc(x)}</b>`).join(' · ')}</div>` : ''}
       </div>
-      ${completa ? `<div class="idi-ver-frase">${vozDisponible() ? `<button class="idi-voz" data-decir="${esc(completa)}" title="Escuchar la frase">🔊</button>` : ''}<span><b>${esc(completa)}</b>${h.traduccion ? `<br><span class="apagado">${esc(h.traduccion)}</span>` : ''}</span></div>` : ''}
+      ${completa ? `<div class="idi-ver-frase">${vozDisponible() ? `<button class="idi-voz" data-decir="${esc(completa)}" title="${esc(ui('Escuchar la frase'))}">🔊</button>` : ''}<span><b>${esc(completa)}</b>${h.traduccion ? (idiomaUI() === 'es' ? `<br><span class="apagado">${esc(h.traduccion)}</span>` : `${btnEs()}${ocultaEs(h.traduccion, 'div')}`) : ''}</span></div>` : ''}
       ${porQueSuya}
-      ${h.explicacion ? `<div class="idi-ver-bloque regla"><h5>📐 La regla, aplicada a esta frase</h5><p>${esc(h.explicacion)}</p></div>` : ''}
+      ${h.explicacion ? `<div class="idi-ver-bloque regla"><h5>📐 ${ui('La regla, aplicada a esta frase')}</h5><p>${esc(h.explicacion)}</p></div>` : ''}
       ${opciones}
-      ${(h.glosario || []).length ? `<div class="idi-ver-bloque glosario"><h5>📖 Vocabulario</h5><div class="idi-glos">${h.glosario.map((g) => `<span><b>${esc(g.palabra)}</b> ${esc(g.significado)}</span>`).join('')}</div></div>` : ''}
+      ${(h.glosario || []).length ? `<div class="idi-ver-bloque glosario"><h5>📖 ${ui('Vocabulario')}</h5><div class="idi-glos">${h.glosario.map((g) => `<span><b>${esc(g.palabra)}</b> ${sigEs(g.definicion_l, g.significado)}</span>`).join('')}</div></div>` : ''}
     </div>`;
   };
 
@@ -843,21 +869,21 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
     const r = S ? S.resultados : [];
     const ok = r.filter((x) => x.ok).length;
     const pct = r.length ? Math.round((100 * ok) / r.length) : 0;
-    const titulos = Object.fromEntries((S ? S.sesion.bloques : []).map((b) => [b.ficha.id, b.ficha.titulo_es || b.ficha.titulo]));
+    const titulos = Object.fromEntries((S ? S.sesion.bloques : []).map((b) => [b.ficha.id, idiomaUI() === 'es' ? (b.ficha.titulo_es || b.ficha.titulo) : (b.ficha.titulo || b.ficha.titulo_es)]));
     vistaEl.innerHTML = `<div class="idi-centro idi-fin">
       <div class="idi-tarjeta-grande centro">
         <span class="idi-anillo grande" style="--p:${pct}"><b>${pct}%</b></span>
-        <h2>${ok} de ${r.length} ${pct >= 90 ? '· ¡Excelente!' : pct >= 70 ? '· Bien' : pct >= 50 ? '· Vas por buen camino' : '· A repasar'}</h2>
-        <p class="apagado">${S ? reloj((Date.now() - S.t0) / 1000) : ''} de práctica</p>
+        <h2>${ui('{0} de {1}', ok, r.length)} · ${pct >= 90 ? ui('¡Excelente!') : pct >= 70 ? ui('Bien') : pct >= 50 ? ui('Vas por buen camino') : ui('A repasar')}</h2>
+        <p class="apagado">${ui('{0} de práctica', S ? reloj((Date.now() - S.t0) / 1000) : '')}</p>
         <div class="idi-fin-fichas">${(fin && fin.resumen || []).map((x) => `<div><b>${esc(titulos[x.materia] || x.materia)}</b><span>${Math.round(100 * x.nota)} %</span>
-          <span class="apagado">próximo repaso: ${new Date(x.proximo).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' })}</span></div>`).join('')}</div>
+          <span class="apagado">${ui('próximo repaso: {0}', new Date(x.proximo).toLocaleDateString(loc(), { weekday: 'long', day: 'numeric', month: 'short' }))}</span></div>`).join('')}</div>
       </div>
-      ${r.some((x) => !x.ok) ? `<section class="idi-caja"><h3>Para revisar</h3><div class="idi-errores-rejilla">${r.filter((x) => !x.ok).map((x) => `<div class="idi-error">
-        <div class="idi-cu-frase">${esc(x.frase)}</div><div class="idi-err-mal">✗ ${esc(x.respuesta || '(en blanco)')}</div><div class="idi-err-bien">✓ ${esc(x.correcta)}</div>
+      ${r.some((x) => !x.ok) ? `<section class="idi-caja"><h3>${ui('Para revisar')}</h3><div class="idi-errores-rejilla">${r.filter((x) => !x.ok).map((x) => `<div class="idi-error">
+        <div class="idi-cu-frase">${esc(x.frase)}</div><div class="idi-err-mal">✗ ${esc(x.respuesta || ui('(en blanco)'))}</div><div class="idi-err-bien">✓ ${esc(x.correcta)}</div>
         ${x.breve || x.explicacion ? `<div class="idi-err-nota">${esc(x.breve || x.explicacion)}</div>` : ''}
-        ${x.breve && x.explicacion ? `<details class="idi-mini"><summary>Explicación completa</summary><p>${esc(x.explicacion)}</p></details>` : ''}</div>`).join('')}</div>
-        <p class="apagado idi-mini">Estos errores quedan en tu cuaderno y volverán a salir en los próximos repasos.</p></section>` : ''}
-      <p class="idi-acciones centro"><button class="primario" id="idi-volver">Volver al inicio</button></p></div>`;
+        ${x.breve && x.explicacion ? `<details class="idi-mini"><summary>${ui('Explicación completa')}</summary><p>${esc(x.explicacion)}</p></details>` : ''}</div>`).join('')}</div>
+        <p class="apagado idi-mini">${ui('Estos errores quedan en tu cuaderno y volverán a salir en los próximos repasos.')}</p></section>` : ''}
+      <p class="idi-acciones centro"><button class="primario" id="idi-volver">${ui('Volver al inicio')}</button></p></div>`;
     raiz.querySelector('#idi-volver').onclick = () => { S = null; fin = null; ir('inicio'); };
   }
 
@@ -875,13 +901,19 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
     const num = el.querySelector('.idi-par-n');   // el número de párrafo no forma parte de la frase
     return t.slice(ini === 0 && num ? num.textContent.length : ini, fin).replace(/\s+/g, ' ').trim().slice(0, 300);
   }
-  /** Si la selección es una palabra del vocabulario de un texto («wielded esgrimidos…»), su significado viene de ahí */
+  /** Si la selección es una palabra del vocabulario de un texto («wielded esgrimidos…»), su significado viene de ahí:
+   *  {def, es}: def = lo que se enseña (definición en la lengua estudiada, o el castellano); es = el castellano en gris (.idi-es), si lo hay */
   function definicionGlosario(r, texto) {
     const n = r.startContainer.nodeType === 1 ? r.startContainer : r.startContainer.parentElement;
-    const g = n.closest('.idi-glos > span'); if (!g || !g.querySelector('b')) return '';
+    const g = n.closest('.idi-glos > span'); if (!g || !g.querySelector('b')) return null;
     const b = g.querySelector('b').textContent.trim();
-    if (b.toLowerCase() !== String(texto).toLowerCase().replace(/^[^\p{L}]+|[^\p{L}]+$/gu, '')) return '';
-    const i = g.querySelector('i'); return g.textContent.slice(b.length).replace(i ? i.textContent : '', '').replace(/\s+/g, ' ').trim();
+    if (b.toLowerCase() !== String(texto).toLowerCase().replace(/^[^\p{L}]+|[^\p{L}]+$/gu, '')) return null;
+    const i = g.querySelector('i'), e = g.querySelector('.idi-es');
+    const es = e ? e.textContent.replace(/\s+/g, ' ').trim() : '';
+    let resto = g.textContent.slice(b.length); for (const x of [i, e]) if (x) resto = resto.replace(x.textContent, '');
+    resto = resto.replace(/\s+/g, ' ').trim();
+    const def = resto || es; if (!def) return null;
+    return { def, es: resto && es ? es : '' };
   }
   function habilitarSeleccionGeneral() {
     raiz.addEventListener('mouseup', (ev) => {
@@ -893,8 +925,8 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
         if (!raiz.contains(r.commonAncestorContainer)) return;
         const texto = r.toString().replace(/\s+/g, ' ').trim(); if (!texto || texto.length > 160) return;
         const contexto = contextoDe(r), glos = definicionGlosario(r, texto);
-        const b = mostrarBarra(r.getBoundingClientRect(), '<button data-accion="dicc">📖 Añadir a mi diccionario</button><button data-accion="buscar">🔎 Buscar</button>');
-        b.querySelector('[data-accion="dicc"]').onclick = () => { quitarBarra(); sel.removeAllRanges(); abrirAlta({ texto, contexto: glos ? '' : contexto, ...(glos ? { definicion: glos, fija: 'vocabulario del texto' } : {}) }); };
+        const b = mostrarBarra(r.getBoundingClientRect(), `<button data-accion="dicc">📖 ${ui('Añadir a mi diccionario')}</button><button data-accion="buscar">🔎 ${ui('Buscar')}</button>`);
+        b.querySelector('[data-accion="dicc"]').onclick = () => { quitarBarra(); sel.removeAllRanges(); abrirAlta({ texto, contexto: glos ? '' : contexto, ...(glos ? { definicion: glos.def, definicion_es: glos.es, fija: 'texto' } : {}) }); };
         b.querySelector('[data-accion="buscar"]').onclick = () => { quitarBarra(); buscarEnCajon(texto); };
       }, 0);
     });
@@ -906,6 +938,11 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
     return null;
   }
   let claveDlg = 0;
+  /** Diálogo de alta: el castellano, en gris, debajo de la definición en la lengua estudiada */
+  function ponerDefEs(dlg, es) {
+    const p = dlg && dlg.querySelector('[data-def-es-p]'); if (!p) return;
+    p.querySelector('[data-def-es]').textContent = es; p.hidden = !es;
+  }
   /** Diálogo para añadir o editar una entrada de Mi diccionario */
   function abrirAlta(e) {
     const l = e.lengua || lengua();
@@ -913,20 +950,22 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
     const m = f ? materia(l, f.id) || {} : {};
     const palabras = String(e.texto || '').trim().split(/\s+/).length;
     const ent = { id: e.id, lengua: l, texto: e.texto || '', definicion: e.definicion || '', tipo: e.tipo || (palabras >= 3 || /___/.test(e.texto || '') ? 'estructura' : 'palabra'),
-      campo: e.campo || (f ? (m.titulo_es || f.titulo_es || f.titulo) : 'General'), ficha: e.ficha || (f ? f.id : null), contexto: e.contexto || '', fecha: e.fecha };
+      campo: e.campo || (f ? (idiomaUI() === 'es' ? (m.titulo_es || f.titulo_es || f.titulo) : (m.titulo_l || f.titulo || m.titulo_es)) : ui('General')), ficha: e.ficha || (f ? f.id : null), contexto: e.contexto || '', fecha: e.fecha };
     const campos = [...new Set((X.miDiccionario || []).filter((x) => x.lengua === l).map((x) => x.campo))];
     const clave = ++claveDlg;
     document.querySelectorAll('.idi-dlg-fondo').forEach((x) => x.remove());
     const fondo = document.createElement('div'); fondo.className = 'idi-dlg-fondo idi-raiz';
-    fondo.innerHTML = `<div class="idi-dlg" role="dialog" aria-label="Mi diccionario">
-      <h3>📖 ${e.id ? 'Editar entrada' : 'Añadir a mi diccionario'} <span class="apagado">· ${esc(X.lenguas[l] || l)}</span></h3>
-      <label>Palabra o estructura <input type="text" data-k="texto" value="${esc(ent.texto)}"></label>
-      <label>Definición o traducción <input type="text" data-k="definicion" data-def="${clave}" value="${esc(ent.definicion)}" ${e.fija ? 'readonly class="idi-def-fija"' : ''} placeholder="Buscando en el diccionario…"></label>
-      <p class="idi-mini apagado" data-def-origen>${e.fija ? `Definición del ${esc(e.fija)}.` : ''}</p>
-      <div class="idi-dlg-fila"><span>Tipo</span><div class="segmentos"><button data-tipo-ent="palabra" class="${ent.tipo === 'palabra' ? 'activo' : ''}">Palabra</button><button data-tipo-ent="estructura" class="${ent.tipo === 'estructura' ? 'activo' : ''}">Estructura</button></div></div>
-      <label>${ent.tipo === 'palabra' ? 'Campo semántico' : 'Ficha o grupo'} <input type="text" data-k="campo" list="idi-campos" value="${esc(ent.campo)}"><datalist id="idi-campos">${campos.map((c) => `<option value="${esc(c)}">`).join('')}</datalist></label>
-      ${ent.contexto ? `<p class="idi-mini apagado">Contexto: «${esc(ent.contexto)}»</p>` : ''}
-      <p class="idi-acciones"><button class="primario" data-accion="guardar">Guardar</button><button data-accion="cancelar">Cancelar</button></p></div>`;
+    const defEs = e.definicion_es && e.definicion_es !== ent.definicion ? e.definicion_es : '';
+    fondo.innerHTML = `<div class="idi-dlg" role="dialog" aria-label="${esc(ui('Mi diccionario'))}">
+      <h3>📖 ${e.id ? ui('Editar entrada') : ui('Añadir a mi diccionario')} <span class="apagado">· ${esc(nomL(l))}</span></h3>
+      <label>${ui('Palabra o estructura')} <input type="text" data-k="texto" value="${esc(ent.texto)}"></label>
+      <label>${ui('Definición o traducción')} <input type="text" data-k="definicion" data-def="${clave}" value="${esc(ent.definicion)}" ${e.fija ? 'readonly class="idi-def-fija"' : ''} placeholder="${esc(ui('Buscando en el diccionario…'))}"></label>
+      <p class="idi-mini" data-def-es-p ${defEs ? '' : 'hidden'}><span class="idi-es" data-def-es>${esc(defEs)}</span></p>
+      <p class="idi-mini apagado" data-def-origen>${e.fija === 'texto' ? ui('Definición del vocabulario del texto.') : e.fija ? ui('Definición del diccionario.') : ''}</p>
+      <div class="idi-dlg-fila"><span>${ui('Tipo')}</span><div class="segmentos"><button data-tipo-ent="palabra" class="${ent.tipo === 'palabra' ? 'activo' : ''}">${ui('Palabra')}</button><button data-tipo-ent="estructura" class="${ent.tipo === 'estructura' ? 'activo' : ''}">${ui('Estructura')}</button></div></div>
+      <label>${ent.tipo === 'palabra' ? ui('Campo semántico') : ui('Ficha o grupo')} <input type="text" data-k="campo" list="idi-campos" value="${esc(ent.campo)}"><datalist id="idi-campos">${campos.map((c) => `<option value="${esc(c)}">`).join('')}</datalist></label>
+      ${ent.contexto ? `<p class="idi-mini apagado">${ui('Contexto: «{0}»', esc(ent.contexto))}</p>` : ''}
+      <p class="idi-acciones"><button class="primario" data-accion="guardar">${ui('Guardar')}</button><button data-accion="cancelar">${ui('Cancelar')}</button></p></div>`;
     document.body.appendChild(fondo);
     const cerrar = () => fondo.remove();
     fondo.addEventListener('mousedown', (ev) => { if (ev.target === fondo) cerrar(); });
@@ -936,11 +975,13 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
     fondo.querySelector('[data-accion="guardar"]').onclick = () => {
       fondo.querySelectorAll('[data-k]').forEach((i) => { ent[i.dataset.k] = i.value; });
       if (!ent.texto.trim()) return;
+      const de = fondo.querySelector('[data-def-es]').textContent.trim();
+      if (de && de !== ent.definicion) ent.definicion_es = de; else if (e.definicion_es && e.definicion_es !== ent.definicion) ent.definicion_es = e.definicion_es;
       enviar({ tipo: 'idiGuardarEntrada', entrada: ent }); cerrar();
-      if (ctx.aviso) ctx.aviso(e.id ? 'Entrada actualizada.' : `«${ent.texto}» añadido a tu diccionario.`);
+      if (ctx.aviso) ctx.aviso(e.id ? ui('Entrada actualizada.') : ui('«{0}» añadido a tu diccionario.', ent.texto));
     };
     // definición del diccionario del paquete: fija (no se edita). Si no está, el campo queda libre para escribirla.
-    if (!ent.definicion && !e.id) enviar({ tipo: 'idiDefinir', clave, lengua: l, texto: ent.texto }); else fondo.querySelector('[data-def]').placeholder = ent.definicion ? '' : 'Escribe la definición';
+    if (!ent.definicion && !e.id) enviar({ tipo: 'idiDefinir', clave, lengua: l, texto: ent.texto }); else fondo.querySelector('[data-def]').placeholder = ent.definicion ? '' : ui('Escribe la definición');
     const t = fondo.querySelector(ent.definicion ? '[data-k="campo"]' : '[data-k="definicion"]'); t.focus();
   }
 
@@ -948,28 +989,29 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
   let claveBusq = 0, tBusq = null;
   function pintarCajon() {
     const l = lengua(), abierto = !!st().idiCajon, modo = st().idiCajonModo || 'directo';
-    const firma = `${l}|${abierto}|${modo}`;
+    const firma = `${l}|${abierto}|${modo}|${idiomaUI()}`;
     raiz.classList.toggle('cajon-abierto', abierto);
     if (cajonEl.dataset.firma === firma) return;
     const q = (cajonEl.querySelector('#idi-cq') || {}).value || '';
     cajonEl.dataset.firma = firma;
     if (!abierto) {
       cajonEl.className = 'idi-cajon cerrado';
-      cajonEl.innerHTML = '<button class="idi-cajon-asa" id="idi-cajon-abrir" title="Abrir el diccionario">📚 <span>Diccionario</span></button>';
+      cajonEl.innerHTML = `<button class="idi-cajon-asa" id="idi-cajon-abrir" title="${esc(ui('Abrir el diccionario'))}">📚 <span>${ui('Diccionario')}</span></button>`;
       cajonEl.querySelector('#idi-cajon-abrir').onclick = () => { st().idiCajon = true; ctx.guardar(); pintarCajon(); const i = cajonEl.querySelector('#idi-cq'); if (i) i.focus(); };
       return;
     }
-    const nombre = X.lenguas[l] || l;
+    const nombre = nomL(l);
+    const enLengua = l === 'en' ? ui('en inglés') : l === 'fr' ? ui('en francés') : esc(nombre.toLowerCase());
     cajonEl.className = 'idi-cajon';
-    cajonEl.innerHTML = `<div class="idi-cajon-cab"><b>📚 Diccionario · ${esc(nombre)}</b><button id="idi-cajon-cerrar" title="Plegar">⟩</button></div>
-      <div class="segmentos idi-cajon-modos"><button data-modo="directo" class="${modo === 'directo' ? 'activo' : ''}" title="Escribe una palabra o expresión en ${esc(nombre.toLowerCase())}">${esc(nombre)} → Español</button>
-        <button data-modo="espanol" class="${modo === 'espanol' ? 'activo' : ''}" title="Escribe una palabra en castellano y te da su traducción">Español → ${esc(nombre)}</button>
-        <button data-modo="inverso" class="${modo === 'inverso' ? 'activo' : ''}" title="Describe en castellano lo que quieres decir y te propone palabras">Por significado</button></div>
-      <input id="idi-cq" type="search" placeholder="${modo === 'directo' ? `Palabra en ${esc(nombre.toLowerCase())}…` : modo === 'espanol' ? 'Palabra en castellano: «paro», «ordenador»…' : 'Describe en castellano: «subida general de precios»…'}" value="${esc(q)}">
-      <div class="idi-cajon-res" id="idi-cres">${X.hayDiccionario && X.hayDiccionario[l] ? '<p class="apagado idi-mini">Escribe para buscar. Con «＋» lo guardas en Mi diccionario.</p>'
-        : '<p class="apagado idi-mini">El diccionario bilingüe de esta lengua aún no está en el paquete de idiomas.</p>'}</div>
-      <div class="idi-cajon-pie">${l === 'en' ? '<a data-externo href="https://wantwords.net/">WantWords ↗</a> <span class="apagado">buscar palabras inglesas por su definición (en el navegador)</span><br>' : ''}
-        <span class="apagado">Fuente: Wiktionary (kaikki.org), CC BY-SA.</span></div>`;
+    cajonEl.innerHTML = `<div class="idi-cajon-cab"><b>📚 ${ui('Diccionario')} · ${esc(nombre)}</b><button id="idi-cajon-cerrar" title="${esc(ui('Plegar'))}">⟩</button></div>
+      <div class="segmentos idi-cajon-modos"><button data-modo="directo" class="${modo === 'directo' ? 'activo' : ''}" title="${esc(ui('Escribe una palabra o expresión {0}', enLengua))}">${esc(nombre)} → ${ui('Español')}</button>
+        <button data-modo="espanol" class="${modo === 'espanol' ? 'activo' : ''}" title="${esc(ui('Escribe una palabra en castellano y te da su traducción'))}">${ui('Español')} → ${esc(nombre)}</button>
+        <button data-modo="inverso" class="${modo === 'inverso' ? 'activo' : ''}" title="${esc(ui('Describe en castellano lo que quieres decir y te propone palabras'))}">${ui('Por significado')}</button></div>
+      <input id="idi-cq" type="search" placeholder="${esc(modo === 'directo' ? ui('Palabra {0}…', enLengua) : modo === 'espanol' ? ui('Palabra en castellano: «paro», «ordenador»…') : ui('Describe en castellano: «subida general de precios»…'))}" value="${esc(q)}">
+      <div class="idi-cajon-res" id="idi-cres">${X.hayDiccionario && X.hayDiccionario[l] ? `<p class="apagado idi-mini">${ui('Escribe para buscar. Con «＋» lo guardas en Mi diccionario.')}</p>`
+        : `<p class="apagado idi-mini">${ui('El diccionario bilingüe de esta lengua aún no está en el paquete de idiomas.')}</p>`}</div>
+      <div class="idi-cajon-pie">${l === 'en' ? `<a data-externo href="https://wantwords.net/">WantWords ↗</a> <span class="apagado">${ui('buscar palabras inglesas por su definición (en el navegador)')}</span><br>` : ''}
+        <span class="apagado">${ui('Fuente:')} Wiktionary (kaikki.org), CC BY-SA.</span></div>`;
     cajonEl.querySelector('#idi-cajon-cerrar').onclick = () => { st().idiCajon = false; ctx.guardar(); pintarCajon(); };
     cajonEl.querySelectorAll('[data-modo]').forEach((b) => b.onclick = () => { st().idiCajonModo = b.dataset.modo; ctx.guardar(); pintarCajon(); lanzarBusqueda(); });
     cajonEl.querySelectorAll('[data-externo]').forEach((a) => a.onclick = (e) => { e.preventDefault(); enviar({ tipo: 'abrirUrl', url: a.getAttribute('href') }); });
@@ -989,19 +1031,21 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
   function resultadosCajon(m) {
     if (m.clave !== claveBusq) return;
     const cont = cajonEl.querySelector('#idi-cres'); if (!cont) return;
-    if (m.falta) { cont.innerHTML = '<p class="apagado idi-mini">El diccionario bilingüe de esta lengua aún no está en el paquete de idiomas.</p>'; return; }
+    if (m.falta) { cont.innerHTML = `<p class="apagado idi-mini">${ui('El diccionario bilingüe de esta lengua aún no está en el paquete de idiomas.')}</p>`; return; }
     const l = lengua();
     cont.innerHTML = m.resultados.length ? m.resultados.map((x, i) => `<div class="idi-cr">
         <div class="idi-cr-cab">${vozDisponible() ? `<button class="idi-voz" data-decir="${esc(x.palabra)}">🔊</button>` : ''}<b>${esc(x.palabra)}</b>
-          ${x.cat ? `<i>${esc(x.cat)}</i>` : ''}${x.ipa ? `<span class="apagado">${esc(x.ipa)}</span>` : ''}<button class="idi-cr-mas" data-mas="${i}" title="Añadir a mi diccionario">＋</button></div>
-        ${x.trad.length ? `<div class="idi-cr-trad">${x.trad.slice(0, 8).map(esc).join(' · ')}</div>` : ''}
-        ${x.glosas.length ? `<ol class="idi-cr-glosas">${x.glosas.slice(0, 3).map((g) => `<li>${esc(g)}</li>`).join('')}</ol>` : ''}</div>`).join('')
-      : '<p class="apagado idi-mini">Sin resultados. Prueba con la forma base (infinitivo, singular) o cambia de modo.</p>';
+          ${x.cat ? `<i>${esc(x.cat)}</i>` : ''}${x.ipa ? `<span class="apagado">${esc(x.ipa)}</span>` : ''}<button class="idi-cr-mas" data-mas="${i}" title="${esc(ui('Añadir a mi diccionario'))}">＋</button></div>
+        ${idiomaUI() === 'es' ? (x.trad.length ? `<div class="idi-cr-trad">${x.trad.slice(0, 8).map(esc).join(' · ')}</div>` : '')
+          : x.definicion_l || x.trad.length ? `<div class="idi-cr-trad">${sigEs(x.definicion_l, x.trad.slice(0, 8).join(' · '))}</div>` : ''}
+        ${x.glosas.length ? `<ol class="idi-cr-glosas${idiomaUI() === 'es' ? '' : ' idi-gris'}">${x.glosas.slice(0, 3).map((g) => `<li>${esc(g)}</li>`).join('')}</ol>` : ''}</div>`).join('')
+      : `<p class="apagado idi-mini">${ui('Sin resultados. Prueba con la forma base (infinitivo, singular) o cambia de modo.')}</p>`;
     cont.querySelectorAll('[data-decir]').forEach((b) => b.onclick = () => decir(b.dataset.decir, l));
     cont.querySelectorAll('[data-mas]').forEach((b) => b.onclick = () => {
       const x = m.resultados[Number(b.dataset.mas)];
       const def = x.trad.length ? x.trad.slice(0, 4).join(', ') : (x.glosas[0] || '');
-      abrirAlta({ texto: x.palabra, definicion: def, contexto: '', ...(def ? { fija: 'diccionario' } : {}) });
+      const enL = idiomaUI() !== 'es' && x.definicion_l;
+      abrirAlta({ texto: x.palabra, definicion: enL ? x.definicion_l : def, ...(enL && x.trad.length ? { definicion_es: def } : {}), contexto: '', ...(def || enL ? { fija: 'diccionario' } : {}) });
     });
   }
 
@@ -1010,26 +1054,26 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
     const l = lengua();
     const xs = (X.miDiccionario || []).filter((x) => x.lengua === l);
     const filtro = (st().idiDiccFiltro || '').toLowerCase();
-    const vis = xs.filter((x) => !filtro || `${x.texto} ${x.definicion} ${x.campo}`.toLowerCase().includes(filtro));
+    const vis = xs.filter((x) => !filtro || `${x.texto} ${x.definicion} ${x.definicion_es || ''} ${x.campo}`.toLowerCase().includes(filtro));
     const grupo = (tipo, titulo, sub) => {
       const ys = vis.filter((x) => x.tipo === tipo);
       const porCampo = {}; for (const y of ys) (porCampo[y.campo] = porCampo[y.campo] || []).push(y);
       return `<section class="idi-caja"><h3>${titulo} <span class="idi-num gris">${ys.length}</span></h3><p class="idi-sub">${sub}</p>
         ${ys.length ? Object.entries(porCampo).sort((a, b) => a[0].localeCompare(b[0], 'es')).map(([c, zs]) => `<div class="idi-dg"><h4>${esc(c)} <span class="apagado">(${zs.length})</span></h4>
-          <div class="idi-de-rejilla">${zs.sort((a, b) => a.texto.localeCompare(b.texto, l)).map((z) => `<div class="idi-de" title="${esc(z.contexto ? `Contexto: ${z.contexto}` : '')}">
+          <div class="idi-de-rejilla">${zs.sort((a, b) => a.texto.localeCompare(b.texto, l)).map((z) => `<div class="idi-de" title="${esc(z.contexto ? ui('Contexto: «{0}»', z.contexto) : '')}">
             <div class="idi-de-cab">${vozDisponible() ? `<button class="idi-voz" data-decir="${esc(z.texto)}">🔊</button>` : ''}<b>${esc(z.texto)}</b>
-              <span class="idi-de-acc"><button data-editar="${esc(z.id)}" title="Editar">✎</button><button data-borrar="${esc(z.id)}" title="Borrar">🗑</button></span></div>
-            <div class="idi-de-def">${esc(z.definicion || '—')}</div></div>`).join('')}</div></div>`).join('')
-          : '<p class="apagado">Aún no hay entradas.</p>'}</section>`;
+              <span class="idi-de-acc"><button data-editar="${esc(z.id)}" title="${esc(ui('Editar'))}">✎</button><button data-borrar="${esc(z.id)}" title="${esc(ui('Borrar'))}">🗑</button></span></div>
+            <div class="idi-de-def">${idiomaUI() === 'es' ? esc(z.definicion_es || z.definicion || '—') : `${esc(z.definicion || '—')}${z.definicion_es && z.definicion_es !== z.definicion ? ` <span class="idi-es">${esc(z.definicion_es)}</span>` : ''}`}</div></div>`).join('')}</div></div>`).join('')
+          : `<p class="apagado">${ui('Aún no hay entradas.')}</p>`}</section>`;
     };
-    vistaEl.innerHTML = `<div class="idi-centro ancho idi-midicc"><div class="idi-ficha-barra"><a id="idi-volver">← Volver</a>
-      <button class="primario" id="idi-nueva-ent">＋ Añadir a mano</button></div>
-      <h2>📖 Mi diccionario · ${esc(X.lenguas[l] || l)}</h2>
-      <p class="ayuda">Selecciona cualquier texto del panel (fichas, ejercicios, correcciones, diccionario) y pulsa «📖 Añadir a mi diccionario».
-        Las palabras se agrupan por campo semántico y las estructuras por ficha. Más adelante habrá sesiones de repaso sobre este diccionario.</p>
-      <input type="search" id="idi-dfiltro" placeholder="Filtrar…" value="${esc(st().idiDiccFiltro || '')}">
-      ${grupo('palabra', 'Vocabulario', 'Por campo semántico')}
-      ${grupo('estructura', 'Estructuras y expresiones', 'Por ficha o grupo')}</div>`;
+    vistaEl.innerHTML = `<div class="idi-centro ancho idi-midicc"><div class="idi-ficha-barra"><a id="idi-volver">← ${ui('Volver')}</a>
+      <button class="primario" id="idi-nueva-ent">＋ ${ui('Añadir a mano')}</button></div>
+      <h2>📖 ${ui('Mi diccionario')} · ${esc(nomL(l))}</h2>
+      <p class="ayuda">${ui('Selecciona cualquier texto del panel (fichas, ejercicios, correcciones, diccionario) y pulsa «{0}».', `📖 ${ui('Añadir a mi diccionario')}`)}
+        ${ui('Las palabras se agrupan por campo semántico y las estructuras por ficha. Más adelante habrá sesiones de repaso sobre este diccionario.')}</p>
+      <input type="search" id="idi-dfiltro" placeholder="${esc(ui('Filtrar…'))}" value="${esc(st().idiDiccFiltro || '')}">
+      ${grupo('palabra', ui('Vocabulario'), ui('Por campo semántico'))}
+      ${grupo('estructura', ui('Estructuras y expresiones'), ui('Por ficha o grupo'))}</div>`;
     vistaEl.querySelector('#idi-volver').onclick = () => ir('inicio');
     vistaEl.querySelector('#idi-nueva-ent').onclick = () => abrirAlta({ texto: '' });
     const fi = vistaEl.querySelector('#idi-dfiltro');
@@ -1040,8 +1084,8 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
   }
 
   // ------------------------------------------------------------------ vista Libreta: todo lo subrayado y anotado, por ficha
-  const SECCION = (k) => (/^(desc|ctx|resumen|sec-que)/.test(k) ? '🎯 De qué trata' : /^(r\d|sec-reglas)/.test(k) ? '📐 Reglas y claves' : /^(ej|sec-ejemplos)/.test(k) ? '💬 Ejemplos'
-    : /^(err|sec-errores)/.test(k) ? '⚠️ Errores típicos' : k === 'sec-material' ? '📎 Material' : 'Ficha');
+  const SECCION = (k) => (/^(desc|ctx|resumen|sec-que)/.test(k) ? `🎯 ${ui('De qué trata')}` : /^(r\d|sec-reglas)/.test(k) ? `📐 ${ui('Reglas y claves')}` : /^(ej|sec-ejemplos)/.test(k) ? `💬 ${ui('Ejemplos')}`
+    : /^(err|sec-errores)/.test(k) ? `⚠️ ${ui('Errores típicos')}` : k === 'sec-material' ? `📎 ${ui('Material')}` : ui('Ficha'));
   /** Contexto legible de un subrayado: en tablas, la fila con el nombre de cada columna; en listas, el punto; en textos, la frase o frases */
   function contextoMarca(el, mk) {
     const marca = (txt) => {
@@ -1066,14 +1110,14 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
   }
   function pLibreta() {
     const l = lengua();
-    if (!libretaFichas) { vistaEl.innerHTML = '<p class="vacio">Cargando la libreta…</p>'; return; }
+    if (!libretaFichas) { vistaEl.innerHTML = `<p class="vacio">${ui('Cargando la libreta…')}</p>`; return; }
     const fichas = libretaFichas.filter((f) => f.id.startsWith(`${l}.`) && (X.anotaciones || {})[f.id]);
     const tmp = document.createElement('div');
     const tarjetas = fichas.map((f) => {
       const a = X.anotaciones[f.id], m = materia(l, f.id) || {};
       tmp.innerHTML = f.formato === 'conjugacion' ? cuerpoConjugacion(f) : f.formato === 'particularidades' ? (f.subpestanas || []).map((sp) => { const g = st().idiVerbSub; st().idiVerbSub = f.subpestanas.indexOf(sp); const h = cuerpoParticularidades(f); st().idiVerbSub = g; return h; }).join('') : cuerpoFicha(f, l);
       const items = [];
-      if (a.texto) items.push(`<div class="idi-lb-item"><div class="idi-lb-sec">📝 Nota general</div><div class="idi-recuadro c-amarillo"><p>${esc(a.texto)}</p></div></div>`);
+      if (a.texto) items.push(`<div class="idi-lb-item"><div class="idi-lb-sec">📝 ${ui('Nota general')}</div><div class="idi-recuadro c-amarillo"><p>${esc(a.texto)}</p></div></div>`);
       for (const mk of a.marcas || []) {
         const extracto = mk.cita ? contextoMarca(tmp.querySelector(`[data-k="${CSS.escape(mk.k)}"]`), mk) : '';
         items.push(`<div class="idi-lb-item"><div class="idi-lb-sec">${SECCION(mk.k)}</div>
@@ -1081,13 +1125,13 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
           ${mk.nota ? `<div class="idi-recuadro c-${mk.color || 'amarillo'}"><p>${esc(mk.nota)}</p></div>` : ''}</div>`);
       }
       return `<article class="idi-lb-ficha n-${f.nivel}"><div class="idi-lb-cab"><span class="idi-chip-niv">${esc(f.nivel)}</span>
-        <b>${esc(m.titulo_l || f.titulo)}</b><span class="apagado">${esc(f.titulo_es || '')}</span><button data-abrir-ficha-lb="${esc(f.id)}">Abrir la ficha</button></div>
+        <b>${esc(m.titulo_l || f.titulo)}</b><span class="apagado">${subEs(f.titulo_es)}</span><button data-abrir-ficha-lb="${esc(f.id)}">${ui('Abrir la ficha')}</button></div>
         ${items.join('')}</article>`;
     });
-    vistaEl.innerHTML = `<div class="idi-centro ancho idi-libreta"><p><a id="idi-volver">← Volver</a></p>
-      <h2>📒 Libreta · ${esc(X.lenguas[l] || l)}</h2>
-      <p class="ayuda">Todo lo que has subrayado o anotado en las fichas, con el fragmento de la ficha y tu nota.</p>
-      ${tarjetas.length ? tarjetas.join('') : '<p class="vacio">Aún no hay anotaciones. Abre una ficha, selecciona un texto y elige un color o «✎ Nota».</p>'}</div>`;
+    vistaEl.innerHTML = `<div class="idi-centro ancho idi-libreta"><p><a id="idi-volver">← ${ui('Volver')}</a></p>
+      <h2>📒 ${ui('Libreta')} · ${esc(nomL(l))}</h2>
+      <p class="ayuda">${ui('Todo lo que has subrayado o anotado en las fichas, con el fragmento de la ficha y tu nota.')}</p>
+      ${tarjetas.length ? tarjetas.join('') : `<p class="vacio">${ui('Aún no hay anotaciones. Abre una ficha, selecciona un texto y elige un color o «{0}».', `✎ ${ui('Nota')}`)}</p>`}</div>`;
     vistaEl.querySelector('#idi-volver').onclick = () => ir('inicio');
     vistaEl.querySelectorAll('[data-abrir-ficha-lb]').forEach((b) => b.onclick = () => enviar({ tipo: 'idiFicha', lengua: l, id: b.dataset.abrirFichaLb }));
   }
@@ -1099,17 +1143,17 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
   let claveVerbo = 0;
   function pVerbos() {
     const I2 = VB.info;
-    if (!I2) { vistaEl.innerHTML = '<p class="vacio">Cargando los verbos…</p>'; return; }
-    if (I2.falta) { vistaEl.innerHTML = '<div class="idi-centro"><p class="vacio">Falta la base de verbos en el paquete de idiomas. Ejecuta «Sincronizar».</p><p><a id="idi-volver">← Volver</a></p></div>'; vistaEl.querySelector('#idi-volver').onclick = () => ir('inicio'); return; }
+    if (!I2) { vistaEl.innerHTML = `<p class="vacio">${ui('Cargando los verbos…')}</p>`; return; }
+    if (I2.falta) { vistaEl.innerHTML = `<div class="idi-centro"><p class="vacio">${ui('Falta la base de verbos en el paquete de idiomas. Ejecuta «Sincronizar».')}</p><p><a id="idi-volver">← ${ui('Volver')}</a></p></div>`; vistaEl.querySelector('#idi-volver').onclick = () => ir('inicio'); return; }
     const c = confVerbos(), plegada = !!st().idiVerbPlegada;
     const fichas = I2.fichas || [], fi = fichas[Math.min(c.ficha || 0, fichas.length - 1)];
     vistaEl.innerHTML = `<div class="idi-verbos">
-      <div class="idi-ficha-barra"><a id="idi-volver">← Volver</a><b>🔁 Practica los verbos · francés</b><span class="apagado idi-mini">${I2.total.toLocaleString('es-ES')} verbos (Verbiste)</span></div>
+      <div class="idi-ficha-barra"><a id="idi-volver">← ${ui('Volver')}</a><b>🔁 ${ui('Practica los verbos')} · ${ui('francés')}</b><span class="apagado idi-mini">${ui('{0} verbos (Verbiste)', I2.total.toLocaleString(loc()))}</span></div>
       <div class="idi-practica ${plegada ? 'plegada' : ''}">
         <aside class="idi-pr-ficha">
-          <div class="idi-pr-ficha-cab"><button id="idi-vplegar" title="${plegada ? 'Desplegar las fichas' : 'Plegar las fichas'}">${plegada ? '▶' : '◀'}</button>
-            ${plegada ? '<span class="idi-vertical">Fichas de conjugación</span>' : `<div class="idi-vtabs">${fichas.map((f, j) => `<button class="${j === (c.ficha || 0) ? 'activo' : ''}" data-vficha="${j}">${esc(f.formato === 'particularidades' ? f.titulo : f.titulo_es.replace(/^Verbos del? /, '').replace(/\s*\(.*\)$/, ''))}</button>`).join('')}</div>`}</div>
-          ${plegada || !fi ? '' : `<div class="idi-pr-ficha-cuerpo">${fi.formato === 'particularidades' ? cuerpoParticularidades(fi) : `<h3>${esc(fi.titulo)}</h3><p class="idi-ficha-sub">${esc(fi.titulo_es)}</p>${fi.formato === 'conjugacion' ? cuerpoConjugacion(fi) : cuerpoFicha(fi, 'fr', { compacta: true })}`}</div>`}
+          <div class="idi-pr-ficha-cab"><button id="idi-vplegar" title="${esc(plegada ? ui('Desplegar las fichas') : ui('Plegar las fichas'))}">${plegada ? '▶' : '◀'}</button>
+            ${plegada ? `<span class="idi-vertical">${ui('Fichas de conjugación')}</span>` : `<div class="idi-vtabs">${fichas.map((f, j) => `<button class="${j === (c.ficha || 0) ? 'activo' : ''}" data-vficha="${j}">${esc(f.formato === 'particularidades' || idiomaUI() !== 'es' ? f.titulo : f.titulo_es.replace(/^Verbos del? /, '').replace(/\s*\(.*\)$/, ''))}</button>`).join('')}</div>`}</div>
+          ${plegada || !fi ? '' : `<div class="idi-pr-ficha-cuerpo">${fi.formato === 'particularidades' ? cuerpoParticularidades(fi) : `<h3>${esc(fi.titulo)}</h3><p class="idi-ficha-sub">${subEs(fi.titulo_es)}</p>${fi.formato === 'conjugacion' ? cuerpoConjugacion(fi) : cuerpoFicha(fi, 'fr', { compacta: true })}`}</div>`}
         </aside>
         <section class="idi-pr-ej" id="idi-vzona"></section></div></div>`;
     vistaEl.querySelector('#idi-volver').onclick = () => { VB.ses = null; ir('inicio'); };
@@ -1171,12 +1215,12 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
     };
     return `<ul class="idi-vcab" data-k="cab">${(fc.cabecera || []).map((c) => `<li>${negrita(c)}</li>`).join('')}</ul>
       ${tabs}
-      ${par ? `<div class="idi-vmodelo-cab"><b>${esc(par.verbo)}</b> <span class="apagado">${esc(par.trad || '')}</span>
-          <span class="idi-vchipaux" title="Auxiliar de los tiempos compuestos">aux. ${esc(par.auxiliar)}</span>
+      ${par ? `<div class="idi-vmodelo-cab"><b>${esc(par.verbo)}</b> <span class="apagado">${subEs(par.trad)}</span>
+          <span class="idi-vchipaux" title="${esc(ui('Auxiliar de los tiempos compuestos'))}">aux. ${esc(par.auxiliar)}</span>
           ${mod.nota ? `<div class="idi-mini apagado" data-k="mn">${negrita(mod.nota)}</div>` : ''}</div>
-        ${MODOS_V.map(([m, es, color, ks]) => `<section class="idi-vbloque" style="--mc:var(--${color})"><h4>${m} <small>${es}</small></h4><div class="idi-vrejilla">${ks.map(tabla).join('')}</div></section>`).join('')}
+        ${MODOS_V.map(([m, es, color, ks]) => `<section class="idi-vbloque" style="--mc:var(--${color})"><h4>${m}${idiomaUI() === 'es' ? ` <small>${es}</small>` : ''}</h4><div class="idi-vrejilla">${ks.map(tabla).join('')}</div></section>`).join('')}
         <div class="idi-vt-nota" data-k="part"><b>Participes:</b> présent <b>${esc(par.participios.presente)}</b> · passé <b>${esc(par.participios.pasado.join(', '))}</b></div>`
-    : '<p class="apagado">Falta la base de verbos.</p>'}
+    : `<p class="apagado">${ui('Falta la base de verbos.')}</p>`}
       ${(fc.notas_finales || []).filter((n) => !/^Participi/i.test(n)).map((n, j) => `<div class="idi-vt-nota" data-k="nf${j}">${negrita(n)}</div>`).join('')}
       ${(fc.extra || []).map((e, j) => `<details class="idi-sec s-material" ${j === 0 ? 'open' : ''}><summary><span class="idi-sec-ico">📌</span>${esc(e.titulo || '')}</summary><div class="idi-sec-cuerpo" data-k="x${j}">
         ${e.tipo === 'tabla' ? `<div class="idi-tabla-env"><table class="idi-tabla"><thead><tr>${(e.cabecera || []).map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${(e.filas || []).map((r) => `<tr>${r.map((c) => `<td>${negrita(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`
@@ -1187,20 +1231,20 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
     const z = vistaEl.querySelector('#idi-vzona'), c = confVerbos(), I2 = VB.info;
     const modos = [...new Set(I2.tiempos.map((t) => t[1]))];
     z.innerHTML = `<div class="idi-ej-tarjeta idi-vconf">
-      <h3>Entrenador de conjugación</h3>
-      <div class="idi-vfila"><span class="idi-vlab">Grupos</span><div class="segmentos">${[1, 2, 3].map((g) => `<button data-vgrupo="${g}" class="${c.grupos.includes(g) ? 'activo' : ''}">${g}.º grupo <small>(${I2.grupos[g - 1]})</small></button>`).join('')}</div>
-        <label class="idi-revisar"><input type="checkbox" id="idi-vfrec" ${c.frecuentes ? 'checked' : ''}> solo verbos frecuentes</label></div>
-      <div class="idi-vfila col"><span class="idi-vlab">Tiempos <a data-vt="basicos">básicos</a> · <a data-vt="todos">todos</a> · <a data-vt="ninguno">ninguno</a></span>
+      <h3>${ui('Entrenador de conjugación')}</h3>
+      <div class="idi-vfila"><span class="idi-vlab">${ui('Grupos')}</span><div class="segmentos">${[1, 2, 3].map((g) => `<button data-vgrupo="${g}" class="${c.grupos.includes(g) ? 'activo' : ''}">${g === 1 ? ui('1.er grupo') : ui('{0}.º grupo', g)} <small>(${I2.grupos[g - 1]})</small></button>`).join('')}</div>
+        <label class="idi-revisar"><input type="checkbox" id="idi-vfrec" ${c.frecuentes ? 'checked' : ''}> ${ui('solo verbos frecuentes')}</label></div>
+      <div class="idi-vfila col"><span class="idi-vlab">${ui('Tiempos')} <a data-vt="basicos">${ui('básicos')}</a> · <a data-vt="todos">${ui('todos')}</a> · <a data-vt="ninguno">${ui('ninguno')}</a></span>
         <div class="idi-vtiempos">${modos.map((md) => `<div class="idi-vmodo"><b>${esc(md)}</b><div class="idi-vtchips">${I2.tiempos.filter((t) => t[1] === md).map((t) => `<button class="idi-vtchip ${c.tiempos.includes(t[0]) ? 'activo' : ''}" data-vtiempo="${t[0]}" aria-pressed="${c.tiempos.includes(t[0])}">${esc(t[2])}</button>`).join('')}</div></div>`).join('')}</div></div>
-      <div class="idi-vfila col"><span class="idi-vlab">Verbos</span>
-        <div class="idi-vbusca"><input type="search" id="idi-vq" placeholder="Busca un verbo (p. ej. prendre) y elígelo…" autocomplete="off"><div id="idi-vsug" class="idi-vsug"></div></div>
-        <div class="idi-vchips">${VB.elegidos.map((v) => `<span class="idi-vchip">${esc(v)} <button data-vquitar="${esc(v)}">✕</button></span>`).join('') || '<span class="apagado idi-mini">Sin verbos elegidos: se escogerán 3 al azar.</span>'}</div></div>
-      <div class="idi-vfila"><span class="idi-vlab">Modo</span><div class="segmentos"><button data-vmodo="tabla" class="${c.modo === 'tabla' ? 'activo' : ''}" title="Un verbo y un tiempo: las seis personas">Tabla (6 personas)</button><button data-vmodo="mezcla" class="${c.modo === 'mezcla' ? 'activo' : ''}" title="Una forma por pregunta, verbos y tiempos mezclados">Mezcla (una forma)</button></div>
-        ${c.modo === 'mezcla' ? `<label>· <input type="number" id="idi-vn" min="5" max="60" value="${c.n || 15}"> preguntas</label>` : ''}</div>
-      <p class="idi-acciones"><button class="primario" id="idi-vempezar">▶ Empezar${VB.elegidos.length ? '' : ' con 3 verbos al azar'}</button>
-        ${VB.elegidos.length ? '<button id="idi-vazar">🎲 3 al azar</button>' : ''}
-        ${I2.debiles.length ? '<button id="idi-vdebiles" title="Las combinaciones verbo + tiempo que más fallas">⚠ Lo que más fallo</button>' : ''}</p>
-      ${I2.debiles.length ? `<p class="idi-mini apagado">Más flojos: ${I2.debiles.map((d) => `${esc(d.verbo)} (${esc((I2.tiempos.find((t) => t[0] === d.tiempo) || [])[2] || d.tiempo)}) ${d.pct} %`).join(' · ')}</p>` : ''}
+      <div class="idi-vfila col"><span class="idi-vlab">${ui('Verbos')}</span>
+        <div class="idi-vbusca"><input type="search" id="idi-vq" placeholder="${esc(ui('Busca un verbo (p. ej. prendre) y elígelo…'))}" autocomplete="off"><div id="idi-vsug" class="idi-vsug"></div></div>
+        <div class="idi-vchips">${VB.elegidos.map((v) => `<span class="idi-vchip">${esc(v)} <button data-vquitar="${esc(v)}">✕</button></span>`).join('') || `<span class="apagado idi-mini">${ui('Sin verbos elegidos: se escogerán 3 al azar.')}</span>`}</div></div>
+      <div class="idi-vfila"><span class="idi-vlab">${ui('Modo')}</span><div class="segmentos"><button data-vmodo="tabla" class="${c.modo === 'tabla' ? 'activo' : ''}" title="${esc(ui('Un verbo y un tiempo: las seis personas'))}">${ui('Tabla (6 personas)')}</button><button data-vmodo="mezcla" class="${c.modo === 'mezcla' ? 'activo' : ''}" title="${esc(ui('Una forma por pregunta, verbos y tiempos mezclados'))}">${ui('Mezcla (una forma)')}</button></div>
+        ${c.modo === 'mezcla' ? `<label>· ${ui('{0} preguntas', `<input type="number" id="idi-vn" min="5" max="60" value="${c.n || 15}">`)}</label>` : ''}</div>
+      <p class="idi-acciones"><button class="primario" id="idi-vempezar">▶ ${VB.elegidos.length ? ui('Empezar') : ui('Empezar con 3 verbos al azar')}</button>
+        ${VB.elegidos.length ? `<button id="idi-vazar">🎲 ${ui('3 al azar')}</button>` : ''}
+        ${I2.debiles.length ? `<button id="idi-vdebiles" title="${esc(ui('Las combinaciones verbo + tiempo que más fallas'))}">⚠ ${ui('Lo que más fallo')}</button>` : ''}</p>
+      ${I2.debiles.length ? `<p class="idi-mini apagado">${ui('Más flojos:')} ${I2.debiles.map((d) => `${esc(d.verbo)} (${esc((I2.tiempos.find((t) => t[0] === d.tiempo) || [])[2] || d.tiempo)}) ${d.pct} %`).join(' · ')}</p>` : ''}
     </div>`;
     const guardar = () => ctx.guardar();
     z.querySelectorAll('[data-vgrupo]').forEach((b) => b.onclick = () => { const g = Number(b.dataset.vgrupo); c.grupos = c.grupos.includes(g) ? c.grupos.filter((x) => x !== g) : [...c.grupos, g].sort(); if (!c.grupos.length) c.grupos = [g]; guardar(); pintarConfVerbos(); });
@@ -1213,7 +1257,7 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
     const q = z.querySelector('#idi-vq'); let tq = null;
     q.oninput = () => { clearTimeout(tq); tq = setTimeout(() => enviar({ tipo: 'idiVerbosBuscar', clave: ++claveVerbo, q: q.value }), 150); };
     const pedir = (extra) => {
-      if (!c.tiempos.length) { if (ctx.aviso) ctx.aviso('Elige al menos un tiempo.'); return; }
+      if (!c.tiempos.length) { if (ctx.aviso) ctx.aviso(ui('Elige al menos un tiempo.')); return; }
       enviar({ tipo: 'idiVerbosSesion', grupos: c.grupos, tiempos: c.tiempos, frecuentes: c.frecuentes, modo: c.modo, n: c.n, elegidos: VB.elegidos, ...extra });
     };
     z.querySelector('#idi-vempezar').onclick = () => pedir({ aleatorios: VB.elegidos.length ? 0 : 3 });
@@ -1223,7 +1267,7 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
   function listaVerbos(m) {
     if (m.clave !== claveVerbo) return;
     const box = vistaEl.querySelector('#idi-vsug'); if (!box) return;
-    box.innerHTML = m.lista.map((x) => `<button data-velegir="${esc(x.verbo)}"><b>${esc(x.verbo)}</b> <span class="apagado">${x.grupo}.º · ${esc(x.trad || '')}</span></button>`).join('');
+    box.innerHTML = m.lista.map((x) => `<button data-velegir="${esc(x.verbo)}"><b>${esc(x.verbo)}</b> <span class="apagado">${Number(x.grupo) === 1 ? ui('1.er grupo') : ui('{0}.º grupo', x.grupo)}${idiomaUI() === 'es' && x.trad ? ` · ${esc(x.trad)}` : ''}</span></button>`).join('');
     box.querySelectorAll('[data-velegir]').forEach((b) => b.onclick = () => { if (!VB.elegidos.includes(b.dataset.velegir)) VB.elegidos.push(b.dataset.velegir); pintarConfVerbos(); const q = vistaEl.querySelector('#idi-vq'); if (q) q.focus(); });
   }
 
@@ -1257,32 +1301,32 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
       if (cambia) { c.ficha = fd; return pVerbos(); }
     }
     const z = vistaEl.querySelector('#idi-vzona');
-    const cab = `<div class="idi-pr-cab"><span class="idi-pr-tipo">${S2.modo === 'tabla' ? 'Tabla' : 'Mezcla'} · ${VB.i + 1} de ${total}</span>
-      <span class="apagado">⏱ ${reloj((Date.now() - VB.t0) / 1000)}</span><button id="idi-vsalir">Terminar</button></div>
+    const cab = `<div class="idi-pr-cab"><span class="idi-pr-tipo">${S2.modo === 'tabla' ? ui('Tabla') : ui('Mezcla')} · ${ui('{0} de {1}', VB.i + 1, total)}</span>
+      <span class="apagado">⏱ ${reloj((Date.now() - VB.t0) / 1000)}</span><button id="idi-vsalir">${ui('Terminar')}</button></div>
       <div class="idi-pr-puntos">${S2.items.map((x, j) => { const r = VB.res.filter((y) => y.idx === j); const ok = r.length && r.every((y) => y.ok); return `<i class="${r.length ? (ok ? 'ok' : 'mal') : j === VB.i ? 'actual' : ''}"></i>`; }).join('')}</div>`;
     const h = VB.hecho;
     if (S2.modo === 'tabla') {
       z.innerHTML = `${cab}<div class="idi-ej-tarjeta">
         ${cabTiempo(it)}${vozDisponible() ? `<button class="idi-voz idi-vvoz" data-decir="${esc(it.verbo)}">🔊</button>` : ''}
-        <h2 class="idi-vverbo">${esc(it.verbo)} <small class="apagado">${esc(it.trad || '')}</small></h2>
+        <h2 class="idi-vverbo">${esc(it.verbo)} <small class="apagado">${subEs(it.trad)}</small></h2>
         <div class="idi-vtabla">${it.filas.map((f, k) => {
           const r = h && h[k];
           return `<label class="idi-vfilaej ${r ? (r.ok ? 'ok' : 'mal') : ''}"><span class="idi-vpron">${esc(f.pronombre)}</span>
             <input class="idi-vresp" data-k="${k}" autocomplete="off" spellcheck="false" ${r ? 'disabled' : ''} value="${esc(r ? r.escrito : '')}">
             ${r ? `<span class="idi-vsol">${r.ok ? '✓' : `${r.casi ? '≈ ' : '✗ '}<b>${esc(f.respuestas[0])}</b>`}${f.respuestas.length > 1 ? ` <span class="apagado">(${esc(f.respuestas.slice(1).join(' · '))})</span>` : ''}</span>` : ''}</label>`;
         }).join('')}</div>
-        <div class="idi-ej-botones">${h ? `<button class="primario" id="idi-vsig">${VB.i + 1 < total ? 'Siguiente →' : 'Ver resultado'}</button>` : '<button class="primario" id="idi-vcomp">Comprobar</button>'}</div>
-        ${h && h.some((r) => !r.ok) ? '<p class="idi-mini apagado">Consulta la ficha del grupo a la izquierda para repasar la regla. ≈ = solo fallan los acentos.</p>' : ''}</div>`;
+        <div class="idi-ej-botones">${h ? `<button class="primario" id="idi-vsig">${VB.i + 1 < total ? ui('Siguiente →') : ui('Ver resultado')}</button>` : `<button class="primario" id="idi-vcomp">${ui('Comprobar')}</button>`}</div>
+        ${h && h.some((r) => !r.ok) ? `<p class="idi-mini apagado">${ui('Consulta la ficha del grupo a la izquierda para repasar la regla. ≈ = solo fallan los acentos.')}</p>` : ''}</div>`;
     } else {
       const r = h && h[0];
       z.innerHTML = `${cab}<div class="idi-ej-tarjeta">
         ${cabTiempo(it)}
-        <h2 class="idi-vverbo">${esc(it.verbo)} <small class="apagado">${esc(it.trad || '')}</small></h2>
+        <h2 class="idi-vverbo">${esc(it.verbo)} <small class="apagado">${subEs(it.trad)}</small></h2>
         <label class="idi-vfilaej grande ${r ? (r.ok ? 'ok' : 'mal') : ''}"><span class="idi-vpron">${esc(it.pronombre)}</span>
           <input class="idi-vresp" data-k="0" autocomplete="off" spellcheck="false" ${r ? 'disabled' : ''} value="${esc(r ? r.escrito : '')}"></label>
-        ${r ? `<div class="idi-ver ${r.ok ? 'ok' : 'mal'}"><b>${r.ok ? '✓ Correcto' : r.casi ? '≈ Casi: revisa los acentos' : '✗ No es correcto'}</b>
-          <div class="idi-ver-frase">${vozDisponible() ? `<button class="idi-voz" data-decir="${esc(pronTxt(it.pronombre).replace(/[()]/g, '') + it.respuestas[0])}">🔊</button>` : ''}<span><b>${esc(pronTxt(it.pronombre) + it.respuestas[0])}</b>${it.respuestas.length > 1 ? ` <span class="apagado">· también ${esc(it.respuestas.slice(1).join(' · '))}</span>` : ''}</span></div></div>` : ''}
-        <div class="idi-ej-botones">${r ? `<button class="primario" id="idi-vsig">${VB.i + 1 < total ? 'Siguiente →' : 'Ver resultado'}</button>` : '<button class="primario" id="idi-vcomp">Comprobar</button><button id="idi-vnose">No lo sé</button>'}</div></div>`;
+        ${r ? `<div class="idi-ver ${r.ok ? 'ok' : 'mal'}"><b>${r.ok ? `✓ ${ui('Correcto')}` : r.casi ? `≈ ${ui('Casi: revisa los acentos')}` : `✗ ${ui('No es correcto')}`}</b>
+          <div class="idi-ver-frase">${vozDisponible() ? `<button class="idi-voz" data-decir="${esc(pronTxt(it.pronombre).replace(/[()]/g, '') + it.respuestas[0])}">🔊</button>` : ''}<span><b>${esc(pronTxt(it.pronombre) + it.respuestas[0])}</b>${it.respuestas.length > 1 ? ` <span class="apagado">· ${ui('también {0}', esc(it.respuestas.slice(1).join(' · ')))}</span>` : ''}</span></div></div>` : ''}
+        <div class="idi-ej-botones">${r ? `<button class="primario" id="idi-vsig">${VB.i + 1 < total ? ui('Siguiente →') : ui('Ver resultado')}</button>` : `<button class="primario" id="idi-vcomp">${ui('Comprobar')}</button><button id="idi-vnose">${ui('No lo sé')}</button>`}</div></div>`;
     }
     z.querySelector('#idi-vsalir').onclick = terminarVerbos;
     z.querySelectorAll('[data-decir]').forEach((b) => b.onclick = () => decir(b.dataset.decir, 'fr'));
@@ -1312,9 +1356,9 @@ La solución que me dan es «${buena}»${h.respuesta && !h.ok ? ` y yo respondí
     VB.ses = null;
     const z = vistaEl.querySelector('#idi-vzona');
     z.innerHTML = res.length ? `<div class="idi-tarjeta-grande centro"><span class="idi-anillo grande" style="--p:${pct}"><b>${pct}%</b></span>
-        <h2>${ok} de ${res.length} formas</h2><p class="apagado">${reloj(seg)} de práctica</p>
+        <h2>${ui('{0} de {1} formas', ok, res.length)}</h2><p class="apagado">${ui('{0} de práctica', reloj(seg))}</p>
         <div class="idi-fin-fichas">${Object.entries(porComb).map(([k, x]) => { const [v, t] = k.split('|'); return `<div><b>${esc(v)}</b><span>${x.ok}/${x.n}</span><span class="apagado">${esc((VB.info.tiempos.find((y) => y[0] === t) || [])[2] || t)}</span></div>`; }).join('')}</div>
-        <p class="idi-acciones centro"><button class="primario" id="idi-votra">Otra ronda</button></p></div>` : '';
+        <p class="idi-acciones centro"><button class="primario" id="idi-votra">${ui('Otra ronda')}</button></p></div>` : '';
     const o = z.querySelector('#idi-votra'); if (o) o.onclick = () => pintarConfVerbos(); else pintarConfVerbos();
   }
 

@@ -9,6 +9,7 @@ const { spawn } = require('child_process');
 const I = require('./idiomas');
 const X = require('./idiomasTextos');
 const C = require('./cante');
+const { tr } = require('./media/i18n-idiomas.js');
 
 const leer = (f, def) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return def; } };
 const escribir = (f, d) => { fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f + '.tmp', JSON.stringify(d, null, 1) + '\n'); fs.renameSync(f + '.tmp', f); };
@@ -19,20 +20,30 @@ const HZ = 16000;
 // frases que whisper se inventa en los silencios en inglés y francés (las del castellano están en cante.js)
 const ALUCINACIONES_LENGUA = /thank(s| you) for watching|please subscribe|subtitles by|sous-titr|merci d'avoir regard|abonnez-vous|amara\.org/i;
 
-function crearPracticas({ dirPaquete, dirPerfil, perfil, herramientas, cante = () => null, avisar = () => {}, alCambiar = () => {} }) {
-  const fp = (n) => { const d = dirPerfil(); if (!d) throw new Error('Crea primero tu perfil.'); return path.join(d, n); };
+/**
+ * idiomaUI(lengua): lengua del panel ('es' | 'en' | 'fr'); por defecto, la del perfil (ajustes.idiomaFichas === 'es' → castellano; si no, la estudiada).
+ * rutaPaquete(l, rel): fichero del paquete en la lengua del panel (copia de <l>/lengua/<rel> si existe); por defecto, se calcula aquí.
+ */
+function crearPracticas({ dirPaquete, dirPerfil, perfil, herramientas, cante = () => null, avisar = () => {}, alCambiar = () => {}, idiomaUI, rutaPaquete }) {
+  const ui = idiomaUI || ((l) => { const p = perfil() || {}; return (p.ajustes || {}).idiomaFichas === 'es' ? 'es' : (l === 'fr' ? 'fr' : 'en'); });
+  const T = (s, args, l) => tr(ui(l), s, args);   // T: hay muchas variables locales «t» (textos)
+  const ruta = rutaPaquete || ((l, rel) => {
+    const x = path.join(dirPaquete(), l, 'lengua', rel);
+    return ui(l) !== 'es' && fs.existsSync(x) ? x : path.join(dirPaquete(), l, rel);
+  });
+  const fp = (n) => { const d = dirPerfil(); if (!d) throw new Error(T('Crea primero tu perfil.')); return path.join(d, n); };
   const anotarSesion = (linea) => fs.appendFileSync(fp('sesiones.jsonl'), JSON.stringify(linea) + '\n');
 
   // ---------------------------------------------------------------- biblioteca
   const cache = {};
   function indice(l) {
-    const f = path.join(dirPaquete(), l, 'textos.json');
+    const f = ruta(l, 'textos.json');   // la caché distingue el modo de lengua por la ruta elegida (y la fecha del fichero)
     let m = 0; try { m = fs.statSync(f).mtimeMs; } catch (e) { return []; }
-    if (cache[l] && cache[l].m === m) return cache[l].textos;
-    cache[l] = { m, textos: leer(f, { textos: [] }).textos || [] };
+    if (cache[l] && cache[l].m === m && cache[l].f === f) return cache[l].textos;
+    cache[l] = { m, f, textos: leer(f, { textos: [] }).textos || [] };
     return cache[l].textos;
   }
-  const texto = (l, id) => leer(path.join(dirPaquete(), l, 'textos', `${id.split('.').slice(2).join('.')}.json`), null);
+  const texto = (l, id) => leer(ruta(l, path.join('textos', `${id.split('.').slice(2).join('.')}.json`)), null);
   const registros = () => (dirPerfil() ? leer(fp('textos.json'), {}) : {});
 
   /** Biblioteca para la pantalla: índice + lo hecho por el usuario en cada texto + el texto recomendado para cada modo */
@@ -51,7 +62,7 @@ function crearPracticas({ dirPaquete, dirPerfil, perfil, herramientas, cante = (
 
   /** Abre un texto para practicar. Al navegador va lo necesario para leer, escuchar y contestar; las soluciones se piden al corregir */
   function abrir({ lengua, id, longitud }) {
-    const t = texto(lengua, id); if (!t) throw new Error('Texto no encontrado. Ejecuta «Sincronizar» para actualizar el paquete de idiomas.');
+    const t = texto(lengua, id); if (!t) throw new Error(T('Texto no encontrado. Ejecuta «Sincronizar» para actualizar el paquete de idiomas.', [], lengua));
     const r = X.recortar(t, longitud === 'completo' ? 'completo' : (Number(longitud) || longitud || 'estandar'));
     return {
       id: t.id, lengua, titulo: t.titulo, titulo_es: t.titulo_es, nivel: t.nivel, campo: t.campo, tipo: t.tipo, fuente: t.fuente, audio: r.entero ? t.audio : null,
@@ -65,18 +76,18 @@ function crearPracticas({ dirPaquete, dirPerfil, perfil, herramientas, cante = (
 
   /** Corrige una pregunta de comprensión: vf / eleccion / vocabulario con respuesta fija; abierta con el modelo local (o autoevaluación) */
   async function responder({ lengua, id, pregunta, respuesta }) {
-    const t = texto(lengua, id); if (!t) throw new Error('Texto no encontrado.');
-    const p = (t.preguntas || []).find((x) => x.id === pregunta); if (!p) throw new Error('Pregunta no encontrada.');
+    const t = texto(lengua, id); if (!t) throw new Error(T('Texto no encontrado.', [], lengua));
+    const p = (t.preguntas || []).find((x) => x.id === pregunta); if (!p) throw new Error(T('Pregunta no encontrada.', [], lengua));
     const base = { correcta: p.respuestas[0], respuestas: p.respuestas, cita: p.cita || '', explicacion: p.explicacion || '', parrafo: p.parrafo };
     if (p.tipo === 'abierta') {
-      if (!String(respuesta || '').trim()) return { ...base, ok: false, nota: 0, comentario: 'Sin respuesta.' };
+      if (!String(respuesta || '').trim()) return { ...base, ok: false, nota: 0, comentario: T('Sin respuesta.', [], lengua) };
       const e = await herramientas.estado();
       if (!e.ollama || !e.modelo) return { ...base, autoevaluar: true };
-      const pr = X.promptAbierta({ lengua, pregunta: p.pregunta, modelo: p.respuestas[0], cita: p.cita, respuesta });
+      const pr = X.promptAbierta({ lengua, pregunta: p.pregunta, modelo: p.respuestas[0], cita: p.cita, respuesta, idiomaPanel: ui(lengua) });
       let r;
-      try { r = await herramientas.preguntar(pr); } catch (e) { return { ...base, autoevaluar: true, aviso: `Modelo local: ${e.message}` }; }
+      try { r = await herramientas.preguntar(pr); } catch (e) { return { ...base, autoevaluar: true, aviso: T('Modelo local: {0}', [e.message], lengua) }; }
       // control objetivo: una respuesta sin ninguna palabra con contenido en común con la respuesta modelo, la cita y la pregunta no puntúa
-      if (X.comunesRaices(respuesta, `${p.respuestas[0]} ${p.cita || ''} ${p.pregunta}`, lengua) === 0) { r.nota = 0; r.comentario = 'La respuesta no tiene relación con lo que se pregunta.'; }
+      if (X.comunesRaices(respuesta, `${p.respuestas[0]} ${p.cita || ''} ${p.pregunta}`, lengua) === 0) { r.nota = 0; r.comentario = T('La respuesta no tiene relación con lo que se pregunta.', [], lengua); }
       r.comentario = X.limpiarComentario(r.comentario, 2);
       return { ...base, ok: r.nota === 2, parcial: r.nota === 1, nota: r.nota, comentario: r.comentario };
     }
@@ -111,13 +122,13 @@ function crearPracticas({ dirPaquete, dirPerfil, perfil, herramientas, cante = (
    */
   async function corregirEscrito({ lengua, clase, id, k, tareaId, texto: escrito, segundos, modo, notas, sinSesion }, aviso = () => {}) {
     const limpio = String(escrito || '').trim();
-    if (X.palabras(limpio) < 20) throw new Error('Escribe al menos unas frases (20 palabras) para poder corregirlo.');
+    if (X.palabras(limpio) < 20) throw new Error(T('Escribe al menos unas frases (20 palabras) para poder corregirlo.', [], lengua));
     const e = await herramientas.estado();
     const out = { id: `${sello()}_${clase}`, fecha: new Date().toISOString(), lengua, clase, modo: modo || null, texto: limpio, palabras: X.palabras(limpio),
       segundos: Math.round(segundos || 0), notas: notas || '', herramientas: { lt: e.lt, modelo: e.ollama && e.modelo }, avisos: [] };
     let original = '', ideas = [], tarea = null;
     if (clase === 'resumen') {
-      const t = texto(lengua, id); if (!t) throw new Error('Texto no encontrado.');
+      const t = texto(lengua, id); if (!t) throw new Error(T('Texto no encontrado.', [], lengua));
       const r = X.recortar(t, X.LONGITUDES.completo); const kk = Math.min(Number(k) || t.parrafos.length, t.parrafos.length);
       original = t.parrafos.slice(0, kk).join('\n\n');
       ideas = (t.ideas_clave || []).filter((x) => (x.parrafos || [0]).some((i) => i < kk));
@@ -126,32 +137,32 @@ function crearPracticas({ dirPaquete, dirPerfil, perfil, herramientas, cante = (
       out.copiado = X.copiado(original, limpio);
       void r;
     } else {
-      tarea = tareas(lengua).find((x) => x.id === tareaId); if (!tarea) throw new Error('Tarea no encontrada.');
+      tarea = tareas(lengua).find((x) => x.id === tareaId); if (!tarea) throw new Error(T('Tarea no encontrada.', [], lengua));
       out.tareaId = tareaId; out.titulo = tarea.titulo_es; out.extension = tarea.palabras; out.modelo = tarea.modelo || '';
     }
     if (e.lt) {
-      aviso('Revisando la gramática y la ortografía con LanguageTool…');
+      aviso(T('Revisando la gramática y la ortografía con LanguageTool…', [], lengua));
       try { out.errores = await herramientas.corregirTexto(limpio, lengua); } catch (x) { out.avisos.push(`LanguageTool: ${x.message}`); out.errores = []; }
-    } else { out.errores = null; out.avisos.push('LanguageTool no está instalado: sin corrección gramatical automática.'); }
+    } else { out.errores = null; out.avisos.push(T('LanguageTool no está instalado: sin corrección gramatical automática.', [], lengua)); }
     // controles objetivos (sin modelo): un resumen que no trata del texto es un 0 y no hace falta preguntar al modelo
     const control = clase === 'resumen' ? X.controlResumen({ lengua, texto: original, ideas, resumen: limpio, extension: out.extension }) : null;
     if (control) out.control = control;
     if (control && control.fueraDeTema) {
-      const a = X.ajustarResumen(null, control, ideas);
+      const a = X.ajustarResumen(null, control, ideas, ui(lengua));
       out.valoracion = a.valoracion; out.nota = a.nota; out.ideasEstado = a.ideasEstado; out.avisos.push(...a.avisos);
     } else if (e.ollama && e.modelo) {
-      aviso('Valorando con el modelo local (puede tardar uno o dos minutos)…');
+      aviso(T('Valorando con el modelo local (puede tardar uno o dos minutos)…', [], lengua));
       try {
         const pr = clase === 'resumen'
-          ? X.promptResumen({ lengua, texto: original, ideas, resumen: limpio, errores: out.errores, extension: out.extension })
-          : X.promptEscrito({ lengua, tarea, texto: limpio, errores: out.errores });
+          ? X.promptResumen({ lengua, texto: original, ideas, resumen: limpio, errores: out.errores, extension: out.extension, idiomaPanel: ui(lengua) })
+          : X.promptEscrito({ lengua, tarea, texto: limpio, errores: out.errores, idiomaPanel: ui(lengua) });
         const v = X.depurarValoracion(await herramientas.preguntar(pr), limpio, lengua);
-        const a = clase === 'resumen' ? X.ajustarResumen(v, control, ideas)
-          : X.ajustarEscrito(v, { lengua, enunciado: `${tarea.enunciado} ${tarea.titulo || ''}`, texto: limpio, extension: tarea.palabras });
+        const a = clase === 'resumen' ? X.ajustarResumen(v, control, ideas, ui(lengua))
+          : X.ajustarEscrito(v, { lengua, enunciado: `${tarea.enunciado} ${tarea.titulo || ''}`, texto: limpio, extension: tarea.palabras, lang: ui(lengua) });
         out.valoracion = a.valoracion; out.nota = a.nota; out.avisos.push(...a.avisos);
         if (a.ideasEstado) out.ideasEstado = a.ideasEstado;
-      } catch (x) { out.avisos.push(`Modelo local: ${x.message}`); }
-    } else out.avisos.push('El modelo local no está instalado: valora tú mismo las ideas y la rúbrica.');
+      } catch (x) { out.avisos.push(T('Modelo local: {0}', [x.message], lengua)); }
+    } else out.avisos.push(T('El modelo local no está instalado: valora tú mismo las ideas y la rúbrica.', [], lengua));
     escribir(fp(path.join('escritos', `${out.id}.json`)), out);
     if (clase === 'resumen') {
       const regs = registros(); const t = texto(lengua, id) || {};
@@ -166,7 +177,7 @@ function crearPracticas({ dirPaquete, dirPerfil, perfil, herramientas, cante = (
   }
   /** Autoevaluación (sin modelo, o para corregir la del modelo): ideas recogidas y notas de la rúbrica */
   function autoevaluar({ id, ideasEstado, criterios }) {
-    const f = fp(path.join('escritos', `${id}.json`)); const e = leer(f, null); if (!e) throw new Error('Escrito no encontrado.');
+    const f = fp(path.join('escritos', `${id}.json`)); const e = leer(f, null); if (!e) throw new Error(T('Escrito no encontrado.'));
     if (ideasEstado) e.ideasEstado = ideasEstado;
     if (criterios) { e.auto = criterios; e.nota = X.notaRubrica(criterios); }
     escribir(f, e); return e;
@@ -178,13 +189,13 @@ function crearPracticas({ dirPaquete, dirPerfil, perfil, herramientas, cante = (
   }
   const escrito = ({ id }) => leer(fp(path.join('escritos', `${id}.json`)), null);
 
-  const tareas = (l) => leer(path.join(dirPaquete(), l, 'escritura.json'), { tareas: [] }).tareas || [];
+  const tareas = (l) => leer(ruta(l, 'escritura.json'), { tareas: [] }).tareas || [];
   const listaTareas = ({ lengua }) => tareas(lengua).map(({ modelo, ...t }) => ({ ...t, tieneModelo: !!modelo }));
-  const expresiones = ({ lengua }) => leer(path.join(dirPaquete(), lengua, 'expresiones.json'), { funciones: [] }).funciones || [];
+  const expresiones = ({ lengua }) => leer(ruta(lengua, 'expresiones.json'), { funciones: [] }).funciones || [];
 
   // ---------------------------------------------------------------- tribunal: preguntas generales y del texto
   function preguntasTribunal({ lengua, textoId, n = 4, bloques }) {
-    const gen = leer(path.join(dirPaquete(), lengua, 'tribunal.json'), { preguntas: [] }).preguntas || [];
+    const gen = leer(ruta(lengua, 'tribunal.json'), { preguntas: [] }).preguntas || [];
     const deTexto = textoId ? ((texto(lengua, textoId) || {}).tribunal || []).map((x, i) => ({ ...x, id: `${textoId}#${i}`, bloque: 'texto' })) : [];
     const p = perfil() || {}; const nv = I.nivelNum(((p.idiomas || {})[lengua] || {}).nivel || 'B1');
     const generales = I.barajar(gen.filter((x) => (!bloques || !bloques.length || bloques.includes(x.bloque)) && I.nivelNum(x.nivel) <= nv + 1));
@@ -230,12 +241,12 @@ function crearPracticas({ dirPaquete, dirPerfil, perfil, herramientas, cante = (
   }
   async function grabar({ lengua, clase, ref, micro }) {
     const h = C.herramientas();
-    if (!h.ffmpeg) throw new Error('Falta ffmpeg: pulsa «Instalar herramientas» en Ajustes de Idiomas.');
-    if (grabacionEnCurso()) throw new Error('Ya hay una grabación en curso.');
-    const ec = cante(); if (ec && ec.grabando) throw new Error('Se está grabando un cante: termínalo antes de grabar aquí (el micrófono es uno).');
+    if (!h.ffmpeg) throw new Error(T('Falta ffmpeg: pulsa «Instalar herramientas» en Ajustes de Idiomas.', [], lengua));
+    if (grabacionEnCurso()) throw new Error(T('Ya hay una grabación en curso.', [], lengua));
+    const ec = cante(); if (ec && ec.grabando) throw new Error(T('Se está grabando un cante: termínalo antes de grabar aquí (el micrófono es uno).', [], lengua));
     const lista = await C.microfonos(h.ffmpeg);
     const mic = C.elegirMicro(lista, micro || ((perfil() || {}).ajustes || {}).micro);
-    if (!mic) throw new Error('ffmpeg no encuentra ningún micrófono. Revisa Ajustes del Sistema › Privacidad y seguridad › Micrófono › Visual Studio Code.');
+    if (!mic) throw new Error(T('ffmpeg no encuentra ningún micrófono. Revisa Ajustes del Sistema › Privacidad y seguridad › Micrófono › Visual Studio Code.', [], lengua));
     fs.mkdirSync(dirAudio(), { recursive: true });
     const id = `${sello()}_${clase}`;
     const wav = path.join(dirAudio(), `${id}.wav`), registro = path.join(dirAudio(), `${id}.log`);
@@ -245,7 +256,7 @@ function crearPracticas({ dirPaquete, dirPerfil, perfil, herramientas, cante = (
     fs.closeSync(fd); p.unref();
     const m = { id, pid: p.pid, lengua, clase, ref: ref || null, inicio: Date.now(), wav, registro, micro: mic.nombre };
     fs.writeFileSync(marca(), JSON.stringify(m, null, 1));
-    setTimeout(() => { if (!vivo(p.pid) && (leer(marca(), {}).pid === p.pid)) { try { fs.unlinkSync(marca()); } catch (e) { /* */ } avisar('La grabación no ha arrancado: revisa el permiso de micrófono de Visual Studio Code.', true); alCambiar(); } }, 2500);
+    setTimeout(() => { if (!vivo(p.pid) && (leer(marca(), {}).pid === p.pid)) { try { fs.unlinkSync(marca()); } catch (e) { /* */ } avisar(T('La grabación no ha arrancado: revisa el permiso de micrófono de Visual Studio Code.', [], lengua), true); alCambiar(); } }, 2500);
     return { id, inicio: m.inicio, micro: mic.nombre };
   }
   /** Para la grabación y la transcribe (en cola). Devuelve el id de la grabación */
@@ -263,8 +274,8 @@ function crearPracticas({ dirPaquete, dirPerfil, perfil, herramientas, cante = (
     const id = cola.shift(); const f = ficha(id); if (!f) return siguiente();
     const h = C.herramientas();
     if (h.falta.length) {
-      for (const x of [id, ...cola.splice(0)]) { const g = ficha(x); if (g) escribir(path.join(dirAudio(), `${x}.json`), { ...g, estado: 'error', error: `Falta ${h.falta.join(', ')}` }); }
-      avisar(`No puedo transcribir: falta ${h.falta.join(', ')}. Pulsa «Instalar herramientas» en Ajustes de Idiomas.`, true); alCambiar(); return;
+      for (const x of [id, ...cola.splice(0)]) { const g = ficha(x); if (g) escribir(path.join(dirAudio(), `${x}.json`), { ...g, estado: 'error', error: T('Falta {0}', [h.falta.join(', ')], g.lengua) }); }
+      avisar(T('No puedo transcribir: falta {0}. Pulsa «Instalar herramientas» en Ajustes de Idiomas.', [h.falta.join(', ')], f.lengua), true); alCambiar(); return;
     }
     // un whisper cada vez también con el cante (Mac de 8 GB): si el cante está transcribiendo, se espera
     const ec = cante(); if (ec && ec.transcribiendo) { cola.unshift(id); setTimeout(siguiente, 15000); return; }
@@ -291,7 +302,7 @@ function crearPracticas({ dirPaquete, dirPerfil, perfil, herramientas, cante = (
       } catch (e) { /* se queda el WAV */ }
     } catch (e) {
       escribir(path.join(dirAudio(), `${id}.json`), { ...ficha(id), estado: 'error', error: String(e.message || e).slice(0, 300) });
-      avisar(`No se pudo transcribir la grabación: ${e.message || e}`, true);
+      avisar(T('No se pudo transcribir la grabación: {0}', [e.message || e], f.lengua), true);
     } finally {
       for (const x of [`${base}.json`, limpio]) { try { fs.unlinkSync(x); } catch (e) { /* */ } }
       transcribiendo = null; alCambiar(true); siguiente();
@@ -303,7 +314,7 @@ function crearPracticas({ dirPaquete, dirPerfil, perfil, herramientas, cante = (
       let resto = '', ultimo = '';
       const leerSalida = (d) => { resto += d.toString(); const ls = resto.split(/\r|\n/); resto = ls.pop(); ls.forEach((l) => { if (l.trim()) ultimo = l; if (alLinea) alLinea(l); }); };
       p.stdout.on('data', leerSalida); p.stderr.on('data', leerSalida); p.on('error', mal);
-      p.on('close', (c) => (c === 0 ? ok() : mal(new Error(`${path.basename(prog)} terminó con error (${c}): ${ultimo.slice(0, 200)}`))));
+      p.on('close', (c) => (c === 0 ? ok() : mal(new Error(T('{0} terminó con error ({1}): {2}', [path.basename(prog), c, ultimo.slice(0, 200)])))));
     });
   }
   function estadoOral() {
@@ -317,11 +328,11 @@ function crearPracticas({ dirPaquete, dirPerfil, perfil, herramientas, cante = (
    * tribunal (respuesta a una pregunta: ref = {pregunta, ideas, textoId}) o resumen (lees tu resumen: se compara con lo escrito).
    */
   async function valorarOral({ id, ref, sinSesion }, aviso = () => {}) {
-    const f = ficha(id); if (!f) throw new Error('Grabación no encontrada.');
-    if (f.estado !== 'transcrito') throw new Error(f.estado === 'error' ? `No se pudo transcribir: ${f.error}` : (cola.includes(id) || (transcribiendo && transcribiendo.id === id) ? 'La grabación aún se está transcribiendo.' : 'Grabación sin corregir: pulsa «Corregir».'));
+    const f = ficha(id); if (!f) throw new Error(T('Grabación no encontrada.'));
+    if (f.estado !== 'transcrito') throw new Error(f.estado === 'error' ? T('No se pudo transcribir: {0}', [f.error], f.lengua) : (cola.includes(id) || (transcribiendo && transcribiendo.id === id) ? T('La grabación aún se está transcribiendo.', [], f.lengua) : T('Grabación sin corregir: pulsa «Corregir».', [], f.lengua)));
     if (f.valoracionOral && !ref) return f;   // ya valorada: no se repite (ni se cuenta otra sesión)
     const r = { ...(f.ref || {}), ...(ref || {}) };
-    const out = { metricas: f.metricas, velocidad: X.valorarVelocidad(f.metricas.ppm) };
+    const out = { metricas: f.metricas, velocidad: X.valorarVelocidad(f.metricas.ppm, ui(f.lengua)) };
     let original = '';
     if (r.textoId) { const t = texto(f.lengua, r.textoId); if (t) original = t.parrafos.slice(0, r.k || t.parrafos.length).join('\n\n'); }
     if ((f.clase === 'lectura' && original) || (f.clase === 'resumen' && r.escrito)) {
@@ -331,17 +342,17 @@ function crearPracticas({ dirPaquete, dirPerfil, perfil, herramientas, cante = (
     }
     const e = await herramientas.estado();
     if (e.ollama && e.modelo && (f.clase === 'exposicion' || f.clase === 'tribunal')) {
-      aviso('Valorando con el modelo local…');
+      aviso(T('Valorando con el modelo local…', [], f.lengua));
       try {
-        if (f.clase === 'tribunal') out.valoracion = X.depurarValoracion(await herramientas.preguntar(X.promptTribunal({ lengua: f.lengua, pregunta: r.pregunta, ideas: r.ideas, transcripcion: f.texto, segundos: f.segundos, texto: original })), f.texto, f.lengua);
+        if (f.clase === 'tribunal') out.valoracion = X.depurarValoracion(await herramientas.preguntar(X.promptTribunal({ lengua: f.lengua, pregunta: r.pregunta, ideas: r.ideas, transcripcion: f.texto, segundos: f.segundos, texto: original, idiomaPanel: ui(f.lengua) })), f.texto, f.lengua);
         else {
           const t = texto(f.lengua, r.textoId) || {};
           const ideas = (t.ideas_clave || []).filter((x) => (x.parrafos || [0]).some((i) => i < (r.k || 1e9)));
-          out.valoracion = X.depurarValoracion(await herramientas.preguntar(X.promptExposicion({ lengua: f.lengua, texto: original, ideas, transcripcion: f.texto, segundos: f.segundos })), f.texto, f.lengua);
+          out.valoracion = X.depurarValoracion(await herramientas.preguntar(X.promptExposicion({ lengua: f.lengua, texto: original, ideas, transcripcion: f.texto, segundos: f.segundos, idiomaPanel: ui(f.lengua) })), f.texto, f.lengua);
           out.ideas = ideas; out.nota = X.notaRubrica(out.valoracion.criterios || {});
         }
-      } catch (x) { out.aviso = `Modelo local: ${x.message}`; }
-    } else if (f.clase === 'exposicion' || f.clase === 'tribunal') out.aviso = 'El modelo local no está instalado: revisa tú la transcripción.';
+      } catch (x) { out.aviso = T('Modelo local: {0}', [x.message], f.lengua); }
+    } else if (f.clase === 'exposicion' || f.clase === 'tribunal') out.aviso = T('El modelo local no está instalado: revisa tú la transcripción.', [], f.lengua);
     escribir(path.join(dirAudio(), `${id}.json`), { ...f, ref: r, valoracionOral: out });
     if (f.clase === 'tribunal' && out.valoracion && Number.isFinite(out.valoracion.contenido)) out.nota = Math.round(((out.valoracion.contenido + (out.valoracion.lengua || 0)) / 8) * 100) / 10;
     if (!f.valoracionOral && !sinSesion) anotarSesion({ id, fecha: f.fecha, lengua: f.lengua, tipo: 'oral', minutos: Math.round(f.segundos / 6) / 10, materias: [], clase: f.clase, ejercicios: 1,

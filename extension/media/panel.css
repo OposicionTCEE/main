@@ -1023,3 +1023,6 @@ body.vscode-high-contrast .idi-vterm, body.vscode-high-contrast-light .idi-vterm
 .idi-es-oculta { display: none; }
 .idi-es-oculta.vista { display: block; }
 span.idi-es-oculta.vista { display: inline; }
+/* v0.41 · Idiomas en la lengua del panel: glosas del diccionario (en castellano) en gris */
+.idi-cr-glosas.idi-gris { color: var(--vscode-descriptionForeground, #888); font-style: italic; }
+.idi-dlg [data-def-es-p] { margin: -6px 0 4px; }

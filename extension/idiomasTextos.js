@@ -3,6 +3,7 @@
 // modelo local.) Reglas: main/IDIOMAS.md
 'use strict';
 const I = require('./idiomas');
+const { tr } = require('./media/i18n-idiomas.js');
 
 // ---------------------------------------------------------------- longitud flexible (siempre por párrafos enteros)
 const LONGITUDES = { corto: 150, estandar: 400, largo: 800, completo: Infinity };
@@ -147,13 +148,26 @@ function controlResumen({ lengua, texto, ideas, resumen, extension }) {
     ideas: ideas.map((x) => { const I_ = raices(x.idea, lengua); return I_.size ? [...I_].filter((r) => S.has(r)).length / I_.size : 0; }),
   };
 }
-/** Quita frases repetidas y las que piden escribir en castellano (el resumen y el escrito van SIEMPRE en la lengua del examen) */
+/**
+ * Frases del modelo que piden escribir en castellano o reprochan que el texto esté en la lengua del examen (en castellano, inglés o francés:
+ * los comentarios llegan en la lengua del panel). Solo esas: «written in clear English» o «en un français soutenu» no se tocan.
+ */
+const PIDE_OTRA_LENGUA = new RegExp([
+  "\\b(en|in) (espanol|castellano|spanish|espagnol)\\b",                                         // en español · in Spanish · en espagnol
+  "\\b(esta|es|escrito|redactado) en (ingles|frances)\\b", "\\bno (esta|es) en (espanol|castellano)\\b",
+  "\\bnot (be |been )?(written |in )?in (english|french)\\b", "\\b(is|was|been) (written )?in (english|french) (instead|rather)\\b",
+  "\\bwritten in (english|french)\\b", "\\b(ecrit|redige) en (anglais|francais)\\b",
+  "\\b(instead of|rather than) (english|french|spanish)\\b", "\\b(should|must) be (written )?in (english|french)\\b",
+  "\\bn.?(est|etait) pas (ecrit |redige )?en (anglais|francais)\\b", "\\b(est|ecrit|redige) en (anglais|francais) au lieu\\b",
+  "\\bau lieu (de l.?|du )?(anglais|francais|espagnol)\\b", "\\ben lugar de(l)? (ingles|frances|espanol)\\b",
+].join('|'));
+/** Quita frases repetidas y las que piden escribir en otra lengua (el resumen y el escrito van SIEMPRE en la lengua del examen) */
 function limpiarComentario(txt, max = 3) {
   const vistas = new Set(), out = [];
   for (const f of String(txt || '').split(/(?<=[.!?])\s+/)) {
     const k = plano(f).replace(/[^a-z ]/g, '').trim();
     if (!k || vistas.has(k)) continue; vistas.add(k);
-    if (/(en|in) (espanol|castellano|spanish)|(esta|es|escrito|redactado) en (ingles|frances)|no (esta|es) en (espanol|castellano)/.test(plano(f))) continue;
+    if (PIDE_OTRA_LENGUA.test(plano(f))) continue;
     out.push(f.trim()); if (out.length >= max) break;
   }
   return out.join(' ');
@@ -174,14 +188,16 @@ const tope = (c, max, motivo) => { if (!c) return; if (Number(c.nota) > max) { c
 /**
  * Aplica los controles objetivos a la valoración de un resumen. Devuelve {valoracion, nota, ideasEstado, avisos}.
  * Fuera de tema → 0 en todo. Ideas sin apenas palabras del resumen → «falta». Corto o sin las ideas esenciales → tope en «tarea» y en la nota.
+ * lang: lengua del panel (es | en | fr) para los comentarios y avisos.
  */
-function ajustarResumen(v, control, ideas) {
+function ajustarResumen(v, control, ideas, lang = 'es') {
+  const t = (s, args) => tr(lang, s, args);
   const avisos = [];
   if (control.fueraDeTema) {
-    const crit = Object.fromEntries(RUBRICA.map((c) => [c.id, { nota: 0, comentario: c.id === 'tarea' ? 'El texto no resume el artículo.' : 'No se valora: el texto no es un resumen del artículo.' }]));
+    const crit = Object.fromEntries(RUBRICA.map((c) => [c.id, { nota: 0, comentario: c.id === 'tarea' ? t('El texto no resume el artículo.') : t('No se valora: el texto no es un resumen del artículo.') }]));
     return { valoracion: { ...(v || {}), ideas: ideas.map((_, i) => ({ n: i + 1, estado: 'falta' })), criterios: crit, mejoras: [], inexactitudes: [],
-      comentario: 'Esto no es un resumen del texto: apenas comparte vocabulario con él y no recoge ninguna de sus ideas. Nota: 0.' },
-    nota: 0, ideasEstado: Object.fromEntries(ideas.map((_, i) => [i + 1, 'falta'])), avisos: ['El texto no trata del artículo: nota 0.'] };
+      comentario: t('Esto no es un resumen del texto: apenas comparte vocabulario con él y no recoge ninguna de sus ideas. Nota: 0.') },
+    nota: 0, ideasEstado: Object.fromEntries(ideas.map((_, i) => [i + 1, 'falta'])), avisos: [t('El texto no trata del artículo: nota 0.')] };
   }
   const val = v || {}; const estado = {};
   ideas.forEach((x, i) => {
@@ -193,25 +209,26 @@ function ajustarResumen(v, control, ideas) {
   const c = val.criterios || (val.criterios = {});
   const esenciales = ideas.map((x, i) => (x.principal ? estado[i + 1] : null)).filter(Boolean);
   const sinEsenciales = esenciales.length && esenciales.every((e) => e === 'falta');
-  if (sinEsenciales) tope(c.tarea, 0, 'No recoge ninguna idea esencial.');
-  else if (esenciales.some((e) => e === 'falta')) tope(c.tarea, 2, 'Falta alguna idea esencial.');
-  if (control.muyCorto) tope(c.tarea, 1, `Muy corto (${control.palabras} palabras).`);
-  else if (control.corto) tope(c.tarea, 2, `Más corto de lo pedido (${control.palabras} palabras).`);
+  if (sinEsenciales) tope(c.tarea, 0, t('No recoge ninguna idea esencial.'));
+  else if (esenciales.some((e) => e === 'falta')) tope(c.tarea, 2, t('Falta alguna idea esencial.'));
+  if (control.muyCorto) tope(c.tarea, 1, t('Muy corto ({0} palabras).', [control.palabras]));
+  else if (control.corto) tope(c.tarea, 2, t('Más corto de lo pedido ({0} palabras).', [control.palabras]));
   let nota = notaRubrica(c);
   if (nota != null) {
-    if (sinEsenciales) { nota = Math.min(nota, 2); avisos.push('No recoge ninguna idea esencial: nota máxima 2.'); }
-    if (control.muyCorto) { nota = Math.min(nota, 3); avisos.push('Menos de la mitad de la extensión pedida: nota máxima 3.'); }
+    if (sinEsenciales) { nota = Math.min(nota, 2); avisos.push(t('No recoge ninguna idea esencial: nota máxima 2.')); }
+    if (control.muyCorto) { nota = Math.min(nota, 3); avisos.push(t('Menos de la mitad de la extensión pedida: nota máxima 3.')); }
   }
   return { valoracion: val, nota, ideasEstado: estado, avisos };
 }
 /** Escrito libre: si apenas comparte vocabulario con el enunciado, «tarea» como mucho 1; si es muy corto, tope de nota */
-function ajustarEscrito(v, { lengua, enunciado, texto, extension }) {
+function ajustarEscrito(v, { lengua, enunciado, texto, extension, lang = 'es' }) {
+  const t = (s, args) => tr(lang, s, args);
   const avisos = []; const val = v || {}; const c = val.criterios || (val.criterios = {});
   const S = raices(texto, lengua), E = raices(enunciado, lengua);
   const comunes = [...S].filter((r) => E.has(r)).length;
-  if (comunes < 2) { tope(c.tarea, 1, 'No parece responder al enunciado.'); avisos.push('El texto apenas tiene relación con el enunciado.'); }
+  if (comunes < 2) { tope(c.tarea, 1, t('No parece responder al enunciado.')); avisos.push(t('El texto apenas tiene relación con el enunciado.')); }
   const n = palabras(texto);
-  if (n < extension[0] * 0.5) tope(c.tarea, 1, `Muy corto (${n} palabras).`); else if (n < extension[0]) tope(c.tarea, 2, `Más corto de lo pedido (${n} palabras).`);
+  if (n < extension[0] * 0.5) tope(c.tarea, 1, t('Muy corto ({0} palabras).', [n])); else if (n < extension[0]) tope(c.tarea, 2, t('Más corto de lo pedido ({0} palabras).', [n]));
   let nota = notaRubrica(c);
   if (nota != null && comunes < 2) nota = Math.min(nota, 3);
   if (nota != null && n < extension[0] * 0.5) nota = Math.min(nota, 3);
@@ -229,6 +246,9 @@ const RUBRICA = [
   { id: 'vocabulario', nombre: 'Riqueza y precisión del vocabulario', resumen: 'Vocabulario variado y preciso; reformula en lugar de copiar.', otra: 'Vocabulario variado, preciso y adecuado al tema.' },
 ];
 const BANDAS = ['Insuficiente', 'Flojo', 'Suficiente', 'Bien', 'Excelente'];
+/** Rúbrica y bandas en la lengua del panel (las tablas de arriba quedan en castellano: los ids son los que usa la lógica) */
+const rubricaEn = (lang) => RUBRICA.map((c) => ({ ...c, nombre: tr(lang, c.nombre), resumen: tr(lang, c.resumen), otra: tr(lang, c.otra) }));
+const bandasEn = (lang) => BANDAS.map((b) => tr(lang, b));
 /** Nota sobre 10 a partir de los cinco criterios (0–4) */
 const notaRubrica = (criterios) => {
   const xs = RUBRICA.map((c) => Number((criterios[c.id] || {}).nota));
@@ -238,28 +258,35 @@ const notaRubrica = (criterios) => {
 
 // ---------------------------------------------------------------- instrucciones para el modelo local (respuestas en JSON)
 const NOMBRE_LENGUA = { en: 'English', fr: 'French' };
-const SISTEMA = 'You are a strict examiner for the foreign-language exam of the Spanish civil service competition «Técnico Comercial y Economista del Estado». '
-  + 'The candidate is a native Spanish speaker. The candidate MUST write in the foreign language of the exam (English or French): that is correct and expected, never ask for Spanish. '
-  + 'Only YOUR comments and explanations to the candidate are written in Spanish (castellano), short and concrete, without repeating yourself. Quote the candidate\'s words when pointing out a problem. '
+/** Lengua de los comentarios del modelo: la del panel (es | en | fr) */
+const NOMBRE_PANEL = { es: 'Spanish (castellano)', en: 'English', fr: 'French' };
+const comoPanel = (lp) => NOMBRE_PANEL[lp] || NOMBRE_PANEL.es;
+/** Instrucciones de sistema. lp: lengua del panel, en la que van SOLO los comentarios, explicaciones y motivos */
+const sistema = (lp) => 'You are a strict examiner for the foreign-language exam of the Spanish civil service competition «Técnico Comercial y Economista del Estado». '
+  + 'The candidate is a native Spanish speaker. The candidate ALWAYS writes and speaks in the foreign language of the exam (English or French): that is correct and expected, '
+  + 'never ask the candidate to use another language and never criticise the candidate for writing in the language of the exam. '
+  + `Only YOUR comments, explanations and reasons to the candidate are written in ${comoPanel(lp)}, short and concrete, without repeating yourself. Quote the candidate's words when pointing out a problem. `
   + 'Be strict: an answer that does not do the task gets 0. Never invent errors: if something is correct, do not mark it. Answer ONLY with the JSON object requested.';
+const SISTEMA = sistema('es');   // compatibilidad
 
 const esquemaCriterios = () => ({ type: 'object', properties: Object.fromEntries(RUBRICA.map((c) => [c.id, { type: 'object', properties: { nota: { type: 'integer', minimum: 0, maximum: 4 }, comentario: { type: 'string' } }, required: ['nota', 'comentario'] }])), required: RUBRICA.map((c) => c.id) });
 const esquemaMejoras = { type: 'array', items: { type: 'object', properties: { original: { type: 'string' }, propuesta: { type: 'string' }, motivo: { type: 'string' } }, required: ['original', 'propuesta', 'motivo'] } };
-const listaErrores = (errores) => (errores || []).slice(0, 25).map((e) => `- «${e.fragmento}»: ${e.mensaje}${e.sugerencias && e.sugerencias.length ? ` → ${e.sugerencias.slice(0, 2).join(' / ')}` : ''}`).join('\n') || '(ninguno)';
+const listaErrores = (errores) => (errores || []).slice(0, 25).map((e) => `- «${e.fragmento}»: ${e.mensaje}${e.sugerencias && e.sugerencias.length ? ` → ${e.sugerencias.slice(0, 2).join(' / ')}` : ''}`).join('\n') || '(none)';
 
 /** Corrección de un resumen frente a las ideas clave del texto */
-function promptResumen({ lengua, texto, ideas, resumen, errores, extension }) {
+function promptResumen({ lengua, texto, ideas, resumen, errores, extension, idiomaPanel = 'es' }) {
+  const C = comoPanel(idiomaPanel);
   return {
-    sistema: SISTEMA,
+    sistema: sistema(idiomaPanel),
     mensaje: `TASK: The candidate listened to (or read) the following ${NOMBRE_LENGUA[lengua]} text and wrote a summary in ${NOMBRE_LENGUA[lengua]}.\n\n`
       + `=== TEXT ===\n${texto}\n\n=== KEY IDEAS (numbered; * = essential) ===\n${ideas.map((x, i) => `${i + 1}.${x.principal ? '*' : ''} ${x.idea}`).join('\n')}\n\n`
       + `=== CANDIDATE'S SUMMARY, written in ${NOMBRE_LENGUA[lengua]} as required (${palabras(resumen)} words; recommended ${extension[0]}–${extension[1]}) ===\n${resumen}\n\n`
       + `=== GRAMMAR/SPELLING ISSUES FOUND BY LANGUAGETOOL ===\n${listaErrores(errores)}\n\n`
       + 'Return JSON: "ideas": for EACH key idea, its number and "estado" = "recogida" (clearly present, even if reworded), "parcial" or "falta"; '
-      + '"criterios": score 0-4 and a one-sentence Spanish comment for: tarea (coverage of essential ideas, no personal opinion, length), coherencia, registro (formal), correccion (grammar/spelling), vocabulario (variety, rewording instead of copying); '
-      + '"inexactitudes": statements in the summary that contradict the text (Spanish, max 3, empty if none); '
-      + `"mejoras": up to 6 concrete rewrites: "original" = exact words copied from the CANDIDATE'S SUMMARY, "propuesta" = improved version in ${NOMBRE_LENGUA[lengua]} (never in Spanish), "motivo" = Spanish explanation; `
-      + '"comentario": 2-3 sentences in Spanish with the overall assessment and the single most useful advice.',
+      + `"criterios": score 0-4 and a one-sentence comment in ${C} for: tarea (coverage of essential ideas, no personal opinion, length), coherencia, registro (formal), correccion (grammar/spelling), vocabulario (variety, rewording instead of copying); `
+      + `"inexactitudes": statements in the summary that contradict the text (explained in ${C}, max 3, empty if none); `
+      + `"mejoras": up to 6 concrete rewrites: "original" = exact words copied from the CANDIDATE'S SUMMARY, "propuesta" = improved version in ${NOMBRE_LENGUA[lengua]} (never in Spanish), "motivo" = explanation in ${C}; `
+      + `"comentario": 2-3 sentences in ${C} with the overall assessment and the single most useful advice.`,
     formato: { type: 'object', properties: {
       ideas: { type: 'array', items: { type: 'object', properties: { n: { type: 'integer' }, estado: { type: 'string', enum: ['recogida', 'parcial', 'falta'] } }, required: ['n', 'estado'] } },
       criterios: esquemaCriterios(), inexactitudes: { type: 'array', items: { type: 'string' } }, mejoras: esquemaMejoras, comentario: { type: 'string' } },
@@ -268,37 +295,39 @@ function promptResumen({ lengua, texto, ideas, resumen, errores, extension }) {
 }
 
 /** Corrección de una tarea de escritura (opinión, carta, correo…) */
-function promptEscrito({ lengua, tarea, texto, errores }) {
+function promptEscrito({ lengua, tarea, texto, errores, idiomaPanel = 'es' }) {
+  const C = comoPanel(idiomaPanel);
   return {
-    sistema: SISTEMA,
+    sistema: sistema(idiomaPanel),
     mensaje: `TASK given to the candidate (${NOMBRE_LENGUA[lengua]}, level ${tarea.nivel}, register: ${tarea.registro}, ${tarea.palabras[0]}–${tarea.palabras[1]} words):\n${tarea.enunciado}\n\n`
       + `=== CANDIDATE'S TEXT (${palabras(texto)} words) ===\n${texto}\n\n=== GRAMMAR/SPELLING ISSUES FOUND BY LANGUAGETOOL ===\n${listaErrores(errores)}\n\n`
-      + 'Return JSON: "criterios": score 0-4 and a one-sentence Spanish comment for: tarea (does it do everything the task asks, for the right reader, with the right length), coherencia, registro, correccion, vocabulario; '
-      + `"mejoras": up to 8 concrete rewrites ("original" = exact words copied from the candidate's text, "propuesta" = improved version in ${NOMBRE_LENGUA[lengua]}, never in Spanish, "motivo" = Spanish explanation); `
-      + '"comentario": 2-3 sentences in Spanish: overall assessment and the most useful advice.',
+      + `Return JSON: "criterios": score 0-4 and a one-sentence comment in ${C} for: tarea (does it do everything the task asks, for the right reader, with the right length), coherencia, registro, correccion, vocabulario; `
+      + `"mejoras": up to 8 concrete rewrites ("original" = exact words copied from the candidate's text, "propuesta" = improved version in ${NOMBRE_LENGUA[lengua]}, never in Spanish, "motivo" = explanation in ${C}); `
+      + `"comentario": 2-3 sentences in ${C}: overall assessment and the most useful advice.`,
     formato: { type: 'object', properties: { criterios: esquemaCriterios(), mejoras: esquemaMejoras, comentario: { type: 'string' } }, required: ['criterios', 'mejoras', 'comentario'] },
   };
 }
 
 /** Respuesta abierta de comprensión frente a la respuesta modelo */
-function promptAbierta({ lengua, pregunta, modelo, cita, respuesta }) {
+function promptAbierta({ lengua, pregunta, modelo, cita, respuesta, idiomaPanel = 'es' }) {
   return {
-    sistema: SISTEMA,
+    sistema: sistema(idiomaPanel),
     mensaje: `Reading/listening comprehension question (${NOMBRE_LENGUA[lengua]}): ${pregunta}\nModel answer: ${modelo}\nEvidence in the text: ${cita || '-'}\n`
-      + `Candidate's answer: ${respuesta}\n\nJudge ONLY the content (not the grammar). Return JSON: "nota": 2 = correct, 1 = partly correct, 0 = wrong or empty; "comentario": one Spanish sentence explaining what is right or missing.`,
+      + `Candidate's answer: ${respuesta}\n\nJudge ONLY the content (not the grammar). Return JSON: "nota": 2 = correct, 1 = partly correct, 0 = wrong or empty; "comentario": one sentence in ${comoPanel(idiomaPanel)} explaining what is right or missing.`,
     formato: { type: 'object', properties: { nota: { type: 'integer', minimum: 0, maximum: 2 }, comentario: { type: 'string' } }, required: ['nota', 'comentario'] },
   };
 }
 
 /** Respuesta oral a una pregunta del tribunal (transcrita con whisper) */
-function promptTribunal({ lengua, pregunta, ideas, transcripcion, segundos, texto }) {
+function promptTribunal({ lengua, pregunta, ideas, transcripcion, segundos, texto, idiomaPanel = 'es' }) {
+  const C = comoPanel(idiomaPanel);
   return {
-    sistema: SISTEMA,
+    sistema: sistema(idiomaPanel),
     mensaje: `ORAL exam, question from the board (${NOMBRE_LENGUA[lengua]}): ${pregunta}\n${ideas && ideas.length ? `Possible ideas: ${ideas.join(' / ')}\n` : ''}`
       + `${texto ? `The question refers to this text:\n${texto.slice(0, 6000)}\n` : ''}`
       + `Automatic transcription of the candidate's spoken answer (${Math.round(segundos || 0)} s; transcription may hide hesitations; ignore punctuation):\n${transcripcion}\n\n`
       + 'Return JSON: "contenido": 0-4 (relevance and depth of the answer); "lengua": 0-4 (grammar and vocabulary as far as the transcription shows); '
-      + '"comentario": 2 Spanish sentences; "mejoras": up to 4 rewrites ("original" from the transcription, "propuesta", "motivo" in Spanish); '
+      + `"comentario": 2 sentences in ${C}; "mejoras": up to 4 rewrites ("original" from the transcription, "propuesta" in ${NOMBRE_LENGUA[lengua]}, "motivo" in ${C}); `
       + `"repregunta": one natural follow-up question the board could ask next, in ${NOMBRE_LENGUA[lengua]}.`,
     formato: { type: 'object', properties: { contenido: { type: 'integer', minimum: 0, maximum: 4 }, lengua: { type: 'integer', minimum: 0, maximum: 4 },
       comentario: { type: 'string' }, mejoras: esquemaMejoras, repregunta: { type: 'string' } }, required: ['contenido', 'lengua', 'comentario', 'repregunta'] },
@@ -306,14 +335,15 @@ function promptTribunal({ lengua, pregunta, ideas, transcripcion, segundos, text
 }
 
 /** Exposición oral sobre un texto (o lectura del propio resumen): cobertura de ideas y lengua */
-function promptExposicion({ lengua, texto, ideas, transcripcion, segundos }) {
+function promptExposicion({ lengua, texto, ideas, transcripcion, segundos, idiomaPanel = 'es' }) {
+  const C = comoPanel(idiomaPanel);
   return {
-    sistema: SISTEMA,
+    sistema: sistema(idiomaPanel),
     mensaje: `ORAL exam: after reading the text below, the candidate gave an oral presentation about it (${Math.round((segundos || 0) / 60)} min). `
       + `Text (${NOMBRE_LENGUA[lengua]}):\n${texto.slice(0, 9000)}\n\nKey ideas (* = essential):\n${ideas.map((x, i) => `${i + 1}.${x.principal ? '*' : ''} ${x.idea}`).join('\n')}\n\n`
       + `Automatic transcription of the presentation:\n${transcripcion}\n\n`
-      + 'Return JSON: "ideas": for each key idea, "n" and "estado" (recogida | parcial | falta); "criterios": 0-4 + Spanish comment for: tarea (coverage and personal contribution), coherencia (structure: introduction, development, conclusion), registro, correccion, vocabulario; '
-      + '"mejoras": up to 6 rewrites ("original" from the transcription, "propuesta", "motivo" in Spanish); "comentario": 2-3 Spanish sentences.',
+      + `Return JSON: "ideas": for each key idea, "n" and "estado" (recogida | parcial | falta); "criterios": 0-4 + comment in ${C} for: tarea (coverage and personal contribution), coherencia (structure: introduction, development, conclusion), registro, correccion, vocabulario; `
+      + `"mejoras": up to 6 rewrites ("original" from the transcription, "propuesta" in ${NOMBRE_LENGUA[lengua]}, "motivo" in ${C}); "comentario": 2-3 sentences in ${C}.`,
     formato: { type: 'object', properties: {
       ideas: { type: 'array', items: { type: 'object', properties: { n: { type: 'integer' }, estado: { type: 'string', enum: ['recogida', 'parcial', 'falta'] } }, required: ['n', 'estado'] } },
       criterios: esquemaCriterios(), mejoras: esquemaMejoras, comentario: { type: 'string' } }, required: ['ideas', 'criterios', 'comentario'] },
@@ -345,8 +375,8 @@ function metricasOral(segmentos, lengua, duracion) {
   };
 }
 /** Velocidad orientativa: lectura en voz alta y exposición de un hablante de C1 rondan 120–160 palabras por minuto */
-const valorarVelocidad = (ppm) => (ppm < 90 ? 'lenta' : ppm < 115 ? 'algo lenta' : ppm <= 170 ? 'adecuada' : 'rápida');
+const valorarVelocidad = (ppm, lang = 'es') => tr(lang, ppm < 90 ? 'lenta' : ppm < 115 ? 'algo lenta' : ppm <= 170 ? 'adecuada' : 'rápida');
 
-module.exports = { LONGITUDES, parrafosPara, recortar, palabras, comparar, frasesDictado, copiado, extensionResumen, RUBRICA, BANDAS, notaRubrica,
+module.exports = { LONGITUDES, parrafosPara, recortar, palabras, comparar, frasesDictado, copiado, extensionResumen, RUBRICA, BANDAS, rubricaEn, bandasEn, notaRubrica,
   comunesRaices, controlResumen, ajustarResumen, ajustarEscrito, depurarValoracion, limpiarComentario, pareceCastellano,
   promptResumen, promptEscrito, promptAbierta, promptTribunal, promptExposicion, metricasOral, valorarVelocidad };
