@@ -38,6 +38,8 @@ Al escribir no hay que poner ningún `%` (`activarNotas`, en `extension.js`):
 - si detrás de `\footnote{%` queda texto en la misma línea (al juntar dos líneas con ⌫), se quita el `%`.
   Si no, ese texto quedaría como comentario y desaparecería del PDF;
 - el cambio entra en el mismo paso de deshacer (⌘Z) que lo que se ha escrito.
+- solo actúa sobre lo que se escribe en el editor: si el fichero cambia en el disco (Claude Code, *Sincronizar*), no se toca. Si no, el
+  documento quedaría con cambios sin guardar y VS Code avisaría al guardar de que el fichero es más nuevo (v0.42.3).
 
 Se probó (comparación de imágenes página a página) que el PDF es idéntico en 3.A.4, 3.A.6, 3.A.29, 3.B.7, 3.B.14, 4.B.24 y 4.B.26.
 

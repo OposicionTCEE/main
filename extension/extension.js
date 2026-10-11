@@ -758,6 +758,9 @@ function activarNotas(context) {
     vscode.workspace.onDidChangeTextDocument((e) => {
       const ed = vscode.window.activeTextEditor;
       if (ajustando || !ed || e.document !== ed.document || e.document.languageId !== 'latex' || !e.contentChanges.length) return;
+      // documento sin cambios pendientes = el cambio viene del disco (Claude Code, Sincronizar…): no se toca, porque dejaría el
+      // documento con cambios sin guardar y VS Code avisaría de que el fichero es más nuevo al guardar
+      if (!e.document.isDirty) return;
       const doc = e.document, lineas = new Set();
       for (const ch of e.contentChanges) {
         const n = (ch.text.match(/\n/g) || []).length;
