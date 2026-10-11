@@ -4,10 +4,12 @@
 Espacio de trabajo para preparar la oposición a Técnico Comercial y Economista del Estado (TCEE).
 La carpeta raíz (`TCEE/`) contiene:
 - `main/` — este repositorio: configuración del entorno, scripts, análisis y todo lo que no es un tema.
-- `temario/` — repositorio con todos los temas: `Ejercicio-3/Parte-A/3.A.1/`, `Ejercicio-4/Parte-B/4.B.7/`, etc.
+- `temario/` — repositorio PRIVADO (desde el 11/10/2026) con todos los temas: `Ejercicio-3/Parte-A/3.A.1/`, `Ejercicio-4/Parte-B/4.B.7/`, etc.
   Cada carpeta de tema tiene `main.tex`, la carpeta `Img/` con sus figuras (el preámbulo usa `\graphicspath{{Img/}}`)
   y, si ha compilado, el PDF `X.Y.N.pdf` (no se sube a GitHub). Las figuras nuevas van siempre en `Img/`.
-  Los antiguos repositorios `Tema-X.Y.Z` están archivados; su historial está dentro de `temario` (ver `main/HISTORIAL.md`).
+  Los antiguos repositorios `Tema-X.Y.Z` están archivados y son privados; su historial está dentro de `temario` (ver `main/HISTORIAL.md`).
+  Al ser privado, `temario` no se descarga sin credenciales: en una sesión en la nube se pide acceso con la herramienta de repositorios (`add_repo`),
+  nunca se da por inexistente porque una descarga anónima falle.
 
 ## Cómo trabajar con los temas
 - Compilación: `bash main/scripts/compilar.sh temario/Ejercicio-3/Parte-A/3.A.43/main` (envuelve `latexmk -pdf -f …`).
