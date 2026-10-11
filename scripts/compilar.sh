@@ -1,7 +1,7 @@
 #!/bin/bash
 # Compila un tema como Overleaf: si la compilación falla del todo, se conserva el último PDF correcto.
 # Lo usa VS Code (LaTeX Workshop) al pulsar "Compilar". También se puede usar a mano:
-#   bash main/scripts/compilar.sh /ruta/al/Tema-3.A.43/main   [carpeta_de_salida]
+#   bash main/scripts/compilar.sh temario/Ejercicio-3/Parte-A/3.A.43/main   [carpeta_de_salida]
 #
 # - Compila en <salida>/.tmp (por defecto <tema>/.build/.tmp).
 # - Si se genera PDF (aunque haya errores menores), lo copia a <salida>/ y es el que ves.

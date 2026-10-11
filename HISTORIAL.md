@@ -24,10 +24,6 @@ Esas fotos no se borran nunca: puedes volver a cualquier versión anterior de cu
 2. Abre `main.tex` y pulsa **History** (arriba a la derecha).
 3. Cada línea es una versión; al pulsarla ves qué cambió.
 
-### Lo anterior a la unificación (antes del 03/10/2026)
-El repositorio `temario` conserva el historial completo de los antiguos repositorios `Tema-X.Y.Z`.
-Esos repositorios siguen existiendo en GitHub como copia de seguridad, archivados (solo lectura) y privados desde el 11/10/2026.
-
 ---
 
 ## 2. Deshacer cambios
@@ -72,4 +68,3 @@ sustituyes sigue guardada en el historial.
 | Commit | Una foto del estado de los archivos, con fecha y descripción |
 | Sincronizar | Guardar foto + traer lo de GitHub + subir lo tuyo (tarea *Sincronizar todos los temas con GitHub*) |
 | Conflicto | El mismo fragmento cambió en dos sitios; hay que elegir cuál se queda |
-| Archivado | Repositorio de GitHub en solo lectura: se puede consultar, no modificar |

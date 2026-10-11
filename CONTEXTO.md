@@ -24,7 +24,6 @@ Claude Code lee `CLAUDE.md` en cada sesión. Este documento completa ese fichero
 | `main` | público | Entorno: scripts, panel, análisis, documentación |
 | `temario` | **privado** (desde el 11/10/2026) | Los temas (`Ejercicio-X/Parte-Y/X.Y.N/main.tex` + `Img/`) |
 | `test` | público | Banco de preguntas del test (`preguntas.json`, `img/`) |
-| `Tema-X.Y.Z` (unos 145) | **privados**, archivados | Antiguos repositorios por tema, solo como copia de seguridad (su historial está en `temario`) |
 | `progreso` | **privado** | Tiempos y temas hechos (`equipos/`), calendarios (`calendarios/`), cantes (`cantes/`) y respuestas del test (`test/`) |
 
 Nada de `progreso` se copia nunca a `main` ni a `temario`.
