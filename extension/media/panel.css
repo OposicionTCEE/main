@@ -308,6 +308,31 @@ button.grande { font-size: 1.1em; padding: 8px 18px; }
 .aviso-instalar { border-color: var(--acento); }
 @media (prefers-reduced-motion: reduce) { .punto-rec { animation: none; } .medidor span { transition: none; } }
 .cante-lista td, .cante-lista th { font-size: .95em; } .cante-lista .nowrap { white-space: nowrap; }
+/* Cante: audios adjuntos y marcas (CANTE.md, apartado 6) */
+.cante-adj { border-top: 1px solid var(--borde); margin-top: 10px; padding-top: 10px; }
+.cante-adj-lista { margin: 6px 0 12px; padding-left: 22px; display: flex; flex-direction: column; gap: 4px; }
+.cante-adj-lista li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: center; }
+.cante-adj-nombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cante-adj-bot { display: flex; gap: 2px; } .cante-adj-bot button { padding: 0 7px; min-width: 0; }
+.cante-marcado { margin-left: 4px; color: var(--apagado); font-size: .85em; }
+.cante-de { color: var(--apagado); }
+.cante-marcas { border: 1px solid var(--borde); border-radius: 8px; padding: 10px 12px; margin: 10px 0 14px; display: flex; flex-direction: column; gap: 8px; }
+.cante-marcas > p { margin: 0; }
+.cante-repro { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.cante-repro button { min-width: 0; padding: 2px 9px; }
+.cante-repro select { font: inherit; color: var(--vscode-input-foreground, var(--tinta)); background: var(--vscode-input-background, var(--fondo)); border: 1px solid var(--borde); border-radius: 4px; }
+.cante-pos { font-variant-numeric: tabular-nums; margin: 0 6px; }
+.cante-onda { width: 100%; height: 90px; display: block; border-radius: 4px; background: color-mix(in srgb, var(--tinta) 4%, transparent); cursor: pointer; }
+.cante-leyenda { display: flex; gap: 12px; flex-wrap: wrap; font-size: .85em; align-items: center; }
+.cante-leyenda > span[class^="l-"]::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.l-expo::before { background: rgba(60, 170, 110, .55); } .l-comp::before { background: rgba(210, 150, 40, .6); } .l-desc::before { background: rgba(128, 128, 128, .6); }
+.cante-marcas button.activo { outline: 2px solid rgba(128, 128, 128, .8); }
+.cante-resumen a, .cante-descartes a, .cante-t[data-ir] { cursor: pointer; text-decoration: underline dotted; }
+.cante-descartes { margin: 0; padding-left: 18px; font-size: .92em; }
+button.enlace { background: none; border: none; padding: 0; color: var(--vscode-textLink-foreground, var(--acento)); cursor: pointer; text-decoration: underline; font: inherit; min-width: 0; }
+.cante-texto p.t-complementario > span:last-child { border-left: 3px solid rgba(210, 150, 40, .8); padding-left: 8px; }
+.cante-texto p.t-descartado > span:last-child { opacity: .45; border-left: 3px solid rgba(128, 128, 128, .7); padding-left: 8px; }
+.cante-tipo { font-style: normal; font-size: .8em; color: var(--apagado); text-transform: uppercase; letter-spacing: .5px; }
 
 /* ---------------------------------------------------------------- Temas: cartas por bloque */
 .tb-controles { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }

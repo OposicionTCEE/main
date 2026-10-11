@@ -25,6 +25,7 @@
     if (m.tipo === 'canteDetalle' && window.TCEE_CANTE) window.TCEE_CANTE.detalle(m.detalle);
     if (m.tipo === 'canteSeleccionar' && window.TCEE_CANTE) window.TCEE_CANTE.seleccionar(m.id);
     if (m.tipo === 'canteMicros' && window.TCEE_CANTE) window.TCEE_CANTE.micros(m.micros);
+    if (['canteAdjuntos', 'canteJuntado', 'canteEscucha'].includes(m.tipo) && window.TCEE_CANTE) window.TCEE_CANTE.recibir(m);
     if (m.tipo === 'aviso') { aviso(m.texto, m.error); if (m.error && window.TCEE_CAL) window.TCEE_CAL.fallo(); }
   });
 
@@ -46,7 +47,7 @@
         <nav>${pest.map(([k, t]) => `<button class="pest ${estado.pestana === k ? 'activa' : ''}" data-pest="${k}">${t}</button>`).join('')}</nav>
       </header>
       <main id="cuerpo"></main>`;
-    app.querySelectorAll('[data-pest]').forEach((b) => b.onclick = () => { estado.pestana = b.dataset.pest; guardar(); pintar(); });
+    app.querySelectorAll('[data-pest]').forEach((b) => b.onclick = () => { if (b.dataset.pest !== 'cante' && window.TCEE_CANTE) window.TCEE_CANTE.salir(); estado.pestana = b.dataset.pest; guardar(); pintar(); });
     const cuerpo = document.getElementById('cuerpo');
     const pCalendario = (el) => { window.TCEE_CAL.pintar(el, D, { estado, guardar, enviar, repintar: pintar }); enlaces(el); };
     const pRelaciones = (el) => { window.TCEE_REL.pintar(el, D, { estado, guardar, enviar, repintar: pintar }); enlaces(el); };
