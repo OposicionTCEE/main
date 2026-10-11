@@ -133,7 +133,7 @@ contenido se pierde por razones de forma.
 
 ## 5. Bibliografía
 
-- **Obligatorio e importantísimo: al terminar cada redacción (cada epígrafe trabajado), toda obra citada o utilizada que aún no figure
+- **Obligatorio: al terminar cada redacción (cada epígrafe trabajado), toda obra citada o utilizada que aún no figure
   en la bibliografía del tema se añade en ese mismo momento**, en su bloque y en su orden, con las normas de este apartado. No se deja
   para el final del tema ni se da por hecho: una cita en el texto sin su entrada en la bibliografía es un encargo incompleto. Antes de
   añadirla se comprueba que no esté ya (una sola entrada por título). En el resumen del epígrafe (§8.1) se enumeran las entradas añadidas
