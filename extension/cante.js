@@ -111,6 +111,36 @@ function tipoEn(c, x) {
   return en(c.descartar) ? 'descartado' : en(c.complementario) ? 'complementario' : 'exposicion';
 }
 
+/**
+ * Palabras con su instante a partir de los tokens del JSON completo de whisper (-ojf), leído como latin1:
+ * whisper escribe los bytes UTF-8 tal cual y una letra con tilde puede quedar partida entre dos tokens, así que se juntan los bytes
+ * de cada palabra antes de decodificarlos. Devuelve [[t (s, 2 decimales), palabra], …]
+ */
+function palabrasDeTokens(tokens) {
+  const r = [];
+  let cur = null;
+  const cerrar = () => {
+    if (!cur) return;
+    let w = Buffer.from(cur.b, 'latin1').toString('utf8');
+    if (w.includes('\ufffd')) w = cur.b;   // el fichero traía escapes \u: ya era texto
+    w = w.trim();
+    if (w) r.push([cur.t, w]);
+    cur = null;
+  };
+  for (const k of tokens || []) {
+    const tx = String(k.text || '');
+    if (!tx || /^\[_.*\]$/.test(tx.trim())) continue;   // fichas especiales: [_BEG_], [_TT_150], [_EOT_]…
+    const t = k.offsets && k.offsets.from >= 0 ? Math.round(k.offsets.from / 10) / 100 : null;
+    if (/^\s/.test(tx) || !cur) { cerrar(); cur = { t, b: tx }; } else cur.b += tx;
+    if (cur.t == null && t != null) cur.t = t;
+  }
+  cerrar();
+  return r.filter((x) => x[0] != null);
+}
+/** Palabras de un segmento: las suyas si las tiene; si no, el segmento entero como una sola «palabra» */
+const palabrasDe = (seg) => (seg.palabras && seg.palabras.length ? seg.palabras : [[seg.t, seg.texto]]);
+const contar = (x) => String(x).split(/\s+/).filter(Boolean).length;
+
 /** Duración de un fichero de audio o vídeo (s), leída de la cabecera con ffmpeg */
 function duracionDe(ffmpeg, f) {
   return new Promise((ok) => execFile(ffmpeg, ['-hide_banner', '-nostdin', '-i', f], { timeout: 20000 }, (e, out, err) => {
@@ -210,7 +240,7 @@ function crearCante({ raiz, progreso, avisar, alCambiar, cacheEscucha }) {
     let fs_ = []; try { fs_ = fs.readdirSync(dirTx()).filter((f) => f.endsWith('.json')); } catch (e) { /* aún no hay cantes */ }
     return fs_.map((f) => leerJson(path.join(dirTx(), f), null)).filter((f) => f && f.id && f.fecha)
       .map((f) => { const c = calcularTramos(f); return { ...f, real: c.real, marcado: c.marcado,
-        palabrasExpo: (f.segmentos || []).filter((x) => tipoEn(c, x.t) === 'exposicion').reduce((n, x) => n + x.texto.split(/\s+/).filter(Boolean).length, 0) }; })
+        palabrasExpo: (f.segmentos || []).flatMap(palabrasDe).filter(([t]) => tipoEn(c, t) === 'exposicion').reduce((n, [, w]) => n + contar(w), 0) }; })
       .map(({ segmentos, texto, ...r }) => ({ ...r, palabras: texto ? texto.split(/\s+/).filter(Boolean).length : 0,
         audioExiste: existe(path.join(dirAudio(), r.audio || '')) || existe(path.join(dirAudio(), (r.audio || '').replace(/\.wav$/, '.m4a'))) }))
       .sort((a, b) => b.fecha.localeCompare(a.fecha));
@@ -285,6 +315,22 @@ function crearCante({ raiz, progreso, avisar, alCambiar, cacheEscucha }) {
     return calcularTramos(n);
   }
 
+  /** Guarda la transcripción corregida por el usuario (mismos segmentos e instantes; cambia solo el texto) */
+  function guardarSegmentos(id, segs) {
+    const f = leer(id); if (!f || !Array.isArray(segs)) return false;
+    const limpios = segs.map((x) => {
+      const seg = { t: Number(x.t) || 0, texto: '' };
+      if (Array.isArray(x.palabras) && x.palabras.length) {
+        seg.palabras = x.palabras.map(([t, w]) => [Number(t) || 0, String(w || '').replace(/\s+/g, ' ').trim()]).filter(([, w]) => w);
+        seg.texto = seg.palabras.map((p) => p[1]).join(' ');
+        if (!seg.palabras.length) delete seg.palabras;
+      } else seg.texto = String(x.texto || '').replace(/\s+/g, ' ').trim();
+      return seg;
+    }).filter((x) => x.texto);
+    guardarFicha({ ...f, segmentos: limpios, texto: limpios.map((x) => x.texto).join(' '), editado: true });
+    return true;
+  }
+
   /** Copia para escuchar en el panel (MP3: el reproductor de VS Code no lee AAC) y forma de onda (pico cada 0,1 s, de 0 a 100) */
   async function escucha(id) {
     const h = herramientas();
@@ -346,21 +392,32 @@ function crearCante({ raiz, progreso, avisar, alCambiar, cacheEscucha }) {
       let ok = false;
       try { await correr(h.ffmpeg, ['-hide_banner', '-nostdin', '-y', '-i', wav, '-ac', '1', '-ar', String(HZ), '-c:a', 'pcm_s16le', limpio]); ok = fs.statSync(limpio).size > tam * 0.9; } catch (e) { ok = false; }
       if (!ok) await correr(h.ffmpeg, ['-hide_banner', '-nostdin', '-y', '-f', 's16le', '-ar', String(HZ), '-ac', '1', '-i', wav, '-c:a', 'pcm_s16le', limpio]);
-      const args = ['-m', h.modelo, '-f', limpio, '-l', 'es', '-oj', '-of', base, '-pp', '-t', String(Math.max(2, Math.min(8, os.cpus().length - 1)))];
+      // -ojf: JSON completo, con el instante de cada token (para marcar tramos seleccionando el texto)
+      const args = ['-m', h.modelo, '-f', limpio, '-l', 'es', '-ojf', '-of', base, '-pp', '-t', String(Math.max(2, Math.min(8, os.cpus().length - 1)))];
       if (f.pista) args.push('--prompt', f.pista);
       await correr(h.whisper, args, (linea) => {
         const m = linea.match(/progress\s*=\s*(\d+)%/);
         if (m && transcribiendo) { transcribiendo.pct = Number(m[1]); alCambiar(true); }
       });
       const j = leerJson(`${base}.json`, { transcription: [] });
-      const segmentos = (j.transcription || []).map((s) => ({ t: Math.round((s.offsets ? s.offsets.from : 0) / 1000), texto: (s.text || '').trim() }))
-        .filter((s) => s.texto && !ALUCINACIONES.test(s.texto));
+      let jb = null; try { jb = JSON.parse(fs.readFileSync(`${base}.json`, 'latin1')); } catch (e) { /* sin tokens: solo frases */ }
+      const segmentos = (j.transcription || []).map((s, i) => {
+        const seg = { t: Math.round((s.offsets ? s.offsets.from : 0) / 1000), texto: (s.text || '').trim() };
+        const ps = jb && jb.transcription && jb.transcription[i] ? palabrasDeTokens(jb.transcription[i].tokens) : [];
+        if (ps.length) { seg.palabras = ps; seg.texto = ps.map((p) => p[1]).join(' '); }
+        return seg;
+      }).filter((s) => s.texto && !ALUCINACIONES.test(s.texto));
       // audio comprimido para guardar (≈20 MB por hora) en lugar del WAV (≈115 MB por hora)
+      // (al volver a transcribir, el audio ya es .m4a: no se recomprime ni se borra)
       const m4a = wav.replace(/\.wav$/, '.m4a');
-      await correr(h.ffmpeg, ['-hide_banner', '-nostdin', '-y', '-i', limpio, '-c:a', 'aac', '-b:a', '48k', m4a]);
-      try { fs.unlinkSync(wav); } catch (e) { /* ya no está */ }
+      if (wav !== m4a) {
+        await correr(h.ffmpeg, ['-hide_banner', '-nostdin', '-y', '-i', limpio, '-c:a', 'aac', '-b:a', '48k', m4a]);
+        try { fs.unlinkSync(wav); } catch (e) { /* ya no está */ }
+      }
       if (!leer(id)) { try { fs.unlinkSync(m4a); } catch (e) { /* no estaba */ } return; }   // se eliminó mientras se transcribía
-      guardarFicha({ ...leer(id), audio: path.basename(m4a), estado: 'transcrito', modelo: MODELO, segmentos, texto: segmentos.map((s) => s.texto).join(' ') });
+      const nueva = { ...leer(id), audio: path.basename(m4a), estado: 'transcrito', modelo: MODELO, segmentos, texto: segmentos.map((s) => s.texto).join(' ') };
+      delete nueva.editado;
+      guardarFicha(nueva);
       avisar(`Transcripción lista: cante de ${f.codigo}.`);
     } catch (e) {
       if (cancelado) { guardarFicha({ ...leer(id), estado: 'pendiente' }); avisar(`Transcripción del cante de ${f.codigo} cancelada. Queda pendiente.`); }
@@ -416,7 +473,7 @@ function crearCante({ raiz, progreso, avisar, alCambiar, cacheEscucha }) {
   }
 
   return { herramientas, microfonos: async () => { const h = herramientas(); return h.ffmpeg ? microfonos(h.ffmpeg) : []; },
-    empezar, terminar, lista, leer, eliminar, rutaAudio, encolar, cancelar, retomar, estado, infoAdjuntos, juntar, guardarTramos, escucha };
+    empezar, terminar, lista, leer, eliminar, rutaAudio, encolar, cancelar, retomar, estado, infoAdjuntos, juntar, guardarTramos, escucha, guardarSegmentos };
 }
 
-module.exports = { crearCante, herramientas, microfonos, elegirMicro, pista, nivel, ALUCINACIONES, normalizarTramos, calcularTramos, tipoEn };
+module.exports = { crearCante, herramientas, microfonos, elegirMicro, pista, nivel, ALUCINACIONES, normalizarTramos, calcularTramos, tipoEn, palabrasDeTokens };

@@ -332,6 +332,15 @@ button.grande { font-size: 1.1em; padding: 8px 18px; }
 button.enlace { background: none; border: none; padding: 0; color: var(--vscode-textLink-foreground, var(--acento)); cursor: pointer; text-decoration: underline; font: inherit; min-width: 0; }
 .cante-texto p.t-complementario > span:last-child { border-left: 3px solid rgba(210, 150, 40, .8); padding-left: 8px; }
 .cante-texto p.t-descartado > span:last-child { opacity: .45; border-left: 3px solid rgba(128, 128, 128, .7); padding-left: 8px; }
+.cante-seltxt { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 12px 0 4px; position: sticky; top: 0; background: var(--fondo); padding: 6px 0; z-index: 2; }
+.cante-seltxt .apagado { flex: 1 1 220px; font-size: .9em; }
+.cante-aviso-frase { font-size: .88em; margin: 4px 0; }
+.cante-texto .w { border-radius: 2px; }
+.cante-texto .w:hover { background: color-mix(in srgb, var(--tinta) 8%, transparent); }
+.cante-texto .w.actual { background: color-mix(in srgb, var(--acento) 35%, transparent); }
+.cante-editor { position: fixed; z-index: 50; width: min(420px, calc(100vw - 16px)); background: var(--vscode-editorWidget-background, var(--fondo)); border: 1px solid var(--borde); border-radius: 6px; padding: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, .35); display: flex; flex-direction: column; gap: 8px; }
+.cante-editor input[type="text"], .cante-editor textarea { font: inherit; width: 100%; box-sizing: border-box; color: var(--vscode-input-foreground, var(--tinta)); background: var(--vscode-input-background, var(--fondo)); border: 1px solid var(--borde); border-radius: 4px; padding: 4px 6px; }
+.cante-editor p { margin: 0; align-items: center; } .cante-editor label { font-size: .9em; }
 .cante-tipo { font-style: normal; font-size: .8em; color: var(--apagado); text-transform: uppercase; letter-spacing: .5px; }
 
 /* ---------------------------------------------------------------- Temas: cartas por bloque */
