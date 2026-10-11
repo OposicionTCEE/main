@@ -40,6 +40,12 @@
     const complementario = t.exposicion ? [...restar([0, expo[0]], t.descartar), ...restar([expo[1], dur], t.descartar)] : [];
     return { t, marcado: !!(t.exposicion || t.descartar.length), exposicion, complementario, descartar: t.descartar, real: Math.round(largo(exposicion)) };
   }
+  // palabras con su instante; los cantes transcritos antes de la v0.44 solo tienen frases: cada frase cuenta como una «palabra»
+  const palabrasDe = (seg) => (seg.palabras && seg.palabras.length ? seg.palabras : [[seg.t, seg.texto]]);
+  const contar = (x) => String(x).split(/\s+/).filter(Boolean).length;
+  const palabrasExpoDe = (f, c) => (f.segmentos || []).flatMap(palabrasDe).filter(([t]) => tipoEn(c, t) === 'exposicion').reduce((n, [, w]) => n + contar(w), 0);
+  let W = [];                // palabras del cante abierto: [{s, p, t, w, tipo}] (p = null si es una frase entera)
+  let selK = null;           // [primera, última] palabra seleccionada en el texto
   const tipoEn = (c, x) => { const en = (xs) => xs.some(([a, b]) => x >= a && x < b); return en(c.descartar) ? 'descartado' : en(c.complementario) ? 'complementario' : 'exposicion'; };
 
   function pintar(elemento, datos, contexto) {
@@ -139,13 +145,18 @@
     const f = detalle;
     if (!f) return '<p class="apagado cante-vacio">Elige un cante del historial para leer su transcripción.</p>';
     const c = calcular(f), dur = c.real;
-    const palabrasExpo = (f.segmentos || []).filter((x) => tipoEn(c, x.t) === 'exposicion').reduce((n, x) => n + x.texto.split(/\s+/).filter(Boolean).length, 0);
+    const palabrasExpo = palabrasExpoDe(f, c);
     const ppm = palabrasExpo && dur ? Math.round(palabrasExpo / (dur / 60)) : null;
     const dif = f.objetivo ? dur - f.objetivo : null;
     // párrafos de aproximadamente un minuto y del mismo tipo (exposición, complementario, descartado), con la marca de tiempo al margen
+    // cada palabra lleva su tipo, así que un párrafo puede cortarse a mitad de frase
+    W = []; selK = null;
+    (f.segmentos || []).forEach((sg, si) => { const conP = !!(sg.palabras && sg.palabras.length);
+      palabrasDe(sg).forEach(([t, w], pi) => W.push({ s: si, p: conP ? pi : null, t, w, tipo: tipoEn(c, t) })); });
     const parrafos = [];
-    (f.segmentos || []).forEach((s) => { const tipo = tipoEn(c, s.t), ult = parrafos[parrafos.length - 1];
-      if (!ult || ult.tipo !== tipo || s.t - ult.t >= 60) parrafos.push({ t: s.t, texto: s.texto, tipo }); else ult.texto += ` ${s.texto}`; });
+    W.forEach((x, k) => { const ult = parrafos[parrafos.length - 1], cambioFrase = !k || W[k - 1].s !== x.s;
+      if (!ult || ult.tipo !== x.tipo || (cambioFrase && x.t - ult.t >= 60)) parrafos.push({ t: x.t, tipo: x.tipo, ks: [k] }); else ult.ks.push(k); });
+    const porFrase = W.length && W.some((x) => x.p == null);
     const enLista = C.lista.find((x) => x.id === f.id);
     const hayAudio = enLista ? enLista.audioExiste : true;
     return `<div class="cante-detalle">
@@ -161,7 +172,12 @@
       ${f.estado === 'pendiente' && !enMarcha(f.id) ? '<p class="apagado">Pendiente de transcribir. Tarda unos minutos y el Mac trabaja a tope (gasta batería): mejor con el cargador puesto.</p>' : ''}
       ${enMarcha(f.id) ? '<p class="apagado">Transcribiendo…</p>' : ''}
       ${c.complementario.length && parrafos.some((p) => p.tipo === 'complementario') ? '<p class="cante-botones"><button data-c="copiarComp">Copiar material complementario</button></p>' : ''}
-      ${parrafos.length ? `<div class="cante-texto">${parrafos.map((p) => `<p class="t-${p.tipo}"><span class="cante-t" data-ir="${p.t}" title="Escuchar desde aquí">${esc(reloj(p.t))}</span><span>${p.tipo !== 'exposicion' ? `<em class="cante-tipo">${p.tipo === 'complementario' ? 'Material complementario' : 'Descartado'}</em> ` : ''}${esc(p.texto)}</span></p>`).join('')}</div>`
+      ${parrafos.length ? `<div class="cante-seltxt" id="c-seltxt">
+          <span class="apagado" id="c-selinfo">Selecciona texto con el ratón para marcarlo. Doble clic en ${porFrase ? 'una frase' : 'una palabra'} para corregirla.</span>
+          <button data-s="expo" disabled>Exposición = selección</button><button data-s="desc" disabled>Descartar selección</button></div>
+        ${porFrase ? `<p class="apagado cante-aviso-frase">Este cante se transcribió sin el instante de cada palabra: al seleccionar se marca la frase entera (unos segundos de margen).
+          ${!enMarcha(f.id) && hayAudio ? '<button class="enlace" data-c="retranscribir">Volver a transcribir con precisión por palabra</button>' : ''}</p>` : ''}
+        <div class="cante-texto" id="c-texto">${parrafos.map((p) => `<p class="t-${p.tipo}"><span class="cante-t" data-ir="${p.t}" title="Escuchar desde aquí">${esc(reloj(p.t))}</span><span>${p.tipo !== 'exposicion' ? `<em class="cante-tipo">${p.tipo === 'complementario' ? 'Material complementario' : 'Descartado'}</em> ` : ''}${p.ks.map((k) => `<span class="w" data-k="${k}">${esc(W[k].w)}</span>`).join(' ')}</span></p>`).join('')}</div>`
         : f.estado === 'transcrito' ? '<p class="apagado">La transcripción está vacía: no se reconoció voz en la grabación.</p>' : ''}
     </div>`;
   }
@@ -200,7 +216,7 @@
     f.tramos = normalizar(t, f.duracion);
     if (!f.tramos.exposicion && !f.tramos.descartar.length) delete f.tramos;
     const c = calcular(f), x = C.lista.find((y) => y.id === f.id);
-    if (x) { x.marcado = c.marcado; x.real = c.real; x.palabrasExpo = (f.segmentos || []).filter((s) => tipoEn(c, s.t) === 'exposicion').reduce((n, s) => n + s.texto.split(/\s+/).filter(Boolean).length, 0); }
+    if (x) { x.marcado = c.marcado; x.real = c.real; x.palabrasExpo = palabrasExpoDe(f, c); }
     clearTimeout(guardarT); guardarT = setTimeout(() => ctx.enviar({ tipo: 'canteTramos', id: f.id, tramos: f.tramos || null }), arrastre ? 600 : 150);
     if (!arrastre) render(); else dibujar();
   }
@@ -240,7 +256,18 @@
     if (tocar && AUD.paused) AUD.play().catch(() => {});
     actualizarPos();
   }
+  let wActual = null;
+  function resaltarPalabra() {
+    if (!el || !W.length || !ESC || !ESC.url) return;
+    const t = AUD.currentTime || 0; let lo = 0, hi = W.length - 1, k = -1;
+    while (lo <= hi) { const m = (lo + hi) >> 1; if (W[m].t <= t) { k = m; lo = m + 1; } else hi = m - 1; }
+    const sp = k >= 0 ? el.querySelector(`.w[data-k="${k}"]`) : null;
+    if (sp === wActual) return;
+    if (wActual) wActual.classList.remove('actual');
+    wActual = sp; if (sp) sp.classList.add('actual');
+  }
   function actualizarPos() {
+    resaltarPalabra();
     const p = el && el.querySelector('#c-pos'); if (p) p.textContent = reloj(AUD.currentTime || 0);
     const b = el && el.querySelector('[data-r="play"]'); if (b) b.textContent = AUD.paused ? '▶' : '❚❚';
     dibujar();
@@ -251,16 +278,89 @@
   AUD.addEventListener('seeked', actualizarPos);
   window.addEventListener('resize', () => dibujar());
 
+  // ---- marcar seleccionando el texto y corregir palabras
+  function leerSeleccion() {
+    const caja = el && el.querySelector('#c-texto'), info = el && el.querySelector('#c-selinfo');
+    selK = null;
+    const sel = window.getSelection();
+    if (caja && sel && !sel.isCollapsed && sel.rangeCount && caja.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+      const ks = [...caja.querySelectorAll('.w')].filter((x) => sel.containsNode(x, true)).map((x) => Number(x.dataset.k));
+      if (ks.length) selK = [Math.min(...ks), Math.max(...ks)];
+    }
+    el && el.querySelectorAll('[data-s]').forEach((b) => { b.disabled = !selK || !ESC || !ESC.url; });
+    if (info) {
+      if (selK) { const [a, b] = tramoSel(); info.textContent = `Selección: ${reloj(a)} – ${reloj(b)}`; }
+      else info.textContent = `Selecciona texto con el ratón para marcarlo. Doble clic en ${W.some((x) => x.p == null) ? 'una frase' : 'una palabra'} para corregirla.`;
+    }
+  }
+  /** Instantes [inicio, fin] de la selección: desde la primera palabra hasta el comienzo de la siguiente a la última */
+  function tramoSel() { const [a, b] = selK; return [W[a].t, b + 1 < W.length ? W[b + 1].t : detalle.duracion]; }
+  let selRaf = 0;
+  document.addEventListener('selectionchange', () => { cancelAnimationFrame(selRaf); selRaf = requestAnimationFrame(leerSeleccion); });
+
+  function corregir(span) {
+    const k = Number(span.dataset.k), x = W[k]; if (!x || !detalle) return;
+    document.querySelectorAll('.cante-editor').forEach((e) => e.remove());
+    const otras = x.p != null ? W.filter((y, i) => i !== k && y.p != null && y.w === x.w).length : 0;
+    const ed = document.createElement('div'); ed.className = 'cante-editor';
+    ed.innerHTML = `${x.p == null ? `<textarea rows="3">${esc(x.w)}</textarea>` : `<input type="text" value="${esc(x.w)}">`}
+      ${otras ? `<label><input type="checkbox" id="c-todas"> Cambiar también las otras ${otras} apariciones de «${esc(x.w)}»</label>` : ''}
+      <p class="cante-botones"><button class="primario" data-e="ok">Guardar</button><button data-e="no">Cancelar</button><span class="apagado">Vacío = borrar. Intro guarda, Esc cancela.</span></p>`;
+    document.body.appendChild(ed);
+    const r = span.getBoundingClientRect();
+    ed.style.left = `${Math.max(8, Math.min(window.innerWidth - ed.offsetWidth - 8, r.left))}px`;
+    ed.style.top = `${Math.min(window.innerHeight - ed.offsetHeight - 8, r.bottom + 6)}px`;
+    const campo = ed.querySelector('input[type="text"], textarea'); campo.focus(); campo.select();
+    const cerrar = () => ed.remove();
+    const guardar = () => {
+      const nuevo = campo.value.replace(/\s+/g, ' ').trim();
+      const todas = !!(ed.querySelector('#c-todas') || {}).checked;
+      cerrar();
+      if (nuevo === x.w) return;
+      const segs = JSON.parse(JSON.stringify(detalle.segmentos || []));
+      const cambiar = (y) => { if (y.p == null) segs[y.s].texto = nuevo; else segs[y.s].palabras[y.p][1] = nuevo; };
+      cambiar(x);
+      if (todas) W.forEach((y) => { if (y.p != null && y.w === x.w) cambiar(y); });
+      segs.forEach((sg) => { if (sg.palabras && sg.palabras.length) { sg.palabras = sg.palabras.filter((p) => p[1]); sg.texto = sg.palabras.map((p) => p[1]).join(' '); } });
+      detalle.segmentos = segs.filter((sg) => sg.texto);
+      detalle.texto = detalle.segmentos.map((sg) => sg.texto).join(' ');
+      detalle.editado = true;
+      ctx.enviar({ tipo: 'canteSegmentos', id: detalle.id, segmentos: detalle.segmentos });
+      render();
+    };
+    ed.querySelector('[data-e="ok"]').onclick = guardar;
+    ed.querySelector('[data-e="no"]').onclick = cerrar;
+    campo.onkeydown = (ev) => { if (ev.key === 'Escape') cerrar(); if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); guardar(); } };
+  }
+
   function conectarMarcas() {
+    const caja = el.querySelector('#c-texto');
+    if (caja) caja.ondblclick = (ev) => { const sp = ev.target.closest('.w'); if (!sp) return; window.getSelection().removeAllRanges(); corregir(sp); };
+    el.querySelectorAll('[data-s]').forEach((b) => b.onclick = () => {
+      if (!selK) return;
+      const [a, z] = tramoSel(), t = tramosActuales();
+      if (b.dataset.s === 'expo') t.exposicion = [a, z]; else t.descartar.push([a, z]);
+      window.getSelection().removeAllRanges(); selK = null;
+      cambiarTramos(t);
+    });
+    leerSeleccion();
     const cv = el.querySelector('#c-onda');
     if (cv && detalle) {
       const tEn = (ev) => { const r = cv.getBoundingClientRect(); return Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width)) * detalle.duracion; };
       const borde = (ev) => { const e = tramosActuales().exposicion; if (!e) return null; const r = cv.getBoundingClientRect(), x = ev.clientX - r.left, X = (t) => (t / detalle.duracion) * r.width;
         return Math.abs(x - X(e[0])) <= 6 ? 'ini' : Math.abs(x - X(e[1])) <= 6 ? 'fin' : null; };
-      cv.onmousemove = (ev) => { if (!arrastre) cv.style.cursor = borde(ev) ? 'ew-resize' : 'pointer'; };
+      const cabezal = (ev) => { const r = cv.getBoundingClientRect(); return Math.abs(ev.clientX - r.left - ((AUD.currentTime || 0) / detalle.duracion) * r.width) <= 6; };
+      cv.onmousemove = (ev) => { if (!arrastre) cv.style.cursor = borde(ev) ? 'ew-resize' : cabezal(ev) ? 'grab' : 'pointer'; };
       cv.onmousedown = (ev) => {
         const b = borde(ev);
-        if (!b) { irA(tEn(ev)); return; }
+        if (!b) {
+          // pulsar lleva a ese punto y, sin soltar, se arrastra la línea del momento actual
+          ev.preventDefault(); irA(tEn(ev)); cv.style.cursor = 'grabbing';
+          const mover = (e2) => irA(tEn(e2));
+          const soltar = () => { document.removeEventListener('mousemove', mover); document.removeEventListener('mouseup', soltar); cv.style.cursor = 'grab'; };
+          document.addEventListener('mousemove', mover); document.addEventListener('mouseup', soltar);
+          return;
+        }
         arrastre = b; ev.preventDefault();
         const mover = (e2) => { const t = tramosActuales(), x = t.exposicion.slice(); x[arrastre === 'ini' ? 0 : 1] = tEn(e2); t.exposicion = x; cambiarTramos(t); };
         const soltar = () => { document.removeEventListener('mousemove', mover); document.removeEventListener('mouseup', soltar); arrastre = null; cambiarTramos(tramosActuales()); };
@@ -363,9 +463,10 @@
         juntando = true; render();
         ctx.enviar({ tipo: 'canteJuntar', codigo: (sel('#c-tema') || {}).value || ctx.estado.canteTema, objetivo: (sel('#c-obj') || {}).value, fecha: fe && fe.value ? new Date(fe.value).toISOString() : null, rutas: adj.archivos.map((x) => x.ruta) });
       }
+      if (a === 'retranscribir' && detalle) ctx.enviar({ tipo: 'canteRetranscribir', id: detalle.id });
       if (a === 'copiarComp' && detalle) {
         const c = calcular(detalle);
-        ctx.enviar({ tipo: 'canteCopiarComp', texto: (detalle.segmentos || []).filter((x) => tipoEn(c, x.t) === 'complementario').map((x) => x.texto).join(' ') });
+        ctx.enviar({ tipo: 'canteCopiarComp', texto: (detalle.segmentos || []).flatMap(palabrasDe).filter(([t]) => tipoEn(c, t) === 'complementario').map(([, w]) => w).join(' ') });
       }
     });
     const fe = sel('#c-fecha'); if (fe && adj) fe.onchange = () => { adj.fecha = fe.value; };

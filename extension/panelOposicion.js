@@ -400,6 +400,13 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
         panel.webview.postMessage({ tipo: 'canteEscucha', id: m.id, ...(e ? { url: panel.webview.asWebviewUri(vscode.Uri.file(e.mp3)).toString(), onda: e.onda, paso: e.paso } : { error: true }) });
       } else if (m.tipo === 'canteTramos') {
         cante.guardarTramos(m.id, m.tramos);
+      } else if (m.tipo === 'canteSegmentos') {
+        if (!cante.guardarSegmentos(m.id, m.segmentos)) throw new Error('No se pudo guardar la corrección.');
+      } else if (m.tipo === 'canteRetranscribir') {
+        const f = cante.leer(m.id); if (!f) return;
+        const si = await vscode.window.showWarningMessage('¿Volver a transcribir este cante?', { modal: true,
+          detail: `Tendrás el instante de cada palabra (para marcar tramos seleccionando el texto con precisión).${f.editado ? ' Se perderán las correcciones que hiciste en el texto.' : ''} Los tramos marcados se conservan. Tarda unos minutos y el Mac trabaja a tope.` }, 'Transcribir');
+        if (si) cante.encolar(m.id);
       } else if (m.tipo === 'canteCopiar') {
         const f = cante.leer(m.id); if (f && f.texto) { await vscode.env.clipboard.writeText(f.texto); panel.webview.postMessage({ tipo: 'aviso', texto: 'Transcripción copiada.' }); }
       } else if (m.tipo === 'canteCopiarComp') {

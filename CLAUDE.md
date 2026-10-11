@@ -40,7 +40,7 @@ Relaciones, Cante y Test; se abre en una ventana aparte (`workbench.action.moveE
 Para ahorrar batería guarda por tema el texto y los pendientes y solo los recalcula si cambia el fichero, el documento abierto o `.build/estado`;
 `Progreso.todos()` se guarda 5 s. La transcripción del cante nunca se lanza sola (botón *Transcribir*). El plan semanal se eliminó (v0.11).
 Cante (`cante.js` + `media/cante.js`): graba con ffmpeg y transcribe con whisper.cpp en el Mac; fichas en el repositorio PRIVADO `progreso/cantes/`,
-audio solo en el Mac; *Adjuntar audio* junta varios audios en un cante y en el detalle se marcan Exposición/Descartar sobre la onda (duración real; el resto es material complementario). Reglas en `main/CANTE.md` (mantener código y documento a la vez); instalación con `scripts/instalar_cante.sh`.
+audio solo en el Mac; *Adjuntar audio* junta varios audios en un cante y en el detalle se marcan Exposición/Descartar sobre la onda o seleccionando el texto (instante de cada palabra, `-ojf`) y se corrigen palabras (duración real; el resto es material complementario). Reglas en `main/CANTE.md` (mantener código y documento a la vez); instalación con `scripts/instalar_cante.sh`.
 Test (`testPanel.js` + `media/test.js`): banco en el repositorio `test` (`TCEE/test/preguntas.json`, un único fichero; mantener los `id`),
 respuestas en el repositorio PRIVADO `progreso/test/<Mac>.json`. Reglas en `main/TEST.md` (mantener código y documento a la vez).
 Atajos en `.tex`: ⌘B/⌘I (`tcee.negrita`/`tcee.cursiva`, envuelven o desenvuelven en `\textbf`/`\textit`); vista previa de fórmulas propia

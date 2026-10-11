@@ -44,13 +44,15 @@ ffmpeg -f avfoundation -i :<micrófono> -af ebur128=framelog=info -ac 1 -ar 1600
 - **Orden de whisper:**
 
   ```
-  whisper-cli -m <modelo> -f <audio> -l es -oj -pp --prompt <pista>
+  whisper-cli -m <modelo> -f <audio> -l es -ojf -pp --prompt <pista>
   ```
 
+  `-ojf` (JSON completo) da el instante de cada token: se juntan en palabras (`palabrasDeTokens`). El fichero se lee también como latin1
+  porque whisper escribe los bytes tal cual y una letra con tilde puede quedar partida entre dos tokens; se decodifica cada palabra entera.
   La **pista** es el título del tema y los autores en MAYÚSCULAS que aparecen en su `main.tex` (hasta 25). Ayuda a escribir bien nombres propios y términos.
 - **Ficheros cortados:** si el WAV quedó a medias, se relee como audio en bruto.
 - **Limpieza:** se quitan las frases que whisper inventa en los silencios (p. ej. «Subtítulos realizados por la comunidad de Amara.org»).
-- **Después:** el WAV se comprime a `.m4a` y se borra.
+- **Después:** el WAV se comprime a `.m4a` y se borra. Al *volver a transcribir* un cante ya comprimido, el `.m4a` se conserva tal cual.
 - [Suposición] En un MacBook Air con chip de Apple, una hora de audio tarda unos 10–15 minutos.
 
 ## 4. Dónde se guarda
@@ -64,7 +66,7 @@ ffmpeg -f avfoundation -i :<micrófono> -af ebur128=framelog=info -ac 1 -ar 1600
 
 `<id>` = `aaaa-mm-dd_hhmm_<código>`, por ejemplo `2026-10-04_1830_3.A.5`.
 
-Ficha: `{id, codigo, titulo, fecha, duracion (s), objetivo (s), micro, audio, pista, estado, cortada?, modelo, segmentos: [{t (s), texto}], texto, error?,
+Ficha: `{id, codigo, titulo, fecha, duracion (s), objetivo (s), micro, audio, pista, estado, cortada?, modelo, segmentos: [{t (s), texto, palabras?: [[t (s), palabra], …]}], texto, error?, editado? (el usuario corrigió el texto),
 origen? ('adjunto'), archivos? (nombres de los audios juntados), tramos? ({exposicion: [ini, fin] | null, descartar: [[ini, fin], …]}, en segundos)}`.
 `duracion` es siempre la del audio entero; la duración real del cante sale de los tramos (apartado 6).
 
@@ -106,11 +108,17 @@ Estados: `pendiente` (por transcribir), `transcrito`, `error`.
 - **Duración real** = exposición menos lo descartado. Es la que muestran el historial y el detalle, y con la que se calculan el objetivo y las palabras por minuto.
 - Se marca sobre la **forma de onda**: pulsar lleva a ese punto; *Inicio / Fin de la exposición aquí* usan el punto que suena;
   los bordes de la exposición se arrastran; *Descartar desde aquí* y luego *Fin del descarte aquí*. Se guarda solo al cambiar.
-- En la transcripción, los párrafos de material complementario y los descartados se señalan aparte; *Copiar material complementario* copia ese texto.
-  Pulsar la marca de tiempo de un párrafo lo hace sonar.
+- La **línea del momento actual** se arrastra: pulsar en la onda lleva a ese punto y, sin soltar, se mueve.
+- **Sobre el texto** (v0.44): se selecciona con el ratón desde cualquier palabra hasta cualquier otra y se pulsa *Exposición = selección* (sustituye la exposición)
+  o *Descartar selección* (añade un descarte). El tramo va desde el instante de la primera palabra hasta el de la palabra siguiente a la última.
+  Los cantes transcritos antes de la v0.44 solo tienen el instante de cada frase: se marca la frase entera y se ofrece *Volver a transcribir con precisión por palabra*
+  (conserva los tramos; avisa de que se pierden las correcciones del texto).
+- Cada palabra lleva su tipo, así que los párrafos de material complementario y los descartados se cortan donde empieza el tramo, aunque sea a mitad de frase.
+  *Copiar material complementario* copia ese texto. Pulsar la marca de tiempo de un párrafo lo hace sonar; la palabra que suena se resalta.
+- **Corregir la transcripción:** doble clic en una palabra (o en la frase, en los cantes antiguos) abre un cuadro para cambiarla; vacío la borra.
+  Si la palabra aparece más veces, se puede cambiar en todas (útil para un autor mal escrito). Se conservan los instantes; la ficha queda `editado: true`.
 - **Por qué una copia MP3:** el reproductor de VS Code no lee AAC (`.m4a`). La copia y la forma de onda (pico cada 0,1 s) se guardan en la carpeta de datos de la extensión.
 - Las reglas están dos veces, iguales: `normalizarTramos`/`calcularTramos` en `extension/cante.js` y `normalizar`/`calcular` en `extension/media/cante.js`.
-- **Pendiente (PR 2):** marcar los tramos seleccionando el texto de la transcripción (con el tiempo de cada palabra) y corregir palabras de la transcripción.
 
 ## 7. Ideas para más adelante (no hechas)
 
