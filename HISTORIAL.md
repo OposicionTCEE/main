@@ -19,13 +19,10 @@ Esas fotos no se borran nunca: puedes volver a cualquier versión anterior de cu
    con lo añadido en verde y lo quitado en rojo.
 
 ### En GitHub (desde cualquier dispositivo, también el iPad)
-1. Entra en <https://github.com/OposicionTCEE/temario> y navega hasta la carpeta del tema.
+1. Entra en <https://github.com/OposicionTCEE/temario> **con tu cuenta iniciada** (el repositorio es privado: sin iniciar sesión, GitHub dice que no existe)
+   y navega hasta la carpeta del tema.
 2. Abre `main.tex` y pulsa **History** (arriba a la derecha).
 3. Cada línea es una versión; al pulsarla ves qué cambió.
-
-### Lo anterior a la unificación (antes del 03/10/2026)
-El repositorio `temario` conserva el historial completo de los antiguos repositorios `Tema-X.Y.Z`.
-Esos repositorios siguen existiendo en GitHub como copia de seguridad, archivados (solo lectura).
 
 ---
 
@@ -71,4 +68,3 @@ sustituyes sigue guardada en el historial.
 | Commit | Una foto del estado de los archivos, con fecha y descripción |
 | Sincronizar | Guardar foto + traer lo de GitHub + subir lo tuyo (tarea *Sincronizar todos los temas con GitHub*) |
 | Conflicto | El mismo fragmento cambió en dos sitios; hay que elegir cuál se queda |
-| Archivado | Repositorio de GitHub en solo lectura: se puede consultar, no modificar |

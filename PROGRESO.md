@@ -72,4 +72,4 @@ Un tema vacío o muy escueto no tiene epígrafes vacíos que contar, y parecerí
 - Cada Mac escribe solo su fichero `equipos/<nombre-del-Mac>.json`, así que nunca hay conflictos. El panel suma los de todos los Mac.
 - En cada fichero, por tema: minutos trabajados, unidades resueltas, línea base y marca de hecho con fecha. Si hay dos marcas, gana la más reciente.
 - Si falta la carpeta `progreso`, los datos se guardan dentro de VS Code y se pasan al fichero cuando aparece.
-- Estos datos **nunca** se copian a `main` ni a `temario`, que son públicos.
+- Estos datos **nunca** se copian a `main` (público) ni a `temario` (privado, pero con otro fin).

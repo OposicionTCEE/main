@@ -22,7 +22,7 @@ Claude Code lee `CLAUDE.md` en cada sesión. Este documento completa ese fichero
 | Repositorio | Visibilidad | Contenido |
 |---|---|---|
 | `main` | público | Entorno: scripts, panel, análisis, documentación |
-| `temario` | público | Los temas (`Ejercicio-X/Parte-Y/X.Y.N/main.tex` + `Img/`) |
+| `temario` | **privado** (desde el 11/10/2026) | Los temas (`Ejercicio-X/Parte-Y/X.Y.N/main.tex` + `Img/`) |
 | `test` | público | Banco de preguntas del test (`preguntas.json`, `img/`) |
 | `progreso` | **privado** | Tiempos y temas hechos (`equipos/`), calendarios (`calendarios/`), cantes (`cantes/`) y respuestas del test (`test/`) |
 
