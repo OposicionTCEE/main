@@ -63,8 +63,9 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     alCambiar: () => { if (panel) panel.webview.postMessage({ tipo: 'idiClaseEstado', estado: clases.estado() }); },
   });
   // Cante: grabación y transcripción (main/CANTE.md). alCambiar(ligero): solo el estado en vivo (nivel, % transcrito) o todo el panel
+  const cacheEscucha = path.join(context.globalStorageUri.fsPath, 'cante-escucha');   // copias MP3 para escuchar en el panel
   const cante = crearCante({
-    raiz, progreso,
+    raiz, progreso, cacheEscucha,
     avisar: (texto, error) => { if (panel) panel.webview.postMessage({ tipo: 'aviso', texto, error: !!error }); else (error ? vscode.window.showWarningMessage : vscode.window.showInformationMessage)(texto); },
     alCambiar: (ligero) => { if (!panel) return; if (ligero) panel.webview.postMessage({ tipo: 'canteEstado', estado: cante.estado() }); else enviar(); },
   });
@@ -372,8 +373,37 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
       } else if (m.tipo === 'canteInstalar') {
         const t = (await vscode.tasks.fetchTasks()).find((x) => x.name === 'Instalar herramientas de cante');
         if (t) vscode.tasks.executeTask(t); else vscode.window.showWarningMessage('No encuentro la tarea «Instalar herramientas de cante». Sincroniza y vuelve a abrir el espacio de trabajo TCEE.');
+      } else if (m.tipo === 'canteAdjuntarElegir') {
+        const us = await vscode.window.showOpenDialog({ canSelectMany: true, openLabel: 'Adjuntar', title: 'Audios del cante (puedes elegir varios)',
+          filters: { 'Audio o vídeo': ['m4a', 'mp3', 'wav', 'aac', 'caf', 'aif', 'aiff', 'ogg', 'opus', 'flac', 'mp4', 'mov', 'm4v', 'webm', 'amr', '3gp'] } });
+        if (!us || !us.length) return;
+        const info = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Leyendo los audios…' },
+          () => cante.infoAdjuntos(us.map((u) => u.fsPath)));
+        const sin = info.filter((x) => !x.audio);
+        if (sin.length) vscode.window.showWarningMessage(`Sin sonido, no se añaden: ${sin.map((x) => x.nombre).join(', ')}`);
+        panel.webview.postMessage({ tipo: 'canteAdjuntos', archivos: info.filter((x) => x.audio) });
+      } else if (m.tipo === 'canteJuntar') {
+        if (!cache) await temas();
+        const t = cache[m.codigo];
+        if (!t) throw new Error('Elige un tema.');
+        context.globalState.update('tcee.canteObjetivo', Number(m.objetivo) || 0);
+        let id;
+        try {
+          id = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: `Juntando ${m.rutas.length === 1 ? 'el audio' : `${m.rutas.length} audios`} del cante de ${t.codigo}…` },
+            () => cante.juntar({ codigo: t.codigo, titulo: t.completo || t.titulo, objetivo: (Number(m.objetivo) || 0) * 60, fecha: m.fecha, rutas: m.rutas, texto: t.texto }));
+        } finally { panel.webview.postMessage({ tipo: 'canteJuntado', ok: !!id }); }
+        panel.webview.postMessage({ tipo: 'canteSeleccionar', id });
+        panel.webview.postMessage({ tipo: 'canteDetalle', detalle: cante.leer(id) });
+        panel.webview.postMessage({ tipo: 'aviso', texto: 'Cante guardado. Pulsa «Transcribir» cuando quieras y marca la exposición en el audio.' });
+      } else if (m.tipo === 'canteEscucha') {
+        const e = await cante.escucha(m.id);
+        panel.webview.postMessage({ tipo: 'canteEscucha', id: m.id, ...(e ? { url: panel.webview.asWebviewUri(vscode.Uri.file(e.mp3)).toString(), onda: e.onda, paso: e.paso } : { error: true }) });
+      } else if (m.tipo === 'canteTramos') {
+        cante.guardarTramos(m.id, m.tramos);
       } else if (m.tipo === 'canteCopiar') {
         const f = cante.leer(m.id); if (f && f.texto) { await vscode.env.clipboard.writeText(f.texto); panel.webview.postMessage({ tipo: 'aviso', texto: 'Transcripción copiada.' }); }
+      } else if (m.tipo === 'canteCopiarComp') {
+        await vscode.env.clipboard.writeText(m.texto || ''); panel.webview.postMessage({ tipo: 'aviso', texto: 'Material complementario copiado.' });
       }
     } catch (e) { panel.webview.postMessage({ tipo: 'aviso', texto: String(e.message || e), error: true }); }
   }
@@ -403,7 +433,8 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
       if (panel) { panel.reveal(); refrescar(); return; }
       panel = vscode.window.createWebviewPanel('tceeOposicion', 'Panel Oposición', vscode.ViewColumn.Active, {
         enableScripts: true, retainContextWhenHidden: true,
-        localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media'), vscode.Uri.file(test.carpeta()), vscode.Uri.file(raiz()), vscode.Uri.file((fs.mkdirSync(voz.carpetaCache, { recursive: true }), voz.carpetaCache))],
+        localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media'), vscode.Uri.file(test.carpeta()), vscode.Uri.file(raiz()), vscode.Uri.file((fs.mkdirSync(voz.carpetaCache, { recursive: true }), voz.carpetaCache)),
+          vscode.Uri.file((fs.mkdirSync(cacheEscucha, { recursive: true }), cacheEscucha))],
       });
       panel.iconPath = vscode.Uri.joinPath(context.extensionUri, 'media', 'tcee.svg');
       panel.webview.html = html(panel.webview);

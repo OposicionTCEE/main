@@ -1,6 +1,6 @@
 # Pestaña «Cante» del Panel Oposición
 
-Sirve para **practicar los cantes**: un botón arranca a la vez el cronómetro y la grabación. Al terminar, la grabación queda guardada y se transcribe cuando el usuario pulsa *Transcribir*.
+Sirve para **practicar los cantes**: un botón arranca a la vez el cronómetro y la grabación; otro, *Adjuntar audio*, crea el cante a partir de audios ya grabados (apartado 6). La grabación queda guardada y se transcribe cuando el usuario pulsa *Transcribir*.
 Mientras hablas no se muestra el texto: es una decisión del usuario.
 
 Código:
@@ -60,10 +60,13 @@ ffmpeg -f avfoundation -i :<micrófono> -af ebur128=framelog=info -ac 1 -ar 1600
 | Ficha y transcripción | `progreso/cantes/<id>.json` (repositorio PRIVADO) | Sí, con *Sincronizar* |
 | Audio | `~/.tcee_carpeta_cantes` si existe; si no, `iCloud/OPO - TCEE/Cantes`; si no, `TCEE/.cantes-audio` | No por GitHub (sí por iCloud si está ahí) |
 | Modelo de idioma | `~/.tcee/modelos/ggml-large-v3-turbo.bin` | No |
+| Copia para escuchar en el panel (MP3) y forma de onda | Carpeta de datos de la extensión, `cante-escucha/` (solo las 6 últimas copias) | No |
 
 `<id>` = `aaaa-mm-dd_hhmm_<código>`, por ejemplo `2026-10-04_1830_3.A.5`.
 
-Ficha: `{id, codigo, titulo, fecha, duracion (s), objetivo (s), micro, audio, pista, estado, cortada?, modelo, segmentos: [{t (s), texto}], texto, error?}`.
+Ficha: `{id, codigo, titulo, fecha, duracion (s), objetivo (s), micro, audio, pista, estado, cortada?, modelo, segmentos: [{t (s), texto}], texto, error?,
+origen? ('adjunto'), archivos? (nombres de los audios juntados), tramos? ({exposicion: [ini, fin] | null, descartar: [[ini, fin], …]}, en segundos)}`.
+`duracion` es siempre la del audio entero; la duración real del cante sale de los tramos (apartado 6).
 
 Estados: `pendiente` (por transcribir), `transcrito`, `error`.
 
@@ -80,13 +83,36 @@ Estados: `pendiente` (por transcribir), `transcrito`, `error`.
   - barra hasta el objetivo;
   - medidor del micrófono;
   - botones *Terminar* y *Descartar*. Descartar borra el audio, tras confirmarlo.
-- **Historial:** fecha, tema, duración frente al objetivo y palabras por minuto. Al pulsar un cante se ve a la derecha su transcripción, en párrafos de un minuto con su marca de tiempo. Botones:
-  - *Escuchar audio*;
+- **Historial:** fecha, tema, duración real (la de la exposición; ✂ si hay tramos marcados) frente al objetivo y palabras por minuto de la exposición. Al pulsar un cante se ve a la derecha su transcripción, en párrafos de un minuto con su marca de tiempo. Botones:
+  - reproductor con forma de onda y marcas de tramos (apartado 6);
+  - *Abrir audio fuera* (en la aplicación de audio del Mac);
   - *Copiar texto*;
   - *Transcribir*, si está pendiente o falló; solo aparece al abrir el cante desde el historial;
   - *Eliminar*, que borra la ficha y el audio.
 
-## 6. Ideas para más adelante (no hechas)
+## 6. Audios adjuntos y tramos (decisiones del usuario, 11 de octubre de 2026)
+
+**Adjuntar audio** (junto a *Empezar cante*):
+- Se eligen uno o varios ficheros (notas de voz, WhatsApp `.opus`, `.mp3`, `.wav`, vídeos: se usa solo el sonido). Los que no tienen sonido se avisan y no se añaden.
+- Se ordenan con ↑ ↓ (al principio, por fecha) y se pueden quitar o añadir más.
+- **Fecha del cante:** la del fichero más antiguo (última modificación), editable.
+- *Juntar y guardar*: ffmpeg pasa cada uno a mono 16 kHz y los encadena en un único WAV del cante (`concat`). Los originales no se tocan.
+  La ficha queda `pendiente` con `origen: 'adjunto'` y `archivos`, y se transcribe con *Transcribir* como cualquier otra.
+
+**Tramos** (en el detalle de cualquier cante cuyo audio esté en este Mac):
+- Dos tipos que marca el usuario: **Exposición** (un único tramo seguido) y **Descartar** (los que haga falta).
+- **Sin nada marcado, todo es exposición.** Con la exposición marcada, lo que queda fuera es **material complementario** (por ejemplo, las correcciones del preparador).
+  Lo descartado no cuenta para nada; si cae dentro de la exposición, resta de la duración real.
+- **Duración real** = exposición menos lo descartado. Es la que muestran el historial y el detalle, y con la que se calculan el objetivo y las palabras por minuto.
+- Se marca sobre la **forma de onda**: pulsar lleva a ese punto; *Inicio / Fin de la exposición aquí* usan el punto que suena;
+  los bordes de la exposición se arrastran; *Descartar desde aquí* y luego *Fin del descarte aquí*. Se guarda solo al cambiar.
+- En la transcripción, los párrafos de material complementario y los descartados se señalan aparte; *Copiar material complementario* copia ese texto.
+  Pulsar la marca de tiempo de un párrafo lo hace sonar.
+- **Por qué una copia MP3:** el reproductor de VS Code no lee AAC (`.m4a`). La copia y la forma de onda (pico cada 0,1 s) se guardan en la carpeta de datos de la extensión.
+- Las reglas están dos veces, iguales: `normalizarTramos`/`calcularTramos` en `extension/cante.js` y `normalizar`/`calcular` en `extension/media/cante.js`.
+- **Pendiente (PR 2):** marcar los tramos seleccionando el texto de la transcripción (con el tiempo de cada palabra) y corregir palabras de la transcripción.
+
+## 7. Ideas para más adelante (no hechas)
 
 - Comparar la transcripción con el `main.tex` del tema: epígrafes no mencionados, orden y tiempo por epígrafe.
 - Evolución de la duración y del ritmo por tema y por vuelta.

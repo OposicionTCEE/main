@@ -12,6 +12,35 @@
   const enMarcha = (id) => !!(C && ((C.transcribiendo && C.transcribiendo.id === id) || C.cola.includes(id)));
 
   let D = null, C = null, ctx = null, el = null, tic = null, micros = null, detalle = null, silencio = 0;
+  // audios adjuntos por juntar: {archivos: [{ruta, nombre, fecha, duracion}], fecha: 'aaaa-mm-ddThh:mm'}
+  let adj = null, juntando = false;
+  // escucha y marcas del cante abierto. El reproductor vive fuera de la página para que un repintado no corte el audio
+  const AUD = new Audio(); AUD.preload = 'auto';
+  let ESC = null;            // {id, url, onda, paso, error}
+  let descIni = null;        // inicio de un descarte a medio marcar (s)
+  let arrastre = null;       // 'ini' | 'fin' mientras se arrastra un límite de la exposición
+  let guardarT = null;
+
+  // ---- tramos (mismas reglas que normalizarTramos/calcularTramos de extension/cante.js; CANTE.md, apartado 6)
+  const r1 = (x) => Math.round(x * 10) / 10;
+  function normalizar(t, dur) {
+    const lim = (x) => r1(Math.max(0, Math.min(dur || 0, Number(x) || 0)));
+    let exposicion = null;
+    if (t && Array.isArray(t.exposicion)) { const [a, b] = t.exposicion.map(lim).sort((x, y) => x - y); if (b - a >= 1) exposicion = [a, b]; }
+    const ds = ((t && t.descartar) || []).map((d) => d.map(lim).sort((x, y) => x - y)).filter(([a, b]) => b - a >= 0.5).sort((x, y) => x[0] - y[0]);
+    const descartar = [];
+    for (const d of ds) { const u = descartar[descartar.length - 1]; if (u && d[0] <= u[1]) u[1] = Math.max(u[1], d[1]); else descartar.push(d.slice()); }
+    return { exposicion, descartar };
+  }
+  function restar([a, b], ds) { const r = []; let x = a; for (const [c, d] of ds) { if (d <= x || c >= b) continue; if (c > x) r.push([x, c]); x = Math.max(x, d); } if (x < b) r.push([x, b]); return r; }
+  const largo = (xs) => xs.reduce((n, [a, b]) => n + (b - a), 0);
+  function calcular(f) {
+    const dur = Number(f.duracion) || 0, t = normalizar(f.tramos, dur), expo = t.exposicion || [0, dur];
+    const exposicion = restar(expo, t.descartar);
+    const complementario = t.exposicion ? [...restar([0, expo[0]], t.descartar), ...restar([expo[1], dur], t.descartar)] : [];
+    return { t, marcado: !!(t.exposicion || t.descartar.length), exposicion, complementario, descartar: t.descartar, real: Math.round(largo(exposicion)) };
+  }
+  const tipoEn = (c, x) => { const en = (xs) => xs.some(([a, b]) => x >= a && x < b); return en(c.descartar) ? 'descartado' : en(c.complementario) ? 'complementario' : 'exposicion'; };
 
   function pintar(elemento, datos, contexto) {
     el = elemento; D = datos; C = datos.cante; ctx = contexto;
@@ -59,9 +88,29 @@
         <label class="cante-campo">Tiempo objetivo (minutos)<input id="c-obj" type="number" min="0" max="240" step="1" value="${esc(objetivo)}"></label>
         <label class="cante-campo">Micrófono<select id="c-mic"><option value="">Automático${micros && micros.length ? '' : ' (buscando…)'}</option>${microOpts}</select></label>
       </div>
-      <p><button class="primario grande" data-c="empezar">● Empezar cante</button></p>
-      <p class="apagado">Al pulsar arrancan a la vez el cronómetro y la grabación. No verás el texto mientras hablas. Al terminar, el cante se guarda y lo transcribes con <em>Transcribir</em> cuando te venga bien.</p></section>`;
+      <p class="cante-botones"><button class="primario grande" data-c="empezar" ${adj ? 'disabled' : ''}>● Empezar cante</button>
+        <button class="grande" data-c="adjuntar" ${juntando ? 'disabled' : ''}>📎 Adjuntar audio</button></p>
+      ${adj ? adjuntos() : `<p class="apagado">Al pulsar <em>Empezar cante</em> arrancan a la vez el cronómetro y la grabación. No verás el texto mientras hablas.
+        Con <em>Adjuntar audio</em> eliges uno o varios audios ya grabados (notas de voz, WhatsApp…), que se juntan en un único cante.
+        En los dos casos, el cante se guarda y lo transcribes con <em>Transcribir</em> cuando te venga bien.</p>`}</section>`;
   }
+
+  /** Tarjeta de los audios elegidos: orden, fecha del cante y «Juntar» */
+  function adjuntos() {
+    const xs = adj.archivos;
+    const total = xs.reduce((n, x) => n + (x.duracion || 0), 0);
+    return `<div class="cante-adj">
+      <p><strong>${xs.length === 1 ? '1 audio' : `${xs.length} audios`}</strong> · ${esc(reloj(total))} en total. Se juntan en este orden:</p>
+      <ol class="cante-adj-lista">${xs.map((x, i) => `<li><span class="cante-adj-nombre" title="${esc(x.ruta)}">${esc(x.nombre)}</span>
+        <span class="apagado">${x.duracion != null ? esc(reloj(x.duracion)) : '¿?'} · ${x.fecha ? esc(fechaCorta(x.fecha)) : ''}</span>
+        <span class="cante-adj-bot"><button data-a="subir" data-i="${i}" ${i ? '' : 'disabled'} title="Subir">↑</button><button data-a="bajar" data-i="${i}" ${i < xs.length - 1 ? '' : 'disabled'} title="Bajar">↓</button><button data-a="quitar" data-i="${i}" title="Quitar">✕</button></span></li>`).join('')}</ol>
+      <label class="cante-campo">Fecha del cante<input id="c-fecha" type="datetime-local" value="${esc(adj.fecha)}"></label>
+      <p class="apagado">Por defecto, la fecha del audio más antiguo. Tus ficheros no se modifican: se crea una copia unida.</p>
+      <p class="cante-botones"><button class="primario" data-c="juntar" ${juntando || !xs.length ? 'disabled' : ''}>${juntando ? 'Juntando…' : xs.length > 1 ? 'Juntar y guardar' : 'Guardar'}</button>
+        <button data-c="adjMas" ${juntando ? 'disabled' : ''}>Añadir más</button> <button data-c="adjCancelar" ${juntando ? 'disabled' : ''}>Cancelar</button></p></div>`;
+  }
+  const local = (iso) => { const d = new Date(iso); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+  function fechaPorDefecto() { const fs_ = adj.archivos.map((x) => x.fecha).filter(Boolean).sort(); return fs_.length ? local(fs_[0]) : local(new Date().toISOString()); }
 
   function proceso() {
     const t = C.transcribiendo;
@@ -76,11 +125,12 @@
     if (!C.lista.length) return '<section class="cante-tarjeta"><h3>Historial</h3><p class="apagado">Aún no hay cantes grabados.</p></section>';
     return `<section class="cante-tarjeta"><h3>Historial</h3><table class="temas cante-lista"><thead><tr><th>Fecha</th><th>Tema</th><th>Duración</th><th>Palabras/min</th></tr></thead><tbody>
       ${C.lista.map((f) => {
-        const pasado = f.objetivo && f.duracion > f.objetivo;
-        const ppm = f.palabras && f.duracion ? Math.round(f.palabras / (f.duracion / 60)) : '';
+        const dur = f.marcado ? f.real : f.duracion;
+        const pasado = f.objetivo && dur > f.objetivo;
+        const ppm = f.palabrasExpo && dur ? Math.round(f.palabrasExpo / (dur / 60)) : '';
         return `<tr class="${ctx.estado.canteVer === f.id ? 'sel' : ''}" data-ver="${esc(f.id)}">
           <td class="nowrap">${esc(fechaCorta(f.fecha))}</td><td><strong>${esc(f.codigo)}</strong> ${ESTADOS[f.estado] ? `<span class="etiqueta ${f.estado === 'error' ? 'mal' : ''}">${esc(ESTADOS[f.estado])}</span>` : ''}${enMarcha(f.id) ? ' <span class="etiqueta">transcribiendo</span>' : ''}</td>
-          <td class="num ${pasado ? 'pasado' : ''}">${esc(reloj(f.duracion))}${f.objetivo ? ` <span class="apagado">/ ${esc(reloj(f.objetivo))}</span>` : ''}</td>
+          <td class="num ${pasado ? 'pasado' : ''}" ${f.marcado ? `title="Exposición marcada; el audio dura ${esc(reloj(f.duracion))}"` : ''}>${esc(reloj(dur))}${f.marcado ? '<span class="cante-marcado">✂</span>' : ''}${f.objetivo ? ` <span class="apagado">/ ${esc(reloj(f.objetivo))}</span>` : ''}</td>
           <td class="num">${ppm}</td></tr>`;
       }).join('')}</tbody></table></section>`;
   }
@@ -88,25 +138,154 @@
   function vistaDetalle() {
     const f = detalle;
     if (!f) return '<p class="apagado cante-vacio">Elige un cante del historial para leer su transcripción.</p>';
-    const ppm = f.texto && f.duracion ? Math.round(f.texto.split(/\s+/).length / (f.duracion / 60)) : null;
-    const dif = f.objetivo ? f.duracion - f.objetivo : null;
-    // párrafos de aproximadamente un minuto, con la marca de tiempo al margen
+    const c = calcular(f), dur = c.real;
+    const palabrasExpo = (f.segmentos || []).filter((x) => tipoEn(c, x.t) === 'exposicion').reduce((n, x) => n + x.texto.split(/\s+/).filter(Boolean).length, 0);
+    const ppm = palabrasExpo && dur ? Math.round(palabrasExpo / (dur / 60)) : null;
+    const dif = f.objetivo ? dur - f.objetivo : null;
+    // párrafos de aproximadamente un minuto y del mismo tipo (exposición, complementario, descartado), con la marca de tiempo al margen
     const parrafos = [];
-    (f.segmentos || []).forEach((s) => { const ult = parrafos[parrafos.length - 1]; if (!ult || s.t - ult.t >= 60) parrafos.push({ t: s.t, texto: s.texto }); else ult.texto += ` ${s.texto}`; });
+    (f.segmentos || []).forEach((s) => { const tipo = tipoEn(c, s.t), ult = parrafos[parrafos.length - 1];
+      if (!ult || ult.tipo !== tipo || s.t - ult.t >= 60) parrafos.push({ t: s.t, texto: s.texto, tipo }); else ult.texto += ` ${s.texto}`; });
+    const enLista = C.lista.find((x) => x.id === f.id);
+    const hayAudio = enLista ? enLista.audioExiste : true;
     return `<div class="cante-detalle">
       <h3>${esc(f.codigo)} · ${esc(f.titulo)}</h3>
-      <p class="apagado">${esc(fecha(f.fecha))} · ${esc(reloj(f.duracion))}${dif != null ? ` (${dif > 0 ? '+' : '−'}${esc(reloj(Math.abs(dif)))} ${dif > 0 ? 'sobre' : 'bajo'} el objetivo de ${esc(minutos(f.objetivo))})` : ''}${ppm ? ` · ${ppm} palabras/min` : ''}</p>
+      <p class="apagado">${esc(fecha(f.fecha))} · ${c.marcado ? `exposición ${esc(reloj(dur))} <span class="cante-de">(audio de ${esc(reloj(f.duracion))})</span>` : esc(reloj(f.duracion))}${dif != null ? ` (${dif > 0 ? '+' : '−'}${esc(reloj(Math.abs(dif)))} ${dif > 0 ? 'sobre' : 'bajo'} el objetivo de ${esc(minutos(f.objetivo))})` : ''}${ppm ? ` · ${ppm} palabras/min` : ''}${f.origen === 'adjunto' ? ` · adjuntado (${esc((f.archivos || []).length)} ${(f.archivos || []).length === 1 ? 'audio' : 'audios'})` : ''}</p>
+      ${hayAudio ? marcas(f, c) : '<p class="apagado">El audio de este cante no está en este Mac (los audios no se sincronizan por GitHub): no se pueden marcar tramos.</p>'}
       <p class="cante-botones">
-        <button class="primario" data-c="audio">Escuchar audio</button>
+        <button data-c="audio">Abrir audio fuera</button>
         ${f.texto ? '<button class="" data-c="copiar">Copiar texto</button>' : ''}
         ${(f.estado === 'error' || f.estado === 'pendiente') && !enMarcha(f.id) ? '<button class="primario" data-c="reintentar">Transcribir</button>' : ''}
         <button class="peligro" data-c="eliminar">Eliminar</button></p>
       ${f.estado === 'error' ? `<p class="rel-div es-error">${esc(f.error || 'Error al transcribir.')}</p>` : ''}
       ${f.estado === 'pendiente' && !enMarcha(f.id) ? '<p class="apagado">Pendiente de transcribir. Tarda unos minutos y el Mac trabaja a tope (gasta batería): mejor con el cargador puesto.</p>' : ''}
       ${enMarcha(f.id) ? '<p class="apagado">Transcribiendo…</p>' : ''}
-      ${parrafos.length ? `<div class="cante-texto">${parrafos.map((p) => `<p><span class="cante-t">${esc(reloj(p.t))}</span>${esc(p.texto)}</p>`).join('')}</div>`
+      ${c.complementario.length && parrafos.some((p) => p.tipo === 'complementario') ? '<p class="cante-botones"><button data-c="copiarComp">Copiar material complementario</button></p>' : ''}
+      ${parrafos.length ? `<div class="cante-texto">${parrafos.map((p) => `<p class="t-${p.tipo}"><span class="cante-t" data-ir="${p.t}" title="Escuchar desde aquí">${esc(reloj(p.t))}</span><span>${p.tipo !== 'exposicion' ? `<em class="cante-tipo">${p.tipo === 'complementario' ? 'Material complementario' : 'Descartado'}</em> ` : ''}${esc(p.texto)}</span></p>`).join('')}</div>`
         : f.estado === 'transcrito' ? '<p class="apagado">La transcripción está vacía: no se reconoció voz en la grabación.</p>' : ''}
     </div>`;
+  }
+
+  // ------------------------------------------------------------ escucha y marcas (CANTE.md, apartado 6)
+  function marcas(f, c) {
+    const listo = ESC && ESC.id === f.id && ESC.url;
+    if (!ESC || ESC.id !== f.id) { ESC = { id: f.id }; AUD.pause(); AUD.removeAttribute('src'); descIni = null; ctx.enviar({ tipo: 'canteEscucha', id: f.id }); }
+    if (ESC.error) return '<p class="rel-div es-error">No se pudo preparar el audio para escucharlo aquí.</p>';
+    if (!listo) return '<p class="apagado">Preparando el audio para escucharlo y marcar tramos…</p>';
+    const e = c.t.exposicion;
+    const comp = largo(c.complementario), desc = largo(c.descartar);
+    return `<section class="cante-marcas">
+      <div class="cante-repro"><button class="primario" data-r="play">${AUD.paused ? '▶' : '❚❚'}</button>
+        <span class="cante-pos"><span id="c-pos">${esc(reloj(AUD.currentTime || 0))}</span> / ${esc(reloj(f.duracion))}</span>
+        <button data-r="-10" title="Atrás 10 s">−10 s</button><button data-r="-2" title="Atrás 2 s">−2 s</button><button data-r="+2" title="Adelante 2 s">+2 s</button><button data-r="+10" title="Adelante 10 s">+10 s</button>
+        <select id="c-vel" title="Velocidad">${[1, 1.25, 1.5, 2].map((v) => `<option value="${v}" ${AUD.playbackRate === v ? 'selected' : ''}>${String(v).replace('.', ',')}×</option>`).join('')}</select></div>
+      <canvas id="c-onda" class="cante-onda" height="90"></canvas>
+      <div class="cante-leyenda"><span class="l-expo">Exposición</span>${e ? '<span class="l-comp">Material complementario</span>' : ''}${c.descartar.length || descIni != null ? '<span class="l-desc">Descartado</span>' : ''}
+        <span class="apagado">Pulsa en la onda para ir a ese punto${e ? '; arrastra los bordes de la exposición para ajustarlos' : ''}.</span></div>
+      <p class="cante-botones">
+        <button data-m="ini" title="La exposición empieza en el punto que suena ahora">⟦ Inicio de la exposición aquí</button>
+        <button data-m="fin" title="La exposición termina en el punto que suena ahora">Fin de la exposición aquí ⟧</button>
+        <button data-m="desc" class="${descIni != null ? 'activo' : ''}">${descIni != null ? `✂ Fin del descarte aquí (desde ${esc(reloj(descIni))})` : '✂ Descartar desde aquí'}</button>
+        ${descIni != null ? '<button data-m="descNo">Cancelar descarte</button>' : ''}</p>
+      <p class="cante-resumen">${e ? `Exposición de <a data-ir="${e[0]}">${esc(reloj(e[0]))}</a> a <a data-ir="${e[1]}">${esc(reloj(e[1]))}</a>: <strong>${esc(reloj(c.real))}</strong> reales${comp ? ` · material complementario ${esc(reloj(comp))}` : ''}`
+        : `Sin marcar: todo el audio cuenta como exposición (<strong>${esc(reloj(c.real))}</strong>).`}${desc ? ` · descartado ${esc(reloj(desc))}` : ''}
+        ${e ? ' <button class="enlace" data-m="quitarExpo">Quitar la exposición</button>' : ''}</p>
+      ${c.descartar.length ? `<ul class="cante-descartes">${c.descartar.map(([a, b], i) => `<li>Descartado <a data-ir="${a}">${esc(reloj(a))}</a>–<a data-ir="${b}">${esc(reloj(b))}</a> <button class="enlace" data-m="descQuitar" data-i="${i}">quitar</button></li>`).join('')}</ul>` : ''}
+    </section>`;
+  }
+
+  /** Cambia los tramos del cante abierto, repinta y guarda (con un pequeño retraso, por si se arrastra) */
+  function cambiarTramos(t) {
+    const f = detalle; if (!f) return;
+    f.tramos = normalizar(t, f.duracion);
+    if (!f.tramos.exposicion && !f.tramos.descartar.length) delete f.tramos;
+    const c = calcular(f), x = C.lista.find((y) => y.id === f.id);
+    if (x) { x.marcado = c.marcado; x.real = c.real; x.palabrasExpo = (f.segmentos || []).filter((s) => tipoEn(c, s.t) === 'exposicion').reduce((n, s) => n + s.texto.split(/\s+/).filter(Boolean).length, 0); }
+    clearTimeout(guardarT); guardarT = setTimeout(() => ctx.enviar({ tipo: 'canteTramos', id: f.id, tramos: f.tramos || null }), arrastre ? 600 : 150);
+    if (!arrastre) render(); else dibujar();
+  }
+  const tramosActuales = () => normalizar(detalle && detalle.tramos, detalle && detalle.duracion);
+
+  function dibujar() {
+    const cv = el && el.querySelector('#c-onda'); const f = detalle;
+    if (!cv || !f || !ESC || !ESC.onda) return;
+    const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+    if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+    const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+    const dur = f.duracion || 1, X = (t) => (t / dur) * w, css = getComputedStyle(document.body);
+    const col = (v, d) => (css.getPropertyValue(v) || d).trim() || d;
+    const c = calcular(f);
+    const banda = (xs, color) => { g.fillStyle = color; xs.forEach(([a, b]) => g.fillRect(X(a), 0, Math.max(1, X(b) - X(a)), h)); };
+    banda(c.exposicion, 'rgba(60, 170, 110, .20)');
+    banda(c.complementario, 'rgba(210, 150, 40, .20)');
+    banda(c.descartar, 'rgba(128, 128, 128, .35)');
+    if (descIni != null) banda([[Math.min(descIni, AUD.currentTime), Math.max(descIni, AUD.currentTime)]], 'rgba(128, 128, 128, .25)');
+    // onda: el pico más alto de cada columna
+    const o = ESC.onda, n = o.length, mid = h / 2;
+    g.fillStyle = col('--vscode-foreground', '#888'); g.globalAlpha = 0.65;
+    for (let px = 0; px < w; px++) {
+      const i0 = Math.floor((px / w) * n), i1 = Math.max(i0 + 1, Math.floor(((px + 1) / w) * n));
+      let m = 0; for (let i = i0; i < i1 && i < n; i++) if (o[i] > m) m = o[i];
+      const a = Math.max(1, (m / 100) * (h / 2 - 4)); g.fillRect(px, mid - a, 1, a * 2);
+    }
+    g.globalAlpha = 1;
+    const e = c.t.exposicion;
+    if (e) { g.fillStyle = 'rgb(40, 150, 90)'; [e[0], e[1]].forEach((t) => g.fillRect(X(t) - 1.5, 0, 3, h)); }
+    g.fillStyle = col('--vscode-editorCursor-foreground', '#e55'); g.fillRect(X(AUD.currentTime || 0) - 1, 0, 2, h);
+  }
+
+  function irA(t, tocar) {
+    if (!ESC || !ESC.url) return;
+    AUD.currentTime = Math.max(0, Math.min((detalle && detalle.duracion) || 0, Number(t) || 0));
+    if (tocar && AUD.paused) AUD.play().catch(() => {});
+    actualizarPos();
+  }
+  function actualizarPos() {
+    const p = el && el.querySelector('#c-pos'); if (p) p.textContent = reloj(AUD.currentTime || 0);
+    const b = el && el.querySelector('[data-r="play"]'); if (b) b.textContent = AUD.paused ? '▶' : '❚❚';
+    dibujar();
+  }
+  AUD.addEventListener('timeupdate', actualizarPos);
+  AUD.addEventListener('play', actualizarPos);
+  AUD.addEventListener('pause', actualizarPos);
+  AUD.addEventListener('seeked', actualizarPos);
+  window.addEventListener('resize', () => dibujar());
+
+  function conectarMarcas() {
+    const cv = el.querySelector('#c-onda');
+    if (cv && detalle) {
+      const tEn = (ev) => { const r = cv.getBoundingClientRect(); return Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width)) * detalle.duracion; };
+      const borde = (ev) => { const e = tramosActuales().exposicion; if (!e) return null; const r = cv.getBoundingClientRect(), x = ev.clientX - r.left, X = (t) => (t / detalle.duracion) * r.width;
+        return Math.abs(x - X(e[0])) <= 6 ? 'ini' : Math.abs(x - X(e[1])) <= 6 ? 'fin' : null; };
+      cv.onmousemove = (ev) => { if (!arrastre) cv.style.cursor = borde(ev) ? 'ew-resize' : 'pointer'; };
+      cv.onmousedown = (ev) => {
+        const b = borde(ev);
+        if (!b) { irA(tEn(ev)); return; }
+        arrastre = b; ev.preventDefault();
+        const mover = (e2) => { const t = tramosActuales(), x = t.exposicion.slice(); x[arrastre === 'ini' ? 0 : 1] = tEn(e2); t.exposicion = x; cambiarTramos(t); };
+        const soltar = () => { document.removeEventListener('mousemove', mover); document.removeEventListener('mouseup', soltar); arrastre = null; cambiarTramos(tramosActuales()); };
+        document.addEventListener('mousemove', mover); document.addEventListener('mouseup', soltar);
+      };
+      dibujar();
+    }
+    if (ESC && ESC.url && AUD.getAttribute('src') !== ESC.url) AUD.src = ESC.url;
+    const vel = el.querySelector('#c-vel'); if (vel) vel.onchange = () => { AUD.playbackRate = Number(vel.value) || 1; };
+    el.querySelectorAll('[data-ir]').forEach((a) => a.onclick = () => irA(Number(a.dataset.ir), true));
+    el.querySelectorAll('[data-r]').forEach((b) => b.onclick = () => {
+      const r = b.dataset.r;
+      if (r === 'play') { if (AUD.paused) AUD.play().catch(() => {}); else AUD.pause(); return; }
+      irA((AUD.currentTime || 0) + Number(r));
+    });
+    el.querySelectorAll('[data-m]').forEach((b) => b.onclick = () => {
+      const m = b.dataset.m, ahora = AUD.currentTime || 0, t = tramosActuales(), dur = detalle.duracion;
+      if (m === 'ini') { const fin = t.exposicion && t.exposicion[1] > ahora + 1 ? t.exposicion[1] : dur; t.exposicion = [ahora, fin]; }
+      if (m === 'fin') { const ini = t.exposicion && t.exposicion[0] < ahora - 1 ? t.exposicion[0] : 0; t.exposicion = [ini, ahora]; }
+      if (m === 'quitarExpo') t.exposicion = null;
+      if (m === 'desc') { if (descIni == null) { descIni = ahora; render(); return; } t.descartar.push([descIni, ahora]); descIni = null; }
+      if (m === 'descNo') { descIni = null; render(); return; }
+      if (m === 'descQuitar') t.descartar.splice(Number(b.dataset.i), 1);
+      cambiarTramos(t);
+    });
   }
 
   // ------------------------------------------------------------ grabando
@@ -177,7 +356,43 @@
       if (a === 'reintentar') { b.disabled = true; ctx.enviar({ tipo: 'canteReintentar', id }); }
       if (a === 'cancelar') { b.disabled = true; ctx.enviar({ tipo: 'canteCancelar' }); }
       if (a === 'eliminar') ctx.enviar({ tipo: 'canteEliminar', id });
+      if (a === 'adjuntar' || a === 'adjMas') ctx.enviar({ tipo: 'canteAdjuntarElegir' });
+      if (a === 'adjCancelar') { adj = null; render(); }
+      if (a === 'juntar' && adj) {
+        const fe = sel('#c-fecha');
+        juntando = true; render();
+        ctx.enviar({ tipo: 'canteJuntar', codigo: (sel('#c-tema') || {}).value || ctx.estado.canteTema, objetivo: (sel('#c-obj') || {}).value, fecha: fe && fe.value ? new Date(fe.value).toISOString() : null, rutas: adj.archivos.map((x) => x.ruta) });
+      }
+      if (a === 'copiarComp' && detalle) {
+        const c = calcular(detalle);
+        ctx.enviar({ tipo: 'canteCopiarComp', texto: (detalle.segmentos || []).filter((x) => tipoEn(c, x.t) === 'complementario').map((x) => x.texto).join(' ') });
+      }
     });
+    const fe = sel('#c-fecha'); if (fe && adj) fe.onchange = () => { adj.fecha = fe.value; };
+    el.querySelectorAll('[data-a]').forEach((b) => b.onclick = () => {
+      const i = Number(b.dataset.i), xs = adj.archivos;
+      if (b.dataset.a === 'subir' && i > 0) [xs[i - 1], xs[i]] = [xs[i], xs[i - 1]];
+      if (b.dataset.a === 'bajar' && i < xs.length - 1) [xs[i + 1], xs[i]] = [xs[i], xs[i + 1]];
+      if (b.dataset.a === 'quitar') xs.splice(i, 1);
+      if (!xs.length) adj = null;
+      render();
+    });
+    conectarMarcas();
+  }
+
+  /** Respuestas de la extensión: audios elegidos, fin de «Juntar», copia para escuchar */
+  function recibir(m) {
+    if (m.tipo === 'canteAdjuntos') {
+      const nuevos = (m.archivos || []).slice().sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
+      if (!adj) adj = { archivos: [], fecha: '' };
+      const ya = new Set(adj.archivos.map((x) => x.ruta));
+      adj.archivos.push(...nuevos.filter((x) => !ya.has(x.ruta)));
+      adj.fecha = fechaPorDefecto();
+      if (!adj.archivos.length) adj = null;
+    }
+    if (m.tipo === 'canteJuntado') { juntando = false; if (m.ok) adj = null; }
+    if (m.tipo === 'canteEscucha') { if (!ESC || ESC.id !== m.id) return; ESC = m.error ? { id: m.id, error: true } : { id: m.id, url: m.url, onda: m.onda, paso: m.paso }; }
+    if (el && C && !C.grabando) render();
   }
 
   window.TCEE_CANTE = {
@@ -186,5 +401,7 @@
     seleccionar(id) { if (ctx) { ctx.estado.canteVer = id; ctx.guardar(); } },
     detalle(d) { detalle = d; if (!d) { ctx.estado.canteVer = null; ctx.guardar(); } if (el && C && !C.grabando) render(); },
     micros(l) { micros = l || []; if (el && C && !C.grabando) render(); },
+    recibir,
+    salir() { AUD.pause(); },   // al cambiar de pestaña, el audio no sigue sonando
   };
 })();

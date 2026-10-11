@@ -71,7 +71,56 @@ function nivel(registro) {
   } catch (e) { return null; }
 }
 
-function crearCante({ raiz, progreso, avisar, alCambiar }) {
+// ---------------------------------------------------------------- tramos (CANTE.md, apartado 6)
+// ficha.tramos = { exposicion: [ini, fin] | null, descartar: [[ini, fin], …] } en segundos.
+// Sin exposición marcada, todo el audio es exposición. Con exposición marcada, lo que queda fuera es material complementario.
+// Lo descartado no cuenta para nada (tampoco dentro de la exposición: resta de la duración real).
+const r1 = (x) => Math.round(x * 10) / 10;
+function normalizarTramos(t, dur) {
+  const lim = (x) => r1(Math.max(0, Math.min(dur || 0, Number(x) || 0)));
+  let exposicion = null;
+  if (t && Array.isArray(t.exposicion)) {
+    const [a, b] = t.exposicion.map(lim).sort((x, y) => x - y);
+    if (b - a >= 1) exposicion = [a, b];
+  }
+  const ds = ((t && t.descartar) || []).map((d) => d.map(lim).sort((x, y) => x - y)).filter(([a, b]) => b - a >= 0.5).sort((x, y) => x[0] - y[0]);
+  const descartar = [];
+  for (const d of ds) { const u = descartar[descartar.length - 1]; if (u && d[0] <= u[1]) u[1] = Math.max(u[1], d[1]); else descartar.push(d.slice()); }
+  return { exposicion, descartar };
+}
+/** Resta de intervalos: [a, b] menos la lista ordenada ds */
+function restar([a, b], ds) {
+  const r = []; let x = a;
+  for (const [c, d] of ds) { if (d <= x || c >= b) continue; if (c > x) r.push([x, c]); x = Math.max(x, d); }
+  if (x < b) r.push([x, b]);
+  return r;
+}
+const largo = (xs) => xs.reduce((s, [a, b]) => s + (b - a), 0);
+/** Tramos efectivos: exposición (sin lo descartado), complementario, descartado y duración real (s) */
+function calcularTramos(f) {
+  const dur = Number(f.duracion) || 0;
+  const t = normalizarTramos(f.tramos, dur);
+  const expo = t.exposicion || [0, dur];
+  const exposicion = restar(expo, t.descartar);
+  const fuera = t.exposicion ? [...restar([0, expo[0]], t.descartar), ...restar([expo[1], dur], t.descartar)] : [];
+  return { marcado: !!(t.exposicion || t.descartar.length), exposicion, complementario: fuera, descartar: t.descartar, real: Math.round(largo(exposicion)) };
+}
+/** Tipo del instante x: 'exposicion' | 'complementario' | 'descartado' */
+function tipoEn(c, x) {
+  const en = (xs) => xs.some(([a, b]) => x >= a && x < b);
+  return en(c.descartar) ? 'descartado' : en(c.complementario) ? 'complementario' : 'exposicion';
+}
+
+/** Duración de un fichero de audio o vídeo (s), leída de la cabecera con ffmpeg */
+function duracionDe(ffmpeg, f) {
+  return new Promise((ok) => execFile(ffmpeg, ['-hide_banner', '-nostdin', '-i', f], { timeout: 20000 }, (e, out, err) => {
+    const m = String(err || '').match(/Duration:\s*(\d+):(\d+):([\d.]+)/);
+    const audio = /Stream #.*Audio:/.test(String(err || ''));
+    ok({ duracion: m ? Number(m[1]) * 3600 + Number(m[2]) * 60 + Number(m[3]) : null, audio });
+  }));
+}
+
+function crearCante({ raiz, progreso, avisar, alCambiar, cacheEscucha }) {
   const dirTx = () => (progreso.hayCarpeta() ? path.join(progreso.dir, 'cantes') : path.join(raiz(), '.cantes-texto'));
   const dirAudio = () => carpetaAudio(raiz());
   const marca = () => path.join(dirAudio(), 'grabando.json');   // grabación en curso (sobrevive a recargar la ventana)
@@ -160,6 +209,8 @@ function crearCante({ raiz, progreso, avisar, alCambiar }) {
   function lista() {
     let fs_ = []; try { fs_ = fs.readdirSync(dirTx()).filter((f) => f.endsWith('.json')); } catch (e) { /* aún no hay cantes */ }
     return fs_.map((f) => leerJson(path.join(dirTx(), f), null)).filter((f) => f && f.id && f.fecha)
+      .map((f) => { const c = calcularTramos(f); return { ...f, real: c.real, marcado: c.marcado,
+        palabrasExpo: (f.segmentos || []).filter((x) => tipoEn(c, x.t) === 'exposicion').reduce((n, x) => n + x.texto.split(/\s+/).filter(Boolean).length, 0) }; })
       .map(({ segmentos, texto, ...r }) => ({ ...r, palabras: texto ? texto.split(/\s+/).filter(Boolean).length : 0,
         audioExiste: existe(path.join(dirAudio(), r.audio || '')) || existe(path.join(dirAudio(), (r.audio || '').replace(/\.wav$/, '.m4a'))) }))
       .sort((a, b) => b.fecha.localeCompare(a.fecha));
@@ -169,11 +220,108 @@ function crearCante({ raiz, progreso, avisar, alCambiar }) {
     const f = leer(id);
     if (f) for (const a of [f.audio, (f.audio || '').replace(/\.wav$/, '.m4a')]) { try { fs.unlinkSync(path.join(dirAudio(), a)); } catch (e) { /* no estaba */ } }
     try { fs.unlinkSync(fichero(id)); } catch (e) { /* no estaba */ }
+    if (cacheEscucha) for (const x of [`${id}.mp3`, `${id}.onda.json`]) { try { fs.unlinkSync(path.join(cacheEscucha, x)); } catch (e) { /* no estaba */ } }
     alCambiar();
   }
   function rutaAudio(id) {
     const f = leer(id); if (!f) return null;
     return [f.audio, (f.audio || '').replace(/\.wav$/, '.m4a')].map((a) => path.join(dirAudio(), a)).find(existe) || null;
+  }
+
+  // ---------------------------------------------------------------- audios adjuntos (CANTE.md, apartado 6)
+  /** Datos de los ficheros elegidos: [{ruta, nombre, fecha (ISO, última modificación), duracion (s), audio}] */
+  async function infoAdjuntos(rutas) {
+    const h = herramientas();
+    if (!h.ffmpeg) throw new Error('Falta ffmpeg. Pulsa «Instalar herramientas de cante».');
+    const r = [];
+    for (const ruta of rutas) {
+      let fecha = null; try { fecha = fs.statSync(ruta).mtime.toISOString(); } catch (e) { /* sin fecha */ }
+      const d = await duracionDe(h.ffmpeg, ruta);
+      r.push({ ruta, nombre: path.basename(ruta), fecha, duracion: d.duracion, audio: d.audio });
+    }
+    return r;
+  }
+
+  /** Junta los audios (en el orden dado) en un único WAV del cante y crea su ficha, pendiente de transcribir. Los originales no se tocan */
+  async function juntar({ codigo, titulo, objetivo, fecha, rutas, texto }) {
+    const h = herramientas();
+    if (!h.ffmpeg) throw new Error('Falta ffmpeg. Pulsa «Instalar herramientas de cante».');
+    if (!rutas || !rutas.length) throw new Error('No hay audios que juntar.');
+    for (const r of rutas) if (!existe(r)) throw new Error(`No encuentro «${path.basename(r)}».`);
+    const d = new Date(fecha || Date.now());
+    if (Number.isNaN(d.getTime())) throw new Error('La fecha no es válida.');
+    fs.mkdirSync(dirAudio(), { recursive: true });
+    const base = `${d.getFullYear()}-${dos(d.getMonth() + 1)}-${dos(d.getDate())}_${dos(d.getHours())}${dos(d.getMinutes())}_${codigo}`;
+    let id = base;
+    for (let i = 2; existe(fichero(id)) || existe(path.join(dirAudio(), `${id}.wav`)) || existe(path.join(dirAudio(), `${id}.m4a`)); i++) id = `${base}-${i}`;
+    const wav = path.join(dirAudio(), `${id}.wav`);
+    // cada entrada se pasa a mono 16 kHz (el formato de whisper) y se encadenan en el orden elegido
+    const args = ['-hide_banner', '-nostdin', '-y'];
+    rutas.forEach((r) => args.push('-i', r));
+    const filtro = rutas.map((r, i) => `[${i}:a:0]aresample=${HZ},aformat=sample_fmts=s16:channel_layouts=mono[a${i}]`).join(';')
+      + `;${rutas.map((r, i) => `[a${i}]`).join('')}concat=n=${rutas.length}:v=0:a=1[s]`;
+    args.push('-filter_complex', filtro, '-map', '[s]', '-c:a', 'pcm_s16le', wav);
+    try { await correrSimple(h.ffmpeg, args); } catch (e) { try { fs.unlinkSync(wav); } catch (x) { /* no se creó */ } throw e; }
+    let bytes = 0; try { bytes = fs.statSync(wav).size; } catch (e) { /* sin audio */ }
+    if (bytes <= BYTES_SEG) { try { fs.unlinkSync(wav); } catch (e) { /* sin audio */ } throw new Error('Los ficheros no tienen sonido que se pueda leer.'); }
+    guardarFicha({ id, codigo, titulo, fecha: d.toISOString(), duracion: Math.round((await duracionDe(h.ffmpeg, wav)).duracion || bytes / BYTES_SEG), objetivo: Number(objetivo) || 0,
+      micro: null, origen: 'adjunto', archivos: rutas.map((r) => path.basename(r)), audio: path.basename(wav), pista: pista(titulo, texto), estado: 'pendiente' });
+    alCambiar();
+    return id;
+  }
+
+  function correrSimple(prog, args) {
+    return new Promise((ok, mal) => execFile(prog, args, { maxBuffer: 16 << 20 }, (e, out, err) => (e
+      ? mal(new Error(`${path.basename(prog)}: ${String(err || e.message).trim().split('\n').slice(-2).join(' ').slice(0, 300)}`)) : ok())));
+  }
+
+  /** Guarda los tramos marcados (sin repintar el panel: la página ya los muestra) */
+  function guardarTramos(id, tramos) {
+    const f = leer(id); if (!f) return null;
+    const t = normalizarTramos(tramos, f.duracion);
+    const n = { ...f }; delete n.tramos;
+    if (t.exposicion || t.descartar.length) n.tramos = t;
+    guardarFicha(n);
+    return calcularTramos(n);
+  }
+
+  /** Copia para escuchar en el panel (MP3: el reproductor de VS Code no lee AAC) y forma de onda (pico cada 0,1 s, de 0 a 100) */
+  async function escucha(id) {
+    const h = herramientas();
+    const origen = rutaAudio(id);
+    if (!h.ffmpeg || !origen || !cacheEscucha) return null;
+    fs.mkdirSync(cacheEscucha, { recursive: true });
+    const mp3 = path.join(cacheEscucha, `${id}.mp3`), onda = path.join(cacheEscucha, `${id}.onda.json`);
+    const tOrigen = fs.statSync(origen).mtimeMs;
+    const vigente = (x) => { try { return fs.statSync(x).mtimeMs >= tOrigen; } catch (e) { return false; } };
+    if (!vigente(mp3)) {
+      // un WAV cortado no indica su duración: se relee como audio en bruto
+      try { await correrSimple(h.ffmpeg, ['-hide_banner', '-nostdin', '-y', '-i', origen, '-vn', '-ac', '1', '-c:a', 'libmp3lame', '-b:a', '48k', mp3]); }
+      catch (e) { await correrSimple(h.ffmpeg, ['-hide_banner', '-nostdin', '-y', '-f', 's16le', '-ar', String(HZ), '-ac', '1', '-i', origen, '-c:a', 'libmp3lame', '-b:a', '48k', mp3]); }
+    }
+    // la caché guarda solo las copias de los 6 últimos cantes escuchados (≈20 MB por hora de audio cada una)
+    try { fs.utimesSync(mp3, new Date(), fs.statSync(mp3).mtime); } catch (e) { /* recién creada */ }
+    try {
+      fs.readdirSync(cacheEscucha).filter((x) => x.endsWith('.mp3')).map((x) => ({ x, t: fs.statSync(path.join(cacheEscucha, x)).atimeMs }))
+        .sort((a, b) => b.t - a.t).slice(6).forEach(({ x }) => fs.unlinkSync(path.join(cacheEscucha, x)));
+    } catch (e) { /* sin caché */ }
+    if (!vigente(onda)) {
+      const picos = await new Promise((ok, mal) => {
+        const p = spawn(h.ffmpeg, ['-hide_banner', '-nostdin', '-i', mp3, '-ac', '1', '-ar', '8000', '-f', 's16le', '-'], { stdio: ['ignore', 'pipe', 'ignore'] });
+        const r = []; let max = 0, n = 0, resto = null;
+        p.stdout.on('data', (b) => {
+          if (resto) { b = Buffer.concat([resto, b]); resto = null; }
+          const fin = b.length - (b.length % 2);
+          for (let i = 0; i < fin; i += 2) { const v = Math.abs(b.readInt16LE(i)); if (v > max) max = v; if (++n === 800) { r.push(max); max = 0; n = 0; } }
+          if (fin < b.length) resto = b.subarray(fin);
+        });
+        p.on('error', mal);
+        p.on('close', () => { if (n) r.push(max); ok(r); });
+      });
+      const tope = Math.max(1, ...picos.slice().sort((a, b) => a - b).slice(Math.floor(picos.length * 0.99)));
+      fs.writeFileSync(onda, JSON.stringify(picos.map((v) => Math.min(100, Math.round((v / tope) * 100)))));
+    }
+    return { mp3, onda: leerJson(onda, []), paso: 0.1 };
   }
 
   // ---------------------------------------------------------------- transcripción (una cada vez, en segundo plano)
@@ -268,7 +416,7 @@ function crearCante({ raiz, progreso, avisar, alCambiar }) {
   }
 
   return { herramientas, microfonos: async () => { const h = herramientas(); return h.ffmpeg ? microfonos(h.ffmpeg) : []; },
-    empezar, terminar, lista, leer, eliminar, rutaAudio, encolar, cancelar, retomar, estado };
+    empezar, terminar, lista, leer, eliminar, rutaAudio, encolar, cancelar, retomar, estado, infoAdjuntos, juntar, guardarTramos, escucha };
 }
 
-module.exports = { crearCante, herramientas, microfonos, elegirMicro, pista, nivel, ALUCINACIONES };
+module.exports = { crearCante, herramientas, microfonos, elegirMicro, pista, nivel, ALUCINACIONES, normalizarTramos, calcularTramos, tipoEn };
