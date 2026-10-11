@@ -140,6 +140,8 @@ contenido se pierde por razones de forma.
   y las que quedaron pendientes de verificar.
 - **APA 7 en español**, en tres bloques: **Legislación** (normas, tratados y jurisprudencia), **Investigación** (obras académicas e informes
   institucionales de carácter analítico) y **Complementario** (prensa, notas de prensa, datos y blogs).
+- **Al cerrar cada epígrafe (o cada tanda) se actualiza la bibliografía del tema**: se añaden todas las obras nuevas citadas o
+  utilizadas y las ya citadas en el texto trabajado que aún no figuren. No se espera a que el usuario lo pida.
 - Una sola entrada por título, solo con las obras efectivamente citadas o utilizadas. Orden alfabético; la legislación, por ámbito y fecha.
 - Cada entrada: una línea en blanco entre entradas y sangría francesa, `\noindent\hangindent=1.5em\hangafter=1`.
 - **Con DOI**: referencia en texto plano y al final `\href{https://doi.org/…}{\nolinkurl{https://doi.org/…}}`.
@@ -213,6 +215,13 @@ preguntas con opciones cuando estén disponibles; si no, preguntas breves en el 
 
 ### 8.3. Cómo se resuelve una nota magenta
 
+- **Una nota magenta es siempre un encargo de desarrollo, nunca una pregunta para contestar en la conversación.** Sus preguntas,
+  frases o ideas sueltas («¿por qué es importante?», «¿es así? ¿puedes confirmarlo?», «¿dónde va esto?», «continuar…») invitan a
+  desarrollar **en el texto** la línea propuesta, o a partir de esa idea, con las reglas de esta guía. Nada de su contenido se contesta en
+  el chat salvo que la nota lo pida expresamente. Si la nota pide verificar, se verifica y el resultado se escribe en el texto; si pregunta
+  dónde va un fragmento, Claude lo sitúa e integra donde mejor encaje. La interacción con el usuario (§8.1) sirve para matizar su voluntad
+  u objetivo (alcance, enfoque, pros y contras cuando la nota lo pide), no para responderle lo que la nota manda desarrollar; tampoco el
+  plan (§8.4) adelanta esas respuestas: dice qué se va a desarrollar y con qué alcance.
 - La nota se lee con el texto que la rodea: a menudo incluye la redacción anterior («Este era el anterior: …», «Esto es lo que estaba,
   expandir: …»). Ese texto es el punto de partida y su contenido no se pierde.
 - Se resuelve en la misma posición, en prosa definitiva, y se quita la nota. Si se resuelve solo en parte, se deja la nota con lo que falta
