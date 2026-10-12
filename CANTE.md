@@ -109,8 +109,14 @@ Estados: `pendiente` (por transcribir), `transcrito`, `error`.
 - Se marca sobre la **forma de onda**: pulsar lleva a ese punto; *Inicio / Fin de la exposición aquí* usan el punto que suena;
   los bordes de la exposición se arrastran; *Descartar desde aquí* y luego *Fin del descarte aquí*. Se guarda solo al cambiar.
 - La **línea del momento actual** se arrastra: pulsar en la onda lleva a ese punto y, sin soltar, se mueve.
-- **Sobre el texto** (v0.44): se selecciona con el ratón desde cualquier palabra hasta cualquier otra y se pulsa *Exposición = selección* (sustituye la exposición)
-  o *Descartar selección* (añade un descarte). El tramo va desde el instante de la primera palabra hasta el de la palabra siguiente a la última.
+- **Sobre el texto** (v0.44; selección propia desde la v0.44.1): pulsar una palabra la selecciona; arrastrar amplía hasta la palabra sobre la que se suelta
+  (el texto se desplaza solo cerca de los bordes); Mayúsculas + clic amplía desde la anterior; Esc o *Quitar selección* la quitan.
+  No se usa la selección del navegador: saltaba por frases porque la barra de arriba cambiaba de alto al seleccionar y movía el texto bajo el ratón
+  (por eso la barra tiene ahora una sola línea fija). Luego se pulsa *Exposición = selección* (sustituye la exposición) o *Descartar selección* (añade un descarte).
+  El tramo va desde el instante de la primera palabra hasta el de la palabra siguiente a la última; se admiten tramos de una sola palabra (desde 0,05 s; centésimas).
+- **✕ al principio de cada bloque marcado** en el texto: en el primer párrafo de la exposición quita la marca de exposición (todo vuelve a ser exposición);
+  en un descarte quita ese descarte. El material complementario no tiene ✕: sale de la exposición.
+- El panel no repinta el detalle si no ha cambiado nada del cante (se refresca a menudo por otros motivos) ni a mitad de una selección, y conserva el desplazamiento del texto.
   Los cantes transcritos antes de la v0.44 solo tienen el instante de cada frase: se marca la frase entera y se ofrece *Volver a transcribir con precisión por palabra*
   (conserva los tramos; avisa de que se pierden las correcciones del texto).
 - Cada palabra lleva su tipo, así que los párrafos de material complementario y los descartados se cortan donde empieza el tramo, aunque sea a mitad de frase.
