@@ -22,12 +22,12 @@
   let guardarT = null;
 
   // ---- tramos (mismas reglas que normalizarTramos/calcularTramos de extension/cante.js; CANTE.md, apartado 6)
-  const r1 = (x) => Math.round(x * 10) / 10;
+  const r1 = (x) => Math.round(x * 100) / 100;   // centésimas: se marcan palabras sueltas
   function normalizar(t, dur) {
     const lim = (x) => r1(Math.max(0, Math.min(dur || 0, Number(x) || 0)));
     let exposicion = null;
-    if (t && Array.isArray(t.exposicion)) { const [a, b] = t.exposicion.map(lim).sort((x, y) => x - y); if (b - a >= 1) exposicion = [a, b]; }
-    const ds = ((t && t.descartar) || []).map((d) => d.map(lim).sort((x, y) => x - y)).filter(([a, b]) => b - a >= 0.5).sort((x, y) => x[0] - y[0]);
+    if (t && Array.isArray(t.exposicion)) { const [a, b] = t.exposicion.map(lim).sort((x, y) => x - y); if (b - a >= 0.05) exposicion = [a, b]; }
+    const ds = ((t && t.descartar) || []).map((d) => d.map(lim).sort((x, y) => x - y)).filter(([a, b]) => b - a >= 0.05).sort((x, y) => x[0] - y[0]);
     const descartar = [];
     for (const d of ds) { const u = descartar[descartar.length - 1]; if (u && d[0] <= u[1]) u[1] = Math.max(u[1], d[1]); else descartar.push(d.slice()); }
     return { exposicion, descartar };
@@ -54,10 +54,22 @@
     const v = ctx.estado.canteVer, enLista = v && C.lista.find((f) => f.id === v);
     if (v && !enLista) { ctx.estado.canteVer = null; detalle = null; ctx.guardar(); }
     else if (v && (!detalle || detalle.id !== v || detalle.estado !== enLista.estado)) ctx.enviar({ tipo: 'canteVer', id: v });
+    const firma = JSON.stringify([C.lista, C.falta, C.cola, C.transcribiendo && C.transcribiendo.id, !!C.grabando, D.temas.length, C.abierto, C.semana]);
+    if (firma === ultimaFirma && el.querySelector('.cante')) return;
+    ultimaFirma = firma;
     render();
   }
+  let ultimaFirma = null;
 
+  let seleccionando = false, repintarLuego = false;
   function render() {
+    // a mitad de una selección con el ratón no se repinta (se perdería): se hace al soltar
+    if (seleccionando) { repintarLuego = true; return; }
+    const dcha = el.querySelector('.cante-dcha'), scD = dcha ? dcha.scrollTop : 0;
+    renderAhora();
+    const d2 = el.querySelector('.cante-dcha'); if (d2) d2.scrollTop = scD;   // el texto no salta arriba al marcar
+  }
+  function renderAhora() {
     clearInterval(tic); tic = null;
     if (C.grabando) { el.innerHTML = grabando(); conectar(); tic = setInterval(actualizarReloj, 250); actualizarReloj(); medidor(); return; }
     el.innerHTML = `<div class="cante">
@@ -150,13 +162,26 @@
     const dif = f.objetivo ? dur - f.objetivo : null;
     // párrafos de aproximadamente un minuto y del mismo tipo (exposición, complementario, descartado), con la marca de tiempo al margen
     // cada palabra lleva su tipo, así que un párrafo puede cortarse a mitad de frase
-    W = []; selK = null;
+    const mismo = W.length && W.cante === f.id;
+    W = []; W.cante = f.id; if (!mismo) selK = null;
     (f.segmentos || []).forEach((sg, si) => { const conP = !!(sg.palabras && sg.palabras.length);
       palabrasDe(sg).forEach(([t, w], pi) => W.push({ s: si, p: conP ? pi : null, t, w, tipo: tipoEn(c, t) })); });
     const parrafos = [];
     W.forEach((x, k) => { const ult = parrafos[parrafos.length - 1], cambioFrase = !k || W[k - 1].s !== x.s;
       if (!ult || ult.tipo !== x.tipo || (cambioFrase && x.t - ult.t >= 60)) parrafos.push({ t: x.t, tipo: x.tipo, ks: [k] }); else ult.ks.push(k); });
+    if (selK && (selK[1] >= W.length)) selK = null;
     const porFrase = W.length && W.some((x) => x.p == null);
+    // ✕ al principio de cada bloque marcado: quita esa marca (la exposición entera o ese descarte)
+    const primeraExpo = c.t.exposicion ? parrafos.findIndex((p) => p.tipo === 'exposicion') : -1;
+    const quitarDe = (p, i) => {
+      if (p.tipo === 'exposicion' && i === primeraExpo) return { q: 'e', titulo: 'Quitar la marca de exposición (todo vuelve a contar como exposición)' };
+      if (p.tipo === 'descartado') {
+        const t0 = W[p.ks[0]].t, d = c.descartar.findIndex(([a, b]) => t0 >= a && t0 < b);
+        const prev = p.ks[0] > 0 ? W[p.ks[0] - 1] : null;
+        if (d >= 0 && !(prev && prev.tipo === 'descartado' && prev.t >= c.descartar[d][0])) return { q: `d${d}`, titulo: 'Quitar este descarte' };
+      }
+      return null;
+    };
     const enLista = C.lista.find((x) => x.id === f.id);
     const hayAudio = enLista ? enLista.audioExiste : true;
     return `<div class="cante-detalle">
@@ -173,11 +198,11 @@
       ${enMarcha(f.id) ? '<p class="apagado">Transcribiendo…</p>' : ''}
       ${c.complementario.length && parrafos.some((p) => p.tipo === 'complementario') ? '<p class="cante-botones"><button data-c="copiarComp">Copiar material complementario</button></p>' : ''}
       ${parrafos.length ? `<div class="cante-seltxt" id="c-seltxt">
-          <span class="apagado" id="c-selinfo">Selecciona texto con el ratón para marcarlo. Doble clic en ${porFrase ? 'una frase' : 'una palabra'} para corregirla.</span>
-          <button data-s="expo" disabled>Exposición = selección</button><button data-s="desc" disabled>Descartar selección</button></div>
+          <span class="apagado" id="c-selinfo"></span>
+          <button data-s="expo" disabled>Exposición = selección</button><button data-s="desc" disabled>Descartar selección</button><button data-s="no" class="enlace" style="visibility:hidden">Quitar selección</button></div>
         ${porFrase ? `<p class="apagado cante-aviso-frase">Este cante se transcribió sin el instante de cada palabra: al seleccionar se marca la frase entera (unos segundos de margen).
           ${!enMarcha(f.id) && hayAudio ? '<button class="enlace" data-c="retranscribir">Volver a transcribir con precisión por palabra</button>' : ''}</p>` : ''}
-        <div class="cante-texto" id="c-texto">${parrafos.map((p) => `<p class="t-${p.tipo}"><span class="cante-t" data-ir="${p.t}" title="Escuchar desde aquí">${esc(reloj(p.t))}</span><span>${p.tipo !== 'exposicion' ? `<em class="cante-tipo">${p.tipo === 'complementario' ? 'Material complementario' : 'Descartado'}</em> ` : ''}${p.ks.map((k) => `<span class="w" data-k="${k}">${esc(W[k].w)}</span>`).join(' ')}</span></p>`).join('')}</div>`
+        <div class="cante-texto" id="c-texto">${parrafos.map((p, i) => { const qx = quitarDe(p, i); return `<p class="t-${p.tipo}${qx ? ' con-marca' : ''}"><span class="cante-t" data-ir="${p.t}" title="Escuchar desde aquí">${esc(reloj(p.t))}</span><span>${qx ? `<button class="cante-quitar" data-quitar="${qx.q}" title="${esc(qx.titulo)}">✕</button>` : ''}${p.tipo !== 'exposicion' ? `<em class="cante-tipo">${p.tipo === 'complementario' ? 'Material complementario' : 'Descartado'}</em> ` : (qx ? '<em class="cante-tipo">Exposición</em> ' : '')}${p.ks.map((k) => `<span class="w" data-k="${k}">${esc(W[k].w)}</span>`).join(' ')}</span></p>`; }).join('')}</div>`
         : f.estado === 'transcrito' ? '<p class="apagado">La transcripción está vacía: no se reconoció voz en la grabación.</p>' : ''}
     </div>`;
   }
@@ -279,24 +304,53 @@
   window.addEventListener('resize', () => dibujar());
 
   // ---- marcar seleccionando el texto y corregir palabras
-  function leerSeleccion() {
+  // La selección es propia, palabra a palabra (no la del navegador): pulsar una palabra la elige; arrastrar amplía hasta la palabra
+  // sobre la que se suelta; Mayúsculas + clic amplía desde la palabra elegida antes; Esc la quita.
+  let selAncla = null;
+  function pintarSeleccion() {
     const caja = el && el.querySelector('#c-texto'), info = el && el.querySelector('#c-selinfo');
-    selK = null;
-    const sel = window.getSelection();
-    if (caja && sel && !sel.isCollapsed && sel.rangeCount && caja.contains(sel.getRangeAt(0).commonAncestorContainer)) {
-      const ks = [...caja.querySelectorAll('.w')].filter((x) => sel.containsNode(x, true)).map((x) => Number(x.dataset.k));
-      if (ks.length) selK = [Math.min(...ks), Math.max(...ks)];
+    if (caja) {
+      caja.querySelectorAll('.w.sel').forEach((x) => x.classList.remove('sel'));
+      if (selK) for (let k = selK[0]; k <= selK[1]; k++) { const sp = caja.querySelector(`.w[data-k="${k}"]`); if (sp) sp.classList.add('sel'); }
     }
-    el && el.querySelectorAll('[data-s]').forEach((b) => { b.disabled = !selK || !ESC || !ESC.url; });
+    el && el.querySelectorAll('[data-s="expo"], [data-s="desc"]').forEach((b) => { b.disabled = !selK || !ESC || !ESC.url; });
+    const no = el && el.querySelector('[data-s="no"]'); if (no) no.style.visibility = selK ? 'visible' : 'hidden';   // sin mover nada de sitio
     if (info) {
-      if (selK) { const [a, b] = tramoSel(); info.textContent = `Selección: ${reloj(a)} – ${reloj(b)}`; }
-      else info.textContent = `Selecciona texto con el ratón para marcarlo. Doble clic en ${W.some((x) => x.p == null) ? 'una frase' : 'una palabra'} para corregirla.`;
+      if (selK) { const [a, b] = tramoSel(), n = selK[1] - selK[0] + 1; info.textContent = `Selección: ${n === 1 ? '1 palabra' : `${n} palabras`}, ${reloj(a)} – ${reloj(b)}`; }
+      else info.textContent = 'Pulsa o arrastra sobre las palabras para seleccionar';
+      info.title = `Pulsa una palabra (o arrastra hasta otra) para seleccionar; Mayúsculas + clic amplía; Esc quita la selección. Doble clic corrige ${W.some((x) => x.p == null) ? 'la frase' : 'la palabra'}.`;
     }
   }
   /** Instantes [inicio, fin] de la selección: desde la primera palabra hasta el comienzo de la siguiente a la última */
   function tramoSel() { const [a, b] = selK; return [W[a].t, b + 1 < W.length ? W[b + 1].t : detalle.duracion]; }
-  let selRaf = 0;
-  document.addEventListener('selectionchange', () => { cancelAnimationFrame(selRaf); selRaf = requestAnimationFrame(leerSeleccion); });
+  const palabraEn = (x, y) => { const e = document.elementFromPoint(x, y); const w = e && e.closest && e.closest('#c-texto .w'); return w ? Number(w.dataset.k) : null; };
+  document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && selK && !document.querySelector('.cante-editor')) { selK = null; selAncla = null; pintarSeleccion(); } });
+
+  function conectarSeleccion(caja) {
+    caja.onmousedown = (ev) => {
+      if (ev.button !== 0) return;   // (el doble clic, además, abre la corrección)
+      const sp = ev.target.closest('.w'); if (!sp) return;
+      ev.preventDefault(); window.getSelection().removeAllRanges();
+      const k = Number(sp.dataset.k);
+      if (ev.shiftKey && selAncla != null) selK = [Math.min(selAncla, k), Math.max(selAncla, k)];
+      else { selAncla = k; selK = [k, k]; }
+      pintarSeleccion();
+      seleccionando = true;
+      const dcha = el.querySelector('.cante-dcha');
+      const mover = (e2) => {
+        // cerca del borde de arriba o de abajo, el texto se desplaza solo
+        if (dcha) { const r = dcha.getBoundingClientRect(); if (e2.clientY < r.top + 30) dcha.scrollTop -= 18; else if (e2.clientY > r.bottom - 30) dcha.scrollTop += 18; }
+        const k2 = palabraEn(e2.clientX, e2.clientY);
+        if (k2 != null && selAncla != null) { const n = [Math.min(selAncla, k2), Math.max(selAncla, k2)]; if (!selK || n[0] !== selK[0] || n[1] !== selK[1]) { selK = n; pintarSeleccion(); } }
+      };
+      const soltar = () => {
+        document.removeEventListener('mousemove', mover); document.removeEventListener('mouseup', soltar);
+        seleccionando = false;
+        if (repintarLuego) { repintarLuego = false; render(); }
+      };
+      document.addEventListener('mousemove', mover); document.addEventListener('mouseup', soltar);
+    };
+  }
 
   function corregir(span) {
     const k = Number(span.dataset.k), x = W[k]; if (!x || !detalle) return;
@@ -335,15 +389,25 @@
 
   function conectarMarcas() {
     const caja = el.querySelector('#c-texto');
-    if (caja) caja.ondblclick = (ev) => { const sp = ev.target.closest('.w'); if (!sp) return; window.getSelection().removeAllRanges(); corregir(sp); };
+    if (caja) {
+      caja.ondblclick = (ev) => { const sp = ev.target.closest('.w'); if (!sp) return; window.getSelection().removeAllRanges(); corregir(sp); };
+      conectarSeleccion(caja);
+    }
     el.querySelectorAll('[data-s]').forEach((b) => b.onclick = () => {
+      if (b.dataset.s === 'no') { selK = null; selAncla = null; pintarSeleccion(); return; }
       if (!selK) return;
       const [a, z] = tramoSel(), t = tramosActuales();
       if (b.dataset.s === 'expo') t.exposicion = [a, z]; else t.descartar.push([a, z]);
-      window.getSelection().removeAllRanges(); selK = null;
+      selK = null; selAncla = null;
       cambiarTramos(t);
     });
-    leerSeleccion();
+    el.querySelectorAll('[data-quitar]').forEach((b) => b.onclick = (ev) => {
+      ev.stopPropagation();
+      const q = b.dataset.quitar, t = tramosActuales();
+      if (q === 'e') t.exposicion = null; else t.descartar.splice(Number(q.slice(1)), 1);
+      cambiarTramos(t);
+    });
+    pintarSeleccion();
     const cv = el.querySelector('#c-onda');
     if (cv && detalle) {
       const tEn = (ev) => { const r = cv.getBoundingClientRect(); return Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width)) * detalle.duracion; };

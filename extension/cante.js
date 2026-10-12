@@ -75,15 +75,15 @@ function nivel(registro) {
 // ficha.tramos = { exposicion: [ini, fin] | null, descartar: [[ini, fin], …] } en segundos.
 // Sin exposición marcada, todo el audio es exposición. Con exposición marcada, lo que queda fuera es material complementario.
 // Lo descartado no cuenta para nada (tampoco dentro de la exposición: resta de la duración real).
-const r1 = (x) => Math.round(x * 10) / 10;
+const r1 = (x) => Math.round(x * 100) / 100;   // centésimas: se marcan palabras sueltas
 function normalizarTramos(t, dur) {
   const lim = (x) => r1(Math.max(0, Math.min(dur || 0, Number(x) || 0)));
   let exposicion = null;
   if (t && Array.isArray(t.exposicion)) {
     const [a, b] = t.exposicion.map(lim).sort((x, y) => x - y);
-    if (b - a >= 1) exposicion = [a, b];
+    if (b - a >= 0.05) exposicion = [a, b];
   }
-  const ds = ((t && t.descartar) || []).map((d) => d.map(lim).sort((x, y) => x - y)).filter(([a, b]) => b - a >= 0.5).sort((x, y) => x[0] - y[0]);
+  const ds = ((t && t.descartar) || []).map((d) => d.map(lim).sort((x, y) => x - y)).filter(([a, b]) => b - a >= 0.05).sort((x, y) => x[0] - y[0]);
   const descartar = [];
   for (const d of ds) { const u = descartar[descartar.length - 1]; if (u && d[0] <= u[1]) u[1] = Math.max(u[1], d[1]); else descartar.push(d.slice()); }
   return { exposicion, descartar };
