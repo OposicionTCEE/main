@@ -3,13 +3,14 @@
 #   - Homebrew (el instalador habitual de programas en Mac), si falta
 #   - ffmpeg (graba el micrófono) y whisper.cpp (transcribe sin conexión)
 #   - el modelo de idioma de whisper (large-v3-turbo, ~1,6 GB) en ~/.tcee/modelos
+#   - identificar voces: sherpa-onnx y dos modelos pequeños (instalar_voces.sh)
 # Uso (desde la carpeta TCEE): bash main/scripts/instalar_cante.sh   — se puede repetir: lo que ya esté instalado se salta.
 
 MODELO="ggml-large-v3-turbo.bin"
 URL="https://huggingface.co/ggerganov/whisper.cpp/resolve/main/$MODELO"
 DIR="$HOME/.tcee/modelos"
 
-echo "== 1/3 Homebrew"
+echo "== 1/4 Homebrew"
 for d in /opt/homebrew/bin /usr/local/bin; do [ -x "$d/brew" ] && BREW="$d/brew"; done
 if [ -z "$BREW" ]; then
   echo "No está instalado. Se instala ahora: te pedirá la CONTRASEÑA DEL MAC (no se ve al escribirla) y que pulses Intro."
@@ -20,12 +21,12 @@ else
   echo "✓ Ya instalado"
 fi
 
-echo "== 2/3 ffmpeg y whisper.cpp"
+echo "== 2/4 ffmpeg y whisper.cpp"
 for p in ffmpeg whisper-cpp; do
   if "$BREW" list "$p" >/dev/null 2>&1; then echo "✓ $p ya instalado"; else "$BREW" install "$p" || { echo "❌ No se pudo instalar $p."; exit 1; }; fi
 done
 
-echo "== 3/3 Modelo de idioma ($MODELO, ~1,6 GB)"
+echo "== 3/4 Modelo de idioma ($MODELO, ~1,6 GB)"
 mkdir -p "$DIR"
 if [ -f "$DIR/$MODELO" ] && [ "$(stat -f%z "$DIR/$MODELO" 2>/dev/null || echo 0)" -gt 1000000000 ]; then
   echo "✓ Ya descargado"
@@ -33,6 +34,9 @@ else
   echo "Descargando (puede tardar varios minutos; si se corta, repite la tarea y continuará donde lo dejó)…"
   curl -L --fail --progress-bar -C - -o "$DIR/$MODELO.part" "$URL" && mv "$DIR/$MODELO.part" "$DIR/$MODELO" || { echo "❌ La descarga falló. Repite la tarea."; exit 1; }
 fi
+
+echo "== 4/4 Identificar voces (quién habla en cada momento)"
+bash "$(dirname "$0")/instalar_voces.sh" || echo "⚠️  Identificar voces no se ha instalado; el resto funciona. Repite la tarea más tarde."
 
 echo
 echo "Micrófonos que ve el Mac:"

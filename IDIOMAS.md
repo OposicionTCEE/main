@@ -376,14 +376,16 @@ Ajustes, **«Idioma del panel»** (`perfil.ajustes.idiomaFichas`: la estudiada �
   *Subir audio (iPhone…)* (Notas de voz pasadas al Mac por AirDrop, o la grabación de Meet/Teams). Todo se guarda en **mp3 mono de 32 kbit/s**
   (unos 14 MB por hora); el original no se copia.
 - Para grabar al profesor hay que oír la clase por los **altavoces** (con auriculares solo se graba al usuario). Avisar al profesor de que se graba.
-- **Transcribir** (botón; nunca solo): whisper con el idioma elegido (el de la clase, castellano o automático; whisper no separa voces ni idiomas
-  dentro de una misma grabación). Transcripción con marcas de tiempo (clic = se oye desde ahí), búsqueda, y copia en texto plano
+- **Transcribir** (botón; nunca solo): whisper con el idioma elegido (el de la clase, castellano o automático; whisper no separa idiomas dentro de una misma grabación;
+  las voces se separan aparte con *Identificar voces*). Transcripción con marcas de tiempo (clic = se oye desde ahí), búsqueda, y copia en texto plano
   (`audio-N.txt`) junto al audio. Un whisper y un micrófono cada vez entre cante, oral y clases.
 - *Eliminar* manda la carpeta de la clase a la Papelera.
 - **💾 Guardar / Editar** (v0.45, 13/10/2026): con todos sus audios transcritos, *Guardar* bloquea la clase (`guardada` en `clase.json`): se puede escuchar,
   leer, buscar y abrir sus ficheros, pero no cambiar datos ni notas, añadir o quitar ficheros y audios, grabar ni transcribir. Los **audios originales subidos**
   (su ruta se guarda en `rutaOriginal` desde la v0.45) van a la Papelera tras una confirmación que los enumera; se conserva el mp3 de la clase.
   *Editar* desbloquea. La extensión también rechaza los cambios de una clase guardada (`editable` en `idiomasClases.js`).
+- **👥 Identificar voces** (v0.46): en cada audio transcrito, quién habla en cada momento (profesor, tú…), con nombres editables y una etiqueta por intervención
+  en la transcripción. Mismo programa y reglas que en los cantes: `main/CANTE.md`, apartado 8. Se guarda en `voces` de `clase.json`.
 
 ## Inicio: columnas con desplazamiento propio (v0.38)
 

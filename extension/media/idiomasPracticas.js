@@ -1233,11 +1233,18 @@
       const ts = c.transcripciones || [];
       if (!ts.length) return `<p class="apagado idi-mini">${ui('Cuando tengas el audio, pulsa «Transcribir». Se hace en el Mac y tarda más o menos un cuarto de lo que dure la clase.')}</p>`;
       const q = (K.buscar || '').trim().toLowerCase();
-      return ts.map((t) => `<h4>${esc(t.audio)} <span class="apagado idi-mini">${({ es: 'castellano', en: 'inglés', fr: 'francés', auto: 'idioma automático' })[t.idioma] ? ui(({ es: 'castellano', en: 'inglés', fr: 'francés', auto: 'idioma automático' })[t.idioma]) : t.idioma}</span></h4>
-        <div class="idi-k-segs">${t.segmentos.filter((s) => !q || s.texto.toLowerCase().includes(q)).map((s) => `<p><a class="idi-k-t" data-audio="${esc(t.audio)}" data-t="${s.t}">${mmss(s.t)}</a> ${q ? esc(s.texto).replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), (x) => `<mark>${x}</mark>`) : esc(s.texto)}</p>`).join('') || `<p class="apagado">${ui('Sin resultados.')}</p>`}</div>`).join('');
+      return ts.map((t) => { const v = (c.voces || {})[t.audio], hs = v ? Object.keys(v.nombres || {}).map(Number).sort((x, y) => x - y) : [];
+        const nom = (h) => (v && v.nombres && v.nombres[h]) || ui('Hablante {0}', h + 1);
+        return `<h4>${esc(t.audio)} <span class="apagado idi-mini">${({ es: 'castellano', en: 'inglés', fr: 'francés', auto: 'idioma automático' })[t.idioma] ? ui(({ es: 'castellano', en: 'inglés', fr: 'francés', auto: 'idioma automático' })[t.idioma]) : t.idioma}</span></h4>
+        ${v ? `<p class="idi-k-vocesley">👥 ${hs.map((h) => `<span class="cante-voz-ed"><i class="cante-punto v${h % 6}"></i><input type="text" data-kvoz="${esc(t.audio)}" data-h="${h}" value="${esc(nom(h))}" ${c.guardada ? 'disabled' : ''} title="${ui('Nombre de esta voz')}"></span>`).join(' ')}</p>` : ''}
+        <div class="idi-k-segs">${t.segmentos.filter((s) => !q || s.texto.toLowerCase().includes(q)).map((s) => { const h = v ? hablanteEn(v.tramos, s.t + 0.3) : null; return `<p><a class="idi-k-t" data-audio="${esc(t.audio)}" data-t="${s.t}">${mmss(s.t)}</a> ${h != null ? `<span class="cante-voz v${h % 6}">${esc(nom(h))}</span> ` : ''}${q ? esc(s.texto).replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), (x) => `<mark>${x}</mark>`) : esc(s.texto)}</p>`; }).join('') || `<p class="apagado">${ui('Sin resultados.')}</p>`}</div>`; }).join('');
     }
     function enlazarTx() {
       vEl().querySelectorAll('.idi-k-t').forEach((a) => a.onclick = () => reproducir(a.dataset.audio, Number(a.dataset.t)));
+      vEl().querySelectorAll('[data-kvoz]').forEach((i) => i.onchange = async () => {
+        const f = i.dataset.kvoz, v = ((K.clase.voces || {})[f]) || {};
+        try { K.clase = (await pedir('idiPClaseVocesNombres', { id: K.clase.id, fichero: f, nombres: { ...v.nombres, [i.dataset.h]: i.value } })).clase; vEl().querySelector('#idi-k-tx').innerHTML = transcripcionHtml(K.clase); enlazarTx(); } catch (e) { fallo(e); }
+      });
     }
     async function reproducir(fichero, t) {
       const z = vEl().querySelector(`[data-reproductor="${CSS.escape(fichero)}"]`);
@@ -1283,7 +1290,8 @@
     : enCola ? `<p class="idi-progreso">${ui('En cola para transcribir…')}</p>`
     : bloq ? ''
     : `<p class="idi-acciones"><select data-idioma="${esc(a.fichero)}" title="${ui('Idioma que más se habla en la clase')}">${[[c.lengua, c.lengua === 'fr' ? 'Francés' : 'Inglés'], ['es', 'Castellano'], ['auto', 'Automático']].map(([k, n]) => `<option value="${k}">${ui(n)}</option>`).join('')}</select>
-              <button class="${tsx.has(a.fichero) ? '' : 'primario'}" data-transcribir="${esc(a.fichero)}">${tsx.has(a.fichero) ? ui('Volver a transcribir') : ui('Transcribir')}</button></p>`}</div>`; }).join('')}
+              <button class="${tsx.has(a.fichero) ? '' : 'primario'}" data-transcribir="${esc(a.fichero)}">${tsx.has(a.fichero) ? ui('Volver a transcribir') : ui('Transcribir')}</button></p>`}
+            ${vocesAudio(c, a, e, bloq, tsx, ahora || enCola)}</div>`; }).join('')}
         ${bloq ? '' : `<div class="idi-k-nuevo"><p class="idi-acciones"><button ${auds.length ? '' : 'class="primario"'} data-grabar>● ${ui('Grabar con el Mac')}</button>
           <select data-micro title="${ui('Micrófono')}">${micros.length ? micros.map((m) => `<option ${m.nombre === A.st().idiMicroClase ? 'selected' : ''}>${esc(m.nombre)}</option>`).join('') : `<option value="">${ui('Micrófono por defecto')}</option>`}</select>
           <button data-subir>⬆ ${ui('Subir audio (iPhone…)')}</button></p>
@@ -1294,6 +1302,11 @@
               <li>${ui('Avisa a tu profesor de que grabas la clase para estudiar.')}</li></ul></details></div>`}
         <div class="idi-k-prog"></div>`;
       z.querySelectorAll('[data-oir]').forEach((b) => b.onclick = () => reproducir(b.dataset.oir, 0));
+      z.querySelectorAll('[data-voces]').forEach((b) => b.onclick = async () => {
+        const n = Number((z.querySelector(`[data-nvoces="${CSS.escape(b.dataset.voces)}"]`) || {}).value || 0);
+        b.disabled = true;
+        try { const r = await pedir('idiPClaseVoces', { id: c.id, fichero: b.dataset.voces, n }); if (r.clase) { K.clase = r.clase; pClase(); } } catch (x) { fallo(x); }
+      });
       z.querySelectorAll('[data-quitar-aud]').forEach((b) => b.onclick = async () => { try { const r = await pedir('idiPClaseQuitarAudio', { id: c.id, fichero: b.dataset.quitarAud }); if (r.clase) { K.clase = r.clase; pClase(); } } catch (x) { fallo(x); } });
       z.querySelectorAll('[data-transcribir]').forEach((b) => b.onclick = async () => {
         const idioma = z.querySelector(`[data-idioma="${CSS.escape(b.dataset.transcribir)}"]`).value;
@@ -1307,6 +1320,23 @@
       z.querySelector('[data-micro]').onchange = (ev) => { A.st().idiMicroClase = ev.target.value; A.guardar(); };
       z.querySelector('[data-subir]').onclick = () => importarClase('audio');
       if (!K.micros) pedir('idiPClaseMicros').then((r) => { K.micros = r.lista; if (!(K.estado || {}).grabando) { const s = z.querySelector('[data-micro]'); if (s) s.innerHTML = r.lista.map((m) => `<option ${m.nombre === A.st().idiMicroClase ? 'selected' : ''}>${esc(m.nombre)}</option>`).join('') || `<option value="">${ui('Micrófono por defecto')}</option>`; } }).catch(() => {});
+    }
+    // ---- identificar voces (quién habla; IDIOMAS.md, «Clases con profesores»)
+    function hablanteEn(tramos, t) {
+      if (!tramos || !tramos.length) return null;
+      let mejor = null, dist = Infinity;
+      for (const [a, b, h] of tramos) { if (t >= a && t < b) return h; const d = t < a ? a - t : t - b; if (d < dist) { dist = d; mejor = h; } if (a > t + dist) break; }
+      return mejor;
+    }
+    function vocesAudio(c, a, e, bloq, tsx, ocupadoTx) {
+      const iv = e.identificando;
+      if (iv && iv.id === c.id && iv.fichero === a.fichero) return `<p class="idi-progreso">👥 ${ui('Identificando voces… {0} %', iv.pct || 0)}</p><div class="carga"><span style="width:${iv.pct || 0}%"></span></div>`;
+      if (bloq || ocupadoTx || !tsx.has(a.fichero)) return '';
+      const hay = !!((c.voces || {})[a.fichero]);
+      if (!e.voces) return hay ? '' : `<p class="apagado idi-mini">👥 ${ui('Falta instalar «Identificar voces»: pulsa «Instalar herramientas» en Ajustes de Idiomas.')}</p>`;
+      return `<p class="idi-acciones idi-k-voces"><button data-voces="${esc(a.fichero)}" ${iv ? 'disabled' : ''}>👥 ${hay ? ui('Volver a identificar') : ui('Identificar voces')}</button>
+        <select data-nvoces="${esc(a.fichero)}" title="${ui('Cuántas voces hay en la grabación')}">${[[0, ui('Nº de voces: automático')], [2, ui('{0} voces', 2)], [3, ui('{0} voces', 3)], [4, ui('{0} voces', 4)]].map(([v, t]) => `<option value="${v}">${esc(t)}</option>`).join('')}</select>
+        ${hay ? '' : `<span class="apagado idi-mini">${ui('Distingue quién habla en cada momento (tú, el profesor…).')}</span>`}</p>`;
     }
     async function pararClase(descartar) {
       clearInterval(K.sondeo); K.sondeo = null;
