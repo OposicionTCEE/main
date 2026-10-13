@@ -124,7 +124,7 @@
         <span class="cante-adj-bot"><button data-a="subir" data-i="${i}" ${i ? '' : 'disabled'} title="Subir">↑</button><button data-a="bajar" data-i="${i}" ${i < xs.length - 1 ? '' : 'disabled'} title="Bajar">↓</button><button data-a="quitar" data-i="${i}" title="Quitar">✕</button></span></li>`).join('')}</ol>
       <label class="cante-campo">Fecha del cante<input id="c-fecha" type="datetime-local" value="${esc(adj.fecha)}"></label>
       <p class="apagado">Por defecto, la fecha del audio más antiguo. Tus ficheros no se modifican: se crea una copia unida.</p>
-      <p class="cante-botones"><button class="primario" data-c="juntar" ${juntando || !xs.length ? 'disabled' : ''}>${juntando ? 'Juntando…' : xs.length > 1 ? 'Juntar y guardar' : 'Guardar'}</button>
+      <p class="cante-botones"><button class="primario" data-c="juntar" ${juntando || !xs.length ? 'disabled' : ''}>${juntando ? 'Juntando…' : xs.length > 1 ? 'Juntar y crear el cante' : 'Crear el cante'}</button>
         <button data-c="adjMas" ${juntando ? 'disabled' : ''}>Añadir más</button> <button data-c="adjCancelar" ${juntando ? 'disabled' : ''}>Cancelar</button></p></div>`;
   }
   const local = (iso) => { const d = new Date(iso); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
@@ -147,7 +147,7 @@
         const pasado = f.objetivo && dur > f.objetivo;
         const ppm = f.palabrasExpo && dur ? Math.round(f.palabrasExpo / (dur / 60)) : '';
         return `<tr class="${ctx.estado.canteVer === f.id ? 'sel' : ''}" data-ver="${esc(f.id)}">
-          <td class="nowrap">${esc(fechaCorta(f.fecha))}</td><td><strong>${esc(f.codigo)}</strong> ${ESTADOS[f.estado] ? `<span class="etiqueta ${f.estado === 'error' ? 'mal' : ''}">${esc(ESTADOS[f.estado])}</span>` : ''}${enMarcha(f.id) ? ' <span class="etiqueta">transcribiendo</span>' : ''}</td>
+          <td class="nowrap">${esc(fechaCorta(f.fecha))}</td><td><strong>${esc(f.codigo)}</strong> ${ESTADOS[f.estado] ? `<span class="etiqueta ${f.estado === 'error' ? 'mal' : ''}">${esc(ESTADOS[f.estado])}</span>` : ''}${enMarcha(f.id) ? ' <span class="etiqueta">transcribiendo</span>' : ''}${f.guardado ? ' <span title="Guardado: no se puede editar">🔒</span>' : ''}</td>
           <td class="num ${pasado ? 'pasado' : ''}" ${f.marcado ? `title="Exposición marcada; el audio dura ${esc(reloj(f.duracion))}"` : ''}>${esc(reloj(dur))}${f.marcado ? '<span class="cante-marcado">✂</span>' : ''}${f.objetivo ? ` <span class="apagado">/ ${esc(reloj(f.objetivo))}</span>` : ''}</td>
           <td class="num">${ppm}</td></tr>`;
       }).join('')}</tbody></table></section>`;
@@ -184,25 +184,28 @@
     };
     const enLista = C.lista.find((x) => x.id === f.id);
     const hayAudio = enLista ? enLista.audioExiste : true;
-    return `<div class="cante-detalle">
+    const bloq = !!f.guardado;   // guardado: solo escuchar, leer y copiar (CANTE.md, apartado 7)
+    return `<div class="cante-detalle${bloq ? ' bloqueado' : ''}">
       <h3>${esc(f.codigo)} · ${esc(f.titulo)}</h3>
       <p class="apagado">${esc(fecha(f.fecha))} · ${c.marcado ? `exposición ${esc(reloj(dur))} <span class="cante-de">(audio de ${esc(reloj(f.duracion))})</span>` : esc(reloj(f.duracion))}${dif != null ? ` (${dif > 0 ? '+' : '−'}${esc(reloj(Math.abs(dif)))} ${dif > 0 ? 'sobre' : 'bajo'} el objetivo de ${esc(minutos(f.objetivo))})` : ''}${ppm ? ` · ${ppm} palabras/min` : ''}${f.origen === 'adjunto' ? ` · adjuntado (${esc((f.archivos || []).length)} ${(f.archivos || []).length === 1 ? 'audio' : 'audios'})` : ''}</p>
       ${hayAudio ? marcas(f, c) : '<p class="apagado">El audio de este cante no está en este Mac (los audios no se sincronizan por GitHub): no se pueden marcar tramos.</p>'}
       <p class="cante-botones">
+        ${bloq ? `<span class="cante-candado" title="Guardado el ${esc(fecha(f.guardado))}">🔒 Guardado</span><button data-c="editar">Editar</button>`
+    : `<button class="primario" data-c="guardar" ${f.estado === 'transcrito' && !enMarcha(f.id) ? '' : 'disabled title="Se puede guardar cuando esté transcrito"'}>💾 Guardar</button>`}
         <button data-c="audio">Abrir audio fuera</button>
         ${f.texto ? '<button class="" data-c="copiar">Copiar texto</button>' : ''}
-        ${(f.estado === 'error' || f.estado === 'pendiente') && !enMarcha(f.id) ? '<button class="primario" data-c="reintentar">Transcribir</button>' : ''}
+        ${(f.estado === 'error' || f.estado === 'pendiente') && !enMarcha(f.id) && !bloq ? '<button class="primario" data-c="reintentar">Transcribir</button>' : ''}
         <button class="peligro" data-c="eliminar">Eliminar</button></p>
       ${f.estado === 'error' ? `<p class="rel-div es-error">${esc(f.error || 'Error al transcribir.')}</p>` : ''}
       ${f.estado === 'pendiente' && !enMarcha(f.id) ? '<p class="apagado">Pendiente de transcribir. Tarda unos minutos y el Mac trabaja a tope (gasta batería): mejor con el cargador puesto.</p>' : ''}
       ${enMarcha(f.id) ? '<p class="apagado">Transcribiendo…</p>' : ''}
       ${c.complementario.length && parrafos.some((p) => p.tipo === 'complementario') ? '<p class="cante-botones"><button data-c="copiarComp">Copiar material complementario</button></p>' : ''}
-      ${parrafos.length ? `<div class="cante-seltxt" id="c-seltxt">
+      ${parrafos.length ? `${bloq ? '' : `<div class="cante-seltxt" id="c-seltxt">
           <span class="apagado" id="c-selinfo"></span>
-          <button data-s="expo" disabled>Exposición = selección</button><button data-s="desc" disabled>Descartar selección</button><button data-s="no" class="enlace" style="visibility:hidden">Quitar selección</button></div>
-        ${porFrase ? `<p class="apagado cante-aviso-frase">Este cante se transcribió sin el instante de cada palabra: al seleccionar se marca la frase entera (unos segundos de margen).
+          <button data-s="expo" disabled>Exposición = selección</button><button data-s="desc" disabled>Descartar selección</button><button data-s="no" class="enlace" style="visibility:hidden">Quitar selección</button></div>`}
+        ${porFrase && !bloq ? `<p class="apagado cante-aviso-frase">Este cante se transcribió sin el instante de cada palabra: al seleccionar se marca la frase entera (unos segundos de margen).
           ${!enMarcha(f.id) && hayAudio ? '<button class="enlace" data-c="retranscribir">Volver a transcribir con precisión por palabra</button>' : ''}</p>` : ''}
-        <div class="cante-texto" id="c-texto">${parrafos.map((p, i) => { const qx = quitarDe(p, i); return `<p class="t-${p.tipo}${qx ? ' con-marca' : ''}"><span class="cante-t" data-ir="${p.t}" title="Escuchar desde aquí">${esc(reloj(p.t))}</span><span>${qx ? `<button class="cante-quitar" data-quitar="${qx.q}" title="${esc(qx.titulo)}">✕</button>` : ''}${p.tipo !== 'exposicion' ? `<em class="cante-tipo">${p.tipo === 'complementario' ? 'Material complementario' : 'Descartado'}</em> ` : (qx ? '<em class="cante-tipo">Exposición</em> ' : '')}${p.ks.map((k) => `<span class="w" data-k="${k}">${esc(W[k].w)}</span>`).join(' ')}</span></p>`; }).join('')}</div>`
+        <div class="cante-texto" id="c-texto">${parrafos.map((p, i) => { const qx = bloq ? null : quitarDe(p, i); return `<p class="t-${p.tipo}${qx ? ' con-marca' : ''}"><span class="cante-t" data-ir="${p.t}" title="Escuchar desde aquí">${esc(reloj(p.t))}</span><span>${qx ? `<button class="cante-quitar" data-quitar="${qx.q}" title="${esc(qx.titulo)}">✕</button>` : ''}${p.tipo !== 'exposicion' ? `<em class="cante-tipo">${p.tipo === 'complementario' ? 'Material complementario' : 'Descartado'}</em> ` : (qx ? '<em class="cante-tipo">Exposición</em> ' : '')}${p.ks.map((k) => `<span class="w" data-k="${k}">${esc(W[k].w)}</span>`).join(' ')}</span></p>`; }).join('')}</div>`
         : f.estado === 'transcrito' ? '<p class="apagado">La transcripción está vacía: no se reconoció voz en la grabación.</p>' : ''}
     </div>`;
   }
@@ -222,16 +225,16 @@
         <select id="c-vel" title="Velocidad">${[1, 1.25, 1.5, 2].map((v) => `<option value="${v}" ${AUD.playbackRate === v ? 'selected' : ''}>${String(v).replace('.', ',')}×</option>`).join('')}</select></div>
       <canvas id="c-onda" class="cante-onda" height="90"></canvas>
       <div class="cante-leyenda"><span class="l-expo">Exposición</span>${e ? '<span class="l-comp">Material complementario</span>' : ''}${c.descartar.length || descIni != null ? '<span class="l-desc">Descartado</span>' : ''}
-        <span class="apagado">Pulsa en la onda para ir a ese punto${e ? '; arrastra los bordes de la exposición para ajustarlos' : ''}.</span></div>
-      <p class="cante-botones">
+        <span class="apagado">Pulsa en la onda para ir a ese punto${e && !f.guardado ? '; arrastra los bordes de la exposición para ajustarlos' : ''}.</span></div>
+      ${f.guardado ? '' : `<p class="cante-botones">
         <button data-m="ini" title="La exposición empieza en el punto que suena ahora">⟦ Inicio de la exposición aquí</button>
         <button data-m="fin" title="La exposición termina en el punto que suena ahora">Fin de la exposición aquí ⟧</button>
         <button data-m="desc" class="${descIni != null ? 'activo' : ''}">${descIni != null ? `✂ Fin del descarte aquí (desde ${esc(reloj(descIni))})` : '✂ Descartar desde aquí'}</button>
-        ${descIni != null ? '<button data-m="descNo">Cancelar descarte</button>' : ''}</p>
+        ${descIni != null ? '<button data-m="descNo">Cancelar descarte</button>' : ''}</p>`}
       <p class="cante-resumen">${e ? `Exposición de <a data-ir="${e[0]}">${esc(reloj(e[0]))}</a> a <a data-ir="${e[1]}">${esc(reloj(e[1]))}</a>: <strong>${esc(reloj(c.real))}</strong> reales${comp ? ` · material complementario ${esc(reloj(comp))}` : ''}`
         : `Sin marcar: todo el audio cuenta como exposición (<strong>${esc(reloj(c.real))}</strong>).`}${desc ? ` · descartado ${esc(reloj(desc))}` : ''}
-        ${e ? ' <button class="enlace" data-m="quitarExpo">Quitar la exposición</button>' : ''}</p>
-      ${c.descartar.length ? `<ul class="cante-descartes">${c.descartar.map(([a, b], i) => `<li>Descartado <a data-ir="${a}">${esc(reloj(a))}</a>–<a data-ir="${b}">${esc(reloj(b))}</a> <button class="enlace" data-m="descQuitar" data-i="${i}">quitar</button></li>`).join('')}</ul>` : ''}
+        ${e && !f.guardado ? ' <button class="enlace" data-m="quitarExpo">Quitar la exposición</button>' : ''}</p>
+      ${c.descartar.length ? `<ul class="cante-descartes">${c.descartar.map(([a, b], i) => `<li>Descartado <a data-ir="${a}">${esc(reloj(a))}</a>–<a data-ir="${b}">${esc(reloj(b))}</a> ${f.guardado ? '' : `<button class="enlace" data-m="descQuitar" data-i="${i}">quitar</button>`}</li>`).join('')}</ul>` : ''}
     </section>`;
   }
 
@@ -389,7 +392,7 @@
 
   function conectarMarcas() {
     const caja = el.querySelector('#c-texto');
-    if (caja) {
+    if (caja && detalle && !detalle.guardado) {
       caja.ondblclick = (ev) => { const sp = ev.target.closest('.w'); if (!sp) return; window.getSelection().removeAllRanges(); corregir(sp); };
       conectarSeleccion(caja);
     }
@@ -411,7 +414,7 @@
     const cv = el.querySelector('#c-onda');
     if (cv && detalle) {
       const tEn = (ev) => { const r = cv.getBoundingClientRect(); return Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width)) * detalle.duracion; };
-      const borde = (ev) => { const e = tramosActuales().exposicion; if (!e) return null; const r = cv.getBoundingClientRect(), x = ev.clientX - r.left, X = (t) => (t / detalle.duracion) * r.width;
+      const borde = (ev) => { const e = tramosActuales().exposicion; if (!e || detalle.guardado) return null; const r = cv.getBoundingClientRect(), x = ev.clientX - r.left, X = (t) => (t / detalle.duracion) * r.width;
         return Math.abs(x - X(e[0])) <= 6 ? 'ini' : Math.abs(x - X(e[1])) <= 6 ? 'fin' : null; };
       const cabezal = (ev) => { const r = cv.getBoundingClientRect(); return Math.abs(ev.clientX - r.left - ((AUD.currentTime || 0) / detalle.duracion) * r.width) <= 6; };
       cv.onmousemove = (ev) => { if (!arrastre) cv.style.cursor = borde(ev) ? 'ew-resize' : cabezal(ev) ? 'grab' : 'pointer'; };
@@ -527,6 +530,8 @@
         juntando = true; render();
         ctx.enviar({ tipo: 'canteJuntar', codigo: (sel('#c-tema') || {}).value || ctx.estado.canteTema, objetivo: (sel('#c-obj') || {}).value, fecha: fe && fe.value ? new Date(fe.value).toISOString() : null, rutas: adj.archivos.map((x) => x.ruta) });
       }
+      if (a === 'guardar' && detalle) { b.disabled = true; ctx.enviar({ tipo: 'canteGuardar', id: detalle.id }); setTimeout(() => { b.disabled = false; }, 3000); }
+      if (a === 'editar' && detalle) ctx.enviar({ tipo: 'canteEditar', id: detalle.id });
       if (a === 'retranscribir' && detalle) ctx.enviar({ tipo: 'canteRetranscribir', id: detalle.id });
       if (a === 'copiarComp' && detalle) {
         const c = calcular(detalle);

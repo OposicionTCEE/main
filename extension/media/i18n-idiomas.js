@@ -867,7 +867,15 @@
     "última nota {0}": "last score {0}",
     "≈150 palabras": "≈150 words",
     "≈400": "≈400",
-    "≈800": "≈800"
+    "≈800": "≈800",
+    "Guardada": "Saved",
+    "Se puede guardar cuando todos sus audios estén transcritos.": "It can be saved once all its audio has been transcribed.",
+    "Clase guardada.": "Class saved.",
+    "¿Guardar la clase «{0}»?": "Save the class “{0}”?",
+    "Quedará bloqueada: se podrá escuchar, leer, buscar y abrir sus ficheros, pero no cambiarla hasta que pulses «Editar».": "It will be locked: you can listen, read, search and open its files, but not change it until you press “Edit”.",
+    "Estos audios originales irán a la Papelera (se conserva la copia comprimida de la clase):": "These original audio files will go to the Bin (the class’s compressed copy is kept):",
+    "No pude mandar a la Papelera: {0}": "I couldn’t move to the Bin: {0}",
+    "La clase está guardada: pulsa «Editar» para cambiarla.": "The class is saved: press “Edit” to change it."
    },
    "fr": {
     "(Añádelos en ⚙ Ajustes.)": "(Ajoutez-les dans ⚙ Réglages.)",
@@ -1731,7 +1739,15 @@
     "última nota {0}": "dernière note {0}",
     "≈150 palabras": "≈150 mots",
     "≈400": "≈400",
-    "≈800": "≈800"
+    "≈800": "≈800",
+    "Guardada": "Enregistrée",
+    "Se puede guardar cuando todos sus audios estén transcritos.": "Elle peut être enregistrée une fois tous ses audios transcrits.",
+    "Clase guardada.": "Cours enregistré.",
+    "¿Guardar la clase «{0}»?": "Enregistrer le cours « {0} » ?",
+    "Quedará bloqueada: se podrá escuchar, leer, buscar y abrir sus ficheros, pero no cambiarla hasta que pulses «Editar».": "Il sera verrouillé : vous pourrez écouter, lire, chercher et ouvrir ses fichiers, mais pas le modifier avant d’appuyer sur « Modifier ».",
+    "Estos audios originales irán a la Papelera (se conserva la copia comprimida de la clase):": "Ces fichiers audio d’origine iront à la Corbeille (la copie compressée du cours est conservée) :",
+    "No pude mandar a la Papelera: {0}": "Impossible de mettre à la Corbeille : {0}",
+    "La clase está guardada: pulsa «Editar» para cambiarla.": "Le cours est enregistré : appuyez sur « Modifier » pour le changer."
    }
   };
   /** Traduce s a lang (en | fr | es) y rellena los huecos {0}, {1}… con args */

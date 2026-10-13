@@ -48,15 +48,32 @@ function crearClases({ dirPerfil, otroOcupado = () => null, avisar = () => {}, a
   }
   function cambiar({ id, cambios }) {
     const c = clase(id); if (!c) throw new Error(T('Clase no encontrada.'));
+    editable(c);
     for (const k of ['titulo', 'profesor', 'notas', 'fecha', 'revisar']) if (cambios && k in cambios) c[k] = cambios[k];
     return guardar(c);
   }
   const ruta = (id) => dirClase(id);
+  /** Una clase guardada no se cambia hasta pulsar «Editar» (IDIOMAS.md, «Clases con profesores») */
+  const editable = (c) => { if (c.guardada) throw new Error(T('La clase está guardada: pulsa «Editar» para cambiarla.', [], c.lengua)); return c; };
+  /** Guardar (bloquear; olvida las rutas de los originales, que la extensión manda a la Papelera) o Editar (desbloquear) */
+  function bloquear({ id, si }) {
+    const c = clase(id); if (!c) throw new Error(T('Clase no encontrada.'));
+    if (si) {
+      const tx = new Set((c.transcripciones || []).map((t) => t.audio));
+      if (!(c.audios || []).length || !c.audios.every((a) => tx.has(a.fichero))) throw new Error(T('Se puede guardar cuando todos sus audios estén transcritos.', [], c.lengua));
+      c.guardada = new Date().toISOString();
+      c.audios = c.audios.map(({ rutaOriginal, ...a }) => a);
+    } else delete c.guardada;
+    return guardar(c);
+  }
+  /** Ficheros de audio originales (subidos) que siguen en el Mac */
+  const originales = ({ id }) => ((clase(id) || {}).audios || []).map((a) => a.rutaOriginal).filter((x) => x && fs.existsSync(x));
 
   // ---------------------------------------------------------------- ficheros: texto y documentos (pequeños) o audio (comprimido)
   /** Añade ficheros elegidos por el usuario. Los audios se convierten a mp3 mono 32 kbit/s; Word y similares, a texto */
   async function importar({ id, rutas }, aviso = () => {}) {
     const c = clase(id); if (!c) throw new Error(T('Clase no encontrada.'));
+    editable(c);
     const dAdj = path.join(dirClase(id), 'adjuntos'); fs.mkdirSync(dAdj, { recursive: true });
     const resultado = [];
     for (const r of rutas || []) {
@@ -87,12 +104,14 @@ function crearClases({ dirPerfil, otroOcupado = () => null, avisar = () => {}, a
   const libre = (dir, nombre) => { let n = nombre, i = 2; while (fs.existsSync(path.join(dir, n))) { n = nombre.replace(/(\.[^.]*)?$/, `-${i++}$1`); } return n; };
   function quitarAdjunto({ id, fichero }) {
     const c = clase(id); if (!c) throw new Error(T('Clase no encontrada.'));
+    editable(c);
     try { fs.unlinkSync(path.join(dirClase(id), 'adjuntos', path.basename(fichero))); } catch (e) { /* ya no está */ }
     c.adjuntos = c.adjuntos.filter((a) => a.fichero !== fichero);
     return guardar(c);
   }
   function quitarAudio({ id, fichero }) {
     const c = clase(id); if (!c) throw new Error(T('Clase no encontrada.'));
+    editable(c);
     try { fs.unlinkSync(path.join(dirClase(id), path.basename(fichero))); } catch (e) { /* ya no está */ }
     c.audios = c.audios.filter((a) => a.fichero !== fichero);
     c.transcripciones = (c.transcripciones || []).filter((t) => t.audio !== fichero);
@@ -114,7 +133,7 @@ function crearClases({ dirPerfil, otroOcupado = () => null, avisar = () => {}, a
     await ejecutar(h.ffmpeg, ['-hide_banner', '-nostdin', '-y', '-i', origen, '-vn', '-ac', '1', '-ar', String(HZ), '-c:a', 'libmp3lame', '-b:a', '32k', destino]);
     const segundos = await duracion(h.ffmpeg, destino);
     const fresco = clase(c.id) || c;
-    fresco.audios = [...(fresco.audios || []), { fichero, origen: como, nombre: nombre || '', segundos, bytes: fs.statSync(destino).size, fecha: new Date().toISOString() }];
+    fresco.audios = [...(fresco.audios || []), { fichero, origen: como, nombre: nombre || '', ...(como === 'subido' ? { rutaOriginal: origen } : {}), segundos, bytes: fs.statSync(destino).size, fecha: new Date().toISOString() }];
     guardar(fresco); c.audios = fresco.audios;
     return fresco.audios[fresco.audios.length - 1];
   }
@@ -144,6 +163,7 @@ function crearClases({ dirPerfil, otroOcupado = () => null, avisar = () => {}, a
   async function microfonos() { const h = C.herramientas(); return h.ffmpeg ? C.microfonos(h.ffmpeg) : []; }
   async function grabar({ id, micro }) {
     const c = clase(id); if (!c) throw new Error(T('Clase no encontrada.'));
+    editable(c);
     const h = C.herramientas();
     if (!h.ffmpeg) throw new Error(T('Falta ffmpeg: pulsa «Instalar herramientas» en Ajustes de Idiomas.', [], c && c.lengua));
     if (grabacionEnCurso()) throw new Error(T('Ya se está grabando una clase.', [], c.lengua));
@@ -191,6 +211,7 @@ function crearClases({ dirPerfil, otroOcupado = () => null, avisar = () => {}, a
   // ---------------------------------------------------------------- transcripción (al pulsar «Transcribir»; una cada vez)
   function transcribir({ id, fichero, idioma }) {
     const c = clase(id); if (!c) throw new Error(T('Clase no encontrada.'));
+    editable(c);
     if (!c.audios.some((a) => a.fichero === fichero)) throw new Error(T('Audio no encontrado.', [], c.lengua));
     if (!cola.some((x) => x.id === id && x.fichero === fichero) && !(transcribiendo && transcribiendo.id === id && transcribiendo.fichero === fichero)) cola.push({ id, fichero, idioma: idioma || c.lengua });
     siguiente();
@@ -233,7 +254,7 @@ function crearClases({ dirPerfil, otroOcupado = () => null, avisar = () => {}, a
   }
   function eliminar({ id }) { return dirClase(id); }   // la extensión la manda a la Papelera
 
-  return { lista, crear, cambiar, clase, ruta, importar, quitarAdjunto, quitarAudio, leerAdjunto, microfonos, grabar, parar, transcribir, estado, eliminar,
+  return { lista, crear, cambiar, clase, ruta, bloquear, originales, importar, quitarAdjunto, quitarAudio, leerAdjunto, microfonos, grabar, parar, transcribir, estado, eliminar,
     retomar: () => { try { if (dirPerfil()) grabacionEnCurso(); } catch (e) { /* */ } } };
 }
 
