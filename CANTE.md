@@ -87,8 +87,7 @@ Estados: `pendiente` (por transcribir), `transcrito`, `error`.
   - botones *Terminar* y *Descartar*. Descartar borra el audio, tras confirmarlo.
 - **Historial:** fecha, tema, duración real (la de la exposición; ✂ si hay tramos marcados) frente al objetivo y palabras por minuto de la exposición. Al pulsar un cante se ve a la derecha su transcripción, en párrafos de un minuto con su marca de tiempo. Botones:
   - reproductor con forma de onda y marcas de tramos (apartado 6);
-  - *Abrir audio fuera* (en la aplicación de audio del Mac);
-  - *Copiar texto*;
+  - *💾 Guardar* (apartado 7);
   - *Transcribir*, si está pendiente o falló; solo aparece al abrir el cante desde el historial;
   - *Eliminar*, que borra la ficha y el audio.
 
@@ -120,7 +119,8 @@ Estados: `pendiente` (por transcribir), `transcrito`, `error`.
   Los cantes transcritos antes de la v0.44 solo tienen el instante de cada frase: se marca la frase entera y se ofrece *Volver a transcribir con precisión por palabra*
   (conserva los tramos; avisa de que se pierden las correcciones del texto).
 - Cada palabra lleva su tipo, así que los párrafos de material complementario y los descartados se cortan donde empieza el tramo, aunque sea a mitad de frase.
-  *Copiar material complementario* copia ese texto. Pulsar la marca de tiempo de un párrafo lo hace sonar; la palabra que suena se resalta.
+  Pulsar la marca de tiempo de un párrafo lo hace sonar; la palabra que suena se resalta.
+  (v0.46.2: se quitaron *Abrir audio fuera*, *Copiar texto* y *Copiar material complementario*, por decisión del usuario: no servían.)
 - **Corregir la transcripción:** doble clic en una palabra (o en la frase, en los cantes antiguos) abre un cuadro para cambiarla; vacío la borra.
   Si la palabra aparece más veces, se puede cambiar en todas (útil para un autor mal escrito). Se conservan los instantes; la ficha queda `editado: true`.
 - **Por qué una copia MP3:** el reproductor de VS Code no lee AAC (`.m4a`). La copia y la forma de onda (pico cada 0,1 s) se guardan en la carpeta de datos de la extensión.
@@ -128,8 +128,10 @@ Estados: `pendiente` (por transcribir), `transcrito`, `error`.
 
 ## 7. Guardar y Editar (decisiones del usuario, 13 de octubre de 2026)
 
-- **💾 Guardar** (en el detalle; solo con el cante transcrito y sin transcripción en marcha) **bloquea** el cante: se puede escuchar, ir a un punto, leer y copiar,
-  pero desaparecen las marcas (botones, ✕, arrastrar bordes), la selección del texto, la corrección con doble clic y *Transcribir / Volver a transcribir*.
+- **💾 Guardar** (en el detalle; solo con el cante transcrito y sin transcripción en marcha) **bloquea** el cante y deja a la vista **solo la transcripción
+  de la exposición** (sin material complementario ni descartes) y los botones *Editar*, *🎧 Recuperar audio* y *Eliminar* (v0.46.2).
+  *Recuperar audio* vuelve a mostrar el reproductor con la forma de onda a partir del audio comprimido, sin botones de marcar (*Ocultar audio* lo quita).
+  Desaparecen las marcas, la selección del texto, la corrección con doble clic, la sección de voces y *Transcribir / Volver a transcribir*.
   La ficha lleva `guardado` (fecha). El historial lo muestra con 🔒. *Eliminar* sigue disponible, con su confirmación.
 - Al guardar, los **ficheros originales** de un cante adjuntado (los que se eligieron con *Adjuntar audio*; su ruta va en `originales` de la ficha)
   **van a la Papelera del Mac** tras una confirmación que los enumera. Se conserva siempre la copia comprimida del cante. Luego se borra `originales`.
@@ -153,7 +155,8 @@ Estados: `pendiente` (por transcribir), `transcrito`, `error`.
   al empezar cada intervención (los párrafos se cortan al cambiar de voz). Cada palabra (o frase, en las clases) toma la voz del tramo en que cae;
   si cae en un hueco, la del tramo más cercano (`hablanteEn`, igual en `voces.js`, `media/cante.js` y `media/idiomasPracticas.js`).
 - **Corregir a mano** (v0.46.1): pulsar la etiqueta de color de una intervención abre la lista de voces (y *Otra voz*, por si juntó dos personas):
-  cambia **solo esa intervención** (las palabras seguidas de la misma voz). Con palabras seleccionadas, *Asignar a voz ▾* cambia **solo esas palabras**
+  cambia **solo esa intervención** (las palabras seguidas de la misma voz). Con palabras seleccionadas, los botones **Voz: [nombre] [nombre] [Otra]** de la barra
+  de selección (v0.46.2; antes un menú *Asignar a voz ▾* que no funcionaba en el panel) cambian **solo esas palabras**
   (la intervención se parte si hace falta). Cambiar el nombre en la leyenda es lo único que afecta a toda la conversación (no cambia quién dijo qué).
   `asignarVoz` parte los tramos que se solapan y une los seguidos de la misma voz; la ficha queda con `voces.corregido: true`. En las clases, igual, por frase.
 - **Límites:** va bien con dos voces claras; falla más con grabaciones a distancia, voces que se pisan o parecidas. No hay botón para marcar la exposición

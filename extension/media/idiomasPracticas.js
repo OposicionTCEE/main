@@ -1184,19 +1184,23 @@
       const bloq = !!c.guardada, txs = new Set((c.transcripciones || []).map((t) => t.audio)), est = K.estado || {};
       const enMarcha = (est.transcribiendo && est.transcribiendo.id === c.id) || (est.cola || []).some((x) => x.id === c.id);
       const puedeGuardar = (c.audios || []).length && c.audios.every((a) => txs.has(a.fichero)) && !enMarcha;
+      // guardada: solo la transcripción (y notas y ficheros para leer); el audio vuelve con «Recuperar audio»
+      const verAudio = bloq && K.verAudio === c.id;
       vEl().innerHTML = `<div class="idi-p${bloq ? ' idi-bloq' : ''}" id="idi-k">${cab(`👩‍🏫 ${esc(c.titulo)}`, `<span class="apagado">${esc(A.fechaCorta(c.fecha))}${c.profesor ? ` · ${esc(c.profesor)}` : ''}</span>
-          <span class="idi-der-auto">${bloq ? `<span class="idi-candado">🔒 ${ui('Guardada')}</span> <button data-editar>${ui('Editar')}</button>`
-    : `<button class="primario" data-guardar ${puedeGuardar ? '' : `disabled title="${ui('Se puede guardar cuando todos sus audios estén transcritos.')}"`}>💾 ${ui('Guardar')}</button>`}
-          <button data-carpeta title="${ui('Abrir la carpeta de la clase en el Finder')}">📁 ${ui('Carpeta')}</button> <button class="peligro" data-eliminar>${ui('Eliminar')}</button></span>`)}
+          <span class="idi-der-auto">${bloq ? `<span class="idi-candado">🔒 ${ui('Guardada')}</span> <button data-editar>${ui('Editar')}</button>
+            ${(c.audios || []).length ? `<button data-ver-audio>${verAudio ? ui('Ocultar audio') : `🎧 ${ui('Recuperar audio')}`}</button>` : ''}`
+    : `<button class="primario" data-guardar ${puedeGuardar ? '' : `disabled title="${ui('Se puede guardar cuando todos sus audios estén transcritos.')}"`}>💾 ${ui('Guardar')}</button>
+          <button data-carpeta title="${ui('Abrir la carpeta de la clase en el Finder')}">📁 ${ui('Carpeta')}</button>`}
+          <button class="peligro" data-eliminar>${ui('Eliminar')}</button></span>`)}
         <div class="idi-p-dos"><div>
-          <section class="idi-caja" id="idi-k-audio"></section>
+          ${bloq && !verAudio ? '' : '<section class="idi-caja" id="idi-k-audio"></section>'}
           <section class="idi-caja"><h3>📝 ${ui('Transcripción')} ${(c.transcripciones || []).length ? `<input type="search" id="idi-k-buscar" placeholder="${ui('Buscar en la transcripción…')}" value="${esc(K.buscar)}" class="idi-k-buscar">` : ''}</h3>
             <div id="idi-k-tx">${transcripcionHtml(c)}</div></section></div>
         <div>
-          <section class="idi-caja"><h3>${ui('Datos')}</h3><div class="idi-form">
+          ${bloq ? '' : `<section class="idi-caja"><h3>${ui('Datos')}</h3><div class="idi-form">
             <label>${ui('Tema o título')} <input type="text" data-c="titulo" value="${esc(c.titulo)}" ${bloq ? 'disabled' : ''}></label>
             <label>${ui('Profesor o profesora')} <input type="text" data-c="profesor" value="${esc(c.profesor)}" ${bloq ? 'disabled' : ''}></label></div>
-            <label class="idi-chk"><input type="checkbox" data-c="revisar" ${c.revisar ? 'checked' : ''} ${bloq ? 'disabled' : ''}> ${ui('Revisar esta clase con Claude (para ajustar el panel)')}</label></section>
+            <label class="idi-chk"><input type="checkbox" data-c="revisar" ${c.revisar ? 'checked' : ''} ${bloq ? 'disabled' : ''}> ${ui('Revisar esta clase con Claude (para ajustar el panel)')}</label></section>`}
           <section class="idi-caja"><h3>🗒 ${ui('Notas')}</h3><textarea id="idi-k-notas" rows="10" ${bloq ? 'readonly' : ''} placeholder="${ui('Correcciones del profesor, vocabulario, deberes…')}">${esc(c.notas || '')}</textarea>
             <p class="idi-mini apagado" id="idi-k-guardado"></p></section>
           <section class="idi-caja"><h3>📎 ${ui('Ficheros')} ${bloq ? '' : `<button class="idi-mini" data-anadir>+ ${ui('Añadir')}</button>`}</h3>
@@ -1207,7 +1211,8 @@
         </div></div></div>`;
       enlazarVolver(vEl(), 'clases');
       vEl().querySelector('[data-volver]').textContent = `← ${ui('Clases')}`;
-      pintarAudioClase(vEl().querySelector('#idi-k-audio'));
+      const za = vEl().querySelector('#idi-k-audio'); if (za) pintarAudioClase(za);
+      const va = vEl().querySelector('[data-ver-audio]'); if (va) va.onclick = () => { K.verAudio = K.verAudio === c.id ? null : c.id; pClase(); };
       let tNotas = null;
       const notas = vEl().querySelector('#idi-k-notas');
       notas.oninput = () => { clearTimeout(tNotas); tNotas = setTimeout(async () => { try { await pedir('idiPClaseCambiar', { id: c.id, cambios: { notas: notas.value } }); c.notas = notas.value; const g = vEl().querySelector('#idi-k-guardado'); if (g) g.textContent = ui('Guardado.'); } catch (e) { fallo(e); } }, 700); };
@@ -1217,7 +1222,7 @@
       if (gu) gu.onclick = async () => { try { const r = await pedir('idiPClaseGuardar', { id: c.id }); if (r.clase) { K.clase = r.clase; pClase(); A.aviso(ui('Clase guardada.')); } } catch (e) { fallo(e); } };
       const ed = vEl().querySelector('[data-editar]');
       if (ed) ed.onclick = async () => { try { K.clase = (await pedir('idiPClaseEditar', { id: c.id })).clase; pClase(); } catch (e) { fallo(e); } };
-      vEl().querySelector('[data-carpeta]').onclick = () => pedir('idiPClaseCarpeta', { id: c.id }).catch(fallo);
+      const ca = vEl().querySelector('[data-carpeta]'); if (ca) ca.onclick = () => pedir('idiPClaseCarpeta', { id: c.id }).catch(fallo);
       vEl().querySelector('[data-eliminar]').onclick = async () => { try { const r = await pedir('idiPClaseEliminar', { id: c.id }); if (r.eliminada) { K.clase = null; A.ir('clases'); } } catch (e) { fallo(e); } };
       vEl().querySelectorAll('[data-quitar-adj]').forEach((b) => b.onclick = async () => { try { K.clase = (await pedir('idiPClaseQuitarAdjunto', { id: c.id, fichero: b.dataset.quitarAdj })).clase; pClase(); } catch (e) { fallo(e); } });
       vEl().querySelectorAll('[data-adj]').forEach((a) => a.onclick = async () => {
@@ -1236,7 +1241,7 @@
       return ts.map((t) => { const v = (c.voces || {})[t.audio], hs = v ? Object.keys(v.nombres || {}).map(Number).sort((x, y) => x - y) : [];
         const nom = (h) => (v && v.nombres && v.nombres[h]) || ui('Hablante {0}', h + 1);
         return `<h4>${esc(t.audio)} <span class="apagado idi-mini">${({ es: 'castellano', en: 'inglés', fr: 'francés', auto: 'idioma automático' })[t.idioma] ? ui(({ es: 'castellano', en: 'inglés', fr: 'francés', auto: 'idioma automático' })[t.idioma]) : t.idioma}</span></h4>
-        ${v ? `<p class="idi-k-vocesley">👥 ${hs.map((h) => `<span class="cante-voz-ed"><i class="cante-punto v${h % 6}"></i><input type="text" data-kvoz="${esc(t.audio)}" data-h="${h}" value="${esc(nom(h))}" ${c.guardada ? 'disabled' : ''} title="${ui('Nombre de esta voz')}"></span>`).join(' ')}</p>` : ''}
+        ${v && !c.guardada ? `<p class="idi-k-vocesley">👥 ${hs.map((h) => `<span class="cante-voz-ed"><i class="cante-punto v${h % 6}"></i><input type="text" data-kvoz="${esc(t.audio)}" data-h="${h}" value="${esc(nom(h))}" ${c.guardada ? 'disabled' : ''} title="${ui('Nombre de esta voz')}"></span>`).join(' ')}</p>` : ''}
         <div class="idi-k-segs">${t.segmentos.map((s, i) => [s, i]).filter(([s]) => !q || s.texto.toLowerCase().includes(q)).map(([s, i]) => { const h = v ? hablanteEn(v.tramos, s.t + 0.3) : null; return `<p><a class="idi-k-t" data-audio="${esc(t.audio)}" data-t="${s.t}">${mmss(s.t)}</a> ${h != null ? `<span class="cante-voz v${h % 6}${c.guardada ? '' : ' clic'}" ${c.guardada ? '' : `data-kc="${esc(t.audio)}" data-i="${i}" title="${ui('Cambiar la voz de esta intervención')}"`}>${esc(nom(h))}</span> ` : ''}${q ? esc(s.texto).replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), (x) => `<mark>${x}</mark>`) : esc(s.texto)}</p>`; }).join('') || `<p class="apagado">${ui('Sin resultados.')}</p>`}</div>`; }).join('');
     }
     function enlazarTx() {

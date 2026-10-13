@@ -14,6 +14,7 @@
   let D = null, C = null, ctx = null, el = null, tic = null, micros = null, detalle = null, silencio = 0;
   // audios adjuntos por juntar: {archivos: [{ruta, nombre, fecha, duracion}], fecha: 'aaaa-mm-ddThh:mm'}
   let adj = null, juntando = false;
+  let verAudio = null;        // id del cante guardado cuyo audio se ha vuelto a mostrar («Recuperar audio»)
   // escucha y marcas del cante abierto. El reproductor vive fuera de la página para que un repintado no corte el audio
   const AUD = new Audio(); AUD.preload = 'auto';
   let ESC = null;            // {id, url, onda, paso, error}
@@ -191,29 +192,33 @@
     };
     const enLista = C.lista.find((x) => x.id === f.id);
     const hayAudio = enLista ? enLista.audioExiste : true;
-    const bloq = !!f.guardado;   // guardado: solo escuchar, leer y copiar (CANTE.md, apartado 7)
+    const bloq = !!f.guardado;   // guardado: solo la transcripción de la exposición (CANTE.md, apartado 7)
+    if (verAudio && verAudio !== f.id) verAudio = null;
+    const conAudio = hayAudio && (!bloq || verAudio === f.id);
+    const visibles = bloq ? parrafos.filter((p) => p.tipo === 'exposicion') : parrafos;
+    const hsV = f.voces ? Object.keys(f.voces.nombres || {}).map(Number).sort((a, b) => a - b) : [];
+    const nuevaV = hsV.length ? Math.max(...hsV) + 1 : 0;
     return `<div class="cante-detalle${bloq ? ' bloqueado' : ''}">
       <h3>${esc(f.codigo)} · ${esc(f.titulo)}</h3>
       <p class="apagado">${esc(fecha(f.fecha))} · ${c.marcado ? `exposición ${esc(reloj(dur))} <span class="cante-de">(audio de ${esc(reloj(f.duracion))})</span>` : esc(reloj(f.duracion))}${dif != null ? ` (${dif > 0 ? '+' : '−'}${esc(reloj(Math.abs(dif)))} ${dif > 0 ? 'sobre' : 'bajo'} el objetivo de ${esc(minutos(f.objetivo))})` : ''}${ppm ? ` · ${ppm} palabras/min` : ''}${f.origen === 'adjunto' ? ` · adjuntado (${esc((f.archivos || []).length)} ${(f.archivos || []).length === 1 ? 'audio' : 'audios'})` : ''}</p>
-      ${hayAudio ? marcas(f, c) : '<p class="apagado">El audio de este cante no está en este Mac (los audios no se sincronizan por GitHub): no se pueden marcar tramos.</p>'}
+      ${conAudio ? marcas(f, c) : hayAudio ? '' : '<p class="apagado">El audio de este cante no está en este Mac (los audios no se sincronizan por GitHub): no se pueden marcar tramos.</p>'}
       <p class="cante-botones">
-        ${bloq ? `<span class="cante-candado" title="Guardado el ${esc(fecha(f.guardado))}">🔒 Guardado</span><button data-c="editar">Editar</button>`
+        ${bloq ? `<span class="cante-candado" title="Guardado el ${esc(fecha(f.guardado))}">🔒 Guardado</span><button data-c="editar">Editar</button>
+          ${hayAudio ? `<button data-c="verAudio">${verAudio === f.id ? 'Ocultar audio' : '🎧 Recuperar audio'}</button>` : ''}`
     : `<button class="primario" data-c="guardar" ${f.estado === 'transcrito' && !enMarcha(f.id) ? '' : 'disabled title="Se puede guardar cuando esté transcrito"'}>💾 Guardar</button>`}
-        <button data-c="audio">Abrir audio fuera</button>
-        ${f.texto ? '<button class="" data-c="copiar">Copiar texto</button>' : ''}
         ${(f.estado === 'error' || f.estado === 'pendiente') && !enMarcha(f.id) && !bloq ? '<button class="primario" data-c="reintentar">Transcribir</button>' : ''}
         <button class="peligro" data-c="eliminar">Eliminar</button></p>
-      ${seccionVoces(f, bloq, hayAudio)}
+      ${bloq ? '' : seccionVoces(f, bloq, hayAudio)}
       ${f.estado === 'error' ? `<p class="rel-div es-error">${esc(f.error || 'Error al transcribir.')}</p>` : ''}
       ${f.estado === 'pendiente' && !enMarcha(f.id) ? '<p class="apagado">Pendiente de transcribir. Tarda unos minutos y el Mac trabaja a tope (gasta batería): mejor con el cargador puesto.</p>' : ''}
       ${enMarcha(f.id) ? '<p class="apagado">Transcribiendo…</p>' : ''}
-      ${c.complementario.length && parrafos.some((p) => p.tipo === 'complementario') ? '<p class="cante-botones"><button data-c="copiarComp">Copiar material complementario</button></p>' : ''}
       ${parrafos.length ? `${bloq ? '' : `<div class="cante-seltxt" id="c-seltxt">
-          <span class="apagado" id="c-selinfo"></span>
-          <button data-s="expo" disabled>Exposición = selección</button><button data-s="desc" disabled>Descartar selección</button>${f.voces ? '<button data-s="voz" disabled>Asignar a voz ▾</button>' : ''}<button data-s="no" class="enlace" style="visibility:hidden">Quitar selección</button></div>`}
+          <div class="cante-seltxt-f"><span class="apagado" id="c-selinfo"></span><button data-s="no" class="enlace" style="visibility:hidden">Quitar selección</button></div>
+          <div class="cante-seltxt-f"><button data-s="expo" disabled>Exposición = selección</button><button data-s="desc" disabled>Descartar selección</button>
+          ${f.voces ? `<span class="cante-seltxt-voz"><span class="apagado">Voz:</span>${hsV.map((h) => `<button data-sv="${h}" disabled title="Las palabras seleccionadas las dice ${esc(nombreVoz(f, h))}"><i class="cante-punto v${h % 6}"></i> ${esc(nombreVoz(f, h))}</button>`).join('')}<button data-sv="${nuevaV}" disabled title="Otra voz distinta"><i class="cante-punto v${nuevaV % 6}"></i> Otra</button></span>` : ''}</div></div>`}
         ${porFrase && !bloq ? `<p class="apagado cante-aviso-frase">Este cante se transcribió sin el instante de cada palabra: al seleccionar se marca la frase entera (unos segundos de margen).
           ${!enMarcha(f.id) && hayAudio ? '<button class="enlace" data-c="retranscribir">Volver a transcribir con precisión por palabra</button>' : ''}</p>` : ''}
-        <div class="cante-texto" id="c-texto">${parrafos.map((p, i) => { const qx = bloq ? null : quitarDe(p, i); return `<p class="t-${p.tipo}${qx ? ' con-marca' : ''}"><span class="cante-t" data-ir="${p.t}" title="Escuchar desde aquí">${esc(reloj(p.t))}</span><span>${p.h != null ? `<span class="cante-voz v${p.h % 6}${bloq ? '' : ' clic'}" ${bloq ? '' : `data-hk="${p.ks[0]}" title="Cambiar la voz de esta intervención"`}>${esc(nombreVoz(f, p.h))}</span> ` : ''}${qx ? `<button class="cante-quitar" data-quitar="${qx.q}" title="${esc(qx.titulo)}">✕</button>` : ''}${p.tipo !== 'exposicion' ? `<em class="cante-tipo">${p.tipo === 'complementario' ? 'Material complementario' : 'Descartado'}</em> ` : (qx ? '<em class="cante-tipo">Exposición</em> ' : '')}${p.ks.map((k) => `<span class="w" data-k="${k}">${esc(W[k].w)}</span>`).join(' ')}</span></p>`; }).join('')}</div>`
+        <div class="cante-texto" id="c-texto">${visibles.map((p, i) => { const qx = bloq ? null : quitarDe(p, i); return `<p class="t-${p.tipo}${qx ? ' con-marca' : ''}"><span class="cante-t" data-ir="${p.t}" title="Escuchar desde aquí">${esc(reloj(p.t))}</span><span>${p.h != null ? `<span class="cante-voz v${p.h % 6}${bloq ? '' : ' clic'}" ${bloq ? '' : `data-hk="${p.ks[0]}" title="Cambiar la voz de esta intervención"`}>${esc(nombreVoz(f, p.h))}</span> ` : ''}${qx ? `<button class="cante-quitar" data-quitar="${qx.q}" title="${esc(qx.titulo)}">✕</button>` : ''}${p.tipo !== 'exposicion' ? `<em class="cante-tipo">${p.tipo === 'complementario' ? 'Material complementario' : 'Descartado'}</em> ` : (qx ? '<em class="cante-tipo">Exposición</em> ' : '')}${p.ks.map((k) => `<span class="w" data-k="${k}">${esc(W[k].w)}</span>`).join(' ')}</span></p>`; }).join('')}</div>`
         : f.estado === 'transcrito' ? '<p class="apagado">La transcripción está vacía: no se reconoció voz en la grabación.</p>' : ''}
     </div>`;
   }
@@ -379,7 +384,7 @@
       caja.querySelectorAll('.w.sel').forEach((x) => x.classList.remove('sel'));
       if (selK) for (let k = selK[0]; k <= selK[1]; k++) { const sp = caja.querySelector(`.w[data-k="${k}"]`); if (sp) sp.classList.add('sel'); }
     }
-    el && el.querySelectorAll('[data-s="expo"], [data-s="desc"], [data-s="voz"]').forEach((b) => { b.disabled = !selK || !ESC || !ESC.url; });
+    el && el.querySelectorAll('[data-s="expo"], [data-s="desc"], [data-sv]').forEach((b) => { b.disabled = !selK || !ESC || !ESC.url; });
     const no = el && el.querySelector('[data-s="no"]'); if (no) no.style.visibility = selK ? 'visible' : 'hidden';   // sin mover nada de sitio
     if (info) {
       if (selK) { const [a, b] = tramoSel(), n = selK[1] - selK[0] + 1; info.textContent = `Selección: ${n === 1 ? '1 palabra' : `${n} palabras`}, ${reloj(a)} – ${reloj(b)}`; }
@@ -462,11 +467,20 @@
     el.querySelectorAll('[data-s]').forEach((b) => b.onclick = () => {
       if (b.dataset.s === 'no') { selK = null; selAncla = null; pintarSeleccion(); return; }
       if (!selK) return;
-      if (b.dataset.s === 'voz') { const [a, z] = tramoSel(); menuVoz(b, a, z); return; }
       const [a, z] = tramoSel(), t = tramosActuales();
       if (b.dataset.s === 'expo') t.exposicion = [a, z]; else t.descartar.push([a, z]);
       selK = null; selAncla = null;
       cambiarTramos(t);
+    });
+    // asignar las palabras seleccionadas a una voz: un botón por voz, sin menú
+    el.querySelectorAll('[data-sv]').forEach((b) => b.onclick = () => {
+      const f = detalle; if (!selK || !f || !f.voces) return;
+      const [a, z] = tramoSel(), h = Number(b.dataset.sv);
+      f.voces.tramos = asignarVoz(f.voces.tramos, a, z, h);
+      if (!(h in f.voces.nombres)) f.voces.nombres = { ...f.voces.nombres, [h]: `Hablante ${h + 1}` };
+      selK = null; selAncla = null;
+      ctx.enviar({ tipo: 'canteVocesTramos', id: f.id, tramos: f.voces.tramos, nombres: f.voces.nombres });
+      render();
     });
     el.querySelectorAll('[data-hk]').forEach((ch) => {
       ch.onmousedown = (ev) => ev.stopPropagation();   // no empieza una selección
@@ -597,8 +611,6 @@
       if (a === 'terminar') { b.disabled = true; b.textContent = 'Guardando…'; ctx.enviar({ tipo: 'canteTerminar' }); }
       if (a === 'descartar') ctx.enviar({ tipo: 'canteDescartar' });
       if (a === 'instalar') ctx.enviar({ tipo: 'canteInstalar' });
-      if (a === 'audio') ctx.enviar({ tipo: 'canteAudio', id });
-      if (a === 'copiar') ctx.enviar({ tipo: 'canteCopiar', id });
       if (a === 'reintentar') { b.disabled = true; ctx.enviar({ tipo: 'canteReintentar', id }); }
       if (a === 'cancelar') { b.disabled = true; ctx.enviar({ tipo: 'canteCancelar' }); }
       if (a === 'eliminar') ctx.enviar({ tipo: 'canteEliminar', id });
@@ -610,13 +622,10 @@
         ctx.enviar({ tipo: 'canteJuntar', codigo: (sel('#c-tema') || {}).value || ctx.estado.canteTema, objetivo: (sel('#c-obj') || {}).value, fecha: fe && fe.value ? new Date(fe.value).toISOString() : null, rutas: adj.archivos.map((x) => x.ruta) });
       }
       if (a === 'voces' && detalle) { b.disabled = true; const nv = sel('#c-nvoces'); ctx.enviar({ tipo: 'canteVoces', id: detalle.id, n: nv ? Number(nv.value) : 0 }); }
+      if (a === 'verAudio' && detalle) { verAudio = verAudio === detalle.id ? null : detalle.id; if (!verAudio) AUD.pause(); render(); }
       if (a === 'guardar' && detalle) { b.disabled = true; ctx.enviar({ tipo: 'canteGuardar', id: detalle.id }); setTimeout(() => { b.disabled = false; }, 3000); }
       if (a === 'editar' && detalle) ctx.enviar({ tipo: 'canteEditar', id: detalle.id });
       if (a === 'retranscribir' && detalle) ctx.enviar({ tipo: 'canteRetranscribir', id: detalle.id });
-      if (a === 'copiarComp' && detalle) {
-        const c = calcular(detalle);
-        ctx.enviar({ tipo: 'canteCopiarComp', texto: (detalle.segmentos || []).flatMap(palabrasDe).filter(([t]) => tipoEn(c, t) === 'complementario').map(([, w]) => w).join(' ') });
-      }
     });
     const fe = sel('#c-fecha'); if (fe && adj) fe.onchange = () => { adj.fecha = fe.value; };
     const nv = sel('#c-nvoces'); if (nv) nv.onchange = () => { ctx.estado.canteNVoces = Number(nv.value); ctx.guardar(); };
