@@ -25,7 +25,26 @@ latexmk -pdf -f -synctex=1 -interaction=nonstopmode -file-line-error -outdir="$T
 # El registro siempre se copia, para que VS Code muestre los errores en "Problemas"
 [ -f "$TMP/$BASE.log" ] && cp "$TMP/$BASE.log" "$OUT/$BASE.log"
 
-# Estado de la última compilación (lo lee el panel TCEE para el tiempo restante)
+# Páginas del CUERPO (del primer bloque tras la Introducción hasta la Conclusión; sin Introducción, Conclusión, bibliografía ni anexos).
+# Orientación: entre 25 y 35 (main/GUIA_TEMAS.md, §2.5). Se leen del índice (.stc): la numeración arábiga empieza en la Introducción
+# y cada bloque empieza en página nueva, así que basta restar. Lo enseña el panel (cabecera de Acciones y pestaña Temas).
+CUERPO=""
+if [ -f "$TMP/$BASE.pdf" ] && [ -f "$TMP/$BASE.stc" ]; then
+  CUERPO="$(awk '
+    index($0, "\\contentsline {section}{\\numberline") == 1 {
+      if (!match($0, /[}][{][0-9]+[}][{]section[.]/)) next
+      p = substr($0, RSTART + 2, RLENGTH - 12) + 0
+      if ($0 ~ /Introducci/) next
+      if ($0 ~ /Conclusi/) { if (ini) print p - ini; exit }
+      if (!ini) ini = p
+    }' "$TMP/$BASE.stc")"
+fi
+# si no hay PDF se conserva el dato de la última compilación correcta; sin Conclusión no hay cuerpo que medir
+if [ -f "$TMP/$BASE.pdf" ]; then
+  if [ -n "$CUERPO" ]; then echo "$CUERPO" > "$OUT/cuerpo"; else rm -f "$OUT/cuerpo"; fi
+fi
+
+# Estado de la última compilación (lo lee el panel TCEE para el tiempo restante; al cambiar, el panel relee también el cuerpo)
 if [ -f "$TMP/$BASE.pdf" ]; then echo ok > "$OUT/estado"; else echo error > "$OUT/estado"; fi
 
 if [ -f "$TMP/$BASE.pdf" ]; then
@@ -36,6 +55,10 @@ if [ -f "$TMP/$BASE.pdf" ]; then
   cp "$OUT/$BASE.pdf" "$DIR/$CODIGO.pdf"
   echo ""
   echo "PDF actualizado: $DIR/$CODIGO.pdf"
+  if [ -n "$CUERPO" ]; then
+    AVISO=""; [ "$CUERPO" -gt 35 ] && AVISO=" — por encima de la orientación (GUIA_TEMAS.md, §2.5)"
+    echo "Cuerpo del tema: $CUERPO páginas (orientación: entre 25 y 35)$AVISO"
+  fi
 
   # Copia del PDF a iCloud (para leerlo desde el iPad). No se sube a GitHub.
   # Carpeta por defecto: iCloud Drive › OPO - TCEE › PDF temas

@@ -76,6 +76,10 @@ comparados accesorios, historia de detalle, ejemplos extensos, literatura de apo
 se descarta: se reubica** en notas al pie, en recuadros de material complementario (§6) o en los anexos del tema. Ninguna aportación con
 contenido se pierde por razones de forma.
 
+**Lo que otro tema desarrolla, aquí va al grano**: se da lo que este tema necesita, en una o dos frases, y se remite
+(`([\authorfont{Ver Tema 3.B.15}])`). Antes de desarrollar un modelo, un episodio histórico o una institución se comprueba si otro tema
+ya lo trata (`main/analisis/desarrollos.json` para los modelos; para lo demás, una búsqueda en el temario).
+
 ### 2.4. Rigor y verificación
 
 - Todo lo que describe la realidad actual se verifica antes de afirmarlo, aunque parezca conocido: cifras, normativa vigente,
@@ -86,6 +90,23 @@ contenido se pierde por razones de forma.
 - Si un material de partida contiene errores, el texto afirma directamente el dato correcto, sin aludir al error, salvo que la corrección
   tenga valor analítico propio. Los posibles errores en los desarrollos de modelos se enseñan al usuario antes de corregirlos.
 
+### 2.5. Extensión orientativa del cuerpo
+
+Como orientación, el **cuerpo** del tema ocupa **entre 25 y 35 páginas**. El cuerpo va desde el primer bloque tras la Introducción hasta
+la Conclusión; no cuentan la Introducción, la Conclusión, la bibliografía ni los anexos. **No es una exigencia formal ni un límite**: es
+una guía para planificar y para que el crecimiento no pase inadvertido. Lo que se pide sigue siendo profundidad (§1 y §2): ningún
+desarrollo se empobrece para caber, y un tema que necesite más páginas las tiene.
+
+- **En el plan** (§8.4): cada nota lleva su tamaño estimado en páginas, y el plan da el total previsto del cuerpo. Si pasa de 35, se dice
+  en una línea y se pregunta al usuario cómo seguir: igual, o llevando algo a nota al pie, a anexo o a remisión. Nada se recorta por
+  iniciativa propia.
+- **Al cerrar cada epígrafe**: la compilación imprime las páginas del cuerpo y el resumen del epígrafe las da («cuerpo: 31 páginas»).
+  El panel las enseña en la cabecera de Acciones y en cada carta de la pestaña Temas.
+
+Lo que más alarga un tema sin añadir información es explicar dos veces lo mismo (la redacción anterior y la nueva, o una recapitulación
+de lo que se acaba de decir) y desarrollar lo que otro tema ya desarrolla. Lo evitan §2.3 (remisión), §3 (cada idea una vez),
+§8.4 (fusionar en lugar de duplicar) y la pasada de síntesis (§8.5).
+
 ---
 
 ## 3. Estilo de redacción
@@ -95,6 +116,8 @@ contenido se pierde por razones de forma.
   extenso encabezado por una etiqueta en negrita.
 - **Registro académico, sobrio y preciso.** Frases completas, conectores lógicos, razonamiento explícito. Sin telegrafismo, sin relleno y
   sin introducciones que no aporten.
+- **Ir al grano: cada idea se explica una vez**, en el sitio donde hace falta. Después se remite a ella («como vimos») en lugar de volver
+  a explicarla, y no se cierra un apartado recapitulando lo que acaba de decir.
 - **Voz impersonal o primera persona del plural** («vemos», «como veremos», «se estima»). Nunca primera persona del singular ni «tú». Sin
   alusiones al examen, al tribunal, al opositor ni a los materiales de partida.
 - **Intuición antes que fórmula.** Cuando una nota pide «explicar con palabras» una derivación, se explica el mecanismo económico; las
@@ -189,13 +212,15 @@ lo que él ha fijado. Si contradicen esta guía en algún punto, se señala la d
 El usuario quiere alinear el trabajo autónomo con su criterio, así que la interacción manda sobre la velocidad. En Claude Code se usan las
 preguntas con opciones cuando estén disponibles; si no, preguntas breves en el chat.
 
-- **Antes de empezar**: el plan (§8.4) y esperar su visto bueno.
+- **Antes de empezar**: el plan (§8.4), breve, y esperar su visto bueno.
 - **Por cada epígrafe**: (1) qué notas hay y cómo se propone resolver cada una, con una frase por nota; (2) tras su visto bueno, se
   redacta; (3) se resume qué se ha hecho, qué se ha decidido por inferencia y qué no se ha podido verificar, y se espera antes de seguir.
 - **Se para y se pregunta siempre** ante: notas que piden decidir al usuario («proponer pros y contras y dejar a su elección»); notas
   vacías o ambiguas («…», «continuar», «Hay que realizar los siguientes cambios» sin más); cambios de estructura (crear, fusionar o mover
   epígrafes); borrar texto que la nota no manda borrar; y cualquier contradicción entre la nota, el texto y esta guía.
 - No se pregunta por cada párrafo: el punto de control es el epígrafe.
+- **Las preguntas son de contenido.** Leer, editar, compilar, ejecutar scripts o buscar dentro de un encargo aprobado no se consulta. Al
+  usuario se le pregunta por el contenido y por las decisiones que le corresponden, no por permisos para hacer la tarea.
 
 ### 8.2. Pasadas y etiquetas de confianza
 
@@ -229,29 +254,47 @@ preguntas con opciones cuando estén disponibles; si no, preguntas breves en el 
 - Las preguntas del usuario en la nota («¿por qué?», «¿de quién fue…?», «no entiendo…») se contestan **dentro del texto**, como desarrollo,
   no en la conversación; en la conversación solo se resume.
 - Si la nota pide algo que contradice esta guía (por ejemplo, un esquema), se pregunta.
+- Si la nota pregunta si conviene añadir algo nuevo («¿se puede incluir un esquema?», «¿añadir un apartado sobre…?») y no está claro que
+  lo quiera, se le pregunta en una línea antes de añadirlo.
 
 ### 8.4. Fragmentar el trabajo (no resumir, no inventar, no comprimir)
 
 Los encargos se trocean para que el esfuerzo que exige una parte no se coma la calidad de otra. Esto prevalece sobre entregar todo de golpe.
 
-1. **Plan primero**: lista de las notas por epígrafe, con lo que exige cada una (aclarar, ampliar, construir un bloque nuevo, verificar) y una
-   estimación de tamaño. Las grandes (un bloque nuevo, una revisión de literatura) se trocean a su vez. Se acuerda el orden con el usuario.
+1. **Plan primero, y breve**: una línea por nota, agrupadas por epígrafe, con lo que exige (aclarar, ampliar, construir un bloque nuevo,
+   verificar) y su tamaño estimado en páginas; al final, el total previsto del cuerpo (§2.5). Sin justificar cada decisión ni repetir el
+   contenido de las notas. Las grandes (un bloque nuevo, una revisión de literatura) se trocean a su vez. Se acuerda el orden con el usuario.
 2. **Un epígrafe por vez**, con parada al final (§8.1).
-3. **Nunca se acorta** texto existente que la nota no mande cambiar. Al cerrar cada epígrafe se revisa con `git diff` cada línea borrada y
-   se clasifica:
+3. **Nunca se pierde información.** El texto existente que la nota no manda cambiar se conserva, pero no se duplica: si lo nuevo explica lo
+   mismo que una frase o un párrafo anterior, **se fusionan en una sola explicación** en lugar de dejar las dos, siempre que cada idea, dato,
+   autor, cita y ejemplo siga en el texto. Lo que el usuario marcó en azul y sus notas rojas no se fusionan ni se tocan (§7). Al cerrar cada
+   epígrafe se revisa con `git diff` cada línea borrada y se clasifica:
    - **la propia nota magenta resuelta**: es lo esperado, no es una pérdida;
    - **texto que la nota mandaba reformular o sustituir**: es lo esperado, pero se comprueba que cada idea, dato, autor o cita que contenía
      sigue en la redacción nueva, salvo que la nota mandara quitarlo;
+   - **texto fusionado**: una explicación repetida que se ha unido con la nueva; se comprueba dónde sigue cada idea;
    - **cualquier otra cosa** (texto ajeno a la nota, notas rojas o azules, otras notas magenta): es una pérdida; se restaura o se avisa
      al usuario antes de seguir.
-   En el resumen del epígrafe se dice qué se borró de las dos primeras clases y, si se perdió algo de la redacción anterior, qué y por qué.
+   En el resumen del epígrafe se dice qué se borró de las tres primeras clases (de lo fusionado, dónde sigue) y, si se perdió algo de la
+   redacción anterior, qué y por qué.
 4. **Bibliografía al cerrar cada epígrafe**: se añaden las referencias nuevas según §5 antes de dar el epígrafe por terminado.
-5. **Compilar al cerrar cada epígrafe** y arreglar los errores que haya introducido.
+5. **Compilar al cerrar cada epígrafe**, arreglar los errores que haya introducido y dar en el resumen las páginas del cuerpo que imprime
+   la compilación (§2.5).
 6. **Una conversación por encargo** (un tema, o una sección si el tema tiene muchas notas). Si la conversación se alarga mucho (el asistente resume lo antiguo y pierde detalle), se propone seguir en
    una nueva y se deja escrito un relevo breve: qué está hecho, qué falta, decisiones tomadas.
 7. Si una parte exige más trabajo del previsto, se dice y se replantea el plan; nunca se compensa recortando otra.
 
 ### 8.5. Al terminar
+
+**Pasada de síntesis.** Al terminar el encargo, antes del informe final, se relee el cuerpo entero buscando lo que ocupa sin añadir
+información:
+
+- explicaciones repetidas, sobre todo la redacción anterior y la nueva de la misma idea en sitios distintos;
+- recapitulaciones y frases de transición que repiten lo que se acaba de decir;
+- contenido que otro tema ya desarrolla, que se sustituye por lo esencial y la remisión (§2.3).
+
+Se presenta como una lista corta: dónde, qué se quita o se fusiona, cuántas palabras y **dónde sigue la información**. Se aplica lo que el
+usuario apruebe. No es un recorte: no se quita nada que no esté en otro sitio. El informe da las páginas del cuerpo antes y después.
 
 Se informa primero de lo que importa: lo que no se pudo verificar, las decisiones tomadas por inferencia y los cambios de contenido
 relevantes. No se sincroniza con GitHub sin que el usuario lo pida (lo hace él con «Sincronizar»). Antes de modificar varios temas a la

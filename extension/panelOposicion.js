@@ -96,6 +96,12 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     return `${doc ? `v${doc.version}` : m}|${e}`;
   };
 
+  /** Páginas del cuerpo en la última compilación correcta (las escribe scripts/compilar.sh en .build/cuerpo; GUIA_TEMAS.md §2.5) */
+  const cuerpoDe = (u) => {
+    try { const n = parseInt(fs.readFileSync(path.join(path.dirname(u.fsPath), '.build', 'cuerpo'), 'utf8'), 10); return Number.isFinite(n) ? n : null; }
+    catch (x) { return null; }
+  };
+
   async function temas() {
     if (!uris) uris = await vscode.workspace.findFiles('temario/Ejercicio-*/Parte-*/*/main.tex');
     const lista = [];
@@ -107,12 +113,12 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
       if (!c || c.marca !== marca) {
         const texto = await textoDe(u);
         const { p } = progreso.calcular(codigo, u, texto);
-        c = { marca, texto, t: tituloTema(texto) || {}, p };
+        c = { marca, texto, t: tituloTema(texto) || {}, p, paginas: cuerpoDe(u) };   // la marca cambia al compilar (.build/estado)
         porTema.set(codigo, c);
       }
       const { texto, t } = c;
       const { e, test: tt } = progreso.estimar(codigo, c.p);
-      lista.push({ codigo, uri: u, texto, titulo: t.corto || codigo, completo: t.completo || '', parte: codigo.slice(0, 3), minutos: e.minutos, pct: e.pct, hecho: e.hecho, errTest: (tt && tt.errores) || 0 });
+      lista.push({ codigo, uri: u, texto, titulo: t.corto || codigo, completo: t.completo || '', parte: codigo.slice(0, 3), minutos: e.minutos, pct: e.pct, hecho: e.hecho, errTest: (tt && tt.errores) || 0, paginas: c.paginas });
     }
     lista.sort((a, b) => a.codigo.localeCompare(b.codigo, 'es', { numeric: true }));
     cache = Object.fromEntries(lista.map((t) => [t.codigo, t]));
@@ -144,7 +150,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     const abierto = temaMostrado() ? codigoTema(temaMostrado().fsPath) : null;
     const cal = calendarios.vista(cache, minutosDe());
     return {
-      temas: lista.map(({ codigo, titulo, completo, parte, minutos, pct, hecho, errTest }) => ({ codigo, titulo, completo, parte, minutos, pct, hecho, errTest, tiempo: G.formatoTiempo(minutos) })),
+      temas: lista.map(({ codigo, titulo, completo, parte, minutos, pct, hecho, errTest, paginas }) => ({ codigo, titulo, completo, parte, minutos, pct, hecho, errTest, paginas, tiempo: G.formatoTiempo(minutos) })),
       total: { tiempo: G.formatoTiempo(lista.reduce((s, t) => s + t.minutos, 0)), hechos: hechos.size, n: lista.length },
       relaciones: { ...relaciones.vista(cache, abierto, dev), nombres },
       calendario: cal,

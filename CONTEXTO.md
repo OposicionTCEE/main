@@ -72,6 +72,12 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
   - La semana termina el día de cante. Hay un día libre semanal, el sábado.
   - Los temas de una semana pasada se dan por **trabajados**: no se marca nada.
 - El **cante con la preparadora** (un tema por semana) será una **acción aparte**, aún por definir.
+- **Extensión de los temas** (13/10/2026, tras medir las 681 versiones del historial): el **cuerpo** (del primer bloque tras la Introducción
+  hasta la Conclusión) ronda como orientación **25–35 páginas**; no es un límite y manda la profundidad (`GUIA_TEMAS.md` §2.5). Los temas
+  del 3er ejercicio sin trabajar con Claude tienen una mediana de 22; los trabajados crecieron sobre todo por contenido nuevo, pedido en
+  notas abiertas y sin presupuesto. Respuesta acordada: tamaño en el plan, páginas del cuerpo al compilar y en el panel, fusionar lo
+  repetido («nunca se pierde información», §8.4), ir al grano y remitir (§2.3, §3) y pasada de síntesis al terminar (§8.5).
+  Descartado por el usuario: topes a Implicaciones/Limitaciones y que las figuras sustituyan prosa.
 
 ## Pendiente
 

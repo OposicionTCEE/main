@@ -15,12 +15,14 @@ La carpeta raíz (`TCEE/`) contiene:
   Compila en `.build/.tmp` y solo copia el PDF a `.build/` si se genera: con un error grave se conserva el último PDF correcto.
   `-f` es intencionado: muchos temas tienen errores menores y el PDF debe salir igual.
   Si compila, el PDF se copia también a iCloud (`OPO - TCEE/PDF temas/Tema-X.pdf`, configurable en `~/.tcee_carpeta_pdf`).
+  Al terminar imprime las páginas del **cuerpo** (del primer bloque tras la Introducción hasta la Conclusión) y las deja en `.build/cuerpo`, que enseña el panel.
   Los PDF nunca se suben a GitHub. Para compilar todos: `bash main/scripts/compilar_todo.sh [3.A.43 …]`.
   El estado de cada tema está en `main/ESTADO_COMPILACION.md`.
 - **Contenido, estilo, convenciones LaTeX, colores de las notas y protocolo para trabajar un tema: `main/GUIA_TEMAS.md`.**
   Es la única guía (la copia del proyecto de claude.ai, `claude/Guia_redaccion_temas_TCEE.md`, la reproduce); leerla antes de tocar un tema.
   Lo esencial: ecuaciones con `$…$` y `$$…$$` (el `\eqblock` solo lo pone el usuario; los existentes no se tocan; Claude indica junto a cada ecuación su fuente: modelo, autores, año y variante), remisiones `([\authorfont{Ver Tema 3.A.44}])`, autores en MAYÚSCULAS con año,
-  nunca Markdown dentro de un `.tex` (rompe la compilación: ha pasado en 4.B.15 y 4.B.25).
+  nunca Markdown dentro de un `.tex` (rompe la compilación: ha pasado en 4.B.15 y 4.B.25); extensión orientativa del cuerpo entre 25 y 35 páginas, que no es un límite: manda la profundidad (§2.5);
+  nunca se pierde información, pero lo repetido se fusiona (§8.4); pasada de síntesis al terminar cada encargo (§8.5).
 - Antes de modificar varios temas a la vez, enseñar al usuario qué se va a cambiar y esperar su visto bueno.
 - Para sincronizar con GitHub (main + temario): `bash main/scripts/sincronizar_todo.sh` desde la carpeta TCEE.
 - Para ver o deshacer cambios antiguos de un tema: `main/HISTORIAL.md`.
@@ -30,11 +32,11 @@ La carpeta raíz (`TCEE/`) contiene:
 Código en `main/extension/` (JavaScript sin compilación: `extension.js` + `parser.js`). Tras cualquier cambio, volver a empaquetar
 con `npx @vscode/vsce package --skip-license -o tcee-panel.vsix` dentro de `main/extension/` y subir el `.vsix`;
 el usuario lo instala con la tarea *Instalar o actualizar el panel TCEE*. Probar `parser.js` contra todos los temas (145 carpetas en octubre de 2026) antes de publicar.
-Tiempo restante (`progreso.js`): reglas en `main/PROGRESO.md` (mantener código y documento a la vez). Ajustes propios de este temario
+Tiempo restante (`progreso.js`; la cabecera de Acciones añade las páginas del cuerpo): reglas en `main/PROGRESO.md` (mantener código y documento a la vez). Ajustes propios de este temario
 que no figuran allí: no cuentan Introducción, Conclusión ni Preguntas Test. Datos en el repositorio PRIVADO `progreso`; no copiarlos a `main` ni a `temario`.
 Nueva nota (`inferencia.js`): añade `\textbf{NOTA (dd/mm/aaaa[, desde X.Y.N]):} texto` como párrafo final de `\modificaciones{…}` del tema destino
 (buscado tras `\begin{document}`: en el preámbulo está la definición de la macro).
-Panel Oposición (`panelOposicion.js` + `media/panel.js/.css`, pestaña webview): pestañas Calendario, Temas (`media/temas.js`: cartas por bloque de `config/bloques.json`, filtro de ejercicio y partes),
+Panel Oposición (`panelOposicion.js` + `media/panel.js/.css`, pestaña webview): pestañas Calendario, Temas (`media/temas.js`: cartas por bloque de `config/bloques.json`, filtro de ejercicio y partes, páginas del cuerpo de cada tema),
 Relaciones, Cante y Test; se abre en una ventana aparte (`workbench.action.moveEditorToNewWindow`). Lo que abre (temas, líneas) va a la ventana principal:
 `tcee.irA(uri, linea, {principal:true})` usa el último grupo de editores de texto activo.
 Para ahorrar batería guarda por tema el texto y los pendientes y solo los recalcula si cambia el fichero, el documento abierto o `.build/estado`;
