@@ -875,7 +875,21 @@
     "Quedará bloqueada: se podrá escuchar, leer, buscar y abrir sus ficheros, pero no cambiarla hasta que pulses «Editar».": "It will be locked: you can listen, read, search and open its files, but not change it until you press “Edit”.",
     "Estos audios originales irán a la Papelera (se conserva la copia comprimida de la clase):": "These original audio files will go to the Bin (the class’s compressed copy is kept):",
     "No pude mandar a la Papelera: {0}": "I couldn’t move to the Bin: {0}",
-    "La clase está guardada: pulsa «Editar» para cambiarla.": "The class is saved: press “Edit” to change it."
+    "La clase está guardada: pulsa «Editar» para cambiarla.": "The class is saved: press “Edit” to change it.",
+    "Identificar voces": "Identify voices",
+    "Volver a identificar": "Identify again",
+    "Identificando voces… {0} %": "Identifying voices… {0} %",
+    "Cuántas voces hay en la grabación": "How many voices are in the recording",
+    "Nº de voces: automático": "No. of voices: automatic",
+    "{0} voces": "{0} voices",
+    "Distingue quién habla en cada momento (tú, el profesor…).": "Tells who is speaking at each moment (you, the teacher…).",
+    "Falta instalar «Identificar voces»: pulsa «Instalar herramientas» en Ajustes de Idiomas.": "“Identify voices” is not installed: press “Install tools” in Language settings.",
+    "Hablante {0}": "Speaker {0}",
+    "Nombre de esta voz": "Name of this voice",
+    "Transcribe antes este audio.": "Transcribe this audio first.",
+    "Espera a que termine la transcripción en marcha.": "Wait for the current transcription to finish.",
+    "Voces identificadas: {0}. Puedes ponerles nombre.": "Voices identified: {0}. You can name them.",
+    "No se pudieron identificar las voces: {0}": "The voices could not be identified: {0}"
    },
    "fr": {
     "(Añádelos en ⚙ Ajustes.)": "(Ajoutez-les dans ⚙ Réglages.)",
@@ -1747,7 +1761,21 @@
     "Quedará bloqueada: se podrá escuchar, leer, buscar y abrir sus ficheros, pero no cambiarla hasta que pulses «Editar».": "Il sera verrouillé : vous pourrez écouter, lire, chercher et ouvrir ses fichiers, mais pas le modifier avant d’appuyer sur « Modifier ».",
     "Estos audios originales irán a la Papelera (se conserva la copia comprimida de la clase):": "Ces fichiers audio d’origine iront à la Corbeille (la copie compressée du cours est conservée) :",
     "No pude mandar a la Papelera: {0}": "Impossible de mettre à la Corbeille : {0}",
-    "La clase está guardada: pulsa «Editar» para cambiarla.": "Le cours est enregistré : appuyez sur « Modifier » pour le changer."
+    "La clase está guardada: pulsa «Editar» para cambiarla.": "Le cours est enregistré : appuyez sur « Modifier » pour le changer.",
+    "Identificar voces": "Identifier les voix",
+    "Volver a identificar": "Identifier à nouveau",
+    "Identificando voces… {0} %": "Identification des voix… {0} %",
+    "Cuántas voces hay en la grabación": "Combien de voix il y a dans l’enregistrement",
+    "Nº de voces: automático": "Nb de voix : automatique",
+    "{0} voces": "{0} voix",
+    "Distingue quién habla en cada momento (tú, el profesor…).": "Distingue qui parle à chaque moment (vous, le professeur…).",
+    "Falta instalar «Identificar voces»: pulsa «Instalar herramientas» en Ajustes de Idiomas.": "« Identifier les voix » n’est pas installé : appuyez sur « Installer les outils » dans les Réglages des langues.",
+    "Hablante {0}": "Locuteur {0}",
+    "Nombre de esta voz": "Nom de cette voix",
+    "Transcribe antes este audio.": "Transcrivez d’abord cet audio.",
+    "Espera a que termine la transcripción en marcha.": "Attendez la fin de la transcription en cours.",
+    "Voces identificadas: {0}. Puedes ponerles nombre.": "Voix identifiées : {0}. Vous pouvez leur donner un nom.",
+    "No se pudieron identificar las voces: {0}": "Impossible d’identifier les voix : {0}"
    }
   };
   /** Traduce s a lang (en | fr | es) y rellena los huecos {0}, {1}… con args */

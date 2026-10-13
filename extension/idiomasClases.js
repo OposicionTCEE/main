@@ -22,7 +22,7 @@ const CONVERTIBLE = /\.(docx?|rtf|rtfd|odt|html?|pages|webarchive)$/i;   // text
 const ALUCINACIONES = /thank(s| you) for watching|please subscribe|subtitles by|sous-titr|merci d'avoir regard|abonnez-vous|amara\.org|subt[ií]tulos (realizados|por)|gracias por ver/i;
 
 /** idiomaUI(lengua): lengua del panel ('es' | 'en' | 'fr') para los textos que llegan a la pantalla (por defecto, castellano) */
-function crearClases({ dirPerfil, otroOcupado = () => null, avisar = () => {}, alCambiar = () => {}, idiomaUI = () => 'es' }) {
+function crearClases({ voces = null, dirPerfil, otroOcupado = () => null, avisar = () => {}, alCambiar = () => {}, idiomaUI = () => 'es' }) {
   const T = (s, args, l) => tr(idiomaUI(l), s, args);
   const dirClases = () => { const d = dirPerfil(); if (!d) throw new Error(T('Crea primero tu perfil.')); return path.join(d, 'clases'); };
   const dirClase = (id) => { if (!/^[\w.-]+$/.test(String(id))) throw new Error(T('Clase no válida.')); return path.join(dirClases(), id); };
@@ -219,6 +219,7 @@ function crearClases({ dirPerfil, otroOcupado = () => null, avisar = () => {}, a
   }
   async function siguiente() {
     if (transcribiendo || !cola.length) return;
+    if (voces && voces.estado()) { setTimeout(siguiente, 10000); return; }   // primero termina «Identificar voces»
     const o = otroOcupado(); if (o && o.transcribiendo) { setTimeout(siguiente, 15000); return; }   // un whisper cada vez (8 GB)
     const t = cola.shift();
     const h = C.herramientas();
@@ -248,13 +249,44 @@ function crearClases({ dirPerfil, otroOcupado = () => null, avisar = () => {}, a
     }
   }
 
+  // ---------------------------------------------------------------- identificar voces (quién habla; IDIOMAS.md, «Clases con profesores»)
+  let identificando = null;   // {id, fichero, pct}
+  async function identificarVoces({ id, fichero, n }) {
+    const c = clase(id); if (!c) throw new Error(T('Clase no encontrada.'));
+    editable(c);
+    if (!(c.transcripciones || []).some((t) => t.audio === fichero)) throw new Error(T('Transcribe antes este audio.', [], c.lengua));
+    if (transcribiendo) throw new Error(T('Espera a que termine la transcripción en marcha.', [], c.lengua));
+    const h = C.herramientas(); if (!h.ffmpeg) throw new Error(T('Falta ffmpeg: pulsa «Instalar herramientas» en Ajustes de Idiomas.', [], c.lengua));
+    if (!voces || !voces.instalado()) throw new Error(T('Falta instalar «Identificar voces»: pulsa «Instalar herramientas» en Ajustes de Idiomas.', [], c.lengua));
+    identificando = { id, fichero, pct: 0 }; alCambiar(true);
+    try {
+      const tramos = await voces.identificar({ ffmpeg: h.ffmpeg, audio: path.join(dirClase(id), path.basename(fichero)), n, quien: `${id}/${fichero}`,
+        alPct: (p) => { if (identificando) { identificando.pct = p; alCambiar(true); } } });
+      const g = clase(id); if (!g) return null;
+      const nh = new Set(tramos.map((x) => x[2])).size, antes = ((g.voces || {})[fichero] || {}).nombres || {};
+      const nombres = Object.fromEntries([...Array(nh).keys()].map((k) => [k, antes[k] || T('Hablante {0}', [k + 1], g.lengua)]));
+      g.voces = { ...(g.voces || {}), [fichero]: { tramos, n: Number(n) || 0, nombres, fecha: new Date().toISOString() } };
+      guardar(g);
+      avisar(T('Voces identificadas: {0}. Puedes ponerles nombre.', [nh], g.lengua));
+      return g;
+    } catch (e) { avisar(T('No se pudieron identificar las voces: {0}', [e.message || e], c.lengua), true); return null; }
+    finally { identificando = null; alCambiar(true); siguiente(); }
+  }
+  function nombresVoces({ id, fichero, nombres }) {
+    const c = clase(id); if (!c) throw new Error(T('Clase no encontrada.'));
+    editable(c);
+    const v = (c.voces || {})[fichero]; if (!v) return c;
+    for (const k of Object.keys(v.nombres || {})) { const x = String((nombres || {})[k] || '').trim().slice(0, 40); if (x) v.nombres[k] = x; }
+    return guardar(c);
+  }
+
   function estado() {
     let g = null; try { g = dirPerfil() ? grabacionEnCurso() : null; } catch (e) { g = null; }
-    return { grabando: g && { clase: g.clase, inicio: g.inicio, nivel: g.nivel, micro: g.micro }, transcribiendo, cola: cola.map((x) => ({ id: x.id, fichero: x.fichero })) };
+    return { grabando: g && { clase: g.clase, inicio: g.inicio, nivel: g.nivel, micro: g.micro }, transcribiendo, identificando, voces: !!(voces && voces.instalado()), cola: cola.map((x) => ({ id: x.id, fichero: x.fichero })) };
   }
   function eliminar({ id }) { return dirClase(id); }   // la extensión la manda a la Papelera
 
-  return { lista, crear, cambiar, clase, ruta, bloquear, originales, importar, quitarAdjunto, quitarAudio, leerAdjunto, microfonos, grabar, parar, transcribir, estado, eliminar,
+  return { lista, crear, cambiar, clase, ruta, bloquear, originales, identificarVoces, nombresVoces, importar, quitarAdjunto, quitarAudio, leerAdjunto, microfonos, grabar, parar, transcribir, estado, eliminar,
     retomar: () => { try { if (dirPerfil()) grabacionEnCurso(); } catch (e) { /* */ } } };
 }
 

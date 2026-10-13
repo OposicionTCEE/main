@@ -108,6 +108,7 @@ fi
 echo "== 6/6 Grabación, transcripción y voces del sistema"
 instalar ffmpeg "ffmpeg (grabación)"
 instalar whisper-cpp "whisper.cpp (transcripción)"
+bash "$(dirname "$0")/../instalar_voces.sh" || echo "⚠️  Identificar voces (clases) no se ha instalado; el resto funciona."
 if [ -f "$HOME/.tcee/modelos/ggml-large-v3-turbo.bin" ]; then echo "✓ Modelo de whisper (el del cante; entiende inglés y francés)"
 else echo "⚠️  Falta el modelo de whisper: ejecuta también la tarea «Instalar herramientas de cante» (descarga 1,6 GB)."; fi
 echo

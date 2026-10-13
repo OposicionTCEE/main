@@ -8,6 +8,7 @@ const G = require('./progreso');
 const { crearCalendarios } = require('./calendarioPanel');
 const { crearRelaciones } = require('./relacionesPanel');
 const { crearCante } = require('./cante');
+const { crearVoces } = require('./voces');
 const { crearTest } = require('./testPanel');
 const { crearIdiomas } = require('./idiomasPanel');
 const { crearPracticas } = require('./idiomasPracticas');
@@ -56,7 +57,9 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
   });
   context.subscriptions.push({ dispose: () => voz.parar() });
   // Clases con profesores (main/IDIOMAS.md, «Clases»): audio, ficheros y transcripción en la carpeta del perfil
+  const voces = crearVoces({ raiz });   // «Identificar voces», compartido por cantes y clases
   const clases = crearClases({
+    voces,
     dirPerfil: () => idiomas.dirActivo(), idiomaUI,
     otroOcupado: () => { try { const a = cante.estado(), b = practicas.estadoOral(); return { grabando: a.grabando || b.grabando, transcribiendo: a.transcribiendo || b.transcribiendo }; } catch (e) { return null; } },
     avisar: (texto, error) => { if (panel) panel.webview.postMessage({ tipo: 'aviso', texto, error: !!error }); },
@@ -65,7 +68,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
   // Cante: grabación y transcripción (main/CANTE.md). alCambiar(ligero): solo el estado en vivo (nivel, % transcrito) o todo el panel
   const cacheEscucha = path.join(context.globalStorageUri.fsPath, 'cante-escucha');   // copias MP3 para escuchar en el panel
   const cante = crearCante({
-    raiz, progreso, cacheEscucha,
+    raiz, progreso, cacheEscucha, voces,
     avisar: (texto, error) => { if (panel) panel.webview.postMessage({ tipo: 'aviso', texto, error: !!error }); else (error ? vscode.window.showWarningMessage : vscode.window.showInformationMessage)(texto); },
     alCambiar: (ligero) => { if (!panel) return; if (ligero) panel.webview.postMessage({ tipo: 'canteEstado', estado: cante.estado() }); else enviar(); },
   });
@@ -340,6 +343,8 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
           if (fallidos.length) panel.webview.postMessage({ tipo: 'aviso', texto: tIdi('No pude mandar a la Papelera: {0}', [fallidos.join(', ')], c.lengua), error: true });
           return r({ clase: clases.bloquear({ id: m.id, si: true }) });
         }
+        case 'idiPClaseVoces': return r({ clase: await clases.identificarVoces(m) });
+        case 'idiPClaseVocesNombres': return r({ clase: clases.nombresVoces(m) });
         case 'idiPClaseEditar': return r({ clase: clases.bloquear({ id: m.id, si: false }) });
         case 'idiPClaseEliminar': {
           const c = clases.clase(m.id); if (!c) return r({ cancelado: true });
@@ -426,6 +431,11 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
         panel.webview.postMessage({ tipo: 'canteDetalle', detalle: cante.bloquear(m.id, true) });
         enviar();
         panel.webview.postMessage({ tipo: 'aviso', texto: fallidos.length ? `Cante guardado, pero no pude mandar a la Papelera: ${fallidos.join(', ')}` : `Cante guardado${orig.length ? ` (${orig.length} ${orig.length === 1 ? 'original' : 'originales'} en la Papelera)` : ''}.`, error: !!fallidos.length });
+      } else if (m.tipo === 'canteVoces') {
+        cante.identificarVoces(m.id, m.n).then(() => { if (panel) panel.webview.postMessage({ tipo: 'canteDetalle', detalle: cante.leer(m.id) }); })
+          .catch((e) => { if (panel) panel.webview.postMessage({ tipo: 'aviso', texto: String(e.message || e), error: true }); });
+      } else if (m.tipo === 'canteVocesNombres') {
+        cante.nombresVoces(m.id, m.nombres);
       } else if (m.tipo === 'canteEditar') {
         panel.webview.postMessage({ tipo: 'canteDetalle', detalle: cante.bloquear(m.id, false) });
         enviar();

@@ -137,7 +137,26 @@ Estados: `pendiente` (por transcribir), `transcrito`, `error`.
 - **Editar** desbloquea (los originales ya no vuelven, ni hacen falta).
 - La extensión también rechaza guardar tramos o texto de un cante guardado (`guardarTramos`, `guardarSegmentos`).
 
-## 8. Ideas para más adelante (no hechas)
+## 8. Identificar voces (decisiones del usuario, 13 de octubre de 2026)
+
+- **Para qué:** distinguir quién habla en cada momento (tú, la preparadora…). Sirve en los cantes y en las clases de Idiomas.
+- **Por qué otro programa:** whisper no lo hace en castellano (su `tinydiarize` es solo inglés y `--diarize` exige una voz por canal estéreo).
+  Se usa **sherpa-onnx** (Apache 2.0) sin conexión, con la segmentación de **pyannote 3.0** (MIT) y el modelo de voz **CAM++** de 3D-Speaker (Apache 2.0).
+- **Instalación:** `scripts/instalar_voces.sh`, llamado por *Instalar herramientas de cante* y por *Instalar herramientas* de Idiomas: entorno de Python propio
+  en `~/.tcee/voces-id` (el Python del Mac; si falla, el 3.12 de Homebrew) y modelos en `~/.tcee/modelos/voces/` (`segmentacion.onnx`, `voz.onnx`; unos 35 MB).
+- **Cómo:** botón *👥 Identificar voces* en el detalle de un cante transcrito (y en cada audio transcrito de una clase), con el número de voces
+  (automático, 2, 3 o 4; si se sabe, mejor). `extension/voces.js` pasa el audio a mono 16 kHz y lanza `scripts/diarizar.py`, que devuelve tramos
+  `[[inicio, fin, hablante], …]` (hablantes numerados por orden de aparición; se unen los tramos seguidos del mismo hablante con huecos de menos de 1 s).
+  Una identificación cada vez; la transcripción espera a que termine (las dos cargan mucho el Mac). En un Mac con chip de Apple [Probable] tarda unos pocos minutos por hora de audio.
+- **Dónde se guarda:** ficha del cante, `voces: {tramos, n, nombres: {0: 'Hablante 1', …}, fecha}`; en una clase, `voces: {<audio>: {…}}` en `clase.json`.
+- **Qué se ve:** leyenda con un color por voz, su nombre (se edita ahí: «Yo», «Preparadora») y su tiempo total; en el texto, una etiqueta con el nombre
+  al empezar cada intervención (los párrafos se cortan al cambiar de voz). Cada palabra (o frase, en las clases) toma la voz del tramo en que cae;
+  si cae en un hueco, la del tramo más cercano (`hablanteEn`, igual en `voces.js`, `media/cante.js` y `media/idiomasPracticas.js`).
+- **Límites:** va bien con dos voces claras; falla más con grabaciones a distancia, voces que se pisan o parecidas. No hay botón para marcar la exposición
+  a partir de las voces (decisión del usuario: por si se equivoca).
+- Lo guardado (🔒) no se puede volver a identificar ni renombrar hasta pulsar *Editar*.
+
+## 9. Ideas para más adelante (no hechas)
 
 - Comparar la transcripción con el `main.tex` del tema: epígrafes no mencionados, orden y tiempo por epígrafe.
 - Evolución de la duración y del ritmo por tema y por vuelta.

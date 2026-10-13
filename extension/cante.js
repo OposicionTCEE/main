@@ -150,7 +150,7 @@ function duracionDe(ffmpeg, f) {
   }));
 }
 
-function crearCante({ raiz, progreso, avisar, alCambiar, cacheEscucha }) {
+function crearCante({ raiz, progreso, avisar, alCambiar, cacheEscucha, voces }) {
   const dirTx = () => (progreso.hayCarpeta() ? path.join(progreso.dir, 'cantes') : path.join(raiz(), '.cantes-texto'));
   const dirAudio = () => carpetaAudio(raiz());
   const marca = () => path.join(dirAudio(), 'grabando.json');   // grabación en curso (sobrevive a recargar la ventana)
@@ -315,6 +315,32 @@ function crearCante({ raiz, progreso, avisar, alCambiar, cacheEscucha }) {
     return calcularTramos(n);
   }
 
+  // ---------------------------------------------------------------- identificar voces (CANTE.md, apartado 8)
+  let identificando = null;   // {id, pct}
+  async function identificarVoces(id, n) {
+    const f = leer(id); if (!f) return;
+    if (f.guardado) throw new Error('El cante está guardado: pulsa «Editar» para identificar las voces.');
+    if (transcribiendo) throw new Error('Espera a que termine la transcripción en marcha.');
+    const h = herramientas(), audio = rutaAudio(id);
+    if (!h.ffmpeg || !audio) throw new Error('No encuentro el audio de este cante en este Mac.');
+    identificando = { id, pct: 0, codigo: f.codigo }; alCambiar();
+    try {
+      const tramos = await voces.identificar({ ffmpeg: h.ffmpeg, audio, n, quien: id, alPct: (p) => { if (identificando) { identificando.pct = p; alCambiar(true); } } });
+      const g = leer(id); if (!g) return;
+      const nh = new Set(tramos.map((x) => x[2])).size;
+      const nombres = Object.fromEntries([...Array(nh).keys()].map((k) => [k, ((g.voces || {}).nombres || {})[k] || `Hablante ${k + 1}`]));
+      guardarFicha({ ...g, voces: { tramos, n: Number(n) || 0, nombres, fecha: new Date().toISOString() } });
+      avisar(`Voces identificadas en el cante de ${f.codigo}: ${nh === 1 ? 'una voz' : `${nh} voces`}. Puedes ponerles nombre.`);
+    } catch (e) { avisar(`No se pudieron identificar las voces: ${e.message || e}`, true); }
+    finally { identificando = null; alCambiar(); siguiente(); }
+  }
+  function nombresVoces(id, nombres) {
+    const f = leer(id); if (!f || f.guardado || !f.voces) return null;
+    const n = {}; for (const k of Object.keys(f.voces.nombres || {})) n[k] = String((nombres || {})[k] || f.voces.nombres[k]).trim().slice(0, 40) || f.voces.nombres[k];
+    guardarFicha({ ...f, voces: { ...f.voces, nombres: n } });
+    return n;
+  }
+
   /** Guardar (bloquear) o Editar (desbloquear). Al guardar se olvidan las rutas de los originales (la extensión los manda a la Papelera) */
   function bloquear(id, si) {
     const f = leer(id); if (!f) return null;
@@ -387,6 +413,7 @@ function crearCante({ raiz, progreso, avisar, alCambiar, cacheEscucha }) {
 
   async function siguiente() {
     if (transcribiendo || !cola.length) return;
+    if (voces && voces.estado()) { setTimeout(siguiente, 10000); return; }   // primero termina «Identificar voces» (los dos cargan mucho el Mac)
     const id = cola.shift();
     const f = leer(id); if (!f) return siguiente();
     const h = herramientas();
@@ -480,12 +507,14 @@ function crearCante({ raiz, progreso, avisar, alCambiar, cacheEscucha }) {
       carpetaAudio: dirAudio(),
       grabando: g && { id: g.id, codigo: g.codigo, titulo: g.titulo, inicio: g.inicio, objetivo: g.objetivo, micro: g.micro, nivel: nivel(g.registro) },
       transcribiendo,
+      identificando,
+      voces: !!(voces && voces.instalado()),
       cola: cola.slice(),
     };
   }
 
   return { herramientas, microfonos: async () => { const h = herramientas(); return h.ffmpeg ? microfonos(h.ffmpeg) : []; },
-    empezar, terminar, lista, leer, eliminar, rutaAudio, encolar, cancelar, retomar, estado, infoAdjuntos, juntar, guardarTramos, escucha, guardarSegmentos, bloquear, originales };
+    empezar, terminar, lista, leer, eliminar, rutaAudio, encolar, cancelar, retomar, estado, infoAdjuntos, juntar, guardarTramos, escucha, guardarSegmentos, bloquear, originales, identificarVoces, nombresVoces };
 }
 
 module.exports = { crearCante, herramientas, microfonos, elegirMicro, pista, nivel, ALUCINACIONES, normalizarTramos, calcularTramos, tipoEn, palabrasDeTokens };
