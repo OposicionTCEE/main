@@ -334,6 +334,16 @@ function crearCante({ raiz, progreso, avisar, alCambiar, cacheEscucha, voces }) 
     } catch (e) { avisar(`No se pudieron identificar las voces: ${e.message || e}`, true); }
     finally { identificando = null; alCambiar(); siguiente(); }
   }
+  /** Corrección a mano de quién habla (solo los trozos que el usuario cambió; la página manda los tramos ya corregidos) */
+  function tramosVoces(id, tramos, nombres) {
+    const f = leer(id); if (!f || f.guardado || !f.voces || !Array.isArray(tramos)) return null;
+    const dur = Number(f.duracion) || Infinity;
+    const t = tramos.map(([a, b, h]) => [Math.max(0, Number(a) || 0), Math.min(dur, Number(b) || 0), Math.max(0, Math.floor(Number(h) || 0))]).filter(([a, b]) => b > a).sort((x, y) => x[0] - y[0]);
+    const n = { ...(f.voces.nombres || {}) };
+    for (const [, , h] of t) if (!(h in n)) n[h] = String(((nombres || {})[h]) || `Hablante ${h + 1}`).slice(0, 40);
+    guardarFicha({ ...f, voces: { ...f.voces, tramos: t, nombres: n, corregido: true } });
+    return true;
+  }
   function nombresVoces(id, nombres) {
     const f = leer(id); if (!f || f.guardado || !f.voces) return null;
     const n = {}; for (const k of Object.keys(f.voces.nombres || {})) n[k] = String((nombres || {})[k] || f.voces.nombres[k]).trim().slice(0, 40) || f.voces.nombres[k];
@@ -514,7 +524,7 @@ function crearCante({ raiz, progreso, avisar, alCambiar, cacheEscucha, voces }) 
   }
 
   return { herramientas, microfonos: async () => { const h = herramientas(); return h.ffmpeg ? microfonos(h.ffmpeg) : []; },
-    empezar, terminar, lista, leer, eliminar, rutaAudio, encolar, cancelar, retomar, estado, infoAdjuntos, juntar, guardarTramos, escucha, guardarSegmentos, bloquear, originales, identificarVoces, nombresVoces };
+    empezar, terminar, lista, leer, eliminar, rutaAudio, encolar, cancelar, retomar, estado, infoAdjuntos, juntar, guardarTramos, escucha, guardarSegmentos, bloquear, originales, identificarVoces, nombresVoces, tramosVoces };
 }
 
 module.exports = { crearCante, herramientas, microfonos, elegirMicro, pista, nivel, ALUCINACIONES, normalizarTramos, calcularTramos, tipoEn, palabrasDeTokens };

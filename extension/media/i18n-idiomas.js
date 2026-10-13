@@ -889,7 +889,10 @@
     "Transcribe antes este audio.": "Transcribe this audio first.",
     "Espera a que termine la transcripción en marcha.": "Wait for the current transcription to finish.",
     "Voces identificadas: {0}. Puedes ponerles nombre.": "Voices identified: {0}. You can name them.",
-    "No se pudieron identificar las voces: {0}": "The voices could not be identified: {0}"
+    "No se pudieron identificar las voces: {0}": "The voices could not be identified: {0}",
+    "Cambiar la voz de esta intervención": "Change the voice of this turn",
+    "¿Quién habla?": "Who is speaking?",
+    "Otra voz ({0})": "Another voice ({0})"
    },
    "fr": {
     "(Añádelos en ⚙ Ajustes.)": "(Ajoutez-les dans ⚙ Réglages.)",
@@ -1775,7 +1778,10 @@
     "Transcribe antes este audio.": "Transcrivez d’abord cet audio.",
     "Espera a que termine la transcripción en marcha.": "Attendez la fin de la transcription en cours.",
     "Voces identificadas: {0}. Puedes ponerles nombre.": "Voix identifiées : {0}. Vous pouvez leur donner un nom.",
-    "No se pudieron identificar las voces: {0}": "Impossible d’identifier les voix : {0}"
+    "No se pudieron identificar las voces: {0}": "Impossible d’identifier les voix : {0}",
+    "Cambiar la voz de esta intervención": "Changer la voix de cette intervention",
+    "¿Quién habla?": "Qui parle ?",
+    "Otra voz ({0})": "Autre voix ({0})"
    }
   };
   /** Traduce s a lang (en | fr | es) y rellena los huecos {0}, {1}… con args */

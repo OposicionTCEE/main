@@ -152,6 +152,10 @@ Estados: `pendiente` (por transcribir), `transcrito`, `error`.
 - **Qué se ve:** leyenda con un color por voz, su nombre (se edita ahí: «Yo», «Preparadora») y su tiempo total; en el texto, una etiqueta con el nombre
   al empezar cada intervención (los párrafos se cortan al cambiar de voz). Cada palabra (o frase, en las clases) toma la voz del tramo en que cae;
   si cae en un hueco, la del tramo más cercano (`hablanteEn`, igual en `voces.js`, `media/cante.js` y `media/idiomasPracticas.js`).
+- **Corregir a mano** (v0.46.1): pulsar la etiqueta de color de una intervención abre la lista de voces (y *Otra voz*, por si juntó dos personas):
+  cambia **solo esa intervención** (las palabras seguidas de la misma voz). Con palabras seleccionadas, *Asignar a voz ▾* cambia **solo esas palabras**
+  (la intervención se parte si hace falta). Cambiar el nombre en la leyenda es lo único que afecta a toda la conversación (no cambia quién dijo qué).
+  `asignarVoz` parte los tramos que se solapan y une los seguidos de la misma voz; la ficha queda con `voces.corregido: true`. En las clases, igual, por frase.
 - **Límites:** va bien con dos voces claras; falla más con grabaciones a distancia, voces que se pisan o parecidas. No hay botón para marcar la exposición
   a partir de las voces (decisión del usuario: por si se equivoca).
 - Lo guardado (🔒) no se puede volver a identificar ni renombrar hasta pulsar *Editar*.
