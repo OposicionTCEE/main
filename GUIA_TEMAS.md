@@ -76,10 +76,6 @@ comparados accesorios, historia de detalle, ejemplos extensos, literatura de apo
 se descarta: se reubica** en notas al pie, en recuadros de material complementario (§6) o en los anexos del tema. Ninguna aportación con
 contenido se pierde por razones de forma.
 
-**Lo que otro tema desarrolla, aquí va al grano**: se da lo que este tema necesita, en una o dos frases, y se remite
-(`([\authorfont{Ver Tema 3.B.15}])`). Antes de desarrollar un modelo, un episodio histórico o una institución se comprueba si otro tema
-ya lo trata (`main/analisis/desarrollos.json` para los modelos; para lo demás, una búsqueda en el temario).
-
 ### 2.4. Rigor y verificación
 
 - Todo lo que describe la realidad actual se verifica antes de afirmarlo, aunque parezca conocido: cifras, normativa vigente,
@@ -103,9 +99,8 @@ desarrollo se empobrece para caber, y un tema que necesite más páginas las tie
 - **Al cerrar cada epígrafe**: la compilación imprime las páginas del cuerpo y el resumen del epígrafe las da («cuerpo: 31 páginas»).
   El panel las enseña en la cabecera de Acciones y en cada carta de la pestaña Temas.
 
-Lo que más alarga un tema sin añadir información es explicar dos veces lo mismo (la redacción anterior y la nueva, o una recapitulación
-de lo que se acaba de decir) y desarrollar lo que otro tema ya desarrolla. Lo evitan §2.3 (remisión), §3 (cada idea una vez),
-§8.4 (fusionar en lugar de duplicar) y la pasada de síntesis (§8.5).
+Lo que más alarga un tema sin añadir información es explicar dos veces lo mismo: la redacción anterior y la nueva, o una recapitulación
+de lo que se acaba de decir. Lo evitan §8.4 (fusionar en lugar de duplicar) y la pasada de síntesis al acabar el tema (§8.6).
 
 ---
 
@@ -116,8 +111,6 @@ de lo que se acaba de decir) y desarrollar lo que otro tema ya desarrolla. Lo ev
   extenso encabezado por una etiqueta en negrita.
 - **Registro académico, sobrio y preciso.** Frases completas, conectores lógicos, razonamiento explícito. Sin telegrafismo, sin relleno y
   sin introducciones que no aporten.
-- **Ir al grano: cada idea se explica una vez**, en el sitio donde hace falta. Después se remite a ella («como vimos») en lugar de volver
-  a explicarla, y no se cierra un apartado recapitulando lo que acaba de decir.
 - **Voz impersonal o primera persona del plural** («vemos», «como veremos», «se estima»). Nunca primera persona del singular ni «tú». Sin
   alusiones al examen, al tribunal, al opositor ni a los materiales de partida.
 - **Intuición antes que fórmula.** Cuando una nota pide «explicar con palabras» una derivación, se explica el mecanismo económico; las
@@ -219,8 +212,6 @@ preguntas con opciones cuando estén disponibles; si no, preguntas breves en el 
   vacías o ambiguas («…», «continuar», «Hay que realizar los siguientes cambios» sin más); cambios de estructura (crear, fusionar o mover
   epígrafes); borrar texto que la nota no manda borrar; y cualquier contradicción entre la nota, el texto y esta guía.
 - No se pregunta por cada párrafo: el punto de control es el epígrafe.
-- **Las preguntas son de contenido.** Leer, editar, compilar, ejecutar scripts o buscar dentro de un encargo aprobado no se consulta. Al
-  usuario se le pregunta por el contenido y por las decisiones que le corresponden, no por permisos para hacer la tarea.
 
 ### 8.2. Pasadas y etiquetas de confianza
 
@@ -254,8 +245,6 @@ preguntas con opciones cuando estén disponibles; si no, preguntas breves en el 
 - Las preguntas del usuario en la nota («¿por qué?», «¿de quién fue…?», «no entiendo…») se contestan **dentro del texto**, como desarrollo,
   no en la conversación; en la conversación solo se resume.
 - Si la nota pide algo que contradice esta guía (por ejemplo, un esquema), se pregunta.
-- Si la nota pregunta si conviene añadir algo nuevo («¿se puede incluir un esquema?», «¿añadir un apartado sobre…?») y no está claro que
-  lo quiera, se le pregunta en una línea antes de añadirlo.
 
 ### 8.4. Fragmentar el trabajo (no resumir, no inventar, no comprimir)
 
@@ -286,19 +275,20 @@ Los encargos se trocean para que el esfuerzo que exige una parte no se coma la c
 
 ### 8.5. Al terminar
 
-**Pasada de síntesis.** Al terminar el encargo, antes del informe final, se relee el cuerpo entero buscando lo que ocupa sin añadir
-información:
-
-- explicaciones repetidas, sobre todo la redacción anterior y la nueva de la misma idea en sitios distintos;
-- recapitulaciones y frases de transición que repiten lo que se acaba de decir;
-- contenido que otro tema ya desarrolla, que se sustituye por lo esencial y la remisión (§2.3).
-
-Se presenta como una lista corta: dónde, qué se quita o se fusiona, cuántas palabras y **dónde sigue la información**. Se aplica lo que el
-usuario apruebe. No es un recorte: no se quita nada que no esté en otro sitio. El informe da las páginas del cuerpo antes y después.
-
 Se informa primero de lo que importa: lo que no se pudo verificar, las decisiones tomadas por inferencia y los cambios de contenido
 relevantes. No se sincroniza con GitHub sin que el usuario lo pida (lo hace él con «Sincronizar»). Antes de modificar varios temas a la
 vez, se enseña qué se va a cambiar y se espera su visto bueno.
+
+### 8.6. Al acabar un tema: pasada de síntesis
+
+Cuando el usuario indica que el tema está acabado (por ejemplo, al terminar el último bloque que se trabaja), se relee el cuerpo entero
+buscando lo que ocupa sin añadir información:
+
+- explicaciones repetidas, sobre todo la redacción anterior y la nueva de la misma idea en sitios distintos;
+- recapitulaciones y frases de transición que repiten lo que se acaba de decir.
+
+Se presenta como una lista corta: dónde, qué se quita o se fusiona, cuántas palabras y **dónde sigue la información**. Se aplica lo que el
+usuario apruebe. No es un recorte: no se quita nada que no esté en otro sitio. Se dan las páginas del cuerpo antes y después.
 
 ---
 

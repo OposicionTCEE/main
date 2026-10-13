@@ -76,8 +76,9 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
   hasta la Conclusión) ronda como orientación **25–35 páginas**; no es un límite y manda la profundidad (`GUIA_TEMAS.md` §2.5). Los temas
   del 3er ejercicio sin trabajar con Claude tienen una mediana de 22; los trabajados crecieron sobre todo por contenido nuevo, pedido en
   notas abiertas y sin presupuesto. Respuesta acordada: tamaño en el plan, páginas del cuerpo al compilar y en el panel, fusionar lo
-  repetido («nunca se pierde información», §8.4), ir al grano y remitir (§2.3, §3) y pasada de síntesis al terminar (§8.5).
-  Descartado por el usuario: topes a Implicaciones/Limitaciones y que las figuras sustituyan prosa.
+  repetido («nunca se pierde información», §8.4) y pasada de síntesis cuando el usuario da el tema por acabado (§8.6).
+  Descartado por el usuario: topes a Implicaciones/Limitaciones, que las figuras sustituyan prosa, reglas de «ir al grano y remitir» y
+  de «preguntar solo por contenido / antes de añadir algo nuevo».
 
 ## Pendiente
 
