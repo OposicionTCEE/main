@@ -892,7 +892,9 @@
     "No se pudieron identificar las voces: {0}": "The voices could not be identified: {0}",
     "Cambiar la voz de esta intervención": "Change the voice of this turn",
     "¿Quién habla?": "Who is speaking?",
-    "Otra voz ({0})": "Another voice ({0})"
+    "Otra voz ({0})": "Another voice ({0})",
+    "Recuperar audio": "Restore audio",
+    "Ocultar audio": "Hide audio"
    },
    "fr": {
     "(Añádelos en ⚙ Ajustes.)": "(Ajoutez-les dans ⚙ Réglages.)",
@@ -1781,7 +1783,9 @@
     "No se pudieron identificar las voces: {0}": "Impossible d’identifier les voix : {0}",
     "Cambiar la voz de esta intervención": "Changer la voix de cette intervention",
     "¿Quién habla?": "Qui parle ?",
-    "Otra voz ({0})": "Autre voix ({0})"
+    "Otra voz ({0})": "Autre voix ({0})",
+    "Recuperar audio": "Récupérer l’audio",
+    "Ocultar audio": "Masquer l’audio"
    }
   };
   /** Traduce s a lang (en | fr | es) y rellena los huecos {0}, {1}… con args */

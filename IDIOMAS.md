@@ -384,6 +384,8 @@ Ajustes, **«Idioma del panel»** (`perfil.ajustes.idiomaFichas`: la estudiada �
   leer, buscar y abrir sus ficheros, pero no cambiar datos ni notas, añadir o quitar ficheros y audios, grabar ni transcribir. Los **audios originales subidos**
   (su ruta se guarda en `rutaOriginal` desde la v0.45) van a la Papelera tras una confirmación que los enumera; se conserva el mp3 de la clase.
   *Editar* desbloquea. La extensión también rechaza los cambios de una clase guardada (`editable` en `idiomasClases.js`).
+  Guardada (v0.46.2) se ven la transcripción, las notas y los ficheros (para leer); se ocultan el audio, los datos y la leyenda de voces.
+  *🎧 Recuperar audio* vuelve a mostrar el audio (solo escuchar).
 - **👥 Identificar voces** (v0.46): en cada audio transcrito, quién habla en cada momento (profesor, tú…), con nombres editables y una etiqueta por intervención
   en la transcripción. Mismo programa y reglas que en los cantes: `main/CANTE.md`, apartado 8. Se guarda en `voces` de `clase.json`. Pulsar la etiqueta de una intervención
   permite cambiar su voz (solo esa intervención, por frases seguidas de la misma voz).
