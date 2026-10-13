@@ -249,7 +249,11 @@ function activate(context) {
     const r = progreso.calcular(codigo, uri, texto);
     ultimo = { codigo, ...r };
     const err = (r.test && r.test.errores) || 0;
-    vistaAcciones.title = `Tiempo restante: ${G.formatoTiempo(r.e.minutos)} (${r.e.pct} %)${err ? ` · ✗ ${err} ${err === 1 ? 'error' : 'errores'} de test` : ''}`;
+    // páginas del cuerpo en la última compilación (scripts/compilar.sh → .build/cuerpo; orientación 25–35, GUIA_TEMAS.md §2.5)
+    let pags = null;
+    try { pags = parseInt(fs.readFileSync(path.join(path.dirname(uri.fsPath), '.build', 'cuerpo'), 'utf8'), 10); } catch (e) { /* sin compilar */ }
+    const cuerpo = Number.isFinite(pags) ? ` · Cuerpo: ${pags} págs.${pags > 35 ? ' (orientación 25–35)' : ''}` : '';
+    vistaAcciones.title = `Tiempo restante: ${G.formatoTiempo(r.e.minutos)} (${r.e.pct} %)${err ? ` · ✗ ${err} ${err === 1 ? 'error' : 'errores'} de test` : ''}${cuerpo}`;
     vscode.commands.executeCommand('setContext', 'tcee.hayTema', true);
     vscode.commands.executeCommand('setContext', 'tcee.hecho', r.e.hecho);
   };
@@ -502,7 +506,8 @@ function activate(context) {
   context.subscriptions.push(avisoEditor, vscode.workspace.onDidSaveTextDocument((d) => { if (esTema(d)) panelOpo.refrescar(); }));
 
   const vigia = vscode.workspace.createFileSystemWatcher('**/temario/**/.build/estado');
-  context.subscriptions.push(vigia, vigia.onDidChange(() => indice.refrescar()), vigia.onDidCreate(() => indice.refrescar()));
+  const trasCompilar = () => { indice.refrescar(); panelOpo.refrescar(); };   // tiempo restante y páginas del cuerpo
+  context.subscriptions.push(vigia, vigia.onDidChange(trasCompilar), vigia.onDidCreate(trasCompilar));
 }
 
 /** Ejecuta scripts/armonizacion.js con el Node que trae VS Code (no depende de que haya Node instalado) */

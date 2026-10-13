@@ -395,6 +395,9 @@ button.enlace { background: none; border: none; padding: 0; color: var(--vscode-
 .tb-carta.falta { cursor: default; border-style: dashed; background: none; }
 .tb-fila { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .tb-cod { font-weight: 700; font-variant-numeric: tabular-nums; color: color-mix(in srgb, var(--b) 55%, var(--tinta)); }
+.tb-codp { display: inline-flex; align-items: baseline; gap: 7px; min-width: 0; }
+.tb-pag { font-size: .8em; color: var(--apagado); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tb-pag.alto { color: var(--vscode-editorWarning-foreground, #b8860b); }
 .tb-hecho { display: inline-flex; align-items: center; gap: 4px; color: var(--apagado); font-size: .85em; cursor: pointer; }
 .tb-tit { margin: 0; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.7em; }
 .tb-pie { display: flex; flex-direction: column; gap: 4px; margin-top: auto; }

@@ -56,10 +56,13 @@
         ${cerrado ? '' : `<div class="tb-cartas">${codigos.map((c) => carta(c, porCod[c])).join('')}</div>`}</section>`;
     };
 
+    // páginas del cuerpo en la última compilación (orientación 25–35, no es un límite: GUIA_TEMAS.md §2.5)
+    const pags = (n) => n == null ? '' : `<span class="tb-pag${n > 35 ? ' alto' : ''}" title="Cuerpo del tema (sin Introducción, Conclusión, bibliografía ni anexos) en la última compilación: ${n} páginas. Orientación: entre 25 y 35.">${n} págs.</span>`;
+
     const carta = (c, t) => {
       if (!t) return `<div class="tb-carta falta"><div class="tb-fila"><span class="tb-cod">${esc(c)}</span></div><p class="tb-tit apagado">Sin carpeta en el temario</p></div>`;
       return `<article class="tb-carta ${t.hecho && !t.minutos ? 'hecho' : ''}" data-abrir="${esc(c)}" tabindex="0" title="${esc(t.completo || t.titulo)}">
-        <div class="tb-fila"><span class="tb-cod">${esc(c)}</span>
+        <div class="tb-fila"><span class="tb-codp"><span class="tb-cod">${esc(c)}</span>${pags(t.paginas)}</span>
           <label class="tb-hecho" title="Listo para pasar a estudiar sobre esquema"><input type="checkbox" data-hecho="${esc(c)}" ${t.hecho ? 'checked' : ''}> Hecho</label></div>
         <p class="tb-tit">${esc(t.titulo)}</p>
         ${t.errTest ? `<span class="tb-errtest" title="Preguntas de test de este tema cuya última respuesta fue un error: cuentan como trabajo pendiente">✗ ${t.errTest} ${t.errTest === 1 ? 'error' : 'errores'} de test</span>` : ''}
