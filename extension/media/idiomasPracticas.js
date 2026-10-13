@@ -1237,10 +1237,21 @@
         const nom = (h) => (v && v.nombres && v.nombres[h]) || ui('Hablante {0}', h + 1);
         return `<h4>${esc(t.audio)} <span class="apagado idi-mini">${({ es: 'castellano', en: 'inglés', fr: 'francés', auto: 'idioma automático' })[t.idioma] ? ui(({ es: 'castellano', en: 'inglés', fr: 'francés', auto: 'idioma automático' })[t.idioma]) : t.idioma}</span></h4>
         ${v ? `<p class="idi-k-vocesley">👥 ${hs.map((h) => `<span class="cante-voz-ed"><i class="cante-punto v${h % 6}"></i><input type="text" data-kvoz="${esc(t.audio)}" data-h="${h}" value="${esc(nom(h))}" ${c.guardada ? 'disabled' : ''} title="${ui('Nombre de esta voz')}"></span>`).join(' ')}</p>` : ''}
-        <div class="idi-k-segs">${t.segmentos.filter((s) => !q || s.texto.toLowerCase().includes(q)).map((s) => { const h = v ? hablanteEn(v.tramos, s.t + 0.3) : null; return `<p><a class="idi-k-t" data-audio="${esc(t.audio)}" data-t="${s.t}">${mmss(s.t)}</a> ${h != null ? `<span class="cante-voz v${h % 6}">${esc(nom(h))}</span> ` : ''}${q ? esc(s.texto).replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), (x) => `<mark>${x}</mark>`) : esc(s.texto)}</p>`; }).join('') || `<p class="apagado">${ui('Sin resultados.')}</p>`}</div>`; }).join('');
+        <div class="idi-k-segs">${t.segmentos.map((s, i) => [s, i]).filter(([s]) => !q || s.texto.toLowerCase().includes(q)).map(([s, i]) => { const h = v ? hablanteEn(v.tramos, s.t + 0.3) : null; return `<p><a class="idi-k-t" data-audio="${esc(t.audio)}" data-t="${s.t}">${mmss(s.t)}</a> ${h != null ? `<span class="cante-voz v${h % 6}${c.guardada ? '' : ' clic'}" ${c.guardada ? '' : `data-kc="${esc(t.audio)}" data-i="${i}" title="${ui('Cambiar la voz de esta intervención')}"`}>${esc(nom(h))}</span> ` : ''}${q ? esc(s.texto).replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), (x) => `<mark>${x}</mark>`) : esc(s.texto)}</p>`; }).join('') || `<p class="apagado">${ui('Sin resultados.')}</p>`}</div>`; }).join('');
     }
     function enlazarTx() {
       vEl().querySelectorAll('.idi-k-t').forEach((a) => a.onclick = () => reproducir(a.dataset.audio, Number(a.dataset.t)));
+      vEl().querySelectorAll('[data-kc]').forEach((ch) => ch.onclick = (ev) => {
+        ev.stopPropagation();
+        const c = K.clase, f = ch.dataset.kc, v = (c.voces || {})[f], t = (c.transcripciones || []).find((x) => x.audio === f); if (!v || !t) return;
+        const segs = t.segmentos, hDe = (s) => hablanteEn(v.tramos, s.t + 0.3);
+        // la intervención entera: las frases seguidas de la misma voz
+        let i0 = Number(ch.dataset.i), i1 = i0; const h = hDe(segs[i0]);
+        while (i0 > 0 && hDe(segs[i0 - 1]) === h) i0--;
+        while (i1 + 1 < segs.length && hDe(segs[i1 + 1]) === h) i1++;
+        const dur = ((c.audios || []).find((a) => a.fichero === f) || {}).segundos || (segs[segs.length - 1].t + 30);
+        menuVozClase(ch, f, segs[i0].t, i1 + 1 < segs.length ? segs[i1 + 1].t : dur, h);
+      });
       vEl().querySelectorAll('[data-kvoz]').forEach((i) => i.onchange = async () => {
         const f = i.dataset.kvoz, v = ((K.clase.voces || {})[f]) || {};
         try { K.clase = (await pedir('idiPClaseVocesNombres', { id: K.clase.id, fichero: f, nombres: { ...v.nombres, [i.dataset.h]: i.value } })).clase; vEl().querySelector('#idi-k-tx').innerHTML = transcripcionHtml(K.clase); enlazarTx(); } catch (e) { fallo(e); }
@@ -1327,6 +1338,38 @@
       let mejor = null, dist = Infinity;
       for (const [a, b, h] of tramos) { if (t >= a && t < b) return h; const d = t < a ? a - t : t - b; if (d < dist) { dist = d; mejor = h; } if (a > t + dist) break; }
       return mejor;
+    }
+    /** Pone la voz h en [a, b] y deja el resto como estaba (igual que asignarVoz de media/cante.js) */
+    function asignarVoz(tramos, a, b, h) {
+      const r = [];
+      for (const [x, y, k] of tramos) { if (y <= a || x >= b) r.push([x, y, k]); else { if (x < a) r.push([x, a, k]); if (y > b) r.push([b, y, k]); } }
+      r.push([a, b, h]); r.sort((p, q) => p[0] - q[0]);
+      const m = []; for (const t of r) { const u = m[m.length - 1]; if (u && u[2] === t[2] && t[0] - u[1] < 0.05) u[1] = Math.max(u[1], t[1]); else m.push(t.slice()); }
+      return m.map(([x, y, k]) => [Math.round(x * 100) / 100, Math.round(y * 100) / 100, k]);
+    }
+    function menuVozClase(ancla, fichero, a, b, actual) {
+      document.querySelectorAll('.cante-menuvoz').forEach((x) => x.remove());
+      const c = K.clase, v = (c.voces || {})[fichero]; if (!v) return;
+      const hs = Object.keys(v.nombres || {}).map(Number).sort((x, y) => x - y), nueva = hs.length ? Math.max(...hs) + 1 : 0;
+      const nom = (h) => (v.nombres && v.nombres[h]) || ui('Hablante {0}', h + 1);
+      const m = document.createElement('div'); m.className = 'cante-menuvoz';
+      m.innerHTML = `<p class="apagado">${mmss(a)} – ${mmss(b)}: ${ui('¿Quién habla?')}</p>${hs.map((h) => `<button data-mv="${h}" ${h === actual ? 'disabled' : ''}><i class="cante-punto v${h % 6}"></i> ${esc(nom(h))}</button>`).join('')}
+        <button data-mv="${nueva}"><i class="cante-punto v${nueva % 6}"></i> ${ui('Otra voz ({0})', ui('Hablante {0}', nueva + 1))}</button>`;
+      document.body.appendChild(m);
+      const r = ancla.getBoundingClientRect();
+      m.style.left = `${Math.max(8, Math.min(window.innerWidth - m.offsetWidth - 8, r.left))}px`;
+      m.style.top = `${r.bottom + m.offsetHeight + 6 > window.innerHeight ? Math.max(8, r.top - m.offsetHeight - 6) : r.bottom + 6}px`;
+      const fuera = (ev) => { if (!m.contains(ev.target)) { m.remove(); document.removeEventListener('mousedown', fuera, true); } };
+      setTimeout(() => document.addEventListener('mousedown', fuera, true), 0);
+      m.querySelectorAll('[data-mv]').forEach((x) => x.onclick = async () => {
+        const h = Number(x.dataset.mv);
+        m.remove(); document.removeEventListener('mousedown', fuera, true);
+        const nombres = { ...v.nombres }; if (!(h in nombres)) nombres[h] = ui('Hablante {0}', h + 1);
+        try {
+          K.clase = (await pedir('idiPClaseVocesTramos', { id: c.id, fichero, tramos: asignarVoz(v.tramos, a, b, h), nombres })).clase;
+          vEl().querySelector('#idi-k-tx').innerHTML = transcripcionHtml(K.clase); enlazarTx();
+        } catch (e) { fallo(e); }
+      });
     }
     function vocesAudio(c, a, e, bloq, tsx, ocupadoTx) {
       const iv = e.identificando;

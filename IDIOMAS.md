@@ -385,7 +385,8 @@ Ajustes, **«Idioma del panel»** (`perfil.ajustes.idiomaFichas`: la estudiada �
   (su ruta se guarda en `rutaOriginal` desde la v0.45) van a la Papelera tras una confirmación que los enumera; se conserva el mp3 de la clase.
   *Editar* desbloquea. La extensión también rechaza los cambios de una clase guardada (`editable` en `idiomasClases.js`).
 - **👥 Identificar voces** (v0.46): en cada audio transcrito, quién habla en cada momento (profesor, tú…), con nombres editables y una etiqueta por intervención
-  en la transcripción. Mismo programa y reglas que en los cantes: `main/CANTE.md`, apartado 8. Se guarda en `voces` de `clase.json`.
+  en la transcripción. Mismo programa y reglas que en los cantes: `main/CANTE.md`, apartado 8. Se guarda en `voces` de `clase.json`. Pulsar la etiqueta de una intervención
+  permite cambiar su voz (solo esa intervención, por frases seguidas de la misma voz).
 
 ## Inicio: columnas con desplazamiento propio (v0.38)
 

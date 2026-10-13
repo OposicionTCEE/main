@@ -344,6 +344,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
           return r({ clase: clases.bloquear({ id: m.id, si: true }) });
         }
         case 'idiPClaseVoces': return r({ clase: await clases.identificarVoces(m) });
+        case 'idiPClaseVocesTramos': return r({ clase: clases.vocesTramos(m) });
         case 'idiPClaseVocesNombres': return r({ clase: clases.nombresVoces(m) });
         case 'idiPClaseEditar': return r({ clase: clases.bloquear({ id: m.id, si: false }) });
         case 'idiPClaseEliminar': {
@@ -434,6 +435,8 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
       } else if (m.tipo === 'canteVoces') {
         cante.identificarVoces(m.id, m.n).then(() => { if (panel) panel.webview.postMessage({ tipo: 'canteDetalle', detalle: cante.leer(m.id) }); })
           .catch((e) => { if (panel) panel.webview.postMessage({ tipo: 'aviso', texto: String(e.message || e), error: true }); });
+      } else if (m.tipo === 'canteVocesTramos') {
+        if (!cante.tramosVoces(m.id, m.tramos, m.nombres)) throw new Error('No se pudo guardar el cambio de voz.');
       } else if (m.tipo === 'canteVocesNombres') {
         cante.nombresVoces(m.id, m.nombres);
       } else if (m.tipo === 'canteEditar') {

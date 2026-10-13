@@ -210,14 +210,46 @@
       ${c.complementario.length && parrafos.some((p) => p.tipo === 'complementario') ? '<p class="cante-botones"><button data-c="copiarComp">Copiar material complementario</button></p>' : ''}
       ${parrafos.length ? `${bloq ? '' : `<div class="cante-seltxt" id="c-seltxt">
           <span class="apagado" id="c-selinfo"></span>
-          <button data-s="expo" disabled>Exposición = selección</button><button data-s="desc" disabled>Descartar selección</button><button data-s="no" class="enlace" style="visibility:hidden">Quitar selección</button></div>`}
+          <button data-s="expo" disabled>Exposición = selección</button><button data-s="desc" disabled>Descartar selección</button>${f.voces ? '<button data-s="voz" disabled>Asignar a voz ▾</button>' : ''}<button data-s="no" class="enlace" style="visibility:hidden">Quitar selección</button></div>`}
         ${porFrase && !bloq ? `<p class="apagado cante-aviso-frase">Este cante se transcribió sin el instante de cada palabra: al seleccionar se marca la frase entera (unos segundos de margen).
           ${!enMarcha(f.id) && hayAudio ? '<button class="enlace" data-c="retranscribir">Volver a transcribir con precisión por palabra</button>' : ''}</p>` : ''}
-        <div class="cante-texto" id="c-texto">${parrafos.map((p, i) => { const qx = bloq ? null : quitarDe(p, i); return `<p class="t-${p.tipo}${qx ? ' con-marca' : ''}"><span class="cante-t" data-ir="${p.t}" title="Escuchar desde aquí">${esc(reloj(p.t))}</span><span>${p.h != null ? `<span class="cante-voz v${p.h % 6}">${esc(nombreVoz(f, p.h))}</span> ` : ''}${qx ? `<button class="cante-quitar" data-quitar="${qx.q}" title="${esc(qx.titulo)}">✕</button>` : ''}${p.tipo !== 'exposicion' ? `<em class="cante-tipo">${p.tipo === 'complementario' ? 'Material complementario' : 'Descartado'}</em> ` : (qx ? '<em class="cante-tipo">Exposición</em> ' : '')}${p.ks.map((k) => `<span class="w" data-k="${k}">${esc(W[k].w)}</span>`).join(' ')}</span></p>`; }).join('')}</div>`
+        <div class="cante-texto" id="c-texto">${parrafos.map((p, i) => { const qx = bloq ? null : quitarDe(p, i); return `<p class="t-${p.tipo}${qx ? ' con-marca' : ''}"><span class="cante-t" data-ir="${p.t}" title="Escuchar desde aquí">${esc(reloj(p.t))}</span><span>${p.h != null ? `<span class="cante-voz v${p.h % 6}${bloq ? '' : ' clic'}" ${bloq ? '' : `data-hk="${p.ks[0]}" title="Cambiar la voz de esta intervención"`}>${esc(nombreVoz(f, p.h))}</span> ` : ''}${qx ? `<button class="cante-quitar" data-quitar="${qx.q}" title="${esc(qx.titulo)}">✕</button>` : ''}${p.tipo !== 'exposicion' ? `<em class="cante-tipo">${p.tipo === 'complementario' ? 'Material complementario' : 'Descartado'}</em> ` : (qx ? '<em class="cante-tipo">Exposición</em> ' : '')}${p.ks.map((k) => `<span class="w" data-k="${k}">${esc(W[k].w)}</span>`).join(' ')}</span></p>`; }).join('')}</div>`
         : f.estado === 'transcrito' ? '<p class="apagado">La transcripción está vacía: no se reconoció voz en la grabación.</p>' : ''}
     </div>`;
   }
 
+  /** Pone la voz h en [a, b] y deja el resto como estaba (parte los tramos que se solapan y une los seguidos de la misma voz) */
+  function asignarVoz(tramos, a, b, h) {
+    const r = [];
+    for (const [x, y, k] of tramos) { if (y <= a || x >= b) r.push([x, y, k]); else { if (x < a) r.push([x, a, k]); if (y > b) r.push([b, y, k]); } }
+    r.push([a, b, h]); r.sort((p, q) => p[0] - q[0]);
+    const m = []; for (const t of r) { const u = m[m.length - 1]; if (u && u[2] === t[2] && t[0] - u[1] < 0.05) u[1] = Math.max(u[1], t[1]); else m.push(t.slice()); }
+    return m.map(([x, y, k]) => [Math.round(x * 100) / 100, Math.round(y * 100) / 100, k]);
+  }
+  /** Lista de voces junto a «ancla»: la elegida pasa a ser la de [a, b] (solo ese trozo) */
+  function menuVoz(ancla, a, b, actual) {
+    document.querySelectorAll('.cante-menuvoz').forEach((x) => x.remove());
+    const f = detalle; if (!f || !f.voces) return;
+    const hs = Object.keys(f.voces.nombres || {}).map(Number).sort((x, y) => x - y), nueva = hs.length ? Math.max(...hs) + 1 : 0;
+    const m = document.createElement('div'); m.className = 'cante-menuvoz';
+    m.innerHTML = `<p class="apagado">${esc(reloj(a))} – ${esc(reloj(b))}: ¿quién habla?</p>${hs.map((h) => `<button data-mv="${h}" ${h === actual ? 'disabled' : ''}><i class="cante-punto v${h % 6}"></i> ${esc(nombreVoz(f, h))}</button>`).join('')}
+      <button data-mv="${nueva}"><i class="cante-punto v${nueva % 6}"></i> Otra voz (Hablante ${nueva + 1})</button>`;
+    document.body.appendChild(m);
+    const r = ancla.getBoundingClientRect();
+    m.style.left = `${Math.max(8, Math.min(window.innerWidth - m.offsetWidth - 8, r.left))}px`;
+    m.style.top = `${r.bottom + m.offsetHeight + 6 > window.innerHeight ? Math.max(8, r.top - m.offsetHeight - 6) : r.bottom + 6}px`;
+    const fuera = (ev) => { if (!m.contains(ev.target)) { m.remove(); document.removeEventListener('mousedown', fuera, true); } };
+    setTimeout(() => document.addEventListener('mousedown', fuera, true), 0);
+    m.querySelectorAll('[data-mv]').forEach((x) => x.onclick = () => {
+      const h = Number(x.dataset.mv);
+      m.remove(); document.removeEventListener('mousedown', fuera, true);
+      f.voces.tramos = asignarVoz(f.voces.tramos, a, b, h);
+      if (!(h in f.voces.nombres)) f.voces.nombres = { ...f.voces.nombres, [h]: `Hablante ${h + 1}` };
+      selK = null; selAncla = null;
+      ctx.enviar({ tipo: 'canteVocesTramos', id: f.id, tramos: f.voces.tramos, nombres: f.voces.nombres });
+      render();
+    });
+  }
   const nombreVoz = (f, h) => ((f.voces && f.voces.nombres) || {})[h] || `Hablante ${h + 1}`;
   const selectorVoces = () => `<select id="c-nvoces" title="Cuántas voces hay en la grabación">${[[0, 'Nº de voces: automático'], [2, '2 voces'], [3, '3 voces'], [4, '4 voces']]
     .map(([v, t]) => `<option value="${v}" ${Number(ctx.estado.canteNVoces || 0) === v ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
@@ -347,7 +379,7 @@
       caja.querySelectorAll('.w.sel').forEach((x) => x.classList.remove('sel'));
       if (selK) for (let k = selK[0]; k <= selK[1]; k++) { const sp = caja.querySelector(`.w[data-k="${k}"]`); if (sp) sp.classList.add('sel'); }
     }
-    el && el.querySelectorAll('[data-s="expo"], [data-s="desc"]').forEach((b) => { b.disabled = !selK || !ESC || !ESC.url; });
+    el && el.querySelectorAll('[data-s="expo"], [data-s="desc"], [data-s="voz"]').forEach((b) => { b.disabled = !selK || !ESC || !ESC.url; });
     const no = el && el.querySelector('[data-s="no"]'); if (no) no.style.visibility = selK ? 'visible' : 'hidden';   // sin mover nada de sitio
     if (info) {
       if (selK) { const [a, b] = tramoSel(), n = selK[1] - selK[0] + 1; info.textContent = `Selección: ${n === 1 ? '1 palabra' : `${n} palabras`}, ${reloj(a)} – ${reloj(b)}`; }
@@ -430,10 +462,22 @@
     el.querySelectorAll('[data-s]').forEach((b) => b.onclick = () => {
       if (b.dataset.s === 'no') { selK = null; selAncla = null; pintarSeleccion(); return; }
       if (!selK) return;
+      if (b.dataset.s === 'voz') { const [a, z] = tramoSel(); menuVoz(b, a, z); return; }
       const [a, z] = tramoSel(), t = tramosActuales();
       if (b.dataset.s === 'expo') t.exposicion = [a, z]; else t.descartar.push([a, z]);
       selK = null; selAncla = null;
       cambiarTramos(t);
+    });
+    el.querySelectorAll('[data-hk]').forEach((ch) => {
+      ch.onmousedown = (ev) => ev.stopPropagation();   // no empieza una selección
+      ch.onclick = (ev) => {
+        ev.stopPropagation();
+        // la intervención entera: las palabras seguidas de la misma voz
+        let k0 = Number(ch.dataset.hk), k1 = k0; const h = W[k0].h;
+        while (k0 > 0 && W[k0 - 1].h === h) k0--;
+        while (k1 + 1 < W.length && W[k1 + 1].h === h) k1++;
+        menuVoz(ch, W[k0].t, k1 + 1 < W.length ? W[k1 + 1].t : detalle.duracion, h);
+      };
     });
     el.querySelectorAll('[data-quitar]').forEach((b) => b.onclick = (ev) => {
       ev.stopPropagation();

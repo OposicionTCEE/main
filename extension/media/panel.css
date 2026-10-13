@@ -352,6 +352,10 @@ button.enlace { background: none; border: none; padding: 0; color: var(--vscode-
 .cante-voz-ed { display: inline-flex; gap: 6px; align-items: center; }
 .cante-voz-ed input { font: inherit; width: 9em; color: var(--vscode-input-foreground, var(--tinta)); background: var(--vscode-input-background, var(--fondo)); border: 1px solid var(--borde); border-radius: 4px; padding: 1px 5px; }
 .cante-voces select, .idi-k-voces select { font: inherit; color: var(--vscode-input-foreground, var(--tinta)); background: var(--vscode-input-background, var(--fondo)); border: 1px solid var(--borde); border-radius: 4px; }
+.cante-voz.clic { cursor: pointer; } .cante-voz.clic:hover { filter: brightness(1.15); outline: 1px solid currentColor; }
+.cante-menuvoz { position: fixed; z-index: 60; background: var(--vscode-editorWidget-background, var(--fondo)); border: 1px solid var(--borde); border-radius: 6px; padding: 6px; box-shadow: 0 4px 16px rgba(0, 0, 0, .35); display: flex; flex-direction: column; gap: 3px; min-width: 200px; }
+.cante-menuvoz p { margin: 0 4px 4px; font-size: .85em; }
+.cante-menuvoz button { text-align: left; display: flex; gap: 8px; align-items: center; }
 .cante-punto { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
 .cante-voz { font-size: .78em; font-weight: 600; padding: 0 6px; border-radius: 8px; margin-right: 4px; color: #fff; white-space: nowrap; }
 .v0 { background: #3a7bd5; } .v1 { background: #c2185b; } .v2 { background: #2e7d32; } .v3 { background: #8e24aa; } .v4 { background: #ef6c00; } .v5 { background: #00838f; }

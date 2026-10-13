@@ -272,6 +272,16 @@ function crearClases({ voces = null, dirPerfil, otroOcupado = () => null, avisar
     } catch (e) { avisar(T('No se pudieron identificar las voces: {0}', [e.message || e], c.lengua), true); return null; }
     finally { identificando = null; alCambiar(true); siguiente(); }
   }
+  /** Corrección a mano de quién habla (la página manda los tramos ya corregidos: solo cambian los trozos elegidos) */
+  function vocesTramos({ id, fichero, tramos, nombres }) {
+    const c = clase(id); if (!c) throw new Error(T('Clase no encontrada.'));
+    editable(c);
+    const v = (c.voces || {})[fichero]; if (!v || !Array.isArray(tramos)) return c;
+    v.tramos = tramos.map(([a, b, h]) => [Math.max(0, Number(a) || 0), Number(b) || 0, Math.max(0, Math.floor(Number(h) || 0))]).filter(([a, b]) => b > a).sort((x, y) => x[0] - y[0]);
+    for (const [, , h] of v.tramos) if (!(h in v.nombres)) v.nombres[h] = String(((nombres || {})[h]) || T('Hablante {0}', [h + 1], c.lengua)).slice(0, 40);
+    v.corregido = true;
+    return guardar(c);
+  }
   function nombresVoces({ id, fichero, nombres }) {
     const c = clase(id); if (!c) throw new Error(T('Clase no encontrada.'));
     editable(c);
@@ -286,7 +296,7 @@ function crearClases({ voces = null, dirPerfil, otroOcupado = () => null, avisar
   }
   function eliminar({ id }) { return dirClase(id); }   // la extensión la manda a la Papelera
 
-  return { lista, crear, cambiar, clase, ruta, bloquear, originales, identificarVoces, nombresVoces, importar, quitarAdjunto, quitarAudio, leerAdjunto, microfonos, grabar, parar, transcribir, estado, eliminar,
+  return { lista, crear, cambiar, clase, ruta, bloquear, originales, identificarVoces, nombresVoces, vocesTramos, importar, quitarAdjunto, quitarAudio, leerAdjunto, microfonos, grabar, parar, transcribir, estado, eliminar,
     retomar: () => { try { if (dirPerfil()) grabacionEnCurso(); } catch (e) { /* */ } } };
 }
 
