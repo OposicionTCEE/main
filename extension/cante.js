@@ -295,7 +295,7 @@ function crearCante({ raiz, progreso, avisar, alCambiar, cacheEscucha }) {
     let bytes = 0; try { bytes = fs.statSync(wav).size; } catch (e) { /* sin audio */ }
     if (bytes <= BYTES_SEG) { try { fs.unlinkSync(wav); } catch (e) { /* sin audio */ } throw new Error('Los ficheros no tienen sonido que se pueda leer.'); }
     guardarFicha({ id, codigo, titulo, fecha: d.toISOString(), duracion: Math.round((await duracionDe(h.ffmpeg, wav)).duracion || bytes / BYTES_SEG), objetivo: Number(objetivo) || 0,
-      micro: null, origen: 'adjunto', archivos: rutas.map((r) => path.basename(r)), audio: path.basename(wav), pista: pista(titulo, texto), estado: 'pendiente' });
+      micro: null, origen: 'adjunto', archivos: rutas.map((r) => path.basename(r)), originales: rutas, audio: path.basename(wav), pista: pista(titulo, texto), estado: 'pendiente' });
     alCambiar();
     return id;
   }
@@ -307,7 +307,7 @@ function crearCante({ raiz, progreso, avisar, alCambiar, cacheEscucha }) {
 
   /** Guarda los tramos marcados (sin repintar el panel: la página ya los muestra) */
   function guardarTramos(id, tramos) {
-    const f = leer(id); if (!f) return null;
+    const f = leer(id); if (!f || f.guardado) return null;
     const t = normalizarTramos(tramos, f.duracion);
     const n = { ...f }; delete n.tramos;
     if (t.exposicion || t.descartar.length) n.tramos = t;
@@ -315,9 +315,21 @@ function crearCante({ raiz, progreso, avisar, alCambiar, cacheEscucha }) {
     return calcularTramos(n);
   }
 
+  /** Guardar (bloquear) o Editar (desbloquear). Al guardar se olvidan las rutas de los originales (la extensión los manda a la Papelera) */
+  function bloquear(id, si) {
+    const f = leer(id); if (!f) return null;
+    if (si && f.estado !== 'transcrito') throw new Error('Solo se puede guardar un cante ya transcrito.');
+    const n = { ...f };
+    if (si) { n.guardado = new Date().toISOString(); delete n.originales; } else delete n.guardado;
+    guardarFicha(n);
+    return n;
+  }
+  /** Ficheros originales de un cante adjuntado que siguen en el Mac */
+  const originales = (id) => ((leer(id) || {}).originales || []).filter(existe);
+
   /** Guarda la transcripción corregida por el usuario (mismos segmentos e instantes; cambia solo el texto) */
   function guardarSegmentos(id, segs) {
-    const f = leer(id); if (!f || !Array.isArray(segs)) return false;
+    const f = leer(id); if (!f || f.guardado || !Array.isArray(segs)) return false;
     const limpios = segs.map((x) => {
       const seg = { t: Number(x.t) || 0, texto: '' };
       if (Array.isArray(x.palabras) && x.palabras.length) {
@@ -473,7 +485,7 @@ function crearCante({ raiz, progreso, avisar, alCambiar, cacheEscucha }) {
   }
 
   return { herramientas, microfonos: async () => { const h = herramientas(); return h.ffmpeg ? microfonos(h.ffmpeg) : []; },
-    empezar, terminar, lista, leer, eliminar, rutaAudio, encolar, cancelar, retomar, estado, infoAdjuntos, juntar, guardarTramos, escucha, guardarSegmentos };
+    empezar, terminar, lista, leer, eliminar, rutaAudio, encolar, cancelar, retomar, estado, infoAdjuntos, juntar, guardarTramos, escucha, guardarSegmentos, bloquear, originales };
 }
 
 module.exports = { crearCante, herramientas, microfonos, elegirMicro, pista, nivel, ALUCINACIONES, normalizarTramos, calcularTramos, tipoEn, palabrasDeTokens };

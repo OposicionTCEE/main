@@ -346,6 +346,7 @@ button.enlace { background: none; border: none; padding: 0; color: var(--vscode-
 .cante-editor { position: fixed; z-index: 50; width: min(420px, calc(100vw - 16px)); background: var(--vscode-editorWidget-background, var(--fondo)); border: 1px solid var(--borde); border-radius: 6px; padding: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, .35); display: flex; flex-direction: column; gap: 8px; }
 .cante-editor input[type="text"], .cante-editor textarea { font: inherit; width: 100%; box-sizing: border-box; color: var(--vscode-input-foreground, var(--tinta)); background: var(--vscode-input-background, var(--fondo)); border: 1px solid var(--borde); border-radius: 4px; padding: 4px 6px; }
 .cante-editor p { margin: 0; align-items: center; } .cante-editor label { font-size: .9em; }
+.cante-candado, .idi-candado { align-self: center; color: var(--apagado); font-size: .92em; }
 .cante-tipo { font-style: normal; font-size: .8em; color: var(--apagado); text-transform: uppercase; letter-spacing: .5px; }
 
 /* ---------------------------------------------------------------- Temas: cartas por bloque */

@@ -126,7 +126,18 @@ Estados: `pendiente` (por transcribir), `transcrito`, `error`.
 - **Por qué una copia MP3:** el reproductor de VS Code no lee AAC (`.m4a`). La copia y la forma de onda (pico cada 0,1 s) se guardan en la carpeta de datos de la extensión.
 - Las reglas están dos veces, iguales: `normalizarTramos`/`calcularTramos` en `extension/cante.js` y `normalizar`/`calcular` en `extension/media/cante.js`.
 
-## 7. Ideas para más adelante (no hechas)
+## 7. Guardar y Editar (decisiones del usuario, 13 de octubre de 2026)
+
+- **💾 Guardar** (en el detalle; solo con el cante transcrito y sin transcripción en marcha) **bloquea** el cante: se puede escuchar, ir a un punto, leer y copiar,
+  pero desaparecen las marcas (botones, ✕, arrastrar bordes), la selección del texto, la corrección con doble clic y *Transcribir / Volver a transcribir*.
+  La ficha lleva `guardado` (fecha). El historial lo muestra con 🔒. *Eliminar* sigue disponible, con su confirmación.
+- Al guardar, los **ficheros originales** de un cante adjuntado (los que se eligieron con *Adjuntar audio*; su ruta va en `originales` de la ficha)
+  **van a la Papelera del Mac** tras una confirmación que los enumera. Se conserva siempre la copia comprimida del cante. Luego se borra `originales`.
+  Los cantes grabados con el panel no tienen original aparte. Los adjuntados antes de la v0.45 no guardaban la ruta: solo se bloquean.
+- **Editar** desbloquea (los originales ya no vuelven, ni hacen falta).
+- La extensión también rechaza guardar tramos o texto de un cante guardado (`guardarTramos`, `guardarSegmentos`).
+
+## 8. Ideas para más adelante (no hechas)
 
 - Comparar la transcripción con el `main.tex` del tema: epígrafes no mencionados, orden y tiempo por epígrafe.
 - Evolución de la duración y del ritmo por tema y por vuelta.

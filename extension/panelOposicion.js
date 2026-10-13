@@ -327,6 +327,20 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
         case 'idiPClaseEstado': return r({ estado: clases.estado() });
         case 'idiPClaseTranscribir': return r({ estado: clases.transcribir(m) });
         case 'idiPClaseAudioUrl': return r({ url: panel.webview.asWebviewUri(vscode.Uri.file(path.join(clases.ruta(m.id), path.basename(m.fichero)))).toString() });
+        case 'idiPClaseGuardar': {
+          const c = clases.clase(m.id); if (!c) return r({ cancelado: true });
+          const orig = clases.originales(m);
+          const b = tIdi('Guardar', [], c.lengua);
+          const si = await vscode.window.showWarningMessage(tIdi('¿Guardar la clase «{0}»?', [c.titulo], c.lengua), { modal: true,
+            detail: tIdi('Quedará bloqueada: se podrá escuchar, leer, buscar y abrir sus ficheros, pero no cambiarla hasta que pulses «Editar».', [], c.lengua)
+              + (orig.length ? `\n\n${tIdi('Estos audios originales irán a la Papelera (se conserva la copia comprimida de la clase):', [], c.lengua)}\n${orig.map((x) => `• ${x}`).join('\n')}` : '') }, b);
+          if (si !== b) return r({ cancelado: true });
+          const fallidos = [];
+          for (const x of orig) { try { await vscode.workspace.fs.delete(vscode.Uri.file(x), { useTrash: true }); } catch (e) { fallidos.push(path.basename(x)); } }
+          if (fallidos.length) panel.webview.postMessage({ tipo: 'aviso', texto: tIdi('No pude mandar a la Papelera: {0}', [fallidos.join(', ')], c.lengua), error: true });
+          return r({ clase: clases.bloquear({ id: m.id, si: true }) });
+        }
+        case 'idiPClaseEditar': return r({ clase: clases.bloquear({ id: m.id, si: false }) });
         case 'idiPClaseEliminar': {
           const c = clases.clase(m.id); if (!c) return r({ cancelado: true });
           const eliminar = tIdi('Eliminar', [], c.lengua);
@@ -400,6 +414,21 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
         panel.webview.postMessage({ tipo: 'canteEscucha', id: m.id, ...(e ? { url: panel.webview.asWebviewUri(vscode.Uri.file(e.mp3)).toString(), onda: e.onda, paso: e.paso } : { error: true }) });
       } else if (m.tipo === 'canteTramos') {
         cante.guardarTramos(m.id, m.tramos);
+      } else if (m.tipo === 'canteGuardar') {
+        const f = cante.leer(m.id); if (!f) return;
+        const orig = cante.originales(m.id);
+        const si = await vscode.window.showWarningMessage('¿Guardar este cante?', { modal: true,
+          detail: `Quedará bloqueado: se podrá escuchar, leer y copiar, pero no marcar tramos ni corregir el texto hasta que pulses «Editar».${orig.length
+            ? `\n\nEstos ficheros originales irán a la Papelera (se conserva la copia comprimida del cante):\n${orig.map((x) => `• ${x}`).join('\n')}` : ''}` }, 'Guardar');
+        if (si !== 'Guardar') return;
+        const fallidos = [];
+        for (const x of orig) { try { await vscode.workspace.fs.delete(vscode.Uri.file(x), { useTrash: true }); } catch (e) { fallidos.push(path.basename(x)); } }
+        panel.webview.postMessage({ tipo: 'canteDetalle', detalle: cante.bloquear(m.id, true) });
+        enviar();
+        panel.webview.postMessage({ tipo: 'aviso', texto: fallidos.length ? `Cante guardado, pero no pude mandar a la Papelera: ${fallidos.join(', ')}` : `Cante guardado${orig.length ? ` (${orig.length} ${orig.length === 1 ? 'original' : 'originales'} en la Papelera)` : ''}.`, error: !!fallidos.length });
+      } else if (m.tipo === 'canteEditar') {
+        panel.webview.postMessage({ tipo: 'canteDetalle', detalle: cante.bloquear(m.id, false) });
+        enviar();
       } else if (m.tipo === 'canteSegmentos') {
         if (!cante.guardarSegmentos(m.id, m.segmentos)) throw new Error('No se pudo guardar la corrección.');
       } else if (m.tipo === 'canteRetranscribir') {

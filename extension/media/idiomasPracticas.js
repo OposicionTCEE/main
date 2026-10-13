@@ -1180,23 +1180,29 @@
     async function recargarClase() { if (!K.clase) return; try { const r = await pedir('idiPClase', { id: K.clase.id }); K.clase = r.clase; K.estado = r.estado; if (vEl().querySelector('#idi-k')) pClase(); } catch (e) { /* */ } }
     function pClase() {
       const c = K.clase; if (!c) return A.ir('clases');
-      vEl().innerHTML = `<div class="idi-p" id="idi-k">${cab(`👩‍🏫 ${esc(c.titulo)}`, `<span class="apagado">${esc(A.fechaCorta(c.fecha))}${c.profesor ? ` · ${esc(c.profesor)}` : ''}</span>
-          <span class="idi-der-auto"><button data-carpeta title="${ui('Abrir la carpeta de la clase en el Finder')}">📁 ${ui('Carpeta')}</button> <button class="peligro" data-eliminar>${ui('Eliminar')}</button></span>`)}
+      // guardada: solo escuchar, leer, buscar y abrir ficheros hasta pulsar «Editar» (IDIOMAS.md, «Clases con profesores»)
+      const bloq = !!c.guardada, txs = new Set((c.transcripciones || []).map((t) => t.audio)), est = K.estado || {};
+      const enMarcha = (est.transcribiendo && est.transcribiendo.id === c.id) || (est.cola || []).some((x) => x.id === c.id);
+      const puedeGuardar = (c.audios || []).length && c.audios.every((a) => txs.has(a.fichero)) && !enMarcha;
+      vEl().innerHTML = `<div class="idi-p${bloq ? ' idi-bloq' : ''}" id="idi-k">${cab(`👩‍🏫 ${esc(c.titulo)}`, `<span class="apagado">${esc(A.fechaCorta(c.fecha))}${c.profesor ? ` · ${esc(c.profesor)}` : ''}</span>
+          <span class="idi-der-auto">${bloq ? `<span class="idi-candado">🔒 ${ui('Guardada')}</span> <button data-editar>${ui('Editar')}</button>`
+    : `<button class="primario" data-guardar ${puedeGuardar ? '' : `disabled title="${ui('Se puede guardar cuando todos sus audios estén transcritos.')}"`}>💾 ${ui('Guardar')}</button>`}
+          <button data-carpeta title="${ui('Abrir la carpeta de la clase en el Finder')}">📁 ${ui('Carpeta')}</button> <button class="peligro" data-eliminar>${ui('Eliminar')}</button></span>`)}
         <div class="idi-p-dos"><div>
           <section class="idi-caja" id="idi-k-audio"></section>
           <section class="idi-caja"><h3>📝 ${ui('Transcripción')} ${(c.transcripciones || []).length ? `<input type="search" id="idi-k-buscar" placeholder="${ui('Buscar en la transcripción…')}" value="${esc(K.buscar)}" class="idi-k-buscar">` : ''}</h3>
             <div id="idi-k-tx">${transcripcionHtml(c)}</div></section></div>
         <div>
           <section class="idi-caja"><h3>${ui('Datos')}</h3><div class="idi-form">
-            <label>${ui('Tema o título')} <input type="text" data-c="titulo" value="${esc(c.titulo)}"></label>
-            <label>${ui('Profesor o profesora')} <input type="text" data-c="profesor" value="${esc(c.profesor)}"></label></div>
-            <label class="idi-chk"><input type="checkbox" data-c="revisar" ${c.revisar ? 'checked' : ''}> ${ui('Revisar esta clase con Claude (para ajustar el panel)')}</label></section>
-          <section class="idi-caja"><h3>🗒 ${ui('Notas')}</h3><textarea id="idi-k-notas" rows="10" placeholder="${ui('Correcciones del profesor, vocabulario, deberes…')}">${esc(c.notas || '')}</textarea>
+            <label>${ui('Tema o título')} <input type="text" data-c="titulo" value="${esc(c.titulo)}" ${bloq ? 'disabled' : ''}></label>
+            <label>${ui('Profesor o profesora')} <input type="text" data-c="profesor" value="${esc(c.profesor)}" ${bloq ? 'disabled' : ''}></label></div>
+            <label class="idi-chk"><input type="checkbox" data-c="revisar" ${c.revisar ? 'checked' : ''} ${bloq ? 'disabled' : ''}> ${ui('Revisar esta clase con Claude (para ajustar el panel)')}</label></section>
+          <section class="idi-caja"><h3>🗒 ${ui('Notas')}</h3><textarea id="idi-k-notas" rows="10" ${bloq ? 'readonly' : ''} placeholder="${ui('Correcciones del profesor, vocabulario, deberes…')}">${esc(c.notas || '')}</textarea>
             <p class="idi-mini apagado" id="idi-k-guardado"></p></section>
-          <section class="idi-caja"><h3>📎 ${ui('Ficheros')} <button class="idi-mini" data-anadir>+ ${ui('Añadir')}</button></h3>
+          <section class="idi-caja"><h3>📎 ${ui('Ficheros')} ${bloq ? '' : `<button class="idi-mini" data-anadir>+ ${ui('Añadir')}</button>`}</h3>
             ${(c.adjuntos || []).length ? `<ul class="idi-k-adj">${c.adjuntos.map((a) => `<li><a data-adj="${esc(a.fichero)}">${esc(a.original || a.fichero)}</a>
               <span class="apagado idi-mini">${esc(ui(a.tipo))}${a.tipo === 'texto' && a.original && !/\.(txt|md|vtt|srt|csv)$/i.test(a.original) ? ` ${ui('(convertido)')}` : ''} · ${tam(a.bytes)}</span>
-              <button class="idi-x" data-quitar-adj="${esc(a.fichero)}" title="${ui('Quitar')}">✕</button></li>`).join('')}</ul>` : `<p class="apagado idi-mini">${ui('Textos, PDF, documentos de Word (se guardan como texto) o imágenes.')}</p>`}
+              ${bloq ? '' : `<button class="idi-x" data-quitar-adj="${esc(a.fichero)}" title="${ui('Quitar')}">✕</button>`}</li>`).join('')}</ul>` : `<p class="apagado idi-mini">${ui('Textos, PDF, documentos de Word (se guardan como texto) o imágenes.')}</p>`}
             <div id="idi-k-ver"></div></section>
         </div></div></div>`;
       enlazarVolver(vEl(), 'clases');
@@ -1206,7 +1212,11 @@
       const notas = vEl().querySelector('#idi-k-notas');
       notas.oninput = () => { clearTimeout(tNotas); tNotas = setTimeout(async () => { try { await pedir('idiPClaseCambiar', { id: c.id, cambios: { notas: notas.value } }); c.notas = notas.value; const g = vEl().querySelector('#idi-k-guardado'); if (g) g.textContent = ui('Guardado.'); } catch (e) { fallo(e); } }, 700); };
       vEl().querySelectorAll('[data-c]').forEach((i) => i.onchange = async () => { try { K.clase = (await pedir('idiPClaseCambiar', { id: c.id, cambios: { [i.dataset.c]: i.type === 'checkbox' ? i.checked : i.value } })).clase; } catch (e) { fallo(e); } });
-      vEl().querySelector('[data-anadir]').onclick = () => importarClase('ficheros');
+      const an = vEl().querySelector('[data-anadir]'); if (an) an.onclick = () => importarClase('ficheros');
+      const gu = vEl().querySelector('[data-guardar]');
+      if (gu) gu.onclick = async () => { try { const r = await pedir('idiPClaseGuardar', { id: c.id }); if (r.clase) { K.clase = r.clase; pClase(); A.aviso(ui('Clase guardada.')); } } catch (e) { fallo(e); } };
+      const ed = vEl().querySelector('[data-editar]');
+      if (ed) ed.onclick = async () => { try { K.clase = (await pedir('idiPClaseEditar', { id: c.id })).clase; pClase(); } catch (e) { fallo(e); } };
       vEl().querySelector('[data-carpeta]').onclick = () => pedir('idiPClaseCarpeta', { id: c.id }).catch(fallo);
       vEl().querySelector('[data-eliminar]').onclick = async () => { try { const r = await pedir('idiPClaseEliminar', { id: c.id }); if (r.eliminada) { K.clase = null; A.ir('clases'); } } catch (e) { fallo(e); } };
       vEl().querySelectorAll('[data-quitar-adj]').forEach((b) => b.onclick = async () => { try { K.clase = (await pedir('idiPClaseQuitarAdjunto', { id: c.id, fichero: b.dataset.quitarAdj })).clase; pClase(); } catch (e) { fallo(e); } });
@@ -1261,25 +1271,27 @@
         return;
       }
       const auds = c.audios || [];
+      const bloq = !!c.guardada;
       const tsx = new Set((c.transcripciones || []).map((t) => t.audio));
       const micros = K.micros || [];
       z.innerHTML = `<h3>🎙 ${ui('Audio de la clase')}</h3>
         ${auds.map((a) => { const enCola = (e.cola || []).some((x) => x.id === c.id && x.fichero === a.fichero); const ahora = tx && tx.id === c.id && tx.fichero === a.fichero;
           return `<div class="idi-k-aud"><div class="idi-k-aud-cab"><b>${esc(a.nombre || a.fichero)}</b><span class="apagado idi-mini">${a.origen === 'grabado' ? ui('grabado en el Mac') : ui('subido')} · ${mmss(a.segundos || 0)} · ${tam(a.bytes)}</span>
-            <button class="idi-x" data-quitar-aud="${esc(a.fichero)}" title="${ui('Borrar este audio')}">✕</button></div>
+            ${bloq ? '' : `<button class="idi-x" data-quitar-aud="${esc(a.fichero)}" title="${ui('Borrar este audio')}">✕</button>`}</div>
             <div data-reproductor="${esc(a.fichero)}"><button data-oir="${esc(a.fichero)}">▶ ${ui('Escuchar')}</button></div>
             ${ahora ? `<p class="idi-progreso">${ui('Transcribiendo… {0} %', tx.pct || 0)}</p><div class="carga"><span style="width:${tx.pct || 0}%"></span></div>`
     : enCola ? `<p class="idi-progreso">${ui('En cola para transcribir…')}</p>`
+    : bloq ? ''
     : `<p class="idi-acciones"><select data-idioma="${esc(a.fichero)}" title="${ui('Idioma que más se habla en la clase')}">${[[c.lengua, c.lengua === 'fr' ? 'Francés' : 'Inglés'], ['es', 'Castellano'], ['auto', 'Automático']].map(([k, n]) => `<option value="${k}">${ui(n)}</option>`).join('')}</select>
               <button class="${tsx.has(a.fichero) ? '' : 'primario'}" data-transcribir="${esc(a.fichero)}">${tsx.has(a.fichero) ? ui('Volver a transcribir') : ui('Transcribir')}</button></p>`}</div>`; }).join('')}
-        <div class="idi-k-nuevo"><p class="idi-acciones"><button ${auds.length ? '' : 'class="primario"'} data-grabar>● ${ui('Grabar con el Mac')}</button>
+        ${bloq ? '' : `<div class="idi-k-nuevo"><p class="idi-acciones"><button ${auds.length ? '' : 'class="primario"'} data-grabar>● ${ui('Grabar con el Mac')}</button>
           <select data-micro title="${ui('Micrófono')}">${micros.length ? micros.map((m) => `<option ${m.nombre === A.st().idiMicroClase ? 'selected' : ''}>${esc(m.nombre)}</option>`).join('') : `<option value="">${ui('Micrófono por defecto')}</option>`}</select>
           <button data-subir>⬆ ${ui('Subir audio (iPhone…)')}</button></p>
           <details class="idi-mini"><summary>${ui('¿Cómo grabar la clase sin molestar a Meet o Teams?')}</summary>
             <ul><li>${ui('{0} (lo más sencillo): abre {1}, ponlo cerca del Mac y escucha la clase por los {2} (con auriculares el iPhone solo te oye a ti). Al acabar, pásalo al Mac (AirDrop o Compartir › Guardar en Archivos) y pulsa «Subir audio».', `<b>${ui('Con el iPhone')}</b>`, `<i>${ui('Notas de voz')}</i>`, `<b>${ui('altavoces')}</b>`)}</li>
               <li>${ui('{0}: «Grabar con el Mac» usa el micrófono a la vez que Meet o Teams, sin cortarlos. También aquí hay que oír la clase por los altavoces para que se grabe al profesor.', `<b>${ui('Con el Mac')}</b>`)}</li>
               <li>${ui('Si Meet o Teams te dan su propia grabación o transcripción, súbela: el vídeo se queda solo en audio y la transcripción como fichero de texto.')}</li>
-              <li>${ui('Avisa a tu profesor de que grabas la clase para estudiar.')}</li></ul></details></div>
+              <li>${ui('Avisa a tu profesor de que grabas la clase para estudiar.')}</li></ul></details></div>`}
         <div class="idi-k-prog"></div>`;
       z.querySelectorAll('[data-oir]').forEach((b) => b.onclick = () => reproducir(b.dataset.oir, 0));
       z.querySelectorAll('[data-quitar-aud]').forEach((b) => b.onclick = async () => { try { const r = await pedir('idiPClaseQuitarAudio', { id: c.id, fichero: b.dataset.quitarAud }); if (r.clase) { K.clase = r.clase; pClase(); } } catch (x) { fallo(x); } });
@@ -1287,6 +1299,7 @@
         const idioma = z.querySelector(`[data-idioma="${CSS.escape(b.dataset.transcribir)}"]`).value;
         try { const r = await pedir('idiPClaseTranscribir', { id: c.id, fichero: b.dataset.transcribir, idioma }); K.esperaTx = true; alEstadoClase(r.estado); } catch (x) { fallo(x); }
       });
+      if (bloq) return;
       z.querySelector('[data-grabar]').onclick = async () => {
         const mic = z.querySelector('[data-micro]').value; A.st().idiMicroClase = mic; A.guardar();
         try { const r = await pedir('idiPClaseGrabar', { id: c.id, micro: mic || undefined }); alEstadoClase(r.estado); } catch (x) { fallo(x); }

@@ -380,6 +380,10 @@ Ajustes, **«Idioma del panel»** (`perfil.ajustes.idiomaFichas`: la estudiada �
   dentro de una misma grabación). Transcripción con marcas de tiempo (clic = se oye desde ahí), búsqueda, y copia en texto plano
   (`audio-N.txt`) junto al audio. Un whisper y un micrófono cada vez entre cante, oral y clases.
 - *Eliminar* manda la carpeta de la clase a la Papelera.
+- **💾 Guardar / Editar** (v0.45, 13/10/2026): con todos sus audios transcritos, *Guardar* bloquea la clase (`guardada` en `clase.json`): se puede escuchar,
+  leer, buscar y abrir sus ficheros, pero no cambiar datos ni notas, añadir o quitar ficheros y audios, grabar ni transcribir. Los **audios originales subidos**
+  (su ruta se guarda en `rutaOriginal` desde la v0.45) van a la Papelera tras una confirmación que los enumera; se conserva el mp3 de la clase.
+  *Editar* desbloquea. La extensión también rechaza los cambios de una clase guardada (`editable` en `idiomasClases.js`).
 
 ## Inicio: columnas con desplazamiento propio (v0.38)
 
