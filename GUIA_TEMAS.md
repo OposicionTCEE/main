@@ -141,7 +141,15 @@ de lo que se acaba de decir. Lo evitan §8.4 (fusionar en lugar de duplicar) y l
 - **Remisiones a otros temas**: `([\authorfont{Ver Tema 4.B.24}])`; varios: `([\authorfont{Ver Tema 3.A.36, Tema 3.A.37}])`.
 - **Notas al pie**: en varias líneas, `\footnote{%` ⏎ contenido ⏎ `}` (la llave de cierre en una línea aparte). Dos notas seguidas se
   separan con `\textsuperscript{,}`.
-- **Figuras** siempre en la carpeta `Img/` del tema (el preámbulo usa `\graphicspath{{Img/}}`).
+- **Figuras** siempre en la carpeta `Img/` del tema (el preámbulo usa `\graphicspath{{Img/}}`), con `\imagenfit{fichero}{título}{fuente}`:
+  la figura queda fija entre los párrafos donde se escribe (no flota), su título entra en el índice de figuras y la fuente va debajo.
+  - **Las figuras que hace Claude (TikZ → PDF) se dibujan al tamaño con que deben verse**, porque salen a su tamaño natural: como mucho
+    el ancho del texto (16 cm) y, si hace falta, hasta una página entera. La letra, de al menos 8 puntos (`\footnotesize`). Una figura
+    más ancha que el texto o con letra más pequeña sale reducida y cuesta leerla.
+  - Las PNG/JPG ocupan por defecto el ancho del texto hasta el 30 % del alto de la página.
+  - **Otro tamaño para una figura concreta**: `\imagenfit[1]{…}{…}{…}` (página entera), `[0.5]` (media página), etc.
+  - **Figura apaisada grande**: `\imagenfithorizontal{fichero}{título}{fuente}`, que la pone en una página girada en ese punto del texto.
+  - Si una figura no cabe en lo que queda de página, pasa entera a la siguiente: no se reduce para aprovechar el hueco.
 - El documento debe **compilar sin errores**: `bash main/scripts/compilar.sh temario/Ejercicio-X/Parte-Y/X.Y.N/main` desde la carpeta TCEE
   (o la acción «Compilar tema» del panel).
 

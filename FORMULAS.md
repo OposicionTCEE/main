@@ -87,7 +87,7 @@ con el mensaje original de MathJax detrás, entre paréntesis (`explicarError` e
 
 ## Imágenes
 
-Al pasar el ratón por una línea con una imagen (`\imagenfit{Fig1.png}{pie}{fuente}`, `\includegraphics[…]{…}` o cualquier `{fichero.png}`)
+Al pasar el ratón por una línea con una imagen (`\imagenfit{Fig1.png}{pie}{fuente}`, también con tamaño `\imagenfit[1]{…}` o `\imagenfithorizontal{…}`, `\includegraphics[…]{…}` o cualquier `{fichero.png}`)
 se ve la imagen, con su nombre y un enlace «Abrir la imagen». Código: `extension/imagenes.js` y el segundo proveedor de `activarFormulas`.
 
 - Se busca en `Img/` y en la carpeta del tema, sin distinguir mayúsculas (como el Mac), y probando `.png`, `.jpg`, `.jpeg` y `.pdf` si el nombre no lleva extensión.
