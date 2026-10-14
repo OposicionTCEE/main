@@ -117,7 +117,7 @@ function resumenAuto(texto, nodos) {
     // texto sin ecuaciones ni órdenes de entorno, en párrafos
     let prosa = seg;
     eqs.forEach((e) => { prosa = prosa.replace(e.tex, ' '); });
-    const frases = prosa.split(/\n\s*\n/).map((p) => limpiar(p.replace(/\\(sub)*section\*?\{[^{}]*\}|\\paragraph\{[^{}]*\}|\\begin\{[^{}]*\}|\\end\{[^{}]*\}|\\eqblock|\\imagenfit\{[^{}]*\}\{[^{}]*\}\{[^{}]*\}/g, ' ')))
+    const frases = prosa.split(/\n\s*\n/).map((p) => limpiar(p.replace(/\\(sub)*section\*?\{[^{}]*\}|\\paragraph\{[^{}]*\}|\\begin\{[^{}]*\}|\\end\{[^{}]*\}|\\eqblock|\\imagenfit(?:horizontal)?(?:\[[^\]]*\])?\{[^{}]*\}\{[^{}]*\}\{[^{}]*\}/g, ' ')))
       .filter((p) => p.length > 40).map((p) => { const m = p.match(/^.{40,}?[.:;](\s|$)/); return (m ? m[0] : p.slice(0, 220)).trim(); });
     const sub = epigrafes(texto).filter((x) => x.linea > n.linea && x.linea < n.fin).map((x) => x.titulo);
     return { titulo: n.titulo, numero: n.numero, linea: n.linea, subepigrafes: sub, ecuaciones: eqs.map(({ tex, pie }) => ({ tex, pie })), frases: frases.slice(0, 4),

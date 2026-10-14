@@ -52,7 +52,7 @@ function equilibrado(s) {
 
 // órdenes cuyo primer argumento no es texto (referencias, colores, ficheros, entornos…): no se pasa a mayúsculas
 const ARG_NO_TEXTO = new Set(['ref', 'eqref', 'label', 'cite', 'citep', 'citet', 'pageref', 'url', 'href', 'textcolor', 'color', 'colorbox',
-  'begin', 'end', 'includegraphics', 'imagenfit', 'input', 'include', 'hspace', 'vspace', 'setlength', 'rule', 'sethlcolor', 'hyperref']);
+  'begin', 'end', 'includegraphics', 'imagenfit', 'imagenfithorizontal', 'input', 'include', 'hspace', 'vspace', 'setlength', 'rule', 'sethlcolor', 'hyperref']);
 
 /** Pasa a mayúsculas el texto, sin tocar las órdenes, sus argumentos no textuales, las fórmulas ni los comentarios */
 function mayusculas(s) {
