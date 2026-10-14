@@ -15,7 +15,7 @@ el PDF: la información está en git y se consulta con las herramientas que ya e
 
 ## Punto de partida (14/10/2026, 14:07)
 
-- **Empiezan como Claude** (temas ya trabajados con Claude): 3.A.30, 3.A.31, 3.B.15, 3.B.17, 3.B.33, 3.B.34, 3.B.35, 4.B.12 y de 4.B.15 a 4.B.25.
+- **Empiezan como Claude** (temas ya trabajados con Claude): 3.A.30, 3.A.31, 3.B.15, 3.B.17, 3.B.33, 3.B.35, 4.B.12 y de 4.B.15 a 4.B.25.
 - **Empiezan como el usuario**: todos los demás.
 
 ## Cómo funciona
