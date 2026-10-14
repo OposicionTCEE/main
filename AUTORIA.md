@@ -8,12 +8,14 @@ el PDF: la información está en git y se consulta con las herramientas que ya e
 - **VS Code**: con el tema abierto, la vista **Línea de tiempo** (abajo en la barra del Explorador) lista cada guardado con su autor
   (`marceloortegar` o `Claude`) y su hora. Al pulsar uno se ve qué cambió.
 - **GitHub**: en el fichero del tema, botón **History**.
-- El registro es fiable desde el **14/10/2026**, después del guardado `56aa43c` del repositorio `temario` (la última sincronización
-  antes de activarlo). Lo anterior figura a nombre del usuario aunque lo escribiera Claude, porque antes todo lo subía «Sincronizar».
+- El registro es fiable desde el **14/10/2026 a las 14:07**, después del guardado `87ead33` del repositorio `temario`: la
+  sincronización en la que llegó al Mac este programa de guardado. Lo anterior figura a nombre del usuario aunque lo escribiera Claude,
+  porque antes todo lo subía «Sincronizar»; en concreto, `87ead33` incluye el trabajo de Claude en 3.B.35 (scripts de `Code/`, figuras
+  y `main.tex`), hecho con el hook ya configurado pero sin el programa en el Mac.
 
-## Punto de partida (14/10/2026)
+## Punto de partida (14/10/2026, 14:07)
 
-- **Empiezan como Claude** (temas ya trabajados con Claude): 3.A.30, 3.A.31, 3.B.15, 3.B.17, 3.B.33, 3.B.34, 4.B.12 y de 4.B.15 a 4.B.25.
+- **Empiezan como Claude** (temas ya trabajados con Claude): 3.A.30, 3.A.31, 3.B.15, 3.B.17, 3.B.33, 3.B.34, 3.B.35, 4.B.12 y de 4.B.15 a 4.B.25.
 - **Empiezan como el usuario**: todos los demás.
 
 ## Cómo funciona
