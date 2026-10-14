@@ -312,7 +312,7 @@ Claude acaba de cambiar, a nombre de Claude. «Sincronizar» guarda el resto a n
   usuario con «Sincronizar».
 - Desde la nube, Claude guarda sus cambios a su nombre (`--author="Claude <noreply@anthropic.com>"`).
 - Quién cambió qué se ve en la **Línea de tiempo** de VS Code (barra del Explorador, con el tema abierto) o en el botón **History** del
-  fichero en GitHub. La marca `inicio-autoria` del repositorio `temario` dice desde cuándo es fiable y con quién empieza cada tema.
+  fichero en GitHub. El registro es fiable desde el 14/10/2026 (`main/AUTORIA.md`, «Punto de partida»).
 
 ---
 
