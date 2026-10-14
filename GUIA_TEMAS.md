@@ -298,6 +298,22 @@ buscando lo que ocupa sin añadir información:
 Se presenta como una lista corta: dónde, qué se quita o se fusiona, cuántas palabras y **dónde sigue la información**. Se aplica lo que el
 usuario apruebe. No es un recorte: no se quita nada que no esté en otro sitio. Se dan las páginas del cuerpo antes y después.
 
+### 8.7. Autoría de los cambios (git)
+
+Quién hizo cada cambio de un tema, y cuándo, queda registrado en git sin hacer nada a mano (`main/AUTORIA.md`). En el Mac, un hook de
+Claude Code guarda **antes** de cada acción de Claude lo que haya pendiente en el temario, a nombre del usuario, y **después** lo que
+Claude acaba de cambiar, a nombre de Claude. «Sincronizar» guarda el resto a nombre del usuario. Para que eso funcione:
+
+- **Claude modifica el texto de los temas solo con sus herramientas de edición** (Edit, Write), nunca con `sed`, `perl` ni scripts:
+  el hook atribuye a Claude el fichero editado con esas herramientas y, tras una orden de terminal, solo lo que cambie en `Img/` y `Code/`
+  (figuras). Si un encargo exige cambiar `.tex` con un script (por ejemplo, el mismo cambio en varios temas), Claude lo guarda él mismo a su
+  nombre nada más terminar el script: `git -C temario add -A` y `git -C temario commit --author="Claude <noreply@anthropic.com>" -m "…"`.
+- **Claude no reescribe la historia de git** (`rebase`, `commit --amend`, `reset` de lo ya guardado) **ni sube nada** (`push`): sube el
+  usuario con «Sincronizar».
+- Desde la nube, Claude guarda sus cambios a su nombre (`--author="Claude <noreply@anthropic.com>"`).
+- Quién cambió qué se ve en la **Línea de tiempo** de VS Code (barra del Explorador, con el tema abierto) o en el botón **History** del
+  fichero en GitHub. La marca `inicio-autoria` del repositorio `temario` dice desde cuándo es fiable y con quién empieza cada tema.
+
 ---
 
 ## 9. Cómo adaptar esta guía al encargo

@@ -79,6 +79,10 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
   repetido («nunca se pierde información», §8.4) y pasada de síntesis cuando el usuario da el tema por acabado (§8.6).
   Descartado por el usuario: topes a Implicaciones/Limitaciones, que las figuras sustituyan prosa, reglas de «ir al grano y remitir» y
   de «preguntar solo por contenido / antes de añadir algo nuevo».
+- **Autoría de los cambios** (14/10/2026): registrada en git, sin recuadro en el PDF (sería repetir lo que ya está en git). Hook de Claude
+  Code (`scripts/autoria.sh`, `AUTORIA.md`): antes de cada acción de Claude se guarda lo pendiente a nombre del usuario y después lo de
+  Claude a nombre de Claude. Marca `inicio-autoria` en `temario`: empiezan como Claude 3.A.30, 3.A.31, 3.B.15, 3.B.17, 3.B.33, 3.B.34 y
+  4.B.12, 4.B.15–4.B.25; el resto, como el usuario.
 
 ## Pendiente
 

@@ -26,6 +26,8 @@ La carpeta raíz (`TCEE/`) contiene:
   nunca se pierde información, pero lo repetido se fusiona (§8.4); pasada de síntesis cuando el usuario da el tema por acabado (§8.6).
 - Antes de modificar varios temas a la vez, enseñar al usuario qué se va a cambiar y esperar su visto bueno.
 - Para sincronizar con GitHub (main + temario): `bash main/scripts/sincronizar_todo.sh` desde la carpeta TCEE.
+- Autoría de los cambios (quién cambió qué y cuándo) en git, automática con un hook de Claude Code: `main/AUTORIA.md` y `GUIA_TEMAS.md` §8.7.
+  Claude solo modifica el texto de los temas con sus herramientas de edición, no reescribe la historia de git ni sube nada.
 - Para ver o deshacer cambios antiguos de un tema: `main/HISTORIAL.md`.
   Si informa de un conflicto en un tema, resolverlo mostrando al usuario las dos versiones del fragmento y dejando que elija.
 
