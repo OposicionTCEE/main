@@ -7,7 +7,7 @@ La carpeta raíz (`TCEE/`) contiene:
 - `temario/` — repositorio PRIVADO (desde el 11/10/2026) con todos los temas: `Ejercicio-3/Parte-A/3.A.1/`, `Ejercicio-4/Parte-B/4.B.7/`, etc.
   Cada carpeta de tema tiene `main.tex`, la carpeta `Img/` con sus figuras (el preámbulo usa `\graphicspath{{Img/}}`)
   y, si ha compilado, el PDF `X.Y.N.pdf` (no se sube a GitHub). Las figuras nuevas van siempre en `Img/`, con `\imagenfit[alto]{…}{…}{…}`
-  o `\imagenfithorizontal{…}{…}{…}` (tamaño y reglas: `main/GUIA_TEMAS.md` §4).
+  o `\imagenfithorizontal{…}{…}{…}`, salvo en los anexos, donde no se usan (tamaño y reglas: `main/GUIA_TEMAS.md` §4).
   Al ser privado, `temario` no se descarga sin credenciales: en una sesión en la nube se pide acceso con la herramienta de repositorios (`add_repo`),
   nunca se da por inexistente porque una descarga anónima falle.
 

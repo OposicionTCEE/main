@@ -150,6 +150,12 @@ de lo que se acaba de decir. Lo evitan §8.4 (fusionar en lugar de duplicar) y l
   - **Otro tamaño para una figura concreta**: `\imagenfit[1]{…}{…}{…}` (página entera), `[0.5]` (media página), etc.
   - **Figura apaisada grande**: `\imagenfithorizontal{fichero}{título}{fuente}`, que la pone en una página girada en ese punto del texto.
   - Si una figura no cabe en lo que queda de página, pasa entera a la siguiente: no se reduce para aprovechar el hueco.
+  - **En los anexos no se usa `\imagenfit`**, porque sus figuras no deben entrar en el índice de figuras. La imagen va centrada a su
+    tamaño natural (`[width=\linewidth]` solo si es más ancha que el texto), con el título en negrita encima y la fuente debajo, dentro
+    de un `minipage` que lo mantiene unido:
+    `\begin{center}\begin{minipage}{\linewidth}\centering {\small\textbf{Título}}\par\vspace{0.3em} \includegraphics{fichero.pdf}\par\vspace{0.3em} {\small\textit{Fuente: }…}\end{minipage}\end{center}`.
+  - **Los esquemas de resumen** que pide el usuario (una página que sintetiza un apartado, en un anexo) no llevan **ni título ni
+    fuente**: solo `\begin{center}\includegraphics[width=\linewidth,height=0.95\textheight,keepaspectratio]{fichero.pdf}\end{center}`.
 - El documento debe **compilar sin errores**: `bash main/scripts/compilar.sh temario/Ejercicio-X/Parte-Y/X.Y.N/main` desde la carpeta TCEE
   (o la acción «Compilar tema» del panel).
 
