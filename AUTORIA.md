@@ -23,8 +23,9 @@ el PDF: la información está en git y se consulta con las herramientas que ya e
 1. **Hook de Claude Code** (en el Mac, configurado en `TCEE/.claude/settings.json`). Llama a `main/scripts/autoria.sh`:
    - **antes** de cada acción de Claude que puede cambiar ficheros (Edit, Write, NotebookEdit, Bash): lo que haya sin guardar en el
      temario es del usuario, porque lo de Claude se guarda siempre al instante. Se guarda a su nombre, con la hora de su último cambio;
-   - **después**: lo que acaba de cambiar Claude se guarda a nombre de Claude. Con Edit/Write/NotebookEdit, solo el fichero editado; con
-     Bash, solo lo que cambie en las carpetas `Img/` y `Code/` de los temas (figuras).
+   - **después** (también si la acción acaba en error: bloque `PostToolUseFailure`): lo que acaba de cambiar Claude se guarda a nombre
+     de Claude. Con Edit/Write/NotebookEdit, solo el fichero editado; con Bash, solo lo que cambie en las carpetas `Img/` y `Code/` de los
+     temas (figuras).
    Así, si el usuario retoca una parte de un tema mientras Claude escribe en otra, cada cambio queda a nombre de quien lo hizo.
    El script no escribe nada en pantalla y nunca bloquea a Claude.
 2. **«Sincronizar»** guarda lo que quede a nombre del usuario (por ejemplo, lo trabajado sin conexión) y lo sube.
@@ -52,6 +53,10 @@ El hook es configuración de Claude Code y lo da de alta el usuario (Claude no p
         "hooks": [ { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/main/scripts/autoria.sh\" antes", "timeout": 30 } ] }
     ],
     "PostToolUse": [
+      { "matcher": "Edit|Write|NotebookEdit|Bash",
+        "hooks": [ { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/main/scripts/autoria.sh\" despues", "timeout": 30 } ] }
+    ],
+    "PostToolUseFailure": [
       { "matcher": "Edit|Write|NotebookEdit|Bash",
         "hooks": [ { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/main/scripts/autoria.sh\" despues", "timeout": 30 } ] }
     ]
