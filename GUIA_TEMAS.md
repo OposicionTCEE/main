@@ -156,6 +156,21 @@ de lo que se acaba de decir. Lo evitan §8.4 (fusionar en lugar de duplicar) y l
     `\begin{center}\begin{minipage}{\linewidth}\centering {\small\textbf{Título}}\par\vspace{0.3em} \includegraphics{fichero.pdf}\par\vspace{0.3em} {\small\textit{Fuente: }…}\end{minipage}\end{center}`.
   - **Los esquemas de resumen** que pide el usuario (una página que sintetiza un apartado, en un anexo) no llevan **ni título ni
     fuente**: solo `\begin{center}\includegraphics[width=\linewidth,height=0.95\textheight,keepaspectratio]{fichero.pdf}\end{center}`.
+    Se diseñan como una **secuencia lógica**, no como un resumen del texto: el problema → la herramienta con que se aborda (qué
+    tenemos y por qué) → la solución o el método → el resultado. Cada paso muestra el concepto, la maniobra y su resultado con una
+    ilustración (tabla en miniatura, barras, flechas) y notación, y el mínimo de texto: fuera definiciones, fuentes estadísticas
+    concretas y frases que no añaden. Si usan notación, un glosario al pie. Una página cada uno, letra de 8 puntos como mínimo.
+    Nada de bloques estancos: la solución o el desarrollo es una **cadena de pasos numerados** (qué se hace y su fórmula, qué
+    significa, ilustración), unidos por flechas que dicen la maniobra que lleva de un paso al siguiente («se despeja $X$», «se lee
+    $L$ por columnas», «se abre la economía»). Para un modelo: problema → supuestos (qué supone cada uno y qué pasa si falla) →
+    solución en pasos → para qué sirve y dónde falla (cada límite con su alternativa). Títulos de las partes escuetos
+    («La herramienta: los supuestos», «La solución: la inversa de LEONTIEF»), sin coletillas del tipo «paso a paso» o «lo que tenemos».
+    Si el apartado gira en torno a una **tabla o matriz** (tabla input-output, matriz de transacciones, de balances), va **completa y en
+    el centro**, igual que en el texto, para que pueda dibujarse de memoria; todo lo demás (cuentas, saldos, identidades) se construye
+    a su alrededor con llaves numeradas sobre sus filas y llamadas que remiten a ellas. Debe verse **de dónde sale cada magnitud**:
+    en una matriz contable, las filas en el orden de la sucesión de cuentas y una fila de saldo en color al cerrar cada cuenta (la
+    suma de la columna desde arriba; en el total, la macromagnitud), con el mismo color en su llave, su fórmula y las celdas que
+    intervienen en ella.
 - El documento debe **compilar sin errores**: `bash main/scripts/compilar.sh temario/Ejercicio-X/Parte-Y/X.Y.N/main` desde la carpeta TCEE
   (o la acción «Compilar tema» del panel).
 
