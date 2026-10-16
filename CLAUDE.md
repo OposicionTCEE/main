@@ -52,6 +52,7 @@ Atajos en `.tex`: ⌘B/⌘I (`tcee.negrita`/`tcee.cursiva`, envuelven o desenvue
 (`formulas.js` + MathJax en `lib/`: al pasar el ratón y ⌘⌥M; también imágenes, `imagenes.js`; empareja bien los `aligned` anidados, a diferencia de LaTeX Workshop, cuya vista previa está apagada). Reglas en `main/FORMULAS.md`.
 Notas al pie contraíbles (`notas.js`, ⌘⌥N; se contraen al abrir): las notas van en varias líneas (`\footnote{%` ⏎ contenido ⏎ `}`; el % se pone y quita solo);
 `scripts/notas_pie.js` reescribe las antiguas sin cambiar el PDF. Reglas en `main/NOTAS.md`.
+Edición simultánea (`fusion.js`, `activarFusion` en `extension.js`): si Claude cambia un `.tex` mientras el usuario tiene cambios sin guardar, el panel combina las dos versiones justo antes de guardar (fusión a tres bandas, como `git merge-file`); si tocaron el mismo trozo, deja la del usuario y, debajo, la del disco comentada, con un aviso para elegir. Con `files.saveConflictResolution` en `TCEE.code-workspace`, VS Code ya no pregunta «Comparar / Sobrescribir». Reglas en `main/EDICION_SIMULTANEA.md`.
 Escritura (`escritura.js`, reglas en `main/ESCRITURA.md`): ⌘B/⌘I/⌃H salen del grupo o quitan la orden; ⌘⌥U mayúsculas; `$` automático; `\color` → `\textcolor{}{}`;
 `\hl{}` (paquete soul); ⌃C rodea de color; ⌘⌥K y la acción «Atajos» muestran los atajos;
 `\lnum`/`\la` + Intro → lista; Intro en una lista añade `\item`; `\cita` → `\begin{cita}[Autor][Año][Obra]` (entorno definido en los 145 temas). Paleta en `config/colores.json`. **Para Claude**: qué significa cada color en un tema

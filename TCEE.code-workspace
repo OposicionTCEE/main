@@ -13,7 +13,10 @@
       "editor.tabCompletion": "on",
       "editor.snippetSuggestions": "top",
       "editor.tabSize": 4,
-      "editor.quickSuggestions": { "other": "on", "comments": "off", "strings": "off" }
+      "editor.quickSuggestions": { "other": "on", "comments": "off", "strings": "off" },
+      // Si Claude cambia el tema mientras escribes, el panel TCEE combina las dos versiones justo antes de guardar
+      // (main/EDICION_SIMULTANEA.md); por eso VS Code puede guardar sin preguntar «Comparar / Sobrescribir».
+      "files.saveConflictResolution": "overwriteFileOnDisk"
     },
     "editor.minimap.enabled": false,
     // Botones de las cabeceras del panel TCEE (✓ Hecho, 📌) siempre visibles
