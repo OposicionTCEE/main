@@ -69,7 +69,7 @@ function tieneContenido(fragmento) {
 }
 
 /**
- * Índice del tema: lista de nodos {nivel, numero, titulo, linea, vacio, hijos}
+ * Índice del tema: lista de nodos {nivel, numero, anexo, titulo, linea, vacio, hijos} (anexo: true en los \anexo)
  * Solo lee lo que hay después de \begin{document}. Introducción = 1; anexos I, II… Un anexo hace de \section
  * (main/GUIA_TEMAS.md, §6): dentro, \subsection es I.1, \subsubsection I.1.1 y \paragraph I.1.1.1, como en el PDF.
  */
@@ -127,7 +127,7 @@ function indiceTema(texto) {
       numero = [base, cont[2], cont[3], cont[4]].slice(0, nivel).join('.'); // igual que LaTeX (secnumdepth 4)
     }
     const nodo = {
-      nivel, numero, parrafo: e.tipo === 'paragraph', titulo: e.titulo || '(sin título)', linea: lineaDe(e.pos),
+      nivel, numero, anexo: e.tipo === 'anexo', parrafo: e.tipo === 'paragraph', titulo: e.titulo || '(sin título)', linea: lineaDe(e.pos),
       propioVacio: !tieneContenido(cuerpo.slice(e.finTitulo, sig)), hijos: [],
     };
     while (pila.length > 1 && pila[pila.length - 1].nivel >= nivel) pila.pop();
