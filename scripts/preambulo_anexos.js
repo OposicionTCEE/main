@@ -2,10 +2,10 @@
 // Bloque «Anexos» del preámbulo de los temas: anexos con estructura (un \anexo hace de \section; páginas I-1…; índice propio
 // debajo de la introducción del anexo). Reglas: main/GUIA_TEMAS.md, §6.
 //
-//   node main/scripts/preambulo_anexos.js estado     → qué temas tienen ya el bloque nuevo y cuáles el antiguo
-//   node main/scripts/preambulo_anexos.js aplicar    → sustituye el bloque antiguo por el nuevo, en su sitio (antes de «Lista de figuras (personal)»)
+//   node main/scripts/preambulo_anexos.js estado     → qué temas tienen ya el bloque nuevo y cuáles uno anterior
+//   node main/scripts/preambulo_anexos.js aplicar    → sustituye el bloque anterior por el nuevo, en su sitio (antes de «Lista de figuras (personal)»)
 //
-// Se ejecuta desde la carpeta TCEE. No aplicar sin el visto bueno del usuario. Solo toca el bloque si es el antiguo tal cual
+// Se ejecuta desde la carpeta TCEE. No aplicar sin el visto bueno del usuario. Solo toca el bloque si es una versión anterior tal cual
 // (salvo espacios); si un tema lo tiene cambiado, lo deja y lo dice. El texto de los temas no se toca.
 'use strict';
 const fs = require('fs');
@@ -46,7 +46,7 @@ const NUEVO = String.raw`%-------------------------- Anexos --------------------
       \gdef\thesection{\Roman{section}}\gdef\theHsection{anexo.\Roman{section}}%
       \phantomsection
       \protected@xdef\leq@current@section{Anexo \theanexo.- \unexpanded{#2}}\gdef\leq@current@subsection{}% índice de ecuaciones
-      \addcontentsline{stc}{section}{Anexo \theanexo.- #2}%
+      \addtocontents{stc}{\protect\contentsline{section}{Anexo \theanexo.- #2}{}{\@currentHref}}% índice inicial: solo el nombre, sin página
       \addcontentsline{toc}{section}{Anexo \theanexo.- #2}% marcadores del PDF
       {\noindent\normalfont\Large\bfseries Anexo \theanexo.- #2\par}\nobreak\vspace{1.5ex \@plus .2ex}%
       #1\@ifundefined{anx@lista@\theanexo}{\global\anx@pendientefalse}{}%
@@ -83,6 +83,10 @@ const NUEVO = String.raw`%-------------------------- Anexos --------------------
       \let\MyTOC@subsubsection@nostar\anx@subsubsection
       \let\MyTOC@paragraph@nostar\anx@paragraph}
     \makeatother`;
+// Versiones anteriores que «aplicar» sustituye: la original y la del 18/10/2026 a las 14:20 (con la página del anexo, I-1, en el índice inicial)
+const PAGINA = String.raw`\addcontentsline{stc}{section}{Anexo \theanexo.- #2}%`;
+const SIN_PAGINA = String.raw`\addtocontents{stc}{\protect\contentsline{section}{Anexo \theanexo.- #2}{}{\@currentHref}}% índice inicial: solo el nombre, sin página`;
+const ANTERIORES = [ANTIGUO, NUEVO.replace(SIN_PAGINA, PAGINA)];
 const ls = (d) => { try { return fs.readdirSync(d); } catch (e) { return []; } };
 const temas = [];
 for (const e of ls(TEMARIO).filter((x) => /^Ejercicio-/.test(x)))
@@ -99,10 +103,10 @@ for (const [c, f] of temas) {
   const fin = j + '\\makeatother'.length;
   const bloque = x.slice(i, fin);
   if (norm(bloque) === norm(NUEVO.slice(0, NUEVO.indexOf('\\makeatother') + 12))) { nuevos.push(c); continue; }
-  if (norm(bloque) !== norm(ANTIGUO) || x.slice(fin, k).trim()) { raros.push(c); continue; }
+  if (!ANTERIORES.some((a) => norm(bloque) === norm(a.slice(0, a.indexOf('\\makeatother') + 12))) || x.slice(fin, k).trim()) { raros.push(c); continue; }
   antiguos.push(c);
   if (orden === 'aplicar') { fs.writeFileSync(f, x.slice(0, i) + NUEVO + x.slice(fin)); hechos++; }
 }
 const lista = (a) => `${a.length}${a.length ? ` (${a.slice(0, 8).join(', ')}${a.length > 8 ? '…' : ''})` : ''}`;
 if (orden === 'aplicar') console.log(`Bloque nuevo puesto en ${hechos} temas.${raros.length ? ` Sin tocar, por tener el bloque cambiado: ${lista(raros)}.` : ''}`);
-else console.log(`Con el bloque nuevo: ${lista(nuevos)}. Con el antiguo: ${lista(antiguos)}. Distinto de los dos (no se toca): ${lista(raros)}.`);
+else console.log(`Con el bloque nuevo: ${lista(nuevos)}. Con uno anterior: ${lista(antiguos)}. Distinto (no se toca): ${lista(raros)}.`);
