@@ -1181,62 +1181,105 @@ function activarFormulas(context) {
  * guardar el fichero cambió en el disco (Claude editó otra parte del tema), justo antes de guardar se meten en tu texto los cambios
  * del disco; si los dos tocasteis el mismo trozo, queda el tuyo y, debajo, el del disco comentado, y un aviso para elegir.
  * Con "files.saveConflictResolution": "overwriteFileOnDisk" para LaTeX (TCEE.code-workspace), VS Code guarda ese texto ya combinado
- * sin preguntar.
+ * sin preguntar. Ajuste tcee.fusionAlGuardar para apagarla (entonces VS Code vuelve a preguntar). Registro: Salida › «Panel TCEE: fusión».
+ *
+ * La base (la versión de la que parte tu texto) solo se toma del disco y solo cuando el editor coincide con él: al abrir, al guardar,
+ * al recargar VS Code el tema y al combinar. No se fía de document.isDirty, que en el primer cambio tras guardar llega desfasado
+ * (false con tu tecla ya escrita, microsoft/vscode#27231): eso metía en la base texto que solo tenías tú, y al guardar se tomaba
+ * por «borrado en el disco» y se revertía lo que acababas de escribir (v0.48).
  */
 function activarFusion(context) {
   const F = require('./fusion');
-  const base = new Map();        // uri → texto del disco del que parte el editor (al abrir, al guardar o al recargar)
+  const base = new Map();        // uri → texto del disco del que parte el editor
   const pendientes = new Map();  // uri → conflictos que avisar en cuanto termine el guardado
+  const salida = vscode.window.createOutputChannel('Panel TCEE: fusión');
   const aplica = (d) => d && d.uri.scheme === 'file' && d.languageId === 'latex';
+  const activa = () => vscode.workspace.getConfiguration('tcee').get('fusionAlGuardar', true) !== false;
   const clave = (d) => d.uri.toString();
+  const nombre = (d) => codigoTema(d.uri.fsPath) || path.basename(d.uri.fsPath);
+  const anotar = (d, m) => salida.appendLine(`${new Date().toTimeString().slice(0, 8)}  ${nombre(d)}: ${m}`);
   const leerDisco = (d) => { try { return fs.readFileSync(d.uri.fsPath, 'utf8'); } catch { return undefined; } };
-  const partir = (d) => { if (!aplica(d)) return; const t = d.isDirty ? leerDisco(d) : d.getText(); if (t !== undefined) base.set(clave(d), t); };
+  const partir = (d) => { if (!aplica(d)) return; const t = leerDisco(d); if (t !== undefined) base.set(clave(d), t); };
+  // el editor coincide con el disco: esa es la base (también cuando VS Code recarga el tema porque lo cambió Claude)
+  const alDia = (d, motivo) => {
+    const t = leerDisco(d);
+    if (t === undefined || t !== d.getText()) return;
+    if (motivo && base.get(clave(d)) !== t) anotar(d, motivo);
+    base.set(clave(d), t);
+  };
   vscode.workspace.textDocuments.forEach(partir);
 
   const avisar = async (d, conflictos) => {
-    const nombre = codigoTema(d.uri.fsPath) || path.basename(d.uri.fsPath);
     for (const c of conflictos) {
       const linea = d.getText().split('\n').findIndex((l) => l.startsWith(F.MARCA_INI) && l.includes(`[${c.id}]`));
       const r = await vscode.window.showWarningMessage(
-        `${nombre}: Claude (u otro programa) cambió en el disco el mismo trozo que estabas escribiendo. Tienes las dos versiones: la tuya y, debajo, la del disco comentada. ¿Cuál se queda?`,
+        `${nombre(d)}: Claude (u otro programa) cambió en el disco el mismo trozo que estabas escribiendo. Tienes las dos versiones: la tuya y, debajo, la del disco comentada. ¿Cuál se queda?`,
         'Quedarme con la mía', 'Usar la del disco', 'Ver');
       if (r === 'Ver' || !r) {
         if (linea >= 0) { const ed = await vscode.window.showTextDocument(d); ed.revealRange(new vscode.Range(linea, 0, linea, 0), vscode.TextEditorRevealType.InCenter); }
         continue;   // el bloque se queda en el texto (comentado): se puede borrar a mano o elegir más tarde
       }
       const nuevo = F.resolver(d.getText(), c, r === 'Quedarme con la mía' ? 'tuya' : 'disco');
-      if (nuevo === null) { vscode.window.showWarningMessage(`${nombre}: no he podido aplicar la elección porque el trozo ha cambiado. Elige a mano: el bloque está marcado con «${F.MARCA_INI} [${c.id}]».`); continue; }
+      if (nuevo === null) { vscode.window.showWarningMessage(`${nombre(d)}: no he podido aplicar la elección porque el trozo ha cambiado. Elige a mano: el bloque está marcado con «${F.MARCA_INI} [${c.id}]».`); continue; }
       const eds = F.ediciones(d.getText(), nuevo);
       const w = new vscode.WorkspaceEdit();
       eds.forEach((e) => w.replace(d.uri, new vscode.Range(d.positionAt(e.desde), d.positionAt(e.hasta)), e.texto));
       await vscode.workspace.applyEdit(w);
+      anotar(d, `conflicto ${c.id}: elegida ${r === 'Quedarme con la mía' ? 'la tuya' : 'la del disco'}`);
     }
   };
 
+  // Con la fusión apagada, VS Code debe volver a preguntar antes de sobrescribir el disco (si no, se perderían los cambios de Claude)
+  const cuadrar = async (avisarCambio) => {
+    if (!vscode.workspace.workspaceFile && !(vscode.workspace.workspaceFolders || []).length) return;
+    const files = vscode.workspace.getConfiguration('files', { languageId: 'latex' });
+    const quiero = activa() ? 'overwriteFileOnDisk' : 'askUser';
+    if (files.get('saveConflictResolution') === quiero) return;
+    try { await files.update('saveConflictResolution', quiero, vscode.ConfigurationTarget.Workspace, true); } catch { return; }
+    if (avisarCambio) vscode.window.showInformationMessage(activa()
+      ? 'Panel TCEE: fusión al guardar encendida. Si Claude cambia un tema mientras escribes, sus cambios y los tuyos se combinan al guardar.'
+      : 'Panel TCEE: fusión al guardar apagada. Si Claude cambia un tema mientras escribes, VS Code volverá a preguntar «Comparar / Sobrescribir» al guardar.');
+  };
+  if (!activa()) cuadrar(false);
+
   context.subscriptions.push(
+    salida,
     vscode.workspace.onDidOpenTextDocument(partir),
     vscode.workspace.onDidCloseTextDocument((d) => { base.delete(clave(d)); pendientes.delete(clave(d)); }),
-    // sin cambios pendientes, el texto del editor es el del disco (también cuando VS Code lo recarga porque lo cambió Claude)
-    vscode.workspace.onDidChangeTextDocument((e) => { if (aplica(e.document) && !e.document.isDirty) base.set(clave(e.document), e.document.getText()); }),
+    // isDirty false puede ser verdad (recarga, deshacer hasta lo guardado) o un dato desfasado: se comprueba con el disco
+    vscode.workspace.onDidChangeTextDocument((e) => { if (aplica(e.document) && !e.document.isDirty) alDia(e.document, 'VS Code lo ha recargado del disco'); }),
     vscode.workspace.onWillSaveTextDocument((e) => {
       const d = e.document;
-      if (!aplica(d)) return;
-      e.waitUntil((async () => {
-        const b = base.get(clave(d)), disco = leerDisco(d), tuyo = d.getText();
-        if (b === undefined || disco === undefined || disco === b || disco === tuyo) return [];
+      if (!aplica(d) || !activa()) return;
+      const b = base.get(clave(d)), disco = leerDisco(d), tuyo = d.getText();
+      if (disco === undefined) return;
+      if (disco === tuyo) { base.set(clave(d), disco); return; }
+      if (b === undefined || disco === b) return;   // el disco no ha cambiado desde tu base: guardado normal
+      // lo del disco entra ahora en tu texto: desde aquí esa es la base (si VS Code repite el guardado, no se vuelve a combinar)
+      base.set(clave(d), disco);
+      let r;
+      try {
         const ahora = new Date(), sello = `${String(ahora.getHours()).padStart(2, '0')}${String(ahora.getMinutes()).padStart(2, '0')}${String(ahora.getSeconds()).padStart(2, '0')}`;
-        const r = F.fusionar(b, tuyo, disco, sello);
-        if (r.conflictos.length) pendientes.set(clave(d), r.conflictos);
-        else vscode.window.setStatusBarMessage('$(git-merge) Panel TCEE: tus cambios y los de Claude, combinados al guardar', 5000);
-        return F.ediciones(tuyo, r.texto).map((x) => vscode.TextEdit.replace(new vscode.Range(d.positionAt(x.desde), d.positionAt(x.hasta)), x.texto));
-      })());
+        r = F.fusionar(b, tuyo, disco, sello);
+      } catch (err) {
+        anotar(d, `ERROR al combinar (${err.message}): se guarda tu versión; lo del disco sigue en la Línea de tiempo`);
+        vscode.window.showErrorMessage(`${nombre(d)}: no he podido combinar tus cambios con los del disco. Se ha guardado tu versión; la anterior está en la Línea de tiempo del fichero.`);
+        return;
+      }
+      anotar(d, `el disco cambió mientras escribías: ${r.tramosDisco} cambio(s) del disco y ${r.tramosTuyos} tuyo(s) combinados`
+        + (r.conflictos.length ? `; ${r.conflictos.length} en el mismo trozo (${r.conflictos.map((c) => c.id).join(', ')})` : '')
+        + (r.omitidos ? `; ${r.omitidos} trozo(s) con un bloque de conflicto ya escrito: se deja el tuyo` : ''));
+      if (r.conflictos.length) pendientes.set(clave(d), r.conflictos);
+      else vscode.window.setStatusBarMessage('$(git-merge) Panel TCEE: tus cambios y los de Claude, combinados al guardar', 5000);
+      e.waitUntil(Promise.resolve(F.ediciones(tuyo, r.texto).map((x) => vscode.TextEdit.replace(new vscode.Range(d.positionAt(x.desde), d.positionAt(x.hasta)), x.texto))));
     }),
     vscode.workspace.onDidSaveTextDocument((d) => {
       if (!aplica(d)) return;
-      base.set(clave(d), d.getText());
+      const t = leerDisco(d); if (t !== undefined) base.set(clave(d), t);   // lo que acaba de escribir VS Code
       const c = pendientes.get(clave(d));
       if (c) { pendientes.delete(clave(d)); avisar(d, c); }
     }),
+    vscode.workspace.onDidChangeConfiguration((e) => { if (e.affectsConfiguration('tcee.fusionAlGuardar')) cuadrar(true); }),
   );
 }
 

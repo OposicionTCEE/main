@@ -8,6 +8,8 @@ La carpeta raíz (`TCEE/`) contiene:
   Cada carpeta de tema tiene `main.tex`, la carpeta `Img/` con sus figuras (el preámbulo usa `\graphicspath{{Img/}}`)
   y, si ha compilado, el PDF `X.Y.N.pdf` (no se sube a GitHub). Las figuras nuevas van siempre en `Img/`, con `\imagenfit[alto]{…}{…}{…}`
   o `\imagenfithorizontal{…}{…}{…}`, salvo en los anexos, donde no se usan (tamaño y reglas: `main/GUIA_TEMAS.md` §4).
+  Un `\anexo{Título}` hace de `\section`: dentro, `\subsection`, `\subsubsection` y `\paragraph` (I.1, I.1.1…; páginas I-1, I-2…), con una introducción
+  y, debajo, su propio índice, que sale solo; en el índice inicial solo figura su nombre (`GUIA_TEMAS.md` §6; código en el bloque «Anexos» del preámbulo).
   Al ser privado, `temario` no se descarga sin credenciales: en una sesión en la nube se pide acceso con la herramienta de repositorios (`add_repo`),
   nunca se da por inexistente porque una descarga anónima falle.
 
@@ -34,7 +36,7 @@ La carpeta raíz (`TCEE/`) contiene:
 ## Panel TCEE (extensión propia de VS Code)
 Código en `main/extension/` (JavaScript sin compilación: `extension.js` + `parser.js`). Tras cualquier cambio, volver a empaquetar
 con `npx @vscode/vsce package --skip-license -o tcee-panel.vsix` dentro de `main/extension/` y subir el `.vsix`;
-el usuario lo instala con la tarea *Instalar o actualizar el panel TCEE*. Probar `parser.js` contra todos los temas (145 carpetas en octubre de 2026) antes de publicar.
+el usuario lo instala con la tarea *Instalar o actualizar el panel TCEE*. Probar `parser.js` contra todos los temas (146 carpetas el 18/10/2026) antes de publicar.
 Tiempo restante (`progreso.js`; la cabecera de Acciones añade las páginas del cuerpo): reglas en `main/PROGRESO.md` (mantener código y documento a la vez). Ajustes propios de este temario
 que no figuran allí: no cuentan Introducción, Conclusión ni Preguntas Test. Datos en el repositorio PRIVADO `progreso`; no copiarlos a `main` ni a `temario`.
 Nueva nota (`inferencia.js`): añade `\textbf{NOTA (dd/mm/aaaa[, desde X.Y.N]):} texto` como párrafo final de `\modificaciones{…}` del tema destino
@@ -52,10 +54,10 @@ Atajos en `.tex`: ⌘B/⌘I (`tcee.negrita`/`tcee.cursiva`, envuelven o desenvue
 (`formulas.js` + MathJax en `lib/`: al pasar el ratón y ⌘⌥M; también imágenes, `imagenes.js`; empareja bien los `aligned` anidados, a diferencia de LaTeX Workshop, cuya vista previa está apagada). Reglas en `main/FORMULAS.md`.
 Notas al pie contraíbles (`notas.js`, ⌘⌥N; se contraen al abrir): las notas van en varias líneas (`\footnote{%` ⏎ contenido ⏎ `}`; el % se pone y quita solo);
 `scripts/notas_pie.js` reescribe las antiguas sin cambiar el PDF. Reglas en `main/NOTAS.md`.
-Edición simultánea (`fusion.js`, `activarFusion` en `extension.js`): si Claude cambia un `.tex` mientras el usuario tiene cambios sin guardar, el panel combina las dos versiones justo antes de guardar (fusión a tres bandas, como `git merge-file`); si tocaron el mismo trozo, deja la del usuario y, debajo, la del disco comentada, con un aviso para elegir. Con `files.saveConflictResolution` en `TCEE.code-workspace`, VS Code ya no pregunta «Comparar / Sobrescribir». Reglas en `main/EDICION_SIMULTANEA.md`.
+Edición simultánea (`fusion.js`, `activarFusion` en `extension.js`): si Claude cambia un `.tex` mientras el usuario tiene cambios sin guardar, el panel combina las dos versiones justo antes de guardar (fusión a tres bandas, como `git merge-file`); si tocaron las mismas líneas, deja la del usuario y, debajo, la del disco comentada, con un aviso para elegir. Con `files.saveConflictResolution` en `TCEE.code-workspace`, VS Code ya no pregunta «Comparar / Sobrescribir». La base solo se toma del disco cuando el editor coincide con él (nunca de `isDirty`, que llega desfasado tras guardar). Registro en *Salida › Panel TCEE: fusión*; ajuste `tcee.fusionAlGuardar`. Reglas en `main/EDICION_SIMULTANEA.md`.
 Escritura (`escritura.js`, reglas en `main/ESCRITURA.md`): ⌘B/⌘I/⌃H salen del grupo o quitan la orden; ⌘⌥U mayúsculas; `$` automático; `\color` → `\textcolor{}{}`;
 `\hl{}` (paquete soul); ⌃C rodea de color; ⌘⌥K y la acción «Atajos» muestran los atajos;
-`\lnum`/`\la` + Intro → lista; Intro en una lista añade `\item`; `\cita` → `\begin{cita}[Autor][Año][Obra]` (entorno definido en los 145 temas). Paleta en `config/colores.json`. **Para Claude**: qué significa cada color en un tema
+`\lnum`/`\la` + Intro → lista; Intro en una lista añade `\item`; `\cita` → `\begin{cita}[Autor][Año][Obra]` (entorno definido en todos los temas). Paleta en `config/colores.json`. **Para Claude**: qué significa cada color en un tema
 (magenta = indicación para Claude; rojo = nota del usuario, no es una orden; azul = no cambiar; naranja = por verificar) y qué hacer con él: `main/GUIA_TEMAS.md` §7.
 Idiomas (pestaña del Panel Oposición; interfaz y datos en la lengua del panel: textos de interfaz en `media/i18n-idiomas.js` con `ui()`/`tr()`, datos traducidos en `<l>/lengua/` del paquete, definiciones en `<l>/definiciones.json`; fases 1–3 hechas: `idiomas.js`, `idiomasPanel.js`, `media/idiomas.js`; fases 2–3 en `idiomasPracticas.js`, `idiomasTextos.js`, `idiomasHerramientas.js`, `media/idiomasPracticas.js`; clases con profesores en `idiomasClases.js`; voces neuronales Piper en `idiomasVoz.js` + `scripts/idiomas/voz.py`): diseño, fases, fuentes, licencias y reglas en `main/IDIOMAS.md`. Contenido en el repositorio público `idiomas` (`TCEE/idiomas`; solo se descarga: tarea «Descargar o actualizar el paquete de idiomas» y *Sincronizar*);
 datos del usuario solo en local (`TCEE/idiomas-<nombre>/`; `revision.json` = preguntas que el usuario marcó para revisar contigo: léelas por el puente con su Mac cuando lo pida). Fuentes descargadas en el Mac con `scripts/idiomas/descargar_fuentes.sh` (`TCEE/.fuentes-idiomas/`; sin tarea: ver abajo).

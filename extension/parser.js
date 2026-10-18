@@ -70,8 +70,17 @@ function tieneContenido(fragmento) {
 
 /**
  * Índice del tema: lista de nodos {nivel, numero, titulo, linea, vacio, hijos}
- * Solo lee lo que hay después de \begin{document}. Introducción = 1; anexos A1, A2…
+ * Solo lee lo que hay después de \begin{document}. Introducción = 1; anexos I, II… Un anexo hace de \section
+ * (main/GUIA_TEMAS.md, §6): dentro, \subsection es I.1, \subsubsection I.1.1 y \paragraph I.1.1.1, como en el PDF.
  */
+/** 1 → I, 4 → IV, 12 → XII (números de los anexos, como \Roman en LaTeX). */
+function romano(n) {
+  let r = '';
+  for (const [v, l] of [[1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']])
+    while (n >= v) { r += l; n -= v; }
+  return r;
+}
+
 function indiceTema(texto) {
   const lineasOrig = texto.split('\n');
   const inicio = lineasOrig.findIndex((l) => /\\begin\{document\}/.test(sinComentario(l)));
@@ -105,18 +114,17 @@ function indiceTema(texto) {
   let anexos = 0, enAnexos = false;
   encabezados.forEach((e, k) => {
     const sig = k + 1 < encabezados.length ? encabezados[k + 1].pos : finDoc;
-    let nivel = NIVELES[e.tipo];
+    const nivel = NIVELES[e.tipo];
     let numero = '';
     if (e.tipo === 'anexo') {
-      enAnexos = true; anexos++; numero = `A${anexos}`; cont[1] = cont[2] = cont[3] = cont[4] = 0;
+      enAnexos = true; anexos++; numero = romano(anexos); cont[2] = cont[3] = cont[4] = 0;
     } else if (!e.estrella) {
-      if (e.tipo === 'section') { if (enAnexos) enAnexos = false; cont[1]++; cont[2] = cont[3] = cont[4] = 0; }
+      if (e.tipo === 'section') { enAnexos = false; cont[1]++; cont[2] = cont[3] = cont[4] = 0; }   // un \section no va dentro de un anexo
       else if (e.tipo === 'subsection') { cont[2]++; cont[3] = cont[4] = 0; }
       else if (e.tipo === 'subsubsection') { cont[3]++; cont[4] = 0; }
       else cont[4]++;
-      const base = enAnexos ? `A${anexos}` : String(cont[1]);
+      const base = enAnexos ? romano(anexos) : String(cont[1]);
       numero = [base, cont[2], cont[3], cont[4]].slice(0, nivel).join('.'); // igual que LaTeX (secnumdepth 4)
-      if (enAnexos) nivel += 1; // las subsecciones de un anexo cuelgan del anexo
     }
     const nodo = {
       nivel, numero, parrafo: e.tipo === 'paragraph', titulo: e.titulo || '(sin título)', linea: lineaDe(e.pos),
