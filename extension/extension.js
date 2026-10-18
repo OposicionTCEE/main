@@ -219,13 +219,14 @@ class Indice {
   }
 
   getTreeItem(n) {
+    const num = n.anexo ? `Anexo ${n.numero}` : n.numero;   // como en el PDF: «Anexo I»; el id sigue usando solo el número
     const t = new vscode.TreeItem(
-      `${n.numero ? n.numero + '  ' : ''}${n.titulo}`,
+      `${num ? num + '  ' : ''}${n.titulo}`,
       n.hijos.length ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None
     );
     t.id = n.id;
     if (n.vacio) { t.iconPath = new vscode.ThemeIcon('circle-large-outline'); t.description = 'vacío'; }
-    t.tooltip = `${n.numero} ${n.titulo}${n.vacio ? '\n(sin contenido todavía)' : ''}\nLínea ${n.linea + 1}`;
+    t.tooltip = `${num} ${n.titulo}${n.vacio ? '\n(sin contenido todavía)' : ''}\nLínea ${n.linea + 1}`;
     t.command = { command: 'tcee.irA', title: 'Ir', arguments: [n.uri, n.linea] };
     return t;
   }
