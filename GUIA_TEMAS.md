@@ -205,6 +205,14 @@ de lo que se acaba de decir. Lo evitan §8.4 (fusionar en lugar de duplicar) y l
 - **Recuadros** para el material secundario: `\begin{specialblock}{\textbf{Material complementario:} breve descripción}`, con moderación.
 - **Notas al pie** para la literatura de apoyo, los detalles técnicos y fórmulas accesorias, las remisiones a otros temas y los apartes con
   contenido, etiquetados `\textbf{OJO.-}` (advertencia conceptual) o `\textbf{NOTA.-}` (precisión, aplicación, dato de actualidad, conexión).
+- **Anexos**: `\anexo{Título}` abre un anexo en página nueva y **hace de `\section`**: su título sale del tamaño de un bloque y dentro
+  se usan los tres niveles inferiores, `\subsection`, `\subsubsection` y `\paragraph` (nunca `\section`), que se numeran I.1, I.1.1,
+  I.1.1.1 (II.1… en el segundo anexo). Sus páginas se numeran I-1, I-2… (II-1… en el segundo). Orden: primero una **introducción al
+  anexo** en prosa, sin rótulo (qué contiene y por qué va fuera del cuerpo); justo debajo sale solo el **índice del anexo** (recuadro
+  «Contenido del anexo», que se coloca antes del primer `\subsection` y solo si el anexo tiene apartados); después, los apartados.
+  En el índice de contenido inicial solo figura el nombre del anexo. `\anexo*{Título}`: el mismo anexo sin su índice. Como cualquier
+  índice, se completa en la segunda compilación (la acción «Compilar tema» ya compila las veces necesarias). Los anexos escritos antes
+  del 18/10/2026, con títulos en negrita (`\textbf{1.- …}`), siguen funcionando y se pasarán a esta estructura más adelante.
 - **Introducción y conclusión** (Recapitulación, Extensiones, Opinión, Idea final): las redacta el autor, salvo encargo expreso. La
   conclusión incluye, cuando procede, una lista numerada de «Cuestiones pendientes de verificar» (una entrada por objeto, sin repeticiones);
   Claude puede añadir entradas a esa lista.

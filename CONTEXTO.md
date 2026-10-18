@@ -83,6 +83,13 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
   Code (`scripts/autoria.sh`, `AUTORIA.md`): antes de cada acción de Claude se guarda lo pendiente a nombre del usuario y después lo de
   Claude a nombre de Claude. Punto de partida (tras el commit 87ead33 de `temario`, 14/10/2026 14:07, cuando llegó el programa al Mac): empiezan como Claude 3.A.30, 3.A.31, 3.B.15, 3.B.17, 3.B.33, 3.B.34, 3.B.35 y
   4.B.12, 4.B.15–4.B.25; el resto, como el usuario.
+- **Anexos con estructura** (18/10/2026): un `\anexo` hace de `\section` (título del mismo tamaño; dentro, los tres niveles inferiores),
+  páginas I-1, I-2…, índice propio justo debajo de la introducción del anexo y solo si hay apartados; en el índice inicial, solo el
+  nombre. Solo a futuro: los anexos ya escritos con títulos en negrita no se convierten ahora. El código va en el bloque «Anexos» del
+  preámbulo, antes de «Lista de figuras (personal)», para saber dónde está cada parte (`GUIA_TEMAS.md` §6).
+- **Fusión al guardar** (#80, corregida en la v0.49 el 18/10/2026): el autoguardado sigue a 1,5 s (el usuario propuso 10 s y se mantuvo en
+  1,5 s: con más tiempo sin guardar hay más texto pendiente cuando Claude escribe). Dos cambios en líneas distintas pegadas se combinan sin
+  conflicto (`EDICION_SIMULTANEA.md`).
 
 ## Pendiente
 

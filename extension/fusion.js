@@ -1,7 +1,7 @@
 // Fusión a tres bandas al guardar (main/EDICION_SIMULTANEA.md).
 // Si el fichero cambió en el disco mientras tenías cambios sin guardar (por ejemplo, porque Claude editó otra parte del tema),
 // se combinan las tres versiones: la de partida (base), la tuya (editor) y la del disco. Lo que solo cambió un lado se toma
-// de ese lado; si los dos cambiaron el mismo trozo de forma distinta, se deja el tuyo y, debajo, la versión del disco
+// de ese lado; si los dos cambiaron las mismas líneas de forma distinta, se deja el tuyo y, debajo, la versión del disco
 // comentada entre dos marcas, para elegir después. Funciones puras: no dependen de VS Code (se prueban con node).
 
 /** Diferencias entre dos listas de líneas: [{a0, a1, b0, b1}] = las líneas a[a0..a1) se sustituyen por b[b0..b1). */
@@ -74,23 +74,28 @@ function version(base, lado, tramos, g0, g1) {
 const MARCA_INI = '% >>> PANEL TCEE: VERSIÓN DEL DISCO';
 const MARCA_FIN = '% <<< PANEL TCEE: FIN DE LA VERSIÓN DEL DISCO';
 
+const conMarca = (ls) => ls.some((l) => l.startsWith(MARCA_INI) || l.startsWith(MARCA_FIN));
+
 /**
- * Fusiona base, tuyo (editor) y disco. Devuelve {texto, conflictos: [{id, tuyas, disco}]}.
+ * Fusiona base, tuyo (editor) y disco. Devuelve {texto, conflictos: [{id, tuyas, disco}], tramosTuyos, tramosDisco, omitidos}.
  * En cada conflicto el texto lleva tus líneas y, debajo, las del disco comentadas entre MARCA_INI [id] y MARCA_FIN [id].
+ * Si uno de los dos lados de un conflicto ya lleva un bloque de conflicto, no se escribe otro dentro: se deja el tuyo (omitidos).
  */
 function fusionar(baseTxt, tuyoTxt, discoTxt, sello = '') {
   const base = baseTxt.split('\n'), tuyo = tuyoTxt.split('\n'), disco = discoTxt.split('\n');
   const T = diferencias(base, tuyo).map((t) => ({ ...t, lado: 'tuyo' }));
   const D = diferencias(base, disco).map((t) => ({ ...t, lado: 'disco' }));
   const todos = T.concat(D).sort((x, y) => x.a0 - y.a0 || x.a1 - y.a1);
-  // grupos de tramos que se solapan o se tocan en la base (dos cambios pegados se tratan como el mismo trozo)
+  // grupos de tramos que se solapan en la base, más dos inserciones en el mismo punto (no se sabe cuál va antes). Dos cambios
+  // pegados pero en líneas distintas (uno acaba donde empieza el otro) no chocan: se combinan, cada uno en su sitio.
   const grupos = [];
   for (const t of todos) {
     const g = grupos[grupos.length - 1];
-    if (g && t.a0 <= g.a1) { g.tramos.push(t); g.a1 = Math.max(g.a1, t.a1); } else grupos.push({ a0: t.a0, a1: t.a1, tramos: [t] });
+    const choca = g && (t.a0 < g.a1 || (t.a0 === t.a1 && t.a0 === g.a1 && g.tramos.some((x) => x.a0 === x.a1 && x.a0 === t.a0)));
+    if (choca) { g.tramos.push(t); g.a1 = Math.max(g.a1, t.a1); } else grupos.push({ a0: t.a0, a1: t.a1, tramos: [t] });
   }
   const salida = [], conflictos = [];
-  let pos = 0;
+  let pos = 0, omitidos = 0;
   for (const g of grupos) {
     salida.push(...base.slice(pos, g.a0));
     const tt = g.tramos.filter((t) => t.lado === 'tuyo'), dd = g.tramos.filter((t) => t.lado === 'disco');
@@ -98,6 +103,7 @@ function fusionar(baseTxt, tuyoTxt, discoTxt, sello = '') {
     if (!dd.length) salida.push(...vt);
     else if (!tt.length) salida.push(...vd);
     else if (vt.join('\n') === vd.join('\n')) salida.push(...vt);
+    else if (conMarca(vt) || conMarca(vd)) { salida.push(...vt); omitidos++; }
     else {
       const id = `${sello}${sello ? '-' : ''}${conflictos.length + 1}`;
       salida.push(...vt, `${MARCA_INI} [${id}] (cambió mientras escribías; el panel te deja elegir)`,
@@ -107,7 +113,7 @@ function fusionar(baseTxt, tuyoTxt, discoTxt, sello = '') {
     pos = g.a1;
   }
   salida.push(...base.slice(pos));
-  return { texto: salida.join('\n'), conflictos };
+  return { texto: salida.join('\n'), conflictos, tramosTuyos: T.length, tramosDisco: D.length, omitidos };
 }
 
 /** Ediciones mínimas (por desplazamientos de caracteres en `de`) que convierten `de` en `a`: [{desde, hasta, texto}]. */
