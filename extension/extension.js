@@ -1179,23 +1179,27 @@ function activarFormulas(context) {
 }
 
 /**
- * Preámbulo plegado (main/NOTAS.md, «El preámbulo plegado»): desde \documentclass hasta la línea anterior a «% --- Datos del
- * tema ---» (o, si no está, a \title o a \begin{document}) es un tramo plegable y, al abrir un tema, se pliega (ajuste
- * tcee.preambuloContraidoAlAbrir). Queda a la vista la línea de \documentclass y, debajo, los datos del tema (\title, \author…).
+ * Preámbulo plegado (main/NOTAS.md, «El preámbulo plegado»): desde la primera línea tras \documentclass hasta la línea anterior a
+ * «% --- Datos del tema ---» (o, si no está, a \title o a \begin{document}) es un tramo plegable y, al abrir un tema, se pliega
+ * (ajuste tcee.preambuloContraidoAlAbrir). Quedan a la vista \documentclass, la primera línea del preámbulo y los datos del tema.
  */
 function activarPreambulo(context) {
   const memo = new Map();   // uri → {version, tramo}
   const tramo = (doc) => {
     const k = doc.uri.toString(), m = memo.get(k);
     if (m && m.version === doc.version) return m.tramo;
-    let ini = -1, r = null;
+    // El tramo empieza en la primera línea con texto después de \documentclass, no en la de \documentclass: LaTeX Workshop ya
+    // ofrece un tramo que empieza ahí y llega hasta \begin{document}, y cuando dos tramos empiezan en la misma línea VS Code solo
+    // se queda con el suyo (el primero que se registró). Así el nuestro queda dentro del suyo y es el que se pliega.
+    let doccls = -1, ini = -1, r = null;
     for (let i = 0; i < doc.lineCount; i++) {
       const t = doc.lineAt(i).text;
-      if (ini < 0) { if (/^\s*\\documentclass/.test(t)) ini = i; continue; }
+      if (doccls < 0) { if (/^\s*\\documentclass/.test(t)) doccls = i; continue; }
       if (/^\s*%\s*-+\s*Datos del tema/.test(t) || /^\s*\\title\s*\{/.test(t) || /^\s*\\begin\{document\}/.test(t)) {
-        if (i - 1 > ini) r = { inicio: ini, fin: i - 1 };
+        if (ini >= 0 && i - 1 > ini) r = { inicio: ini, fin: i - 1 };
         break;
       }
+      if (ini < 0 && t.trim()) ini = i;
     }
     memo.set(k, { version: doc.version, tramo: r });
     return r;
