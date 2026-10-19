@@ -171,6 +171,10 @@ de lo que se acaba de decir. Lo evitan §8.4 (fusionar en lugar de duplicar) y l
     en una matriz contable, las filas en el orden de la sucesión de cuentas y una fila de saldo en color al cerrar cada cuenta (la
     suma de la columna desde arriba; en el total, la macromagnitud), con el mismo color en su llave, su fórmula y las celdas que
     intervienen en ella.
+- **Cabecera**: en las páginas numeradas del tema (de la Introducción a la Conclusión) sale arriba el título completo del tema, tal como
+  está en `\title`, sin «Tema X.Y.N --»: título y subtítulo seguidos, en letra pequeña (una talla menos si no cabe en dos líneas). Lo
+  hace el bloque «Cabecera» del preámbulo; no se escribe nada en el texto. Va en el margen superior y no cambia las páginas del tema.
+  Índices, bibliografía y anexos no llevan cabecera. Para cambiar lo que dice, se cambia el `\title`.
 - El documento debe **compilar sin errores**: `bash main/scripts/compilar.sh temario/Ejercicio-X/Parte-Y/X.Y.N/main` desde la carpeta TCEE
   (o la acción «Compilar tema» del panel).
 

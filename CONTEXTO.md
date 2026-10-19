@@ -90,6 +90,9 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
 - **Fusión al guardar** (#80, corregida en la v0.49 el 18/10/2026): el autoguardado sigue a 1,5 s (el usuario propuso 10 s y se mantuvo en
   1,5 s: con más tiempo sin guardar hay más texto pendiente cuando Claude escribe). Dos cambios en líneas distintas pegadas se combinan sin
   conflicto (`EDICION_SIMULTANEA.md`).
+- **Cabecera y preámbulo plegado** (19/10/2026): en las páginas numeradas (de la Introducción a la Conclusión), el título completo del
+  `\title` sin «Tema X.Y.N --», en letra pequeña y una talla menos si no cabe en dos líneas (el usuario prefirió el título entero a la
+  propuesta de código + título corto + bloque actual). El preámbulo se pliega al abrir el tema (panel 0.50).
 
 ## Pendiente
 

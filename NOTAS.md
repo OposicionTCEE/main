@@ -69,3 +69,11 @@ node main/scripts/notas_pie.js aplicar [3.A.4 …]
 ```
 
 Volver a aplicarlo solo con el visto bueno del usuario (por ejemplo, si se pegan notas antiguas de otro sitio).
+
+## El preámbulo plegado
+
+Al abrir un tema, el panel pliega también el preámbulo: desde `\documentclass` hasta la línea anterior a `% --- Datos del tema ---`
+(está en todos los temas; si faltara, hasta `\title` o `\begin{document}`). Queda a la vista la línea de `\documentclass` y, debajo,
+los datos del tema (`\title`, `\author`, `\oldtitle`…). Se despliega con la flecha del margen; si se busca con ⌘F algo de dentro,
+VS Code lo despliega solo. No se pliega si al abrir el cursor está dentro del preámbulo, y solo se pliega una vez cada vez que se abre
+el tema. Ajuste `tcee.preambuloContraidoAlAbrir` (activado por defecto). Código: `activarPreambulo` en `extension.js`.
