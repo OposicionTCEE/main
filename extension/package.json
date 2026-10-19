@@ -2,7 +2,7 @@
   "name": "tcee-panel",
   "displayName": "Panel TCEE",
   "description": "Panel de trabajo para los temas de la oposición TCEE: acciones, tiempo restante, índice, calendario, relaciones y cante.",
-  "version": "0.50.0",
+  "version": "0.50.1",
   "publisher": "oposiciontcee",
   "license": "UNLICENSED",
   "repository": {
@@ -31,7 +31,7 @@
         "tcee.preambuloContraidoAlAbrir": {
           "type": "boolean",
           "default": true,
-          "description": "Al abrir un tema, plegar el preámbulo: desde \\documentclass hasta «% --- Datos del tema ---» (main/NOTAS.md)."
+          "description": "Al abrir un tema, plegar el preámbulo: desde la línea siguiente a \\documentclass hasta «% --- Datos del tema ---» (main/NOTAS.md)."
         },
         "tcee.fusionAlGuardar": {
           "type": "boolean",
