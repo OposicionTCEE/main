@@ -496,6 +496,7 @@ function activate(context) {
   // ---- Panel Oposición (pestaña): calendario, tiempo restante de todos los temas y relaciones
   activarFormulas(context);
   activarNotas(context);
+  activarPreambulo(context);
   activarEscritura(context);
   activarFusion(context);
 
@@ -1178,6 +1179,54 @@ function activarFormulas(context) {
 }
 
 /**
+ * Preámbulo plegado (main/NOTAS.md, «El preámbulo plegado»): desde \documentclass hasta la línea anterior a «% --- Datos del
+ * tema ---» (o, si no está, a \title o a \begin{document}) es un tramo plegable y, al abrir un tema, se pliega (ajuste
+ * tcee.preambuloContraidoAlAbrir). Queda a la vista la línea de \documentclass y, debajo, los datos del tema (\title, \author…).
+ */
+function activarPreambulo(context) {
+  const memo = new Map();   // uri → {version, tramo}
+  const tramo = (doc) => {
+    const k = doc.uri.toString(), m = memo.get(k);
+    if (m && m.version === doc.version) return m.tramo;
+    let ini = -1, r = null;
+    for (let i = 0; i < doc.lineCount; i++) {
+      const t = doc.lineAt(i).text;
+      if (ini < 0) { if (/^\s*\\documentclass/.test(t)) ini = i; continue; }
+      if (/^\s*%\s*-+\s*Datos del tema/.test(t) || /^\s*\\title\s*\{/.test(t) || /^\s*\\begin\{document\}/.test(t)) {
+        if (i - 1 > ini) r = { inicio: ini, fin: i - 1 };
+        break;
+      }
+    }
+    memo.set(k, { version: doc.version, tramo: r });
+    return r;
+  };
+  context.subscriptions.push(vscode.languages.registerFoldingRangeProvider({ language: 'latex' }, {
+    provideFoldingRanges(doc) { const r = tramo(doc); return r ? [new vscode.FoldingRange(r.inicio, r.fin, vscode.FoldingRangeKind.Region)] : []; },
+  }));
+  // al abrir un tema, una vez: plegado (salvo si el cursor está dentro, para no esconder lo que se está tocando)
+  const vistos = new Set();
+  const alAbrir = (ed) => {
+    if (!ed || ed.document.languageId !== 'latex' || ed.document.uri.scheme !== 'file') return;
+    const k = ed.document.uri.toString();
+    if (vistos.has(k)) return;
+    vistos.add(k);
+    if (vscode.workspace.getConfiguration('tcee').get('preambuloContraidoAlAbrir', true) === false) return;
+    // VS Code calcula los tramos plegables justo después de abrir: se espera un momento (como con las notas al pie)
+    setTimeout(() => {
+      if (vscode.window.activeTextEditor !== ed) return;
+      const r = tramo(ed.document), cur = ed.selection.active.line;
+      if (!r || (cur > r.inicio && cur <= r.fin)) return;
+      vscode.commands.executeCommand('editor.fold', { levels: 1, direction: 'up', selectionLines: [r.inicio] });
+    }, 700);
+  };
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor(alAbrir),
+    vscode.workspace.onDidCloseTextDocument((d) => { vistos.delete(d.uri.toString()); memo.delete(d.uri.toString()); }),
+  );
+  alAbrir(vscode.window.activeTextEditor);
+}
+
+/**
  * Fusión a tres bandas al guardar (main/EDICION_SIMULTANEA.md). VS Code guarda el fichero entero: si mientras tenías cambios sin
  * guardar el fichero cambió en el disco (Claude editó otra parte del tema), justo antes de guardar se meten en tu texto los cambios
  * del disco; si los dos tocasteis el mismo trozo, queda el tuyo y, debajo, el del disco comentado, y un aviso para elegir.
@@ -1285,4 +1334,4 @@ function activarFusion(context) {
 }
 
 function deactivate() {}
-module.exports = { activate, deactivate, _pruebas: { activarEscritura, activarNotas, activarFusion, envolver } };   // _pruebas: solo para probar fuera de VS Code
+module.exports = { activate, deactivate, _pruebas: { activarEscritura, activarNotas, activarPreambulo, activarFusion, envolver } };   // _pruebas: solo para probar fuera de VS Code
