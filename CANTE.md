@@ -123,6 +123,7 @@ Estados: `pendiente` (por transcribir), `transcrito`, `error`.
   (v0.46.2: se quitaron *Abrir audio fuera*, *Copiar texto* y *Copiar material complementario*, por decisión del usuario: no servían.)
 - **Corregir la transcripción:** doble clic en una palabra (o en la frase, en los cantes antiguos) abre un cuadro para cambiarla; vacío la borra.
   Si la palabra aparece más veces, se puede cambiar en todas (útil para un autor mal escrito). Se conservan los instantes; la ficha queda `editado: true`.
+  Igual en las clases de Idiomas desde la v0.51 (`main/IDIOMAS.md`, «Clases con profesores»), sin tramos.
 - **Por qué una copia MP3:** el reproductor de VS Code no lee AAC (`.m4a`). La copia y la forma de onda (pico cada 0,1 s) se guardan en la carpeta de datos de la extensión.
 - Las reglas están dos veces, iguales: `normalizarTramos`/`calcularTramos` en `extension/cante.js` y `normalizar`/`calcular` en `extension/media/cante.js`.
 
@@ -152,13 +153,14 @@ Estados: `pendiente` (por transcribir), `transcrito`, `error`.
   Una identificación cada vez; la transcripción espera a que termine (las dos cargan mucho el Mac). En un Mac con chip de Apple [Probable] tarda unos pocos minutos por hora de audio.
 - **Dónde se guarda:** ficha del cante, `voces: {tramos, n, nombres: {0: 'Hablante 1', …}, fecha}`; en una clase, `voces: {<audio>: {…}}` en `clase.json`.
 - **Qué se ve:** leyenda con un color por voz, su nombre (se edita ahí: «Yo», «Preparadora») y su tiempo total; en el texto, una etiqueta con el nombre
-  al empezar cada intervención (los párrafos se cortan al cambiar de voz). Cada palabra (o frase, en las clases) toma la voz del tramo en que cae;
+  al empezar cada intervención (los párrafos se cortan al cambiar de voz). Cada palabra (o frase, en lo transcrito antes de la v0.44 en los cantes y de la v0.51 en las clases) toma la voz del tramo en que cae;
   si cae en un hueco, la del tramo más cercano (`hablanteEn`, igual en `voces.js`, `media/cante.js` y `media/idiomasPracticas.js`).
 - **Corregir a mano** (v0.46.1): pulsar la etiqueta de color de una intervención abre la lista de voces (y *Otra voz*, por si juntó dos personas):
   cambia **solo esa intervención** (las palabras seguidas de la misma voz). Con palabras seleccionadas, los botones **Voz: [nombre] [nombre] [Otra]** de la barra
   de selección (v0.46.2; antes un menú *Asignar a voz ▾* que no funcionaba en el panel) cambian **solo esas palabras**
   (la intervención se parte si hace falta). Cambiar el nombre en la leyenda es lo único que afecta a toda la conversación (no cambia quién dijo qué).
-  `asignarVoz` parte los tramos que se solapan y une los seguidos de la misma voz; la ficha queda con `voces.corregido: true`. En las clases, igual, por frase.
+  `asignarVoz` parte los tramos que se solapan y une los seguidos de la misma voz; la ficha queda con `voces.corregido: true`. En las clases, igual (palabra a palabra desde la v0.51).
+  La primera fila de la barra de selección no se parte (`flex-wrap: nowrap`, v0.51): un texto corto la hacía crecer y movía el texto bajo el ratón.
 - **Límites:** va bien con dos voces claras; falla más con grabaciones a distancia, voces que se pisan o parecidas. No hay botón para marcar la exposición
   a partir de las voces (decisión del usuario: por si se equivoca).
 - Lo guardado (🔒) no se puede volver a identificar ni renombrar hasta pulsar *Editar*.

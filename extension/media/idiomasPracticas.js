@@ -1134,7 +1134,7 @@
     const cajaMedios = () => `<section class="idi-caja"><h3>📺 ${ui('Vídeo y audio en abierto')}</h3><p class="ayuda">${ui('Se abren en el navegador (no se descargan).')}</p><ul class="idi-medios">${(MEDIOS[l()] || []).map(([n, u, d]) => `<li><a data-url="${esc(u)}">${esc(n)} ↗</a> <span class="apagado idi-mini">${esc(ui(d))}</span></li>`).join('')}</ul></section>`;
 
     // ================================================================== clases con profesores (Meet, Teams…): audio, ficheros y transcripción
-    const K = { estado: null, sondeo: null, clase: null, micros: null, buscar: '' };
+    const K = { estado: null, sondeo: null, clase: null, micros: null, tx: [], sel: null, selAncla: null, wActual: null };
     function alEstadoClase(e) {
       K.estado = e;
       const z = vEl() && vEl().querySelector('#idi-k-audio'); if (z && K.clase) pintarAudioClase(z);
@@ -1194,7 +1194,7 @@
           <button class="peligro" data-eliminar>${ui('Eliminar')}</button></span>`)}
         <div class="idi-p-dos"><div>
           ${bloq && !verAudio ? '' : '<section class="idi-caja" id="idi-k-audio"></section>'}
-          <section class="idi-caja"><h3>📝 ${ui('Transcripción')} ${(c.transcripciones || []).length ? `<input type="search" id="idi-k-buscar" placeholder="${ui('Buscar en la transcripción…')}" value="${esc(K.buscar)}" class="idi-k-buscar">` : ''}</h3>
+          <section class="idi-caja"><h3>📝 ${ui('Transcripción')}</h3>
             <div id="idi-k-tx">${transcripcionHtml(c)}</div></section></div>
         <div>
           ${bloq ? '' : `<section class="idi-caja"><h3>${ui('Datos')}</h3><div class="idi-form">
@@ -1228,45 +1228,181 @@
       vEl().querySelectorAll('[data-adj]').forEach((a) => a.onclick = async () => {
         try { const r = await pedir('idiPClaseAdjunto', { id: c.id, fichero: a.dataset.adj }); if (r.texto != null) vEl().querySelector('#idi-k-ver').innerHTML = `<pre class="idi-k-pre">${esc(r.texto)}</pre>`; } catch (e) { fallo(e); }
       });
-      const b = vEl().querySelector('#idi-k-buscar');
-      if (b) b.oninput = () => { K.buscar = b.value; vEl().querySelector('#idi-k-tx').innerHTML = transcripcionHtml(c); enlazarTx(); };
       enlazarTx();
     }
     const tam = (n) => (n > 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round((n || 0) / 1e3))} KB`);
     const mmss = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+    // ---- transcripción palabra a palabra, como en el cante (CANTE.md, apartados 6 y 8; IDIOMAS.md, «Clases con profesores»):
+    // doble clic corrige una palabra; pulsar o arrastrar selecciona palabras para cambiar su voz; la etiqueta de color cambia la de una intervención.
+    // K.tx[i] = {audio, W: [{s, p, t, w, h}], dur} de cada audio transcrito pintado (p = null si es una frase entera, en las transcripciones antiguas)
+    const palabrasSeg = (sg) => (sg.palabras && sg.palabras.length ? sg.palabras : [[sg.t, sg.texto]]);
     function transcripcionHtml(c) {
       const ts = c.transcripciones || [];
+      K.tx = [];
       if (!ts.length) return `<p class="apagado idi-mini">${ui('Cuando tengas el audio, pulsa «Transcribir». Se hace en el Mac y tarda más o menos un cuarto de lo que dure la clase.')}</p>`;
-      const q = (K.buscar || '').trim().toLowerCase();
-      return ts.map((t) => { const v = (c.voces || {})[t.audio], hs = v ? Object.keys(v.nombres || {}).map(Number).sort((x, y) => x - y) : [];
+      const bloq = !!c.guardada;
+      if (K.sel && K.sel.clase !== c.id) K.sel = null;
+      const IDI = { es: 'castellano', en: 'inglés', fr: 'francés', auto: 'idioma automático' };
+      const html = ts.map((t, i) => {
+        const v = (c.voces || {})[t.audio], hs = v ? Object.keys(v.nombres || {}).map(Number).sort((x, y) => x - y) : [];
         const nom = (h) => (v && v.nombres && v.nombres[h]) || ui('Hablante {0}', h + 1);
-        return `<h4>${esc(t.audio)} <span class="apagado idi-mini">${({ es: 'castellano', en: 'inglés', fr: 'francés', auto: 'idioma automático' })[t.idioma] ? ui(({ es: 'castellano', en: 'inglés', fr: 'francés', auto: 'idioma automático' })[t.idioma]) : t.idioma}</span></h4>
-        ${v && !c.guardada ? `<p class="idi-k-vocesley">👥 ${hs.map((h) => `<span class="cante-voz-ed"><i class="cante-punto v${h % 6}"></i><input type="text" data-kvoz="${esc(t.audio)}" data-h="${h}" value="${esc(nom(h))}" ${c.guardada ? 'disabled' : ''} title="${ui('Nombre de esta voz')}"></span>`).join(' ')}</p>` : ''}
-        <div class="idi-k-segs">${t.segmentos.map((s, i) => [s, i]).filter(([s]) => !q || s.texto.toLowerCase().includes(q)).map(([s, i]) => { const h = v ? hablanteEn(v.tramos, s.t + 0.3) : null; return `<p><a class="idi-k-t" data-audio="${esc(t.audio)}" data-t="${s.t}">${mmss(s.t)}</a> ${h != null ? `<span class="cante-voz v${h % 6}${c.guardada ? '' : ' clic'}" ${c.guardada ? '' : `data-kc="${esc(t.audio)}" data-i="${i}" title="${ui('Cambiar la voz de esta intervención')}"`}>${esc(nom(h))}</span> ` : ''}${q ? esc(s.texto).replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), (x) => `<mark>${x}</mark>`) : esc(s.texto)}</p>`; }).join('') || `<p class="apagado">${ui('Sin resultados.')}</p>`}</div>`; }).join('');
+        const W = [];
+        t.segmentos.forEach((sg, si) => { const conP = !!(sg.palabras && sg.palabras.length);
+          palabrasSeg(sg).forEach(([tt, w], pi) => W.push({ s: si, p: conP ? pi : null, t: tt, w, h: v ? hablanteEn(v.tramos, conP ? tt : tt + 0.3) : null })); });
+        const dur = ((c.audios || []).find((a) => a.fichero === t.audio) || {}).segundos || (W.length ? W[W.length - 1].t + 30 : 0);
+        K.tx[i] = { audio: t.audio, W, dur };
+        const porFrase = W.some((x) => x.p == null);
+        const tiempo = {}; if (v) for (const [a, b, h] of v.tramos) tiempo[h] = (tiempo[h] || 0) + (b - a);
+        // párrafos: cambian con la voz y, pasado un minuto, al empezar una frase
+        const ps = [];
+        W.forEach((x, k) => { const u = ps[ps.length - 1], frase = !k || W[k - 1].s !== x.s;
+          if (!u || u.h !== x.h || (frase && x.t - u.t >= 60)) ps.push({ t: x.t, h: x.h, ks: [k] }); else u.ks.push(k); });
+        return `<h4>${esc(t.audio)} <span class="apagado idi-mini">${IDI[t.idioma] ? ui(IDI[t.idioma]) : esc(t.idioma)}</span></h4>
+        ${v && !bloq ? `<p class="idi-k-vocesley">👥 ${hs.map((h) => `<span class="cante-voz-ed"><i class="cante-punto v${h % 6}"></i><input type="text" data-kvoz="${esc(t.audio)}" data-h="${h}" value="${esc(nom(h))}" title="${ui('Nombre de esta voz')}"> <span class="apagado">${mmss(tiempo[h] || 0)}</span></span>`).join(' ')}</p>` : ''}
+        ${porFrase && !bloq ? `<p class="apagado idi-mini">${ui('Esta transcripción no tiene el instante de cada palabra: se corrige y se cambia la voz por frase. «Volver a transcribir» la rehace palabra a palabra (se pierden las correcciones).')}</p>` : ''}
+        <div class="cante-texto idi-k-texto" data-ktx="${i}">${ps.map((p) => `<p><span class="cante-t" data-kt="${i}" data-t="${p.t}" title="${ui('Escuchar desde aquí')}">${mmss(p.t)}</span><span>${p.h != null
+          ? `<span class="cante-voz v${p.h % 6}${bloq ? '' : ' clic'}" ${bloq ? '' : `data-kh="${i}" data-k0="${p.ks[0]}" title="${ui('Cambiar la voz de esta intervención')}"`}>${esc(nom(p.h))}</span> ` : ''}${p.ks.map((k) => `<span class="w" data-k="${k}">${esc(W[k].w)}</span>`).join(' ')}</span></p>`).join('')}</div>`;
+      }).join('');
+      // barra de la selección (fija arriba, de alto constante para que el texto no se mueva bajo el ratón al seleccionar)
+      const conVoces = K.tx.some((x) => (c.voces || {})[x.audio]);
+      return (bloq ? '' : `<div class="cante-seltxt" id="idi-k-sel"><div class="cante-seltxt-f"><span class="apagado" id="idi-k-selinfo"></span><button data-ks="no" class="enlace" style="visibility:hidden">${ui('Quitar selección')}</button></div>
+        ${conVoces ? '<div class="cante-seltxt-f" id="idi-k-selvoz"></div>' : ''}</div>`) + html;
+    }
+    const repintarTx = () => { const z = vEl().querySelector('#idi-k-tx'); if (z && K.clase) { z.innerHTML = transcripcionHtml(K.clase); enlazarTx(); } };
+    /** Instantes [inicio, fin] de la selección: desde la primera palabra hasta el comienzo de la siguiente a la última */
+    function tramoSelClase() { const s = K.sel, x = K.tx[s.i]; return [x.W[s.a].t, s.b + 1 < x.W.length ? x.W[s.b + 1].t : x.dur]; }
+    function pintarSelClase() {
+      const raiz = vEl(); if (!raiz) return;
+      raiz.querySelectorAll('.idi-k-texto .w.sel').forEach((x) => x.classList.remove('sel'));
+      const s = K.sel, x = s && K.tx[s.i], c = K.clase;
+      if (x) { const caja = raiz.querySelector(`.idi-k-texto[data-ktx="${s.i}"]`); if (caja) for (let k = s.a; k <= s.b; k++) { const sp = caja.querySelector(`.w[data-k="${k}"]`); if (sp) sp.classList.add('sel'); } }
+      const info = raiz.querySelector('#idi-k-selinfo'), no = raiz.querySelector('[data-ks="no"]'), zv = raiz.querySelector('#idi-k-selvoz');
+      if (no) no.style.visibility = x ? 'visible' : 'hidden';
+      if (info) {
+        if (x) { const [a, b] = tramoSelClase(); info.textContent = ui('Selección: {0}, {1} – {2}', nPal(s.b - s.a + 1), mmss(a), mmss(b)); }
+        else info.textContent = ui('Pulsa o arrastra sobre las palabras para seleccionar; doble clic para corregir');
+        info.title = ui(K.tx.some((t) => t.W.some((w) => w.p == null))
+          ? 'Pulsa una palabra (o arrastra hasta otra) para seleccionar; Mayúsculas + clic amplía; Esc quita la selección. Doble clic corrige la frase.'
+          : 'Pulsa una palabra (o arrastra hasta otra) para seleccionar; Mayúsculas + clic amplía; Esc quita la selección. Doble clic corrige la palabra.');
+      }
+      if (!zv || !c) return;
+      // un botón por voz del audio de la selección (o del primero con voces): las palabras elegidas pasan a esa voz
+      const xv = x && (c.voces || {})[x.audio] ? x : K.tx.find((t) => (c.voces || {})[t.audio]), v = xv && (c.voces || {})[xv.audio];
+      if (!v) { zv.innerHTML = ''; return; }
+      const hs = Object.keys(v.nombres || {}).map(Number).sort((a, b) => a - b), nueva = hs.length ? Math.max(...hs) + 1 : 0;
+      const nom = (h) => (v.nombres && v.nombres[h]) || ui('Hablante {0}', h + 1), dis = x && xv === x ? '' : 'disabled';
+      zv.innerHTML = `<span class="cante-seltxt-voz"><span class="apagado">${ui('Voz:')}</span>${hs.map((h) => `<button data-ksv="${h}" ${dis} title="${esc(ui('Las palabras seleccionadas las dice {0}', nom(h)))}"><i class="cante-punto v${h % 6}"></i> ${esc(nom(h))}</button>`).join('')}<button data-ksv="${nueva}" ${dis} title="${ui('Otra voz distinta')}"><i class="cante-punto v${nueva % 6}"></i> ${ui('Otra')}</button></span>`;
+      zv.querySelectorAll('[data-ksv]').forEach((b) => b.onclick = () => {
+        if (!K.sel) return;
+        const [a, z] = tramoSelClase(), f = K.tx[K.sel.i].audio;
+        K.sel = null; K.selAncla = null;
+        cambiarVoz(f, a, z, Number(b.dataset.ksv));
+      });
+    }
+    /** Contenedor que se desplaza (para que el texto avance solo al arrastrar cerca del borde) */
+    const desplazable = (n) => { for (let e = n; e && e !== document.body; e = e.parentElement) { const o = getComputedStyle(e).overflowY; if (/(auto|scroll)/.test(o) && e.scrollHeight > e.clientHeight) return e; } return document.scrollingElement; };
+    function conectarSelClase(caja) {
+      const i = Number(caja.dataset.ktx);
+      caja.onmousedown = (ev) => {
+        if (ev.button !== 0) return;   // (el doble clic, además, abre la corrección)
+        const sp = ev.target.closest('.w'); if (!sp) return;
+        ev.preventDefault(); window.getSelection().removeAllRanges();
+        const k = Number(sp.dataset.k);
+        if (ev.shiftKey && K.sel && K.sel.i === i && K.selAncla != null) K.sel = { clase: K.clase.id, i, a: Math.min(K.selAncla, k), b: Math.max(K.selAncla, k) };
+        else { K.selAncla = k; K.sel = { clase: K.clase.id, i, a: k, b: k }; }
+        pintarSelClase();
+        const sc = desplazable(caja);
+        const mover = (e2) => {
+          const r = sc === document.scrollingElement ? { top: 0, bottom: window.innerHeight } : sc.getBoundingClientRect();
+          if (e2.clientY < r.top + 30) sc.scrollTop -= 18; else if (e2.clientY > r.bottom - 30) sc.scrollTop += 18;
+          const e = document.elementFromPoint(e2.clientX, e2.clientY), w = e && e.closest && e.closest('.w');
+          if (!w || !caja.contains(w) || K.selAncla == null) return;
+          const k2 = Number(w.dataset.k), a = Math.min(K.selAncla, k2), b = Math.max(K.selAncla, k2);
+          if (!K.sel || K.sel.a !== a || K.sel.b !== b) { K.sel = { clase: K.clase.id, i, a, b }; pintarSelClase(); }
+        };
+        const soltar = () => { document.removeEventListener('mousemove', mover); document.removeEventListener('mouseup', soltar); };
+        document.addEventListener('mousemove', mover); document.addEventListener('mouseup', soltar);
+      };
+      caja.ondblclick = (ev) => { const sp = ev.target.closest('.w'); if (!sp) return; window.getSelection().removeAllRanges(); corregirClase(sp, i); };
+    }
+    if (!window.__idiKEsc) { window.__idiKEsc = true; document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && K.sel && !document.querySelector('.cante-editor')) { K.sel = null; K.selAncla = null; pintarSelClase(); } }); }
+    /** Corregir una palabra (o una frase, en las transcripciones antiguas): vacío la borra; se puede cambiar en todas sus apariciones */
+    function corregirClase(span, i) {
+      const x = K.tx[i], k = Number(span.dataset.k), y = x && x.W[k]; if (!y) return;
+      document.querySelectorAll('.cante-editor').forEach((e) => e.remove());
+      const otras = y.p != null ? x.W.filter((z, j) => j !== k && z.p != null && z.w === y.w).length : 0;
+      const ed = document.createElement('div'); ed.className = 'cante-editor';
+      ed.innerHTML = `${y.p == null ? `<textarea rows="3">${esc(y.w)}</textarea>` : `<input type="text" value="${esc(y.w)}">`}
+        ${otras ? `<label><input type="checkbox" data-todas> ${ui('Cambiar también las otras {0} apariciones de «{1}»', otras, esc(y.w))}</label>` : ''}
+        <p class="cante-botones"><button class="primario" data-e="ok">${ui('Guardar')}</button><button data-e="no">${ui('Cancelar')}</button><span class="apagado">${ui('Vacío = borrar. Intro guarda, Esc cancela.')}</span></p>`;
+      document.body.appendChild(ed);
+      const r = span.getBoundingClientRect();
+      ed.style.left = `${Math.max(8, Math.min(window.innerWidth - ed.offsetWidth - 8, r.left))}px`;
+      ed.style.top = `${Math.max(8, Math.min(window.innerHeight - ed.offsetHeight - 8, r.bottom + 6))}px`;
+      const campo = ed.querySelector('input[type="text"], textarea'); campo.focus(); campo.select();
+      const cerrar = () => ed.remove();
+      const guardarlo = async () => {
+        const nuevo = campo.value.replace(/\s+/g, ' ').trim(), todas = !!(ed.querySelector('[data-todas]') || {}).checked;
+        cerrar();
+        if (nuevo === y.w) return;
+        const c = K.clase, t = (c.transcripciones || []).find((z) => z.audio === x.audio); if (!t) return;
+        const segs = JSON.parse(JSON.stringify(t.segmentos));
+        const cambiar = (z) => { if (z.p == null) segs[z.s].texto = nuevo; else segs[z.s].palabras[z.p][1] = nuevo; };
+        cambiar(y);
+        if (todas) x.W.forEach((z) => { if (z.p != null && z.w === y.w) cambiar(z); });
+        segs.forEach((sg) => { if (sg.palabras && sg.palabras.length) { sg.palabras = sg.palabras.filter((p) => p[1]); sg.texto = sg.palabras.map((p) => p[1]).join(' '); } });
+        K.sel = null; K.selAncla = null;
+        try { K.clase = (await pedir('idiPClaseSegmentos', { id: c.id, fichero: x.audio, segmentos: segs.filter((sg) => sg.texto) })).clase; repintarTx(); } catch (e) { fallo(e); }
+      };
+      ed.querySelector('[data-e="ok"]').onclick = guardarlo;
+      ed.querySelector('[data-e="no"]').onclick = cerrar;
+      campo.onkeydown = (ev) => { if (ev.key === 'Escape') cerrar(); if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); guardarlo(); } };
     }
     function enlazarTx() {
-      vEl().querySelectorAll('.idi-k-t').forEach((a) => a.onclick = () => reproducir(a.dataset.audio, Number(a.dataset.t)));
-      vEl().querySelectorAll('[data-kc]').forEach((ch) => ch.onclick = (ev) => {
-        ev.stopPropagation();
-        const c = K.clase, f = ch.dataset.kc, v = (c.voces || {})[f], t = (c.transcripciones || []).find((x) => x.audio === f); if (!v || !t) return;
-        const segs = t.segmentos, hDe = (s) => hablanteEn(v.tramos, s.t + 0.3);
-        // la intervención entera: las frases seguidas de la misma voz
-        let i0 = Number(ch.dataset.i), i1 = i0; const h = hDe(segs[i0]);
-        while (i0 > 0 && hDe(segs[i0 - 1]) === h) i0--;
-        while (i1 + 1 < segs.length && hDe(segs[i1 + 1]) === h) i1++;
-        const dur = ((c.audios || []).find((a) => a.fichero === f) || {}).segundos || (segs[segs.length - 1].t + 30);
-        menuVozClase(ch, f, segs[i0].t, i1 + 1 < segs.length ? segs[i1 + 1].t : dur, h);
+      const raiz = vEl(), c = K.clase; if (!raiz || !c) return;
+      raiz.querySelectorAll('.cante-t[data-kt]').forEach((a) => a.onclick = () => { const x = K.tx[Number(a.dataset.kt)]; if (x) reproducir(x.audio, Number(a.dataset.t)); });
+      if (!c.guardada) raiz.querySelectorAll('.idi-k-texto').forEach(conectarSelClase);
+      raiz.querySelectorAll('[data-kh]').forEach((ch) => {
+        ch.onmousedown = (ev) => ev.stopPropagation();   // no empieza una selección
+        ch.onclick = (ev) => {
+          ev.stopPropagation();
+          // la intervención entera: las palabras seguidas de la misma voz
+          const x = K.tx[Number(ch.dataset.kh)]; if (!x) return;
+          let k0 = Number(ch.dataset.k0), k1 = k0; const h = x.W[k0].h;
+          while (k0 > 0 && x.W[k0 - 1].h === h) k0--;
+          while (k1 + 1 < x.W.length && x.W[k1 + 1].h === h) k1++;
+          menuVozClase(ch, x.audio, x.W[k0].t, k1 + 1 < x.W.length ? x.W[k1 + 1].t : x.dur, h);
+        };
       });
-      vEl().querySelectorAll('[data-kvoz]').forEach((i) => i.onchange = async () => {
+      raiz.querySelectorAll('[data-kvoz]').forEach((i) => i.onchange = async () => {
         const f = i.dataset.kvoz, v = ((K.clase.voces || {})[f]) || {};
-        try { K.clase = (await pedir('idiPClaseVocesNombres', { id: K.clase.id, fichero: f, nombres: { ...v.nombres, [i.dataset.h]: i.value } })).clase; vEl().querySelector('#idi-k-tx').innerHTML = transcripcionHtml(K.clase); enlazarTx(); } catch (e) { fallo(e); }
+        try { K.clase = (await pedir('idiPClaseVocesNombres', { id: K.clase.id, fichero: f, nombres: { ...v.nombres, [i.dataset.h]: i.value } })).clase; repintarTx(); } catch (e) { fallo(e); }
       });
+      const no = raiz.querySelector('[data-ks="no"]'); if (no) no.onclick = () => { K.sel = null; K.selAncla = null; pintarSelClase(); };
+      pintarSelClase();
+    }
+    /** La palabra que suena, resaltada en el texto */
+    function resaltarClase(fichero, t) {
+      const i = K.tx.findIndex((x) => x.audio === fichero), x = K.tx[i];
+      let sp = null;
+      if (x) {
+        let lo = 0, hi = x.W.length - 1, k = -1;
+        while (lo <= hi) { const m = (lo + hi) >> 1; if (x.W[m].t <= t) { k = m; lo = m + 1; } else hi = m - 1; }
+        sp = k >= 0 ? vEl().querySelector(`.idi-k-texto[data-ktx="${i}"] .w[data-k="${k}"]`) : null;
+      }
+      if (sp === K.wActual) return;
+      if (K.wActual) K.wActual.classList.remove('actual');
+      K.wActual = sp; if (sp) sp.classList.add('actual');
     }
     async function reproducir(fichero, t) {
       const z = vEl().querySelector(`[data-reproductor="${CSS.escape(fichero)}"]`);
       if (!z) return;
       let au = z.querySelector('audio');
-      if (!au) { const { url } = await pedir('idiPClaseAudioUrl', { id: K.clase.id, fichero }); z.innerHTML = `<audio controls preload="metadata" src="${esc(url)}" style="width:100%"></audio>`; au = z.querySelector('audio'); }
+      if (!au) {
+        const { url } = await pedir('idiPClaseAudioUrl', { id: K.clase.id, fichero });
+        z.innerHTML = `<audio controls preload="metadata" src="${esc(url)}" style="width:100%"></audio>`; au = z.querySelector('audio');
+        au.addEventListener('timeupdate', () => resaltarClase(fichero, au.currentTime));
+      }
       const ir2 = () => { au.currentTime = t || 0; au.play().catch(() => {}); };
       if (au.readyState >= 1) ir2(); else au.addEventListener('loadedmetadata', ir2, { once: true });
       z.scrollIntoView({ block: 'nearest' });
@@ -1352,6 +1488,12 @@
       const m = []; for (const t of r) { const u = m[m.length - 1]; if (u && u[2] === t[2] && t[0] - u[1] < 0.05) u[1] = Math.max(u[1], t[1]); else m.push(t.slice()); }
       return m.map(([x, y, k]) => [Math.round(x * 100) / 100, Math.round(y * 100) / 100, k]);
     }
+    /** Cambia la voz de [a, b] en un audio de la clase (solo ese trozo) y vuelve a pintar el texto */
+    async function cambiarVoz(fichero, a, b, h) {
+      const c = K.clase, v = (c.voces || {})[fichero]; if (!v) return;
+      const nombres = { ...v.nombres }; if (!(h in nombres)) nombres[h] = ui('Hablante {0}', h + 1);
+      try { K.clase = (await pedir('idiPClaseVocesTramos', { id: c.id, fichero, tramos: asignarVoz(v.tramos, a, b, h), nombres })).clase; repintarTx(); } catch (e) { fallo(e); }
+    }
     function menuVozClase(ancla, fichero, a, b, actual) {
       document.querySelectorAll('.cante-menuvoz').forEach((x) => x.remove());
       const c = K.clase, v = (c.voces || {})[fichero]; if (!v) return;
@@ -1366,14 +1508,10 @@
       m.style.top = `${r.bottom + m.offsetHeight + 6 > window.innerHeight ? Math.max(8, r.top - m.offsetHeight - 6) : r.bottom + 6}px`;
       const fuera = (ev) => { if (!m.contains(ev.target)) { m.remove(); document.removeEventListener('mousedown', fuera, true); } };
       setTimeout(() => document.addEventListener('mousedown', fuera, true), 0);
-      m.querySelectorAll('[data-mv]').forEach((x) => x.onclick = async () => {
-        const h = Number(x.dataset.mv);
+      m.querySelectorAll('[data-mv]').forEach((x) => x.onclick = () => {
         m.remove(); document.removeEventListener('mousedown', fuera, true);
-        const nombres = { ...v.nombres }; if (!(h in nombres)) nombres[h] = ui('Hablante {0}', h + 1);
-        try {
-          K.clase = (await pedir('idiPClaseVocesTramos', { id: c.id, fichero, tramos: asignarVoz(v.tramos, a, b, h), nombres })).clase;
-          vEl().querySelector('#idi-k-tx').innerHTML = transcripcionHtml(K.clase); enlazarTx();
-        } catch (e) { fallo(e); }
+        K.sel = null; K.selAncla = null;
+        cambiarVoz(fichero, a, b, Number(x.dataset.mv));
       });
     }
     function vocesAudio(c, a, e, bloq, tsx, ocupadoTx) {

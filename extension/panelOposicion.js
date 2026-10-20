@@ -352,6 +352,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
         case 'idiPClaseVoces': return r({ clase: await clases.identificarVoces(m) });
         case 'idiPClaseVocesTramos': return r({ clase: clases.vocesTramos(m) });
         case 'idiPClaseVocesNombres': return r({ clase: clases.nombresVoces(m) });
+        case 'idiPClaseSegmentos': return r({ clase: clases.guardarSegmentos(m) });
         case 'idiPClaseEditar': return r({ clase: clases.bloquear({ id: m.id, si: false }) });
         case 'idiPClaseEliminar': {
           const c = clases.clase(m.id); if (!c) return r({ cancelado: true });

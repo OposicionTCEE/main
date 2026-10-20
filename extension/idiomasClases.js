@@ -228,18 +228,23 @@ function crearClases({ voces = null, dirPerfil, otroOcupado = () => null, avisar
     const base = path.join(os.tmpdir(), `tcee-clase-${Date.now()}`), wav = `${base}.wav`;
     try {
       await ejecutar(h.ffmpeg, ['-hide_banner', '-nostdin', '-y', '-i', path.join(dirClase(t.id), t.fichero), '-ac', '1', '-ar', String(HZ), '-c:a', 'pcm_s16le', wav]);
-      const args = ['-m', h.modelo, '-f', wav, '-l', t.idioma === 'auto' ? 'auto' : t.idioma, '-oj', '-of', base, '-pp', '-ml', '80', '-sow',
+      // -ojf: JSON completo, con el instante de cada token: palabra a palabra, para corregir y asignar voces como en el cante (CANTE.md, 6 y 8)
+      const args = ['-m', h.modelo, '-f', wav, '-l', t.idioma === 'auto' ? 'auto' : t.idioma, '-ojf', '-of', base, '-pp', '-ml', '80', '-sow',
         '-t', String(Math.max(2, Math.min(8, os.cpus().length - 1)))];
       await ejecutar(h.whisper, args, (l) => { const x = l.match(/progress\s*=\s*(\d+)%/); if (x && transcribiendo) { transcribiendo.pct = Number(x[1]); alCambiar(true); } });
       const j = leer(`${base}.json`, { transcription: [] });
-      const segmentos = (j.transcription || []).map((s) => ({ t: Math.round((s.offsets ? s.offsets.from : 0) / 100) / 10, texto: (s.text || '').trim() }))
-        .filter((s) => s.texto && !ALUCINACIONES.test(s.texto) && !/^\[.*\]$|^\(.*\)$/.test(s.texto));
+      let jb = null; try { jb = JSON.parse(fs.readFileSync(`${base}.json`, 'latin1')); } catch (e) { /* sin tokens: solo frases */ }
+      const segmentos = (j.transcription || []).map((s, i) => {
+        const seg = { t: Math.round((s.offsets ? s.offsets.from : 0) / 100) / 10, texto: (s.text || '').trim() };
+        const ps = jb && jb.transcription && jb.transcription[i] ? C.palabrasDeTokens(jb.transcription[i].tokens) : [];
+        if (ps.length) { seg.palabras = ps; seg.texto = ps.map((p) => p[1]).join(' '); }
+        return seg;
+      }).filter((s) => s.texto && !ALUCINACIONES.test(s.texto) && !/^\[.*\]$|^\(.*\)$/.test(s.texto));
       const c = clase(t.id);
       if (c) {
         c.transcripciones = [...(c.transcripciones || []).filter((x) => x.audio !== t.fichero), { audio: t.fichero, idioma: t.idioma, fecha: new Date().toISOString(), segmentos }];
         guardar(c);
-        // copia en texto plano (para leerla fuera del panel o revisarla con Claude)
-        fs.writeFileSync(path.join(dirClase(t.id), t.fichero.replace(/\.mp3$/, '.txt')), segmentos.map((s) => `[${Math.floor(s.t / 60)}:${dos(Math.floor(s.t % 60))}] ${s.texto}`).join('\n') + '\n');
+        copiaTexto(t.id, t.fichero, segmentos);
         avisar(T('Transcripción lista: {0}.', [c.titulo], c.lengua));
       }
     } catch (e) { avisar(T('No se pudo transcribir la clase: {0}', [e.message], (clase(t.id) || {}).lengua), true); }
@@ -247,6 +252,31 @@ function crearClases({ voces = null, dirPerfil, otroOcupado = () => null, avisar
       for (const x of [wav, `${base}.json`]) { try { fs.unlinkSync(x); } catch (e) { /* */ } }
       transcribiendo = null; alCambiar(true); siguiente();
     }
+  }
+
+  /** Copia en texto plano junto al audio (para leerla fuera del panel o revisarla con Claude) */
+  function copiaTexto(id, fichero, segmentos) {
+    fs.writeFileSync(path.join(dirClase(id), path.basename(fichero).replace(/\.mp3$/, '.txt')), segmentos.map((s) => `[${Math.floor(s.t / 60)}:${dos(Math.floor(s.t % 60))}] ${s.texto}`).join('\n') + '\n');
+  }
+  /** Transcripción corregida a mano (doble clic en una palabra): mismos segmentos e instantes, cambia solo el texto (como guardarSegmentos del cante) */
+  function guardarSegmentos({ id, fichero, segmentos }) {
+    const c = clase(id); if (!c) throw new Error(T('Clase no encontrada.'));
+    editable(c);
+    const tx = (c.transcripciones || []).find((x) => x.audio === fichero);
+    if (!tx || !Array.isArray(segmentos)) return c;
+    tx.segmentos = segmentos.map((x) => {
+      const seg = { t: Math.max(0, Number(x.t) || 0), texto: '' };
+      if (Array.isArray(x.palabras) && x.palabras.length) {
+        seg.palabras = x.palabras.map(([t, w]) => [Number(t) || 0, String(w || '').replace(/\s+/g, ' ').trim()]).filter(([, w]) => w);
+        seg.texto = seg.palabras.map((p) => p[1]).join(' ');
+        if (!seg.palabras.length) delete seg.palabras;
+      } else seg.texto = String(x.texto || '').replace(/\s+/g, ' ').trim();
+      return seg;
+    }).filter((x) => x.texto);
+    tx.editado = true;
+    guardar(c);
+    copiaTexto(id, fichero, tx.segmentos);
+    return c;
   }
 
   // ---------------------------------------------------------------- identificar voces (quién habla; IDIOMAS.md, «Clases con profesores»)
@@ -296,7 +326,7 @@ function crearClases({ voces = null, dirPerfil, otroOcupado = () => null, avisar
   }
   function eliminar({ id }) { return dirClase(id); }   // la extensión la manda a la Papelera
 
-  return { lista, crear, cambiar, clase, ruta, bloquear, originales, identificarVoces, nombresVoces, vocesTramos, importar, quitarAdjunto, quitarAudio, leerAdjunto, microfonos, grabar, parar, transcribir, estado, eliminar,
+  return { lista, crear, cambiar, clase, ruta, bloquear, originales, identificarVoces, nombresVoces, vocesTramos, guardarSegmentos, importar, quitarAdjunto, quitarAudio, leerAdjunto, microfonos, grabar, parar, transcribir, estado, eliminar,
     retomar: () => { try { if (dirPerfil()) grabacionEnCurso(); } catch (e) { /* */ } } };
 }
 
