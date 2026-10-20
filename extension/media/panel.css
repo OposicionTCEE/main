@@ -336,6 +336,8 @@ button.enlace { background: none; border: none; padding: 0; color: var(--vscode-
 .cante-seltxt { flex-direction: column; align-items: stretch; gap: 4px; }
 .cante-seltxt-f { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .cante-seltxt-f > .apagado { flex: 1 1 220px; font-size: .9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }   /* una sola línea: al seleccionar no se mueve el texto */
+/* la primera fila no se parte: con «wrap», un texto corto («Selección: 1 palabra…») la hacía crecer de 16 a 38 px y movía el texto bajo el ratón */
+.cante-seltxt-f:first-child { flex-wrap: nowrap; }
 .cante-seltxt button { flex: none; }
 .cante-seltxt-voz { display: inline-flex; gap: 4px; align-items: center; flex-wrap: wrap; margin-left: 6px; }
 .cante-seltxt-voz button { display: inline-flex; gap: 5px; align-items: center; padding: 1px 8px; }
@@ -1062,10 +1064,9 @@ body.vscode-high-contrast .idi-vterm, body.vscode-high-contrast-light .idi-vterm
 .idi-cuerpo.fijo > .idi-der > .idi-cartas, .idi-cuerpo.fijo > .idi-der > .vacio { flex: 1; overflow-y: auto; min-height: 0; padding: 4px 4px 12px 2px; overscroll-behavior: contain; align-content: start; }
 .idi-btn-clases { order: 9; margin-left: auto; font-weight: 600; padding: 6px 14px; border-color: color-mix(in srgb, var(--acento) 50%, var(--borde)); }
 /* Clases */
-.idi-k-buscar { width: auto !important; margin-left: auto; font-weight: normal; }
-.idi-k-segs p { margin: 0 0 6px; line-height: 1.5; }
-.idi-k-segs mark { background: color-mix(in srgb, var(--iaviso) 45%, transparent); color: inherit; }
-.idi-k-t { cursor: pointer; font-variant-numeric: tabular-nums; font-size: .85em; margin-right: 6px; }
+/* transcripción palabra a palabra: usa los estilos del cante (.cante-texto, .cante-seltxt, .cante-editor) */
+.idi-k-texto { margin-top: 6px; }
+.idi-k-texto .cante-t { cursor: pointer; text-decoration: underline dotted; }
 .idi-k-aud { border: 1px solid var(--borde); border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; }
 .idi-k-aud-cab { display: flex; align-items: center; gap: 8px; }
 .idi-k-aud-cab .idi-x { margin-left: auto; }

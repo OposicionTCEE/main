@@ -377,8 +377,14 @@ Ajustes, **«Idioma del panel»** (`perfil.ajustes.idiomaFichas`: la estudiada �
   (unos 14 MB por hora); el original no se copia.
 - Para grabar al profesor hay que oír la clase por los **altavoces** (con auriculares solo se graba al usuario). Avisar al profesor de que se graba.
 - **Transcribir** (botón; nunca solo): whisper con el idioma elegido (el de la clase, castellano o automático; whisper no separa idiomas dentro de una misma grabación;
-  las voces se separan aparte con *Identificar voces*). Transcripción con marcas de tiempo (clic = se oye desde ahí), búsqueda, y copia en texto plano
-  (`audio-N.txt`) junto al audio. Un whisper y un micrófono cada vez entre cante, oral y clases.
+  las voces se separan aparte con *Identificar voces*). Desde la v0.51, **palabra a palabra** (`-ojf`, como el cante): cada segmento lleva `palabras: [[t, palabra], …]`.
+  Párrafos con su marca de tiempo (clic = se oye desde ahí), que cambian con la voz y, pasado un minuto, al empezar una frase; la palabra que suena se resalta.
+  Copia en texto plano (`audio-N.txt`) junto al audio, que se rehace al corregir. Un whisper y un micrófono cada vez entre cante, oral y clases.
+  (v0.51: se quitó la búsqueda en la transcripción, por decisión del usuario: no servía.)
+- **Corregir la transcripción** (v0.51, 20/10/2026, como en el cante: `main/CANTE.md`, apartado 6): doble clic en una palabra abre un cuadro para cambiarla;
+  vacío la borra; si aparece más veces, se puede cambiar en todas. Se conservan los instantes; la transcripción queda `editado: true` (`guardarSegmentos`
+  en `idiomasClases.js`, mensaje `idiPClaseSegmentos`). Las transcripciones anteriores a la v0.51 no tienen palabras: se corrige la frase entera y un aviso
+  ofrece *Volver a transcribir* (palabra a palabra; se pierden las correcciones). No hay tramos de exposición ni descartes (eso es solo del cante).
 - *Eliminar* manda la carpeta de la clase a la Papelera.
 - **💾 Guardar / Editar** (v0.45, 13/10/2026): con todos sus audios transcritos, *Guardar* bloquea la clase (`guardada` en `clase.json`): se puede escuchar,
   leer, buscar y abrir sus ficheros, pero no cambiar datos ni notas, añadir o quitar ficheros y audios, grabar ni transcribir. Los **audios originales subidos**
@@ -386,9 +392,11 @@ Ajustes, **«Idioma del panel»** (`perfil.ajustes.idiomaFichas`: la estudiada �
   *Editar* desbloquea. La extensión también rechaza los cambios de una clase guardada (`editable` en `idiomasClases.js`).
   Guardada (v0.46.2) se ven la transcripción, las notas y los ficheros (para leer); se ocultan el audio, los datos y la leyenda de voces.
   *🎧 Recuperar audio* vuelve a mostrar el audio (solo escuchar).
-- **👥 Identificar voces** (v0.46): en cada audio transcrito, quién habla en cada momento (profesor, tú…), con nombres editables y una etiqueta por intervención
-  en la transcripción. Mismo programa y reglas que en los cantes: `main/CANTE.md`, apartado 8. Se guarda en `voces` de `clase.json`. Pulsar la etiqueta de una intervención
-  permite cambiar su voz (solo esa intervención, por frases seguidas de la misma voz).
+- **👥 Identificar voces** (v0.46): en cada audio transcrito, quién habla en cada momento (profesor, tú…), con nombres editables, el tiempo de cada voz
+  (v0.51) y una etiqueta por intervención en la transcripción. Mismo programa y reglas que en los cantes: `main/CANTE.md`, apartado 8. Se guarda en `voces`
+  de `clase.json`. Pulsar la etiqueta de una intervención cambia su voz (solo esa intervención: las palabras seguidas de la misma voz). Desde la v0.51, como en
+  el cante, también se seleccionan palabras (pulsar, arrastrar, Mayúsculas + clic; Esc quita la selección) y los botones **Voz: [nombre] … [Otra]** de la barra
+  de arriba las pasan a esa voz (la intervención se parte si hace falta). La barra tiene alto fijo para que el texto no se mueva bajo el ratón al seleccionar.
 
 ## Inicio: columnas con desplazamiento propio (v0.38)
 
