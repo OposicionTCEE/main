@@ -137,7 +137,9 @@ de lo que se acaba de decir. Lo evitan §8.4 (fusionar en lugar de duplicar) y l
   confianza solo con la forma segura de §8.2.
 - **Términos fijos**: «BdE»; «Unión» (salvo en denominaciones jurídicas: «Reglamento (UE) 2024/1263»); «shock», no «choque»;
   «art./arts.»; «trabajo» o «artículo» completo para las publicaciones.
-- **Negrita** para los conceptos clave, con moderación. **Cursiva** para los términos extranjeros y los títulos de obras. Comillas ``así''.
+- **Negrita** para los conceptos clave, con moderación. **Cursiva** para los términos extranjeros y los títulos de obras.
+- **Nunca comillas en el texto de un tema** (ni ``así'', ni «así», ni “así”): lo que iría entre comillas va en cursiva o sin marca
+  (decisión del usuario, 25/10/2026). Ojo al quitarlas en bloque: `''` también es la segunda derivada ($u''$) y una lotería ($L''$).
 - **Remisiones a otros temas**: `([\authorfont{Ver Tema 4.B.24}])`; varios: `([\authorfont{Ver Tema 3.A.36, Tema 3.A.37}])`.
 - **Notas al pie**: en varias líneas, `\footnote{%` ⏎ contenido ⏎ `}` (la llave de cierre en una línea aparte). Dos notas seguidas se
   separan con `\textsuperscript{,}`.
