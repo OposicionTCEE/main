@@ -9,7 +9,7 @@ Prueba realizada el 02/10/2026 compilando los 107 temas que había entonces (4.B
 | Tema | Causa |
 |---|---|
 | 3.A.9 | Línea ~640: llave sin cerrar dentro de \underset; además caracteres  (viñeta pegada desde Word). |
-| 3.B.13 | Nota al pie (\footnote) sin cerrar: el fichero termina dentro de ella. |
+| 3.B.13 | CORREGIDO el 03/11/2026: un enlace con `%` y `#` dentro de una nota al pie (l.860; también l.1245) cortaba la línea y dejaba la nota sin cerrar; escapados (`\%`, `\#`), compila (solo quedan caracteres Unicode sueltos). |
 | 3.B.18 | Línea 573: llave `}` sobrante. |
 | 3.B.43 | Nota al pie (\footnote) sin cerrar: el fichero termina dentro de ella. |
 | 4.B.15 | Texto pegado en formato Markdown (`##` títulos, `**negritas**`, etiquetas [Seguro]/[Probable]) a partir de la línea ~1130; caracteres corruptos (U+FFFD) en la línea 542 y llaves descompensadas hacia las líneas 690–703. |
