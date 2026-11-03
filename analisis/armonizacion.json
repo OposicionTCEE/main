@@ -1,5 +1,5 @@
 {
- "generado": "2026-11-02",
+ "generado": "2026-11-03",
  "metodo": "Informes escritos por Claude leyendo los desarrollos de cada modelo en cada tema; los posibles errores fueron revisados por un segundo análisis independiente (ver RELACIONES.md). Cada tema guarda la huella de su desarrollo para avisar cuando cambia.",
  "modelos": {
   "Burbujas racionales": {
@@ -5594,40 +5594,10 @@
   },
   "Paridad de intereses": {
    "familia": "Paridad de intereses",
-   "prioridad": "alta",
-   "motivo_prioridad": "Los dos temas se contradicen en lo que significa el margen a plazo: 3.B.14 lo lee, dentro de la propia paridad cubierta, como depreciación esperada, y 3.B.25 insiste en que no es una previsión. Además, 3.B.14 rotula como cubierta la derivación de la no cubierta y atribuye a la paridad cubierta la predicción de que las monedas con tipos altos se deprecian.",
+   "prioridad": "baja",
+   "motivo_prioridad": "Las dos presentaciones son coherentes: ambas leen el margen a plazo como diferencia de tipos de interés, y solo como depreciación esperada si se cumple también la paridad no cubierta. Las diferencias que quedan (notación y capitalización, supuestos de partida, reparto de contenidos) se justifican por el enfoque macroeconómico de 3.B.14 y el financiero de 3.B.25.",
    "enfoque_comun": "Ambos derivan la paridad cubierta de la igualdad entre dos formas sin riesgo de invertir una unidad de moneda nacional (depósito nacional, o conversión al contado, depósito en divisa y venta a plazo), con el tipo de cambio en moneda nacional por unidad de divisa, y concluyen que la moneda con el tipo de interés más alto cotiza a plazo con descuento. Ambos distinguen la paridad cubierta de la no cubierta y remiten a la evidencia contraria a esta última (paradoja del margen a plazo).",
    "divergencias": [
-    {
-     "aspecto": "ecuaciones",
-     "descripcion": "Posible error: en 3.B.14 la derivación de la paridad no cubierta (epígrafe 2.3.1.2) lleva sobre la flecha el rótulo 'Paridad Cubierta de Intereses' y el pie 'Paridad Cubierta de Intereses: Margen forward', iguales a los del bloque anterior, aunque la ecuación usa el tipo de contado esperado E[E_{t+1}|Ω_t]; y el bloque de implicaciones de política (2.3.2), con E_{t+1} y la depreciación esperada, lleva el pie 'Paridad Cubierta de Intereses: Diferencial'. En la nota de ese bloque, '1+i-1^*' debe ser 1+i-i^*.",
-     "temas": [
-      "3.B.14"
-     ],
-     "error": true,
-     "verificacion": "confirmado",
-     "linea": 1032,
-     "nota_verificacion": "Todas las partes están en el texto: la derivación de la PNCI (2.3.1.2) lleva sobre la flecha «Paridad Cubierta de Intereses» (l. 1032) y el pie «Paridad Cubierta de Intereses: Margen forward» (l. 1040) con E[E_{t+1}|Ω_t]; el bloque de 2.3.2 (l. 1057), que concluye i=i^*+E[TDE], lleva el pie «Paridad Cubierta de Intereses: Diferencial». La nota de la l. 1050 escribe 1+i-1^* en lugar de 1+i-i^*."
-    },
-    {
-     "aspecto": "ecuaciones",
-     "descripcion": "Posible error: en 3.B.14 (epígrafe 4.4) se dice que 'la PCI señalaría que estos altos tipos de interés deberían estar asociados a depreciaciones del tipo de cambio nominal'. Es la paridad no cubierta la que predice la depreciación de las monedas con tipos altos; la cubierta solo fija el tipo a plazo y no dice nada del tipo de contado futuro.",
-     "temas": [
-      "3.B.14"
-     ],
-     "error": true,
-     "verificacion": "confirmado",
-     "linea": 1535,
-     "nota_verificacion": "El texto atribuye a la PCI la predicción de que las monedas con tipos altos se deprecien; la PCI solo fija el descuento a plazo y no dice nada del contado futuro. Es la PNCI (o la insesgadez del tipo a plazo, PCI + PNCI) la que lo predice, como reconoce la propia nota siguiente."
-    },
-    {
-     "aspecto": "implicaciones",
-     "descripcion": "En 3.B.14 el bloque de la paridad cubierta interpreta el margen a plazo como una expectativa: MF>0 indica que 'se espera depreciación de la moneda en el futuro' y MF<0, apreciación. 3.B.25 sostiene lo contrario: el precio a plazo depende del contado, de los tipos y del rendimiento del subyacente, y el margen refleja la diferencia de tipos, no una depreciación esperada; solo lo sería si se cumpliera además la paridad no cubierta, que los datos rechazan. La lectura de 3.B.14 solo vale con sus supuestos de neutralidad al riesgo y expectativas insesgadas, que la paridad cubierta no necesita, y choca con su propio epígrafe 4.4.",
-     "temas": [
-      "3.B.14",
-      "3.B.25"
-     ]
-    },
     {
      "aspecto": "supuestos",
      "descripcion": "3.B.14 deriva las dos paridades con cuatro supuestos comunes (libre movilidad, sustituibilidad perfecta, neutralidad al riesgo, expectativas insesgadas), aunque su nota reconoce que la cubierta solo exige movilidad perfecta y ausencia de riesgo de impago. 3.B.25 la obtiene solo por arbitraje, sin supuestos sobre preferencias ni expectativas, como caso particular de la relación de coste de acarreo con δ=r_f^*.",
@@ -5638,7 +5608,7 @@
     },
     {
      "aspecto": "notacion",
-     "descripcion": "3.B.14 usa E_t para el contado, F_t^{t+1} para el tipo a plazo (E^f_{t+1} en una nota) e i, i^* para los tipos de un periodo con capitalización discreta, y aproxima la condición de forma lineal; 3.B.25 usa S_0, F_0, r_f y r_f^* con capitalización continua y plazo T, lo que da la condición exacta, y da también la versión discreta con R y R^*. La cotización es la misma (moneda nacional por unidad de divisa) y la diferencia de letras es razonable entre un tema de macroeconomía y uno de finanzas, pero 3.B.14 usa dos símbolos para el tipo a plazo.",
+     "descripcion": "3.B.14 usa E_t para el contado, F_t^{t+1} para el tipo a plazo e i, i^* para los tipos de un periodo con capitalización discreta, y aproxima la condición de forma lineal; 3.B.25 usa S_0, F_0, r_f y r_f^* con capitalización continua y plazo T, lo que da la condición exacta, y da también la versión discreta con R y R^*. La cotización es la misma (moneda nacional por unidad de divisa); la diferencia de letras es razonable entre un tema de macroeconomía y uno de finanzas.",
      "temas": [
       "3.B.14",
       "3.B.25"
@@ -5646,14 +5616,14 @@
     },
     {
      "aspecto": "profundidad",
-     "descripcion": "3.B.25 estudia las desviaciones de la paridad cubierta desde 2008 (base de divisas de DU, TEPPER y VERDELHAN, 2018; AVDJIEV, DU, KOCH y SHIN, 2019; líneas swap, BAHAJ y REIS, 2022), que 3.B.14 no menciona; 3.B.14 desarrolla la paridad no cubierta, sus implicaciones para la política monetaria y la paradoja del margen a plazo (FROOT y THALER, 1990), que 3.B.25 solo cita con remisión. El reparto es complementario.",
+     "descripcion": "3.B.25 estudia las desviaciones de la paridad cubierta desde 2008 (base de divisas de DU, TEPPER y VERDELHAN, 2018; AVDJIEV, DU, KOCH y SHIN, 2019; líneas swap, BAHAJ y REIS, 2022), a las que 3.B.14 remite en una nota; 3.B.14 desarrolla la paridad no cubierta, sus implicaciones para la política monetaria y la paradoja del margen a plazo (FROOT y THALER, 1990), que 3.B.25 solo cita con remisión. El reparto es complementario.",
      "temas": [
       "3.B.14",
       "3.B.25"
      ]
     }
    ],
-   "propuesta": "Tomar 3.B.25 como referencia para la paridad cubierta (arbitraje sin supuestos de preferencias, condición exacta, margen como diferencia de tipos, desviaciones desde 2008) y 3.B.14 para la no cubierta y la paradoja del margen a plazo. En 3.B.14: corregir los rótulos y pies que llaman cubierta a la no cubierta y cambiar PCI por PNCI en el epígrafe 4.4; quitar del bloque de la cubierta la lectura del margen como depreciación esperada, o condicionarla expresamente a que también se cumpla la no cubierta; unificar el símbolo del tipo a plazo; y añadir una nota con remisión al anexo II de 3.B.25 sobre la base de divisas. En 3.B.25 basta con mantener la remisión a 3.B.14 y, si se quiere, indicar la equivalencia de notación (S y E, r_f e i, r_f^* e i^*).",
+   "propuesta": "Tomar 3.B.25 como referencia para la paridad cubierta (arbitraje sin supuestos de preferencias, condición exacta, desviaciones desde 2008) y 3.B.14 para la no cubierta y la paradoja del margen a plazo. Las dos remisiones cruzadas ya existen. Si se quiere afinar más, 3.B.14 podría advertir que sus supuestos de sustituibilidad y neutralidad solo hacen falta para la no cubierta, y 3.B.25 indicar la equivalencia de notación (S y E, r_f e i, r_f^* e i^*).",
    "referencia": "3.B.25",
    "temas": {
     "3.B.14": {
@@ -5686,11 +5656,12 @@
      ],
      "desarrollo": "Compara invertir una unidad en un activo nacional, que rinde 1+i, con convertirla a divisa, invertirla al tipo i^* y reconvertirla. Si se reconvierte con un contrato a plazo, se obtiene la paridad cubierta; si al contado futuro esperado, la no cubierta. Con neutralidad al riesgo las dos coinciden, de modo que el tipo de cambio queda determinado por los tipos de interés, y la paradoja del margen a plazo contrasta la igualdad entre el tipo a plazo y el contado esperado.",
      "implicaciones": [
+      "El margen a plazo refleja la diferencia de tipos; solo coincide con la depreciación esperada si se cumple también la paridad no cubierta",
       "Una subida del tipo de interés nacional aprecia hoy la moneda y aumenta la depreciación esperada hasta restablecer la paridad",
       "La evidencia (β_1 cercano a −1) rechaza que el tipo a plazo prediga el contado futuro, en contra de la eficiencia del mercado de divisas con neutralidad al riesgo",
       "El éxito del carry trade refleja el incumplimiento de la paridad no cubierta"
      ],
-     "huella": "1h3uq80",
+     "huella": "509ba2",
      "epigrafes_analizados": [
       "2.3.1 Desarrollo formal",
       "2.3.1.1 Paridad Cubierta de Intereses: Forward",
@@ -5742,50 +5713,17 @@
      ]
     }
    },
-   "fecha": "2026-11-02"
+   "fecha": "2026-11-03"
   },
   "Riesgo de crédito estructural": {
    "familia": "Riesgo de crédito estructural",
-   "prioridad": "alta",
-   "motivo_prioridad": "3.B.26 identifica el préstamo con una call sobre los activos, lo contrario de lo que dice 3.B.25 (las acciones son la call y la deuda, un bono sin riesgo menos una put) y de lo que dice la frase siguiente del propio 3.B.26. Además, 3.B.25 remite a 3.B.26 para el análisis estructural del riesgo de crédito, y 3.B.26 lo desarrolla menos: sin fórmula de valoración.",
-   "enfoque_comun": "Ambos presentan el modelo de MERTON (1974) como traslación de BLACK-SCHOLES a los pasivos de la empresa: con un único pago de deuda D en T, los acreedores reciben min{D,V_T} y los accionistas max{V_T−D,0}, de modo que la probabilidad de impago es endógena y depende del apalancamiento, de la volatilidad de los activos y del plazo.",
+   "prioridad": "baja",
+   "motivo_prioridad": "Las dos presentaciones coinciden en la lectura de las acciones como call y de la deuda como bono sin riesgo menos una put, y en la fórmula de valoración. 3.B.26, que es el tema del riesgo de crédito, añade el diferencial y sus determinantes y la aplicación al seguro de depósitos; 3.B.25 lo presenta como extensión de BLACK-SCHOLES y remite allí.",
+   "enfoque_comun": "Ambos presentan el modelo de MERTON (1974) como traslación de BLACK-SCHOLES a los pasivos de la empresa: con un único pago de deuda D en T, las acciones son una call sobre los activos con precio de ejercicio D, la deuda vale los activos menos esa call (un bono sin riesgo menos una put) y N(−d_2) es la probabilidad neutral al riesgo de impago.",
    "divergencias": [
     {
-     "aspecto": "ecuaciones",
-     "descripcion": "Posible error: 3.B.26 dice que 'un préstamo sería el equivalente al pago de una opción de compra (call option) sobre los activos de la empresa con un precio de ejercicio igual a D'. El pago de esa call, max{V_T−D,0}, es el de las acciones, no el del préstamo; el préstamo equivale a los activos menos esa call, como dice bien la frase siguiente, o a un bono sin riesgo menos una put.",
-     "temas": [
-      "3.B.26"
-     ],
-     "error": true,
-     "verificacion": "confirmado",
-     "linea": 909,
-     "nota_verificacion": "La frase iguala el préstamo al pago de una call sobre los activos con precio de ejercicio D, pero max{V_T-D,0} es el pago de las acciones (así lo rotula el propio \\eqblock de la l. 905). El préstamo es min{D,V_T}=V_T-call=D-put, como dice bien la frase siguiente."
-    },
-    {
-     "aspecto": "ecuaciones",
-     "descripcion": "Posible error: 3.B.26 afirma que el diferencial 'aumenta proporcionalmente al grado de apalancamiento del deudor'. En MERTON (1974) el diferencial es una función creciente pero no lineal del apalancamiento (cociente entre el valor actual de la deuda al tipo sin riesgo y el valor de los activos) y de la volatilidad.",
-     "temas": [
-      "3.B.26"
-     ],
-     "error": true,
-     "verificacion": "confirmado",
-     "linea": 911,
-     "nota_verificacion": "En MERTON (1974) el diferencial s=-(1/T)ln[N(h_2)+N(h_1)/d], con d=De^{-rT}/V_0, es una función creciente y no lineal del cuasiapalancamiento d (casi nula con poco apalancamiento y muy convexa después), no proporcional. Es un error de formulación que se corrige con «aumenta con el grado de apalancamiento»."
-    },
-    {
-     "aspecto": "ecuaciones",
-     "descripcion": "Posible error: en el epígrafe del seguro de depósitos de 3.B.26, el texto da como pérdida esperada agregada n·L y por entidad L, cuando son npL y pL, como en su propia nota; en esa nota la pérdida agregada se define como X_n y después se usa como S_n, y hay erratas que alteran las fórmulas ('E!' y 'Var!' por \\!, 'n,' por n\\,); en S=\\max{D-P',0} faltan las llaves del máximo, que no se imprimen.",
-     "temas": [
-      "3.B.26"
-     ],
-     "error": true,
-     "verificacion": "confirmado",
-     "linea": 1217,
-     "nota_verificacion": "Todas las partes están en el texto: la l. 1217 da n·L y nL/n→L, cuando la pérdida esperada por entidad es pL (l. 1212 y nota) y la agregada npL; la nota (l. 1219) define X_n y usa S_n, y escribe \\mathbb E!, \\mathrm{Var}! y n,\\mathrm{Var}, que imprimen un signo de exclamación (parece un factorial) y una coma. En la l. 1232, \\max{D-P’,0} no imprime las llaves (debería ser \\max\\{D-P',0\\})."
-    },
-    {
      "aspecto": "profundidad",
-     "descripcion": "3.B.25 da la valoración (E=V_0N(d_1)−De^{−r_fT}N(d_2), la deuda como bono sin riesgo menos una put, el diferencial como remuneración de esa put y N(−d_2) como probabilidad neutral al riesgo de impago) y remite a 3.B.26 para el análisis estructural del riesgo de crédito; 3.B.26, que es el tema de destino, solo da los pagos al vencimiento y tres resultados cualitativos, sin fórmula ni expresión del diferencial. La remisión promete más de lo que el destino desarrolla.",
+     "descripcion": "3.B.26 desarrolla el diferencial, s=−(1/T)ln[N(d_2)+N(−d_1)/ℓ], con ℓ=De^{−r_fT}/V(0), y de él deduce que aumenta con el apalancamiento y la volatilidad y que la prima total aumenta con el plazo; 3.B.25 se queda en la fórmula de las acciones y la lectura del diferencial como precio de la put, y remite a 3.B.26 para el análisis estructural del riesgo de crédito. El reparto es coherente con el fin de cada tema.",
      "temas": [
       "3.B.25",
       "3.B.26"
@@ -5793,15 +5731,23 @@
     },
     {
      "aspecto": "implicaciones",
-     "descripcion": "3.B.26 aplica la misma lógica al seguro de depósitos: la indemnización del fondo, max{D−P',0}, tiene la forma de una put sobre la cartera del banco, y una prima uniforme subvenciona el riesgo y genera riesgo moral; remite a MERTON (1974) para la prima justa sin desarrollarla ni hacer explícita la put. 3.B.25 no trata esa aplicación y, en cambio, extiende la valoración a la estructura de capital (remisión a 3.B.3).",
+     "descripcion": "3.B.26 aplica la misma lógica al seguro de depósitos: la indemnización del fondo, max{D−P',0}, tiene la forma de una put sobre la cartera del banco, y una prima uniforme subvenciona el riesgo y genera riesgo moral; remite a MERTON (1974) para la prima justa sin desarrollarla. 3.B.25 no trata esa aplicación y, en cambio, extiende la valoración a la estructura de capital (remisión a 3.B.3).",
+     "temas": [
+      "3.B.25",
+      "3.B.26"
+     ]
+    },
+    {
+     "aspecto": "notacion",
+     "descripcion": "3.B.25 escribe V_0 y E para los activos y las acciones, como en el resto de su anexo; 3.B.26 escribe V(0), E(0) y D_0, con la notación temporal V(t) del tema. Las dos usan r_f, σ, D y T; la diferencia es solo de escritura.",
      "temas": [
       "3.B.25",
       "3.B.26"
      ]
     }
    ],
-   "propuesta": "Tomar 3.B.25 como referencia de la valoración y llevar su núcleo a 3.B.26, que es el tema del riesgo de crédito: la fórmula de las acciones como call, la deuda como bono sin riesgo menos una put, el diferencial como remuneración de esa put y N(−d_2) como probabilidad neutral al riesgo de impago, de la que salen los tres resultados cualitativos que 3.B.26 ya enuncia. En 3.B.26, además, corregir la frase que identifica el préstamo con la call, el 'proporcionalmente' y las erratas del seguro de depósitos, y hacer explícito que la indemnización del fondo es la put de MERTON. 3.B.25 puede quedarse como está, con su presentación breve y la remisión, que pasará a ser exacta; si 3.B.26 incorpora la fórmula, conviene que use r_f y V_0, como 3.B.25 y el glosario.",
-   "referencia": "3.B.25",
+   "propuesta": "Tomar 3.B.26 como referencia para el riesgo de crédito (fórmula, diferencial y determinantes) y 3.B.25 para la derivación de BLACK-SCHOLES de la que procede; las remisiones cruzadas ya existen. Si se quiere afinar más, 3.B.26 podría hacer explícito que la indemnización del fondo de garantía es la put de MERTON y valorar con ella la prima justa.",
+   "referencia": "3.B.26",
    "temas": {
     "3.B.25": {
      "epigrafe": "II.6.8 Extensiones: ¿cómo se adapta a otros subyacentes?",
@@ -5852,28 +5798,33 @@
        "que": "Recuperación del banco y patrimonio de la empresa en T"
       },
       {
-       "tex": "S=\\max\\{D-P',0\\}",
-       "que": "Indemnización del fondo de garantía de depósitos"
+       "tex": "E(0)=V(0)\\,N(d_1)-De^{-r_fT}N(d_2),\\quad d_{1,2}=\\frac{\\ln\\bigl(V(0)/D\\bigr)+(r_f\\pm\\sigma^2/2)T}{\\sigma\\sqrt{T}}",
+       "que": "Valor del patrimonio como call sobre los activos (MERTON, 1974)"
       },
       {
-       "tex": "E[R]=(\\theta X-P)+\\bigl((1-\\theta)D-\\pi\\bigr)",
-       "que": "Beneficio esperado de los accionistas: rendimiento de la cartera más el valor neto de la protección del fondo"
+       "tex": "s=-\\frac{1}{T}\\ln\\left[N(d_2)+\\frac{N(-d_1)}{\\ell}\\right],\\quad \\ell=\\frac{De^{-r_fT}}{V(0)}",
+       "que": "Diferencial del préstamo sobre el tipo sin riesgo"
+      },
+      {
+       "tex": "S=\\max\\{D-P',0\\}",
+       "que": "Indemnización del fondo de garantía de depósitos"
       }
      ],
-     "desarrollo": "Describe los pagos de acreedores y accionistas al vencimiento y los interpreta como opciones sobre los activos de la empresa: prestar con riesgo es como comprar los activos y vender una call a los accionistas. No da la fórmula de valoración y enuncia tres resultados cualitativos sobre el diferencial. En el seguro de depósitos, la protección del fondo es valiosa para los accionistas y una prima que no depende del riesgo incentiva a asumirlo.",
+     "desarrollo": "Describe los pagos de acreedores y accionistas al vencimiento: el patrimonio es una call sobre los activos y prestar con riesgo es como comprar los activos y venderla a los accionistas. Con los supuestos de BLACK-SCHOLES valora el patrimonio y el préstamo, que es un bono sin riesgo menos una put, y obtiene el diferencial en función del apalancamiento a valor de mercado, la volatilidad y el plazo, del que se siguen sus tres resultados. En el seguro de depósitos, una prima que no depende del riesgo incentiva a asumirlo.",
      "implicaciones": [
-      "El diferencial aumenta con el apalancamiento, con la volatilidad de los activos y, en total, con el plazo",
+      "El diferencial aumenta con el apalancamiento y con la volatilidad de los activos, y la prima total aumenta con el plazo",
+      "N(−d_2) es la probabilidad neutral al riesgo de impago",
       "Las primas del seguro de depósitos deben depender del riesgo de cada entidad para evitar el riesgo moral",
       "El fondo es insuficiente ante pérdidas correlacionadas (crisis sistémicas)"
      ],
-     "huella": "17uh79a",
+     "huella": "1yi2hei",
      "epigrafes_analizados": [
       "3.1.1.1 Extensiones: MERTON (1974)",
       "3.3.2.1 Seguro de depósitos: Fondo de Garantía de Depósitos"
      ]
     }
    },
-   "fecha": "2026-11-02"
+   "fecha": "2026-11-03"
   }
  }
 }
