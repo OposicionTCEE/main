@@ -1673,6 +1673,88 @@
     "bloques": 1,
     "grado": "Parcial"
    }
+  ],
+  "3.B.13": [
+   {
+    "familia": "Paridad de intereses",
+    "area": "Macroeconomía abierta",
+    "forma": "Paridad cubierta por réplica del contrato a plazo, con su banda de precios y las desviaciones desde 2008 (base de divisas)",
+    "epigrafes": "Precio: ¿por qué lo fijan los tipos de interés? | Puntos a plazo: ¿cómo se cotiza el precio a plazo? | Cobertura en el mercado de dinero: ¿puede fabricarse un contrato a plazo? | Puntos swap: ¿cuál es el precio de un FX swap? | Base de divisas: ¿qué cuesta conseguir dólares con un swap? | Cubierto de intereses: ¿qué banda deja la paridad cubierta? | Antes de 2008: ¿se cumplían los arbitrajes? | Base de divisas: ¿qué revela su comportamiento desde 2008? | Tensiones: ¿cuándo se dispara la base? | Arbitraje: ¿se cumple la paridad cubierta?",
+    "bloques": 6,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Paridad de intereses",
+    "area": "Macroeconomía abierta",
+    "forma": "Paradoja del margen forward (contraste de eficiencia): regresión y descomposición de FAMA (1984) y carry trade",
+    "epigrafes": "Especulación: ¿por qué rinde el carry trade y cuándo se derrumba? | Carry trade: ¿por qué rinde endeudarse en la moneda de tipo bajo? | Hipótesis conjunta: ¿qué se contrasta al preguntar si acierta el tipo a plazo? | Regresión de FAMA: ¿anticipa el tipo a plazo la depreciación? | Descomposición de FAMA: ¿prima de riesgo o errores de previsión? | Horizontes y monedas: ¿dónde se cumple la paridad no cubierta? | Información: ¿anticipa el tipo a plazo la depreciación?",
+    "bloques": 7,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Valoración de opciones",
+    "area": "Finanzas",
+    "forma": "GARMAN y KOHLHAGEN (1983): opciones sobre divisas, paridad put-call y cotización por volatilidades",
+    "epigrafes": "Contrato: ¿por qué una opción sobre divisas es a la vez de compra y de venta? | Valor: ¿de qué depende el precio de una opción sobre divisas? | Cotización: ¿qué dicen la risk reversal y la mariposa?",
+    "bloques": 4,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Inventario del intermediario (precios de reserva)",
+    "area": "Finanzas",
+    "forma": "Precio de reserva con aversión al riesgo e inventario (HO y STOLL, 1981) y patata caliente (LYONS, 1997)",
+    "epigrafes": "Inventario: ¿por qué tanto volumen entre intermediarios? | Riesgo de inventario: ¿qué arriesga quien da liquidez? | Precios de reserva: ¿cómo se desplaza la cotización con el inventario? | Patata caliente: ¿por qué tanto volumen entre intermediarios?",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Selección adversa en la horquilla (GLOSTEN y MILGROM)",
+    "area": "Finanzas",
+    "forma": "Versión original (GLOSTEN y MILGROM, 1985)",
+    "epigrafes": "Horquilla: ¿qué cobra el intermediario y por qué? | Horquilla: ¿por qué hay que pagar por la inmediatez? | Selección adversa: ¿qué pierde el intermediario con el cliente informado? | GLOSTEN y MILGROM: ¿cuánto vale la horquilla?",
+    "bloques": 2,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Negociación con información privada (KYLE)",
+    "area": "Finanzas",
+    "forma": "Versión de un periodo (KYLE, 1985)",
+    "epigrafes": "Información: ¿qué aprende el intermediario de sus clientes? | KYLE: ¿cómo entra la información en el precio? | Información en divisas: ¿quién sabe más que el mercado?",
+    "bloques": 1,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Flujo de órdenes y tipo de cambio (EVANS y LYONS)",
+    "area": "Macroeconomía abierta",
+    "forma": "Regresión del tipo de cambio sobre el diferencial de intereses y el flujo de órdenes (EVANS y LYONS, 2002)",
+    "epigrafes": "EVANS y LYONS: ¿explica el flujo de órdenes el tipo de cambio?",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Moneda vehicular (KRUGMAN)",
+    "area": "Macroeconomía abierta",
+    "forma": "Costes de transacción que bajan con el volumen (KRUGMAN, 1980)",
+    "epigrafes": "Moneda vehicular: ¿por qué conviene cambiar a través del dólar? | Moneda vehicular: ¿por qué conviene cambiar a través de una tercera moneda?",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Arbitraje triangular y tipos cruzados",
+    "area": "Finanzas",
+    "forma": "Tipos cruzados con horquillas y arbitrajes espacial y triangular",
+    "epigrafes": "Tipos cruzados: ¿cómo se obtiene el precio entre dos monedas que apenas se negocian entre sí? | Espacial: ¿puede un mismo par tener dos precios? | Triangular: ¿cuándo se gana dando la vuelta por tres monedas?",
+    "bloques": 6,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Exposición cambiaria de la empresa (ADLER y DUMAS)",
+    "area": "Finanzas",
+    "forma": "Exposición como coeficiente de la regresión del valor de la empresa sobre el tipo de cambio (ADLER y DUMAS, 1984)",
+    "epigrafes": "Exposición: ¿qué parte de la empresa depende del tipo de cambio? | Medición: ¿por qué las empresas parecen poco expuestas?",
+    "bloques": 1,
+    "grado": "Parcial"
+   }
   ]
  },
  "por_familia": {
@@ -1843,6 +1925,7 @@
    "3.B.14"
   ],
   "Paridad de intereses": [
+   "3.B.13",
    "3.B.14",
    "3.B.25"
   ],
@@ -1995,6 +2078,7 @@
    "3.B.23"
   ],
   "Valoración de opciones": [
+   "3.B.13",
    "3.B.25"
   ],
   "Riesgo de crédito estructural": [
@@ -2059,6 +2143,27 @@
   ],
   "Estructura temporal / tipos al contado, a plazo y par": [
    "3.B.24"
+  ],
+  "Inventario del intermediario (precios de reserva)": [
+   "3.B.13"
+  ],
+  "Selección adversa en la horquilla (GLOSTEN y MILGROM)": [
+   "3.B.13"
+  ],
+  "Negociación con información privada (KYLE)": [
+   "3.B.13"
+  ],
+  "Flujo de órdenes y tipo de cambio (EVANS y LYONS)": [
+   "3.B.13"
+  ],
+  "Moneda vehicular (KRUGMAN)": [
+   "3.B.13"
+  ],
+  "Arbitraje triangular y tipos cruzados": [
+   "3.B.13"
+  ],
+  "Exposición cambiaria de la empresa (ADLER y DUMAS)": [
+   "3.B.13"
   ]
  }
 }
