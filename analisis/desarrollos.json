@@ -1584,19 +1584,75 @@
   ],
   "3.B.24": [
    {
-    "familia": "Estructura temporal: expectativas y hábitat",
+    "familia": "Valoración de bonos: valor actual y TIR",
     "area": "Finanzas",
-    "forma": "Versión original",
-    "epigrafes": "Teoria de las Expectativas puras",
-    "bloques": 1,
+    "forma": "Valor actual con tipo único, prima y descuento, convergencia a la par, TIR y rentabilidad realizada",
+    "epigrafes": "Valor actual: ¿por qué el precio es la suma de los pagos descontados? | Par, prima y descuento: ¿por qué casi nunca cotiza un bono por su nominal? | Rendimiento al vencimiento: ¿qué tipo iguala el valor de los pagos con el precio? | Rentabilidad realizada: ¿cuándo se obtiene lo que promete la TIR? | Valor actual: ¿por qué un euro futuro vale menos que uno de hoy? | Fórmula: ¿cuánto vale un bono con cupón? | Par, prima y descuento: ¿por qué casi nunca cotiza un bono a su nominal? | Entre cupones: ¿qué se paga al comprar un bono entre dos fechas de pago? | Rendimiento al vencimiento: ¿qué tipo iguala el precio y los pagos? | Condiciones: ¿cuándo obtiene el inversor el rendimiento al vencimiento? | Otras medidas: ¿qué dicen el cupón y el rendimiento corriente? | Convenciones de rendimiento: ¿cómo se comparan rendimientos calculados de forma distinta?",
+    "bloques": 18,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Duración / convexidad",
+    "area": "Finanzas",
+    "forma": "MACAULAY (1938), HICKS (1939) y aproximación de segundo orden",
+    "epigrafes": "Plazo medio: ¿cuándo cobra, en promedio, el tenedor? | Sensibilidad: ¿por qué el plazo medio mide el riesgo? | Segundo orden: ¿qué añade la curvatura? | Valor: ¿se paga la convexidad? | Convexidad negativa: ¿qué ocurre cuando el emisor puede amortizar el bono? | Duración de MACAULAY: ¿cuándo cobra, en promedio, el inversor? | Duración modificada: ¿en qué porcentaje cambia el precio? | Medidas en euros y carteras: ¿cuántos euros se pierden y cómo se suman los riesgos? | Curva de tipos: ¿qué duración se usa cuando cada plazo tiene su tipo? | Segundo orden: ¿cuánto se equivoca la duración? | Determinantes: ¿de qué depende la convexidad? | Valor de la convexidad: ¿se paga por ella?",
+    "bloques": 13,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Inmunización y brecha de duración (REDINGTON)",
+    "area": "Finanzas",
+    "forma": "Inmunización con horizonte igual a la duración, condiciones de REDINGTON (1952) y brecha de duración de un balance",
+    "epigrafes": "Inmunización: ¿cómo se asegura la rentabilidad prometida? | Balances: ¿qué riesgo de tipo de interés tienen las entidades financieras? | Inmunización: ¿cómo se asegura una rentabilidad aunque cambien los tipos? | Activos y pasivos: ¿qué condiciones protegen el excedente? | Balances: ¿qué riesgo de tipo de interés tienen los bancos, las aseguradoras y los fondos de pensiones?",
+    "bloques": 4,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Riesgo de crédito en forma reducida (intensidad de impago)",
+    "area": "Finanzas",
+    "forma": "Pérdida esperada, diferencial igual a la probabilidad por la pérdida e intensidad constante (JARROW y TURNBULL, 1995; DUFFIE y SINGLETON, 1999)",
+    "epigrafes": "Crédito: ¿cuánto vale la posibilidad de impago? | Pérdida esperada: ¿cuánto se pierde, en promedio, por el impago? | Diferencial de crédito: ¿por qué es mayor que la pérdida esperada?",
+    "bloques": 3,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Ecuación de FISHER e inflación implícita",
+    "area": "Finanzas",
+    "forma": "Rendimiento real, inflación esperada e inflación implícita a cinco años dentro de cinco",
+    "epigrafes": "Rendimiento real: ¿cuánto rinde un bono en poder de compra? | Inflación: ¿qué inflación descuentan los mercados?",
+    "bloques": 2,
     "grado": "Parcial"
+   },
+   {
+    "familia": "Estructura temporal / tipos al contado, a plazo y par",
+    "area": "Finanzas",
+    "forma": "Ley del precio único, bootstrapping, tipos par y efecto cupón",
+    "epigrafes": "Tipos al contado: ¿cuánto vale hoy un euro de cada fecha? | Tipos a plazo: ¿qué tipo puede asegurarse hoy para prestar en el futuro? | Bootstrapping: ¿cómo se despeja la curva bono a bono? | Tipos a plazo: ¿qué tipo puede fijarse hoy para un préstamo futuro? | Tipos par: ¿qué cupón hace que un bono valga su nominal? | Efecto cupón: ¿por qué el rendimiento al vencimiento no es la curva? | Bootstrapping: ¿cómo se despejan los tipos plazo a plazo?",
+    "bloques": 9,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Curva de NELSON y SIEGEL y factores de la curva",
+    "area": "Finanzas",
+    "forma": "NELSON y SIEGEL (1987), SVENSSON (1994) y componentes principales (LITTERMAN y SCHEINKMAN, 1991)",
+    "epigrafes": "Modelos: ¿cómo se resume la curva con pocos factores? | Movimientos: ¿cómo cambia la curva? | Modelos paramétricos: ¿cómo se suaviza la curva? | Factores: ¿cuántas cosas mueven la curva?",
+    "bloques": 2,
+    "grado": "Completo"
    },
    {
     "familia": "Estructura temporal: expectativas y hábitat",
     "area": "Finanzas",
-    "forma": "Hábitat preferido (Modigliani-Sutch 1966)",
-    "epigrafes": "Teoria del habitat preferido",
-    "bloques": 1,
+    "forma": "Hipótesis de las expectativas, prima por plazo (HICKS, 1939), segmentación (CULBERTSON, 1957) y hábitat (MODIGLIANI y SUTCH, 1966; VAYANOS y VILA, 2021)",
+    "epigrafes": "Hipótesis: ¿qué dice la curva si solo importan las expectativas? | Contraste: ¿se cumple la hipótesis? | Riesgo: ¿por qué prestar a largo exige una prima? | Hábitat: ¿qué papel tienen la oferta y la demanda de cada plazo? | Evidencia: ¿cuánto vale la prima por plazo? | Hipótesis: ¿qué dice la teoría de las expectativas? | Contraste: ¿predicen los tipos a plazo los tipos futuros? | Paso del tiempo: ¿qué gana un bono si la curva no cambia? | Riesgo: ¿por qué se cobraría una prima por prestar a largo? | Segmentación y hábitat: ¿importa cuántos bonos hay de cada plazo? | Estimaciones: ¿cuánto vale la prima por plazo? | Compras de bonos: ¿pueden los bancos centrales bajar la prima por plazo?",
+    "bloques": 2,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Modelos afines de la estructura temporal (VASICEK, CIR)",
+    "area": "Finanzas",
+    "forma": "VASICEK (1977) con su versión discreta y COX, INGERSOLL y ROSS (1985); factor de descuento estocástico",
+    "epigrafes": "Equilibrio: ¿cómo se mueve el tipo corto? | No arbitraje: ¿cómo se ajusta un modelo a la curva de hoy? | Macrofinanzas: ¿qué hay detrás de los factores? | Límite inferior: ¿qué ocurre cuando el tipo corto no puede bajar más?",
+    "bloques": 3,
     "grado": "Parcial"
    }
   ],
@@ -1970,6 +2026,30 @@
   ],
   "Teorema fundamental de la valoración": [
    "3.B.25"
+  ],
+  "Valoración de bonos: valor actual y TIR": [
+   "3.B.24"
+  ],
+  "Inmunización y brecha de duración (REDINGTON)": [
+   "3.B.24"
+  ],
+  "Riesgo de crédito en forma reducida (intensidad de impago)": [
+   "3.B.24"
+  ],
+  "Ecuación de FISHER e inflación implícita": [
+   "3.B.24"
+  ],
+  "Curva de NELSON y SIEGEL y factores de la curva": [
+   "3.B.24"
+  ],
+  "Modelos afines de la estructura temporal (VASICEK, CIR)": [
+   "3.B.24"
+  ],
+  "Duración / convexidad": [
+   "3.B.24"
+  ],
+  "Estructura temporal / tipos al contado, a plazo y par": [
+   "3.B.24"
   ]
  }
 }
