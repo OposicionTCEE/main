@@ -1,5 +1,5 @@
 {
- "generado": "2026-11-03",
+ "generado": "2026-11-04",
  "metodo": "Informes escritos por Claude leyendo los desarrollos de cada modelo en cada tema; los posibles errores fueron revisados por un segundo análisis independiente (ver RELACIONES.md). Cada tema guarda la huella de su desarrollo para avisar cuando cambia.",
  "modelos": {
   "Burbujas racionales": {
@@ -5608,7 +5608,7 @@
     },
     {
      "aspecto": "notacion",
-     "descripcion": "3.B.14 usa E_t para el contado, F_t^{t+1} para el tipo a plazo e i, i^* para los tipos de un periodo con capitalización discreta, y aproxima la condición de forma lineal; 3.B.25 usa S_0, F_0, r_f y r_f^* con capitalización continua y plazo T, lo que da la condición exacta, y da también la versión discreta con R y R^*. La cotización es la misma (moneda nacional por unidad de divisa); la diferencia de letras es razonable entre un tema de macroeconomía y uno de finanzas.",
+     "descripcion": "3.B.14 usa E_t para el contado, F_t^{t+1} para el tipo a plazo e i, i^* para los tipos de un periodo con capitalización discreta, y aproxima la condición de forma lineal; 3.B.25 usa S_0, F_0, r_f y r_f^* con capitalización continua y plazo T, lo que da la condición exacta, y da también la versión discreta con r_T y r_T^*. La cotización es la misma (moneda nacional por unidad de divisa); la diferencia de letras es razonable entre un tema de macroeconomía y uno de finanzas.",
      "temas": [
       "3.B.14",
       "3.B.25"
@@ -5671,9 +5671,9 @@
      ]
     },
     "3.B.25": {
-     "epigrafe": "3.1 Contratos a Plazo: ¿cuánto vale un compromiso?, II.2.2 Paridad Cubierta: ¿qué tipo de cambio a plazo fija el arbitraje? y II.10.2 Paridad Cubierta: ¿por qué dejó de cumplirse a partir de 2008?",
+     "epigrafe": "3.2.2 Paridad Cubierta: ¿cuánto vale una divisa a plazo?, II.2.2 Paridad Cubierta: ¿qué tipo de cambio a plazo fija el arbitraje? y II.10.2 Paridad Cubierta: ¿por qué dejó de cumplirse a partir de 2008?",
      "papel": "Caso particular de la relación de coste de acarreo aplicada a las divisas: fija el tipo de cambio a plazo, el precio del FX swap y la base de divisas.",
-     "contexto": "En el cuerpo, dentro de la valoración de los contratos a plazo, para mostrar que el precio a plazo no es una previsión; en el anexo II, con la figura del arbitraje y, al final, las desviaciones desde 2008.",
+     "contexto": "En el cuerpo, dentro de la valoración de los contratos a plazo, que aplica el método del marco común (una réplica fija y el valor esperado con las probabilidades neutrales al riesgo), para mostrar que el precio a plazo no es una previsión; en el anexo II, con la figura del arbitraje y, al final, las desviaciones desde 2008.",
      "supuestos": [
       "Ausencia de oportunidades de arbitraje",
       "Endeudamiento y depósito sin riesgo en las dos monedas",
@@ -5690,8 +5690,8 @@
        "que": "Paridad cubierta (KEYNES, 1923): coste de acarreo con δ=r_f^*"
       },
       {
-       "tex": "F_0=S_0\\,\\frac{1+R}{1+R^*}",
-       "que": "Versión en tiempo discreto, con R y R^* los tipos del periodo"
+       "tex": "F_0=S_0\\,\\frac{1+r_T}{1+r_T^*}",
+       "que": "Versión en tiempo discreto, con r_T y r_T^* los tipos del periodo"
       },
       {
        "tex": "x=r_f^*-\\left[r_f-\\frac{1}{T}\\ln\\frac{F_0}{S_0}\\right]",
@@ -5705,15 +5705,15 @@
       "El margen a plazo da el precio del FX swap",
       "Las desviaciones desde 2008 reflejan límites al arbitraje (regulación del balance bancario), no riesgo de crédito"
      ],
-     "huella": "r1jdl7",
+     "huella": "17xitn2",
      "epigrafes_analizados": [
-      "3.1 Contratos a Plazo: ¿cuánto vale un compromiso?",
+      "3.2.2 Paridad Cubierta: ¿cuánto vale una divisa a plazo?",
       "II.2.2 Paridad Cubierta: ¿qué tipo de cambio a plazo fija el arbitraje?",
       "II.10.2 Paridad Cubierta: ¿por qué dejó de cumplirse a partir de 2008?"
      ]
     }
    },
-   "fecha": "2026-11-03"
+   "fecha": "2026-11-04"
   },
   "Riesgo de crédito estructural": {
    "familia": "Riesgo de crédito estructural",
@@ -5739,7 +5739,7 @@
     },
     {
      "aspecto": "notacion",
-     "descripcion": "3.B.25 escribe V_0 y E para los activos y las acciones, como en el resto de su anexo; 3.B.26 escribe V(0), E(0) y D_0, con la notación temporal V(t) del tema. Las dos usan r_f, σ, D y T; la diferencia es solo de escritura.",
+     "descripcion": "3.B.25 escribe V_0 para los activos y c para las acciones, la letra de la call en todo el tema; 3.B.26 escribe V(0), E(0) y D_0, con la notación temporal V(t) del tema. Las dos usan r_f, σ, D y T; la diferencia es solo de escritura.",
      "temas": [
       "3.B.25",
       "3.B.26"
@@ -5760,11 +5760,11 @@
      ],
      "ecuaciones": [
       {
-       "tex": "E=V_0N(d_1)-De^{-r_fT}N(d_2)",
-       "que": "Valor de las acciones como call sobre los activos con precio de ejercicio D"
+       "tex": "c=V_0N(d_1)-De^{-r_fT}N(d_2)",
+       "que": "Valor de las acciones como call, c, sobre los activos con precio de ejercicio D"
       },
       {
-       "tex": "\\text{deuda}=V_0-E",
+       "tex": "\\text{deuda}=V_0-c",
        "que": "Valor de la deuda: un bono sin riesgo menos una put; su diferencial remunera la put"
       },
       {
@@ -5778,7 +5778,7 @@
       "N(−d_2) es la probabilidad neutral al riesgo de impago",
       "Base del análisis estructural del riesgo de crédito (3.B.26) y de su aplicación a la estructura de capital (3.B.3)"
      ],
-     "huella": "1ref7r4",
+     "huella": "15psk5w",
      "epigrafes_analizados": [
       "II.6.8 Extensiones: ¿cómo se adapta a otros subyacentes?"
      ]
@@ -5824,7 +5824,7 @@
      ]
     }
    },
-   "fecha": "2026-11-03"
+   "fecha": "2026-11-04"
   }
  }
 }
