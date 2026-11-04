@@ -1442,6 +1442,14 @@
     "epigrafes": "Cobertura Empresarial: ¿por qué se cubren las empresas si sus accionistas pueden hacerlo?",
     "bloques": 2,
     "grado": "Parcial"
+   },
+   {
+    "familia": "Riesgo de crédito en forma reducida (intensidad de impago)",
+    "area": "Finanzas",
+    "forma": "Valoración de un CDS con intensidad constante: triángulo del crédito, diferencial igual a la intensidad por la pérdida",
+    "epigrafes": "Swap de Incumplimiento: ¿cuánto vale la protección?",
+    "bloques": 1,
+    "grado": "Parcial"
    }
   ],
   "3.B.26": [
@@ -2034,7 +2042,8 @@
    "3.B.24"
   ],
   "Riesgo de crédito en forma reducida (intensidad de impago)": [
-   "3.B.24"
+   "3.B.24",
+   "3.B.25"
   ],
   "Ecuación de FISHER e inflación implícita": [
    "3.B.24"
