@@ -5825,6 +5825,150 @@
     }
    },
    "fecha": "2026-11-04"
+  },
+  "Riesgo de crédito en forma reducida (intensidad de impago)": {
+   "familia": "Riesgo de crédito en forma reducida (intensidad de impago)",
+   "prioridad": "media",
+   "motivo_prioridad": "Las dos presentaciones llegan al mismo resultado, el diferencial igual a la intensidad de impago por la pérdida en caso de impago, y coinciden en que la intensidad que se lee en los precios es neutral al riesgo. Pero la profundidad es muy desigual (tres epígrafes en 3.B.24, uno breve en 3.B.25), los mismos parámetros llevan letras distintas (λ y ℓ frente a γ y 1−R), la convención de recuperación no es la misma sin que ninguno lo advierta y 3.B.25 mezcla λ y γ en un mismo párrafo.",
+   "enfoque_comun": "Los dos tratan el impago como un suceso que llega por sorpresa con una intensidad constante, de modo que la probabilidad de sobrevivir hasta t es exponencial, y con un tipo sin riesgo r_f constante y capitalización continua llegan a la misma regla: el diferencial es la intensidad de impago multiplicada por la pérdida en caso de impago (s=λℓ en 3.B.24, s=γ(1−R) en 3.B.25). Los dos advierten que la intensidad que se deduce de los precios es neutral al riesgo y mayor que la que indican las frecuencias históricas de impago, porque incluye una prima, y relacionan el diferencial del bono con el precio del CDS de la misma entidad.",
+   "divergencias": [
+    {
+     "aspecto": "enfoque",
+     "descripcion": "3.B.24 valora el bono como su pago esperado descontado a r_f: parte de un modelo de un periodo con inversores neutrales al riesgo, P=(1−pℓ)CF/(1+r_f), del que obtiene s≈pℓ, lo extiende a cualquier plazo con intensidad constante (JARROW y TURNBULL, 1995; DUFFIE y SINGLETON, 1999) y solo después, al explicar el enigma del diferencial (I.4.3), distingue la probabilidad neutral al riesgo de la histórica. 3.B.25 obtiene el diferencial justo de un CDS igualando el valor actual de sus dos patas, dentro de la valoración por arbitraje de su anexo II, y en el mismo epígrafe presenta la intensidad que se despeja de los precios como neutral al riesgo. Las dos lecturas son compatibles y responden al fin de cada tema, pero 3.B.24 no dice en I.4.1 que la λ que se lee en los precios es la neutral al riesgo.",
+     "temas": [
+      "3.B.24",
+      "3.B.25"
+     ]
+    },
+    {
+     "aspecto": "supuestos",
+     "descripcion": "3.B.24 supone que el tenedor pierde una fracción ℓ del valor que tenía el bono justo antes del impago (recuperación del valor de mercado de DUFFIE y SINGLETON, 1999), con la que s=λℓ es exacto para un cupón cero a cualquier plazo. 3.B.25 supone que se pierde 1−R por unidad de nominal, como paga el contrato, en el momento del impago, con la que s=γ(1−R) es exacto para el CDS con primas continuas. Ninguno advierte que las convenciones son distintas: con recuperación sobre el nominal, el diferencial de un bono solo es aproximadamente γ(1−R) (exacto si cotiza a la par y paga cupones continuos), y por eso el diferencial del CDS y el del bono se parecen sin coincidir.",
+     "temas": [
+      "3.B.24",
+      "3.B.25"
+     ]
+    },
+    {
+     "aspecto": "notacion",
+     "descripcion": "3.B.24 escribe λ para la intensidad de impago, ℓ para la pérdida en caso de impago y p para la probabilidad de impago a un año; 3.B.25 escribe γ para la intensidad y R para la tasa de recuperación, con la pérdida 1−R, y reserva λ para el precio de mercado del riesgo, (μ−r_f)/σ, en su anexo II. Los dos usan s y r_f, pero s es en 3.B.24 el diferencial del bono, y−r_f, y en 3.B.25 la prima del CDS, su pata fija. Es una convención distinta pero válida, recogida en el glosario: λ y ℓ de 3.B.24 hacen el papel de γ y 1−R de 3.B.25, con la salvedad de la convención de recuperación.",
+     "temas": [
+      "3.B.24",
+      "3.B.25"
+     ]
+    },
+    {
+     "aspecto": "notacion",
+     "descripcion": "Posible error: en 3.B.25 (II.3.5 Swap de Incumplimiento, línea 2586) se dice que las probabilidades se obtienen de los CDS al despejar λ, cuando la intensidad de impago del epígrafe es γ (s=γ(1−R), línea 2585). En el 3.B.25, λ es el precio de mercado del riesgo, (μ−r_f)/σ (II.7.3, línea 2909), así que la letra queda con dos sentidos en el tema y la intensidad con dos letras en el mismo párrafo. Debe decir γ.",
+     "temas": [
+      "3.B.25"
+     ],
+     "error": true,
+     "verificacion": "confirmado",
+     "linea": 2586,
+     "nota_verificacion": "En el 3.B.25 la intensidad de impago del CDS es γ (s = γ(1 − R), l.2585), pero la frase siguiente habla de despejar λ, letra que el tema reserva para el precio de mercado del riesgo (l.2909). Debe decir γ."
+    },
+    {
+     "aspecto": "implicaciones",
+     "descripcion": "3.B.24 usa el CDS para aislar el componente de impago del diferencial del bono y liga el resto a la liquidez del bono y del mercado (LONGSTAFF, MITHAL y NEIS, 2005), y dice que la diferencia entre la probabilidad neutral al riesgo y la histórica mide el precio del riesgo de impago, con remisión a 3.B.25. 3.B.25 dice que las probabilidades que se despejan de los CDS incluyen, además de la prima por el riesgo de impago, una prima por la falta de liquidez (también en su tabla del anexo III), y añade la base entre el CDS y el bono, muy negativa en 2008 por el coste de financiar el bono y el riesgo de contraparte (GÂRLEANU y PEDERSEN, 2011; BAI y COLLIN-DUFRESNE, 2019), que 3.B.24 no trata. Las dos lecturas son defendibles, pero juntas dejan sin aclarar si la prima de liquidez está en el bono, en el CDS o en los dos.",
+     "temas": [
+      "3.B.24",
+      "3.B.25"
+     ]
+    },
+    {
+     "aspecto": "profundidad",
+     "descripcion": "3.B.24 desarrolla el modelo en tres epígrafes: en el cuerpo, la regla de la pérdida esperada con la derivación en nota; en el anexo I.4, la versión de un periodo con su árbol, la de tiempo continuo con sus autores, ejemplos numéricos y el enigma del diferencial con su evidencia y la serie histórica del diferencial Baa. 3.B.25 le dedica un epígrafe breve, de dos párrafos, sin citar autores del modelo y sin remisión a 3.B.24, aunque 3.B.24 remite a 3.B.25 para el CDS y para la diferencia entre la probabilidad neutral al riesgo y la histórica. El reparto se justifica por el fin de cada tema, pero falta la remisión de vuelta.",
+     "temas": [
+      "3.B.24",
+      "3.B.25"
+     ]
+    }
+   ],
+   "propuesta": "Tomar 3.B.24 como referencia del modelo (versión de un periodo, intensidad constante con sus autores, enigma del diferencial) y 3.B.25 como referencia de su aplicación al CDS, la única que deriva el triángulo del crédito igualando las dos patas. En 3.B.25, cambiar λ por γ en la frase sobre las probabilidades implícitas y añadir una remisión a 3.B.24 (anexo I.4) para el diferencial del bono, el enigma y los modelos de intensidad (JARROW y TURNBULL, 1995; DUFFIE y SINGLETON, 1999). En 3.B.24, decir en I.4.1 que la λ que se lee en los precios es la intensidad neutral al riesgo y que s=λℓ es exacto con recuperación del valor de mercado, pero solo aproximado con recuperación sobre el nominal, la del CDS, lo que explica que el diferencial del bono y el del CDS se parezcan sin coincidir. Si se quiere una sola letra para la intensidad, la que menos choca es γ, ya usada en 3.B.25, porque λ es la prima de riesgo en 3.B.2 y 3.B.23 y el precio de mercado del riesgo en 3.B.25; si no, basta una nota con la equivalencia (λ y ℓ en 3.B.24, γ y 1−R en 3.B.25). Por último, alinear dónde se sitúa la prima de liquidez: o 3.B.24 advierte que el CDS también la lleva, o 3.B.25 matiza que, con LONGSTAFF, MITHAL y NEIS (2005), se atribuye sobre todo al bono.",
+   "referencia": "3.B.24",
+   "temas": {
+    "3.B.24": {
+     "epigrafe": "2.3.1 Crédito: ¿cuánto vale la posibilidad de impago?, con el anexo I.4.1 Pérdida esperada: ¿cuánto se pierde, en promedio, por el impago? e I.4.3 Diferencial de crédito: ¿por qué es mayor que la pérdida esperada?",
+     "papel": "Explica el componente de crédito del diferencial de un bono sobre el tipo sin riesgo: compensa la pérdida esperada, y lo que la supera es la prima por soportar el riesgo de impago.",
+     "contexto": "En el cuerpo, primer riesgo de la descomposición del rendimiento en precio del tiempo y diferencial (2.3), con la derivación de un periodo en nota y remisión al anexo. En el anexo I.4, la versión de un periodo, su extensión a cualquier plazo con intensidad constante y el enigma del diferencial de crédito, con su evidencia y la serie del diferencial Baa frente al Tesoro estadounidense.",
+     "supuestos": [
+      "Un pago prometido CF a un año que se impaga con probabilidad p; si hay impago se recupera (1−ℓ)CF",
+      "Inversores neutrales al riesgo en el modelo de un periodo: el precio es el pago esperado descontado a r_f",
+      "En la extensión, intensidad de impago λ constante: la probabilidad de sobrevivir t años es e^{−λt}",
+      "Recuperación de una fracción del valor de mercado (DUFFIE y SINGLETON, 1999): si hay impago se pierde la fracción ℓ del valor que tenía el bono",
+      "Tipo sin riesgo r_f constante, con capitalización continua en la versión de intensidad"
+     ],
+     "ecuaciones": [
+      {
+       "tex": "P=\\frac{(1-p)\\,CF+p\\,(1-\\ell)\\,CF}{1+r_f}=\\frac{(1-p\\,\\ell)\\,CF}{1+r_f}",
+       "que": "Precio de un bono que promete CF a un año, con inversores neutrales al riesgo"
+      },
+      {
+       "tex": "s=y-r_f=\\frac{(1+r_f)\\,p\\,\\ell}{1-p\\,\\ell}\\approx p\\,\\ell",
+       "que": "Diferencial: aproximadamente la pérdida esperada, la probabilidad de impago por la pérdida en caso de impago"
+      },
+      {
+       "tex": "P=N\\,e^{-(r_f+\\lambda\\ell)T}",
+       "que": "Cupón cero con riesgo e intensidad constante: se descuenta a r_f+λℓ (DUFFIE y SINGLETON, 1999, recuperación del valor de mercado)"
+      },
+      {
+       "tex": "s=\\lambda\\,\\ell",
+       "que": "Diferencial en tiempo continuo: intensidad de impago por pérdida en caso de impago"
+      }
+     ],
+     "desarrollo": "Parte de un bono que promete CF a un año: con probabilidad p impaga y el tenedor recupera (1−ℓ)CF, y con inversores neutrales al riesgo el precio es el pago esperado descontado a r_f; como 1+y=CF/P, el diferencial es aproximadamente la pérdida esperada, pℓ. Con intensidad constante λ y recuperación de una fracción del valor de mercado, un cupón cero con riesgo se descuenta a r_f+λℓ y el diferencial es λℓ a cualquier plazo, lo que permite leer en los precios la intensidad que descuenta el mercado. Después contrasta la regla con los datos: el diferencial observado supera la pérdida esperada, sobre todo con grado de inversión, y lo explica por una prima por riesgo de impago sistemático, además de impuestos y liquidez.",
+     "implicaciones": [
+      "El rendimiento de un bono con riesgo es una rentabilidad prometida, no esperada: el inversor neutral al riesgo espera obtener r_f",
+      "El diferencial compensa la pérdida esperada, no la probabilidad de impago por sí sola: con la misma probabilidad, un bono con más prelación o con garantías necesita un diferencial mucho menor",
+      "Enigma del diferencial: la pérdida esperada explica una parte pequeña del diferencial con grado de inversión (ELTON, GRUBER, AGRAWAL y MANN, 2001; HUANG y HUANG, 2012) porque los impagos se concentran en las recesiones y el mercado cobra una prima por ello (CHEN, COLLIN-DUFRESNE y GOLDSTEIN, 2009); por eso la probabilidad neutral al riesgo supera a la histórica",
+      "Medido con los CDS, el riesgo de impago explica la mayor parte del diferencial y el resto se liga a la liquidez (LONGSTAFF, MITHAL y NEIS, 2005)",
+      "Los diferenciales se disparan en las crisis y se mueven sobre todo por un factor común a todos los bonos (COLLIN-DUFRESNE, GOLDSTEIN y MARTIN, 2001)"
+     ],
+     "huella": "cvvjps",
+     "epigrafes_analizados": [
+      "2.3.1 Crédito: ¿cuánto vale la posibilidad de impago?",
+      "I.4.1 Pérdida esperada: ¿cuánto se pierde, en promedio, por el impago?",
+      "I.4.3 Diferencial de crédito: ¿por qué es mayor que la pérdida esperada?"
+     ]
+    },
+    "3.B.25": {
+     "epigrafe": "II.3.5 Swap de Incumplimiento: ¿cuánto vale la protección?",
+     "papel": "Valora un CDS: el diferencial justo de la protección se obtiene igualando el valor de sus dos patas con una intensidad de impago constante (triángulo del crédito).",
+     "contexto": "Penúltimo epígrafe de la valoración de los swaps en el anexo II, que valora por arbitraje, tras los swaps de tipos y de divisas y antes del riesgo de contraparte. El contrato, los sucesos de crédito y el CDS descubierto se describen en el anexo I, y la base entre el CDS y el bono, en II.10.4.",
+     "supuestos": [
+      "Intensidad de impago γ constante: la probabilidad de sobrevivir hasta t es e^{−γt}",
+      "Si hay impago, el vendedor paga en ese momento 1−R por unidad de nominal, donde R es la tasa de recuperación",
+      "Primas pagadas de forma continua hasta el impago o el vencimiento T",
+      "Tipo sin riesgo r_f constante, con capitalización continua",
+      "Valoración por arbitraje del anexo II: la intensidad que se despeja de los precios es la neutral al riesgo"
+     ],
+     "ecuaciones": [
+      {
+       "tex": "\\text{pata de la prima}=s\\int_0^T e^{-(r_f+\\gamma)t}\\,dt",
+       "que": "Valor de la pata de la prima: el diferencial por el valor actual de una renta continua que se paga mientras no hay impago"
+      },
+      {
+       "tex": "\\text{pata de la protección}=(1-R)\\int_0^T\\gamma\\,e^{-\\gamma t}\\,e^{-r_f t}\\,dt",
+       "que": "Valor de la pata de la protección: la pérdida por unidad de nominal, ponderada por la densidad del momento del impago y descontada"
+      },
+      {
+       "tex": "s=\\gamma\\,(1-R)",
+       "que": "Triángulo del crédito: diferencial justo del CDS, intensidad de impago por pérdida en caso de impago"
+      }
+     ],
+     "desarrollo": "Describe las dos patas del CDS: la de la prima vale s por el valor actual de los pagos que se hacen mientras la entidad no incumple, y la de la protección, el valor actual de 1−R ponderado por la probabilidad de que el incumplimiento ocurra en cada momento. Con intensidad constante γ, primas continuas y r_f constante, las dos integrales comparten el factor ∫e^{−(r_f+γ)t}dt, y al igualarlas resulta s=γ(1−R). Interpreta que la intensidad que se despeja de los precios del CDS es neutral al riesgo y, por arbitraje, relaciona el diferencial del CDS con el del bono de la misma entidad.",
+     "implicaciones": [
+      "El diferencial del CDS es la intensidad de impago multiplicada por la pérdida en caso de impago",
+      "Las probabilidades que se despejan de los CDS son neutrales al riesgo: incluyen la prima de los vendedores de protección por el riesgo de impago y por la falta de liquidez, y superan las frecuencias de impago observadas",
+      "Comprar el bono y protegerlo da casi un bono sin riesgo, así que el diferencial del CDS debe parecerse al del bono sobre r_f; su diferencia es la base entre el CDS y el bono, muy negativa en 2008 por el coste de financiar el bono y el riesgo de contraparte (GÂRLEANU y PEDERSEN, 2011; BAI y COLLIN-DUFRESNE, 2019)"
+     ],
+     "huella": "g504u1",
+     "epigrafes_analizados": [
+      "II.3.5 Swap de Incumplimiento: ¿cuánto vale la protección?"
+     ]
+    }
+   },
+   "fecha": "2026-11-04"
   }
  }
 }
