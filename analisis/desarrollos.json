@@ -1383,7 +1383,7 @@
     "familia": "Valoración de opciones",
     "area": "Finanzas",
     "forma": "Árbol binomial y BLACK-SCHOLES-MERTON",
-    "epigrafes": "Opciones: ¿cuánto vale un derecho? | Paridad Put-Call: ¿qué relación hay entre el precio de una call y el de una put? | Un Periodo: ¿cuánto vale una opción si el subyacente solo puede subir o bajar? | Varios Periodos: ¿cómo se valora una opción hacia atrás? | Cobertura Delta: ¿por qué el precio no depende de la rentabilidad esperada? | Fórmula: ¿cuánto vale una opción europea?",
+    "epigrafes": "Réplica y Cobertura: ¿cómo se fabrica un derivado y cómo se neutraliza su riesgo? | Opciones: ¿cuánto vale un derecho? | Valor: ¿de qué depende lo que vale una opción? | Réplica Dinámica: ¿por qué hay que rehacer la cartera que fabrica una opción? | BLACK-SCHOLES-MERTON: ¿qué dice la fórmula del precio de una opción? | Paridad Put-Call: ¿cómo se relacionan la call y la put? | Paridad Put-Call: ¿qué relación hay entre el precio de una call y el de una put? | Un Periodo: ¿cuánto vale una opción si el subyacente solo puede subir o bajar? | Varios Periodos: ¿cómo se valora una opción hacia atrás? | Cobertura Delta: ¿por qué el precio no depende de la rentabilidad esperada? | Fórmula: ¿cuánto vale una opción europea?",
     "bloques": 16,
     "grado": "Completo"
    },
@@ -1391,7 +1391,7 @@
     "familia": "Paridad de intereses",
     "area": "Macroeconomía abierta",
     "forma": "Paridad cubierta como coste de acarreo y sus desviaciones desde 2008",
-    "epigrafes": "Contratos a Plazo: ¿cuánto vale un compromiso? | Paridad Cubierta: ¿qué tipo de cambio a plazo fija el arbitraje? | Paridad Cubierta: ¿por qué dejó de cumplirse a partir de 2008?",
+    "epigrafes": "Paridad Cubierta: ¿cuánto vale una divisa a plazo? | Paridad Cubierta: ¿qué tipo de cambio a plazo fija el arbitraje? | Paridad Cubierta: ¿por qué dejó de cumplirse a partir de 2008?",
     "bloques": 3,
     "grado": "Parcial"
    },
@@ -1407,7 +1407,7 @@
     "familia": "Coste de acarreo (precio a plazo)",
     "area": "Finanzas",
     "forma": "Versión original",
-    "epigrafes": "Coste de Acarreo: ¿cuál es el precio a plazo?",
+    "epigrafes": "Coste de Acarreo: ¿cuánto cuesta fabricar un compromiso? | Coste de Acarreo: ¿cuál es el precio a plazo?",
     "bloques": 3,
     "grado": "Completo"
    },
@@ -1415,7 +1415,7 @@
     "familia": "Teorema fundamental de la valoración",
     "area": "Finanzas",
     "forma": "Precios de estado y medida neutral al riesgo",
-    "epigrafes": "Teorema Fundamental: ¿por qué sirve el mismo método para cualquier derivado? | Precios de Estado: ¿cuánto vale hoy un euro en cada estado? | Martingalas: ¿qué dice el teorema con varios periodos y en tiempo continuo? | Cambio de Medida: ¿cómo se pasa de las probabilidades reales a las neutrales al riesgo? | Completitud: ¿cuándo es único el precio?",
+    "epigrafes": "Probabilidades Neutrales al Riesgo: ¿por qué el precio es un valor esperado sin las probabilidades reales? | Teorema Fundamental: ¿por qué sirve el mismo método para cualquier derivado? | Precios de Estado: ¿cuánto vale hoy una unidad en cada estado? | Medida Neutral al Riesgo: ¿por qué los precios de estado son probabilidades? | Completitud: ¿cuándo da el arbitraje un solo precio? | Precios de Estado: ¿cuánto vale hoy un euro en cada estado? | Martingalas: ¿qué dice el teorema con varios periodos y en tiempo continuo? | Cambio de Medida: ¿cómo se pasa de las probabilidades reales a las neutrales al riesgo? | Completitud: ¿cuándo es único el precio?",
     "bloques": 6,
     "grado": "Completo"
    },
@@ -1431,7 +1431,7 @@
     "familia": "Cobertura con griegas",
     "area": "Finanzas",
     "forma": "Delta, gamma y vega; mínima varianza",
-    "epigrafes": "Cobertura: ¿cómo se neutraliza el riesgo de un derivado? | Griegas: ¿cuánto cambia el precio de una opción con cada variable? | Theta y Gamma: ¿por qué el paso del tiempo paga la convexidad? | Neutralidad: ¿cómo se cubren la delta, la gamma y la vega? | Varios Factores: ¿cómo se cubre una cartera expuesta a muchos riesgos? | Mínima Varianza: ¿cuánto cubrir cuando el instrumento no coincide con el riesgo?",
+    "epigrafes": "Cobertura: ¿cómo se neutraliza el riesgo de un derivado? | Delta: ¿cuánto subyacente neutraliza el riesgo de una opción? | Gamma y Theta: ¿qué riesgo queda después de cubrir la delta? | Vega y Carteras: ¿cómo se cubre lo que el subyacente no cubre? | Griegas: ¿cuánto cambia el precio de una opción con cada variable? | Theta y Gamma: ¿por qué el paso del tiempo paga la convexidad? | Neutralidad: ¿cómo se cubren la delta, la gamma y la vega? | Varios Factores: ¿cómo se cubre una cartera expuesta a muchos riesgos? | Mínima Varianza: ¿cuánto cubrir cuando el instrumento no coincide con el riesgo?",
     "bloques": 7,
     "grado": "Completo"
    },
