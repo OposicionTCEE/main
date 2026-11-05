@@ -100,6 +100,8 @@ Cuando una ficha diga *cambiado*, o se añada un modelo compartido nuevo, pulsa 
 
    El resultado va en `TCEE/.armonizacion/verif_<n>.json`.
 5. `node main/scripts/armonizacion.js unir`. Incorpora los informes a `analisis/armonizacion.json` con las huellas actuales y no toca los demás modelos.
+
+   Ojo: incorpora **todos** los `out/*.json` de la carpeta, también los que dejaron otras sesiones. Si sus `verif_*.json` ya no están, sus errores confirmados vuelven a *sin verificar*, y sus huellas se ponen al día aunque el informe no se haya rehecho. Antes de guardar, comprobar con `git diff` que solo cambian los modelos propios y devolver los demás a su versión de `HEAD`.
 6. Recargar el Panel Oposición. No hace falta reinstalar la extensión: el fichero se relee al cambiar.
 
 ## 5. Encargo del informe (para cada modelo)
