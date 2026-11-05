@@ -1,5 +1,5 @@
 {
- "generado": "2026-11-04",
+ "generado": "2026-11-05",
  "metodo": "Informes escritos por Claude leyendo los desarrollos de cada modelo en cada tema; los posibles errores fueron revisados por un segundo análisis independiente (ver RELACIONES.md). Cada tema guarda la huella de su desarrollo para avisar cuando cambia.",
  "modelos": {
   "Burbujas racionales": {
@@ -5594,71 +5594,219 @@
   },
   "Paridad de intereses": {
    "familia": "Paridad de intereses",
-   "prioridad": "baja",
-   "motivo_prioridad": "Las dos presentaciones son coherentes: ambas leen el margen a plazo como diferencia de tipos de interés, y solo como depreciación esperada si se cumple también la paridad no cubierta. Las diferencias que quedan (notación y capitalización, supuestos de partida, reparto de contenidos) se justifican por el enfoque macroeconómico de 3.B.14 y el financiero de 3.B.25.",
-   "enfoque_comun": "Ambos derivan la paridad cubierta de la igualdad entre dos formas sin riesgo de invertir una unidad de moneda nacional (depósito nacional, o conversión al contado, depósito en divisa y venta a plazo), con el tipo de cambio en moneda nacional por unidad de divisa, y concluyen que la moneda con el tipo de interés más alto cotiza a plazo con descuento. Ambos distinguen la paridad cubierta de la no cubierta y remiten a la evidencia contraria a esta última (paradoja del margen a plazo).",
+   "prioridad": "alta",
+   "motivo_prioridad": "3.B.14 contradice a los otros dos, y en parte a sí mismo, en afirmaciones que pueden salir en el examen: dice que la apreciación de las monedas de tipo alto contradice también la paridad cubierta y que esta se cumple continuamente con mucha precisión, mientras 3.B.13 y 3.B.25 la presentan como un arbitraje que no dice nada del contado futuro y que falla de forma persistente desde 2008. Además, su ecuación de la prima de riesgo tiene el signo contrario al de su texto, y su notación (E para el tipo de cambio y para la esperanza, δ para la prima) choca con la de los otros dos.",
+   "enfoque_comun": "Los tres obtienen la paridad cubierta de la igualdad entre dos formas sin riesgo de llevar moneda nacional de hoy al vencimiento (depositarla, o cambiarla al contado, depositar la divisa y venderla a plazo), que es la réplica del contrato a plazo, con el tipo de cambio en moneda nacional por unidad de divisa, y concluyen que la moneda con el tipo de interés más alto cotiza a plazo con descuento. Los tres leen el margen a plazo como diferencia de tipos de interés y no como previsión, que solo lo sería si se cumpliera también la paridad no cubierta, y remiten a la evidencia que la rechaza, la paradoja del margen a plazo, que 3.B.13 y 3.B.14 relacionan con la rentabilidad del carry trade.",
    "divergencias": [
     {
      "aspecto": "supuestos",
-     "descripcion": "3.B.14 deriva las dos paridades con cuatro supuestos comunes (libre movilidad, sustituibilidad perfecta, neutralidad al riesgo, expectativas insesgadas), aunque su nota reconoce que la cubierta solo exige movilidad perfecta y ausencia de riesgo de impago. 3.B.25 la obtiene solo por arbitraje, sin supuestos sobre preferencias ni expectativas, como caso particular de la relación de coste de acarreo con δ=r_f^*.",
+     "descripcion": "3.B.14 deriva las dos paridades de la elección de un inversor entre un activo nacional y uno extranjero bajo cuatro supuestos comunes (libre movilidad de capitales, sustituibilidad perfecta, neutralidad al riesgo cambiario y expectativas no sesgadas), aunque sus notas (líneas 934-940 y 1097-1099) reconocen que la cubierta solo exige movilidad perfecta, sin riesgo de impago ni controles. 3.B.13 la obtiene de la réplica del intermediario y dice en el texto que solo exige capital sin controles, depósitos sin riesgo de impago y costes de transacción pequeños, no sustituibilidad ni neutralidad al riesgo, que son supuestos de la no cubierta, una condición de equilibrio de la especulación y no un arbitraje (I.9.3, línea 1932); 3.B.25 la obtiene solo de la ausencia de arbitraje, como caso del coste de acarreo con δ=r_f^*. Con costes de transacción, solo 3.B.13 muestra que la paridad deja una banda y no un precio (FRENKEL y LEVICH, 1975; DEARDORFF, 1979).",
      "temas": [
+      "3.B.13",
       "3.B.14",
       "3.B.25"
      ]
     },
     {
      "aspecto": "notacion",
-     "descripcion": "3.B.14 usa E_t para el contado, F_t^{t+1} para el tipo a plazo e i, i^* para los tipos de un periodo con capitalización discreta, y aproxima la condición de forma lineal; 3.B.25 usa S_0, F_0, r_f y r_f^* con capitalización continua y plazo T, lo que da la condición exacta, y da también la versión discreta con r_T y r_T^*. La cotización es la misma (moneda nacional por unidad de divisa); la diferencia de letras es razonable entre un tema de macroeconomía y uno de finanzas.",
+     "descripcion": "3.B.13 y 3.B.25 comparten S y F en euros por dólar, r_f para el euro y r_f^* para el dólar; 3.B.13 usa interés simple con τ, la fracción de año, y 3.B.25 capitalización continua con T, y 3.B.13 declara la equivalencia. 3.B.14 usa la misma cotización con otras letras: E_t, F_t^{t+1}, i e i^* de un periodo, MF_t para el margen a plazo y TDE_t para la depreciación esperada. En 3.B.14 la E es a la vez el tipo de cambio y la esperanza, E[E_{t+1}|Ω_t], y δ es la prima de riesgo (línea 1068), la letra que en 3.B.25 es el rendimiento del subyacente, δ=r_f^* en la propia paridad; 3.B.13 usa 𝔼_t para la esperanza y π_t para la prima. 3.B.14 escribe además la regresión sin logaritmos (E, F) y razona en logaritmos (e, f) en 4.4.1. El glosario ya registra la diferencia de E, i e i^* y la deja para cuando se trabaje 3.B.14.",
      "temas": [
+      "3.B.13",
+      "3.B.14",
+      "3.B.25"
+     ]
+    },
+    {
+     "aspecto": "ecuaciones",
+     "descripcion": "La regresión del contraste cambia de forma y de autor. 3.B.13 la escribe en logaritmos, Δs_{t+1}=α+β(f_t−s_t)+ε_{t+1}, la llama regresión de FAMA (1984), da la media de −0,88 de las unas 75 estimaciones que revisaron FROOT y THALER (1990) y explica en nota por qué se contrasta en variaciones (MEESE y SINGLETON, 1982); 3.B.14 la escribe sin logaritmos, ΔE_{t+1}=β_0+β_1(F_t^{t+1}−E_t)+ε_{t+1}, y dice que la contrastaron FROOT y THALER (1990) (línea 1523). 3.B.13 desarrolla además la descomposición de FAMA, f_t−s_t=π_t+𝔼_t[Δs_{t+1}], y la condición var(π_t)>var(𝔼_t[Δs_{t+1}]) que exige una pendiente negativa; 3.B.14 solo cita la prima de FAMA de palabra, como diferencia entre el tipo a plazo y el contado futuro, sin la esperanza (línea 1549), y 3.B.25 da la relación general entre el precio a plazo y el esperado, F_0/E[S_T]=e^{(r_f−μ)T}, sin aplicarla expresamente a las divisas.",
+     "temas": [
+      "3.B.13",
+      "3.B.14",
+      "3.B.25"
+     ]
+    },
+    {
+     "aspecto": "implicaciones",
+     "descripcion": "Difiere la lectura de la paradoja del margen a plazo. 3.B.14 concluye que la mayoría de los estudios rechazan la eficiencia del mercado de divisas, con resultados desoladores para FAMA (línea 1531), aunque después recoge que FAMA la atribuye a una prima de riesgo (4.4.2), y presenta el problema del peso como un caso de expectativas sesgadas (línea 1551). 3.B.13 la lee con la hipótesis conjunta: un tipo a plazo que predice mal no prueba ineficiencia, porque puede reflejar una prima (que los modelos con una aversión razonable no generan, ENGEL, 1996) o errores de previsión (FROOT y FRANKEL, 1989), y el problema del peso es compatible con expectativas racionales y neutralidad al riesgo (KRASKER, 1980; línea 2201). 3.B.13 matiza además su alcance: se limita a las economías desarrolladas (BANSAL y DAHLQUIST, 2000), se debilita a plazos largos (CHINN y MEREDITH, 2004) y cambia de signo después de 2008 (BUSSIÈRE, CHINN, FERRARA y HEIPERTZ, 2022), mientras que 3.B.14 y 3.B.25 dan el hecho clásico sin matices.",
+     "temas": [
+      "3.B.13",
       "3.B.14",
       "3.B.25"
      ]
     },
     {
      "aspecto": "profundidad",
-     "descripcion": "3.B.25 estudia las desviaciones de la paridad cubierta desde 2008 (base de divisas de DU, TEPPER y VERDELHAN, 2018; AVDJIEV, DU, KOCH y SHIN, 2019; líneas swap, BAHAJ y REIS, 2022), a las que 3.B.14 remite en una nota; 3.B.14 desarrolla la paridad no cubierta, sus implicaciones para la política monetaria y la paradoja del margen a plazo (FROOT y THALER, 1990), que 3.B.25 solo cita con remisión. El reparto es complementario.",
+     "descripcion": "3.B.13 es ahora el desarrollo más completo de la cubierta: cuadro de flujos de la réplica, puntos a plazo en la cotización EUR/USD, cobertura en el mercado de dinero, tipo sintético del FX swap, banda con horquillas, evidencia anterior a 2008 (TAYLOR, 1987 y 1989; AKRAM, RIME y SARNO, 2008) y base de divisas desde 2008 (DU, TEPPER y VERDELHAN, 2018; AVDJIEV, DU, KOCH y SHIN, 2019); de la no cubierta da el contraste y el carry trade. 3.B.25 trata también la base en II.10.2, con los cierres de trimestre y las líneas swap (BAHAJ y REIS, 2022), y la lee como límite del arbitraje (SHLEIFER y VISHNY, 1997); 3.B.14 desarrolla la no cubierta como teoría del tipo de cambio y su política, y deja la base en una nota. Las remisiones no reflejan ese reparto: la nota de 3.B.14 sobre la base (línea 1012) envía solo a 3.B.25, y la de 3.B.25 sobre la paridad cubierta en el mercado de divisas (línea 1354) envía a 3.B.14, que solo la deriva y deja sus desviaciones en una nota.",
      "temas": [
+      "3.B.13",
       "3.B.14",
       "3.B.25"
      ]
+    },
+    {
+     "aspecto": "implicaciones",
+     "descripcion": "Posible error: 3.B.14 (2.3.2, Limitaciones: Evidencia Empírica, línea 1078) dice que la apreciación de las monedas con tipos de interés altos genera rentabilidades contrarias a lo esperado y contradice la paridad cubierta, y en la misma frase repite el hecho como contradicción de la no cubierta. Solo contradice la no cubierta: la cubierta es un arbitraje entre el tipo a plazo y los tipos de interés de hoy y no predice el contado futuro, como dicen 3.B.13 (II.7.1), 3.B.25 (II.2.2) y el propio 3.B.14 en la línea 1011.",
+     "temas": [
+      "3.B.14"
+     ],
+     "error": true,
+     "verificacion": "confirmado",
+     "linea": 1078,
+     "nota_verificacion": "La frase presenta la apreciación de las monedas con tipos de interés altos como contradicción de la PCI y después repite el mismo hecho como contradicción de la PNCI. La PCI es un arbitraje entre el tipo a plazo, el contado y los tipos de interés de hoy y no predice el contado futuro (lo dice el propio tema en la línea 1011): el hecho contradice la PNCI con expectativas racionales, es decir, la insesgadez del tipo a plazo, no la PCI."
+    },
+    {
+     "aspecto": "implicaciones",
+     "descripcion": "Posible error: 3.B.14 (línea 1066) afirma que la paridad cubierta se cumple continuamente con mucha precisión, con incumplimientos puntuales por falta de libre movilidad del capital o por comisiones y costes de transacción. Desde 2008 no se cumple de forma persistente, ni siquiera con instrumentos sin riesgo de crédito, y la desviación no se explica por esos costes, sino por el coste del balance de los intermediarios y la demanda de dólares cubiertos (DU, TEPPER y VERDELHAN, 2018), como dicen 3.B.13 (4.3.1 y II.6), 3.B.25 (II.10.2) y la nota del propio 3.B.14 en la línea 1012.",
+     "temas": [
+      "3.B.14"
+     ],
+     "error": true,
+     "verificacion": "confirmado",
+     "linea": 1066,
+     "nota_verificacion": "Es la evidencia anterior a 2008 (desviaciones dentro de la banda de costes de transacción, FRENKEL y LEVICH, 1975) sin acotarla en el tiempo. Desde 2008 la desviación es persistente y sistemática incluso con instrumentos sin riesgo de crédito y no se explica por costes de transacción ni por controles de capital, sino por el coste del balance de los bancos que arbitran y la demanda de dólares cubiertos (DU, TEPPER y VERDELHAN, 2018), como dice la nota del propio tema en la línea 1012."
+    },
+    {
+     "aspecto": "ecuaciones",
+     "descripcion": "Posible error: la nota de 3.B.14 de la línea 1068 escribe la no cubierta con prima de riesgo como (1+i)=(1+i^*)E[E_{t+1}|Ω_t]/E_t+δ, es decir, i≃i^*+TDE+δ, de modo que la prima la cobra el activo nacional. El texto al que acompaña (línea 1067) dice lo contrario: el inversor exige que la rentabilidad esperada de los activos extranjeros sea la de los nacionales más una prima, lo que da (1+i^*)E[E_{t+1}|Ω_t]/E_t=(1+i)+δ e i≃i^*+TDE−δ. Hay que cambiar el signo de δ o la definición de la prima en el texto.",
+     "temas": [
+      "3.B.14"
+     ],
+     "error": true,
+     "verificacion": "confirmado",
+     "linea": 1068,
+     "nota_verificacion": "El texto de la línea 1067 dice que el inversor exige a los activos extranjeros la rentabilidad de los nacionales más una prima, (1+i*)·E[E_{t+1}|Ω_t]/E_t = (1+i) + δ, lo que da i ≃ i* + TDE − δ; la nota escribe (1+i) = (1+i*)·E[E_{t+1}|Ω_t]/E_t + δ, que pone la prima en el activo nacional. Sumar δ solo sería válido si δ fuese la prima exigida a los activos nacionales, que es lo contrario de lo que define el texto."
+    },
+    {
+     "aspecto": "ecuaciones",
+     "descripcion": "Posible error: en la nota de 3.B.14 de la línea 954, la equivalencia 1^{YYY}_{u.m}=E_t·1^{XXX}_{u.m}, con XXX la divisa e YYY la moneda nacional, está invertida. Con E_t en moneda nacional por unidad de divisa, como exige el rendimiento (1+i^*)E_{t+1}/E_t, una unidad de divisa vale E_t unidades nacionales (1^{XXX}=E_t·1^{YYY}), y por eso con una unidad nacional se compran 1/E_t de divisa, como concluye la propia nota.",
+     "temas": [
+      "3.B.14"
+     ],
+     "error": true,
+     "verificacion": "confirmado",
+     "linea": 954,
+     "nota_verificacion": "El tema usa el tipo de cambio directo (moneda nacional por unidad de divisa: una subida de E es depreciación, línea 896), y con él la cotización XXX/YYY significa que una unidad de divisa vale E_t unidades nacionales; la nota escribe la igualdad al revés (una unidad nacional igual a E_t unidades de divisa). La conclusión 1/E_t y el rendimiento (1+i*)·E_{t+1}/E_t solo se siguen de la equivalencia correcta, así que lo invertido es la igualdad intermedia."
+    },
+    {
+     "aspecto": "enfoque",
+     "descripcion": "Posible error: 3.B.14 (4.4, línea 1479) enuncia la hipótesis conjunta de FAMA como dos condiciones para que el mercado sea eficiente, la primera que exista un modelo de valoración de activos por arbitraje, por ejemplo el CAPM o el APT. El CAPM es un modelo de equilibrio, no de arbitraje (el de arbitraje es el APT), y la hipótesis conjunta se refiere al contraste: toda prueba de eficiencia lo es a la vez de un modelo de las rentabilidades esperadas, como explica el párrafo siguiente del propio tema. 3.B.13 (II.7.1) la formula así para las divisas: una hipótesis sobre las expectativas y otra sobre la prima que se exige por el riesgo de cambio.",
+     "temas": [
+      "3.B.14"
+     ],
+     "error": true,
+     "verificacion": "confirmado",
+     "linea": 1479,
+     "nota_verificacion": "El CAPM (SHARPE, 1964; LINTNER, 1965) es un modelo de equilibrio, no de arbitraje (de arbitraje es el APT de ROSS, 1976). Además, la hipótesis conjunta de FAMA no enuncia dos condiciones para que el mercado sea eficiente, sino que la eficiencia solo puede contrastarse junto con un modelo de equilibrio de las rentabilidades esperadas, como explica el propio párrafo de la línea 1483."
+    },
+    {
+     "aspecto": "enfoque",
+     "descripcion": "Posible error: en la nota de 3.B.14 de la línea 1489, dentro del recuadro de la hipótesis de los mercados eficientes, la PPA de mercados eficientes se atribuye a ROLL (1977), con enlaces (línea 1491) a la crítica de ROLL a los contrastes del CAPM, que es de 1977 y no trata de la PPA. El trabajo es ROLL (1979), como dice la nota gemela de la línea 780 del mismo tema.",
+     "temas": [
+      "3.B.14"
+     ],
+     "error": true,
+     "verificacion": "confirmado",
+     "linea": 1489,
+     "nota_verificacion": "La PPA de mercados eficientes procede de ROLL (1979), sobre las violaciones de la PPA y la eficiencia de los mercados internacionales de mercancías, como dice la nota gemela de la línea 780. ROLL (1977) es la crítica a los contrastes del CAPM, a la que remiten los enlaces de la línea 1491, y no trata de la PPA."
     }
    ],
-   "propuesta": "Tomar 3.B.25 como referencia para la paridad cubierta (arbitraje sin supuestos de preferencias, condición exacta, desviaciones desde 2008) y 3.B.14 para la no cubierta y la paradoja del margen a plazo. Las dos remisiones cruzadas ya existen. Si se quiere afinar más, 3.B.14 podría advertir que sus supuestos de sustituibilidad y neutralidad solo hacen falta para la no cubierta, y 3.B.25 indicar la equivalencia de notación (S y E, r_f e i, r_f^* e i^*).",
-   "referencia": "3.B.25",
+   "propuesta": "Tomar 3.B.13 como referencia de la paridad cubierta (réplica con interés simple, banda, base de divisas) y de la lectura empírica de la no cubierta (hipótesis conjunta, regresión y descomposición de FAMA en logaritmos); 3.B.25 conserva la relación de coste de acarreo con capitalización continua, cuya equivalencia ya declara 3.B.13, y 3.B.14 la no cubierta como teoría del tipo de cambio y su lectura para la política monetaria. En 3.B.14 conviene corregir los posibles errores, decir que la sustituibilidad y la neutralidad al riesgo solo hacen falta para la no cubierta, llamar a la regresión de FAMA (1984), con la revisión de FROOT y THALER (1990), presentar el problema del peso como compatible con expectativas racionales y matizar el alcance de la paradoja con remisión a 3.B.13. Cuando se trabaje 3.B.14, adoptar S, r_f y r_f^*, una letra para la esperanza distinta de la del tipo de cambio y otra distinta de δ para la prima de riesgo, como π_t en 3.B.13. En 3.B.13 basta corregir el recuento de precios de las líneas 847 y 1659. Las remisiones sobre la base de divisas y la paridad cubierta en el mercado de divisas (3.B.14, línea 1012; 3.B.25, línea 1354 y II.10.2) deberían apuntar también a 3.B.13, que es donde se desarrollan.",
+   "referencia": "3.B.13",
    "temas": {
+    "3.B.13": {
+     "epigrafe": "2.4.2 Precio: ¿por qué lo fijan los tipos de interés? (desarrollado en I.4.2-I.4.4, I.5.2, I.5.6 e I.9.3), 4.3 Eficiencia: ¿forma bien sus precios el mercado? (4.3.1 y 4.3.2, desarrollados en II.6 y II.7) y el carry trade de 3.3.2 e I.8.2",
+     "papel": "Precio que ata el contado, el plazo y el swap, y vara de medir la eficiencia del mercado de divisas: la cubierta fija el tipo a plazo y el del FX swap, su ruptura desde 2008 mide la escasez de balance de los intermediarios y la no cubierta se contrasta con la regresión de FAMA.",
+     "contexto": "En el bloque de instrumentos, el intermediario D fabrica la venta a plazo a la importadora B; en el del mercado, la cubierta mide la eficiencia del arbitraje y la no cubierta la informativa, con el carry trade como contrapartida. Los anexos dan el cuadro de flujos, los puntos a plazo, el tipo sintético, la banda con horquillas y la evidencia.",
+     "supuestos": [
+      "Ausencia de arbitraje, con acceso del intermediario a los mercados monetarios de las dos monedas",
+      "Interés simple del mercado monetario, con τ la fracción de año (días/360 en euros y en dólares)",
+      "Capital sin controles y depósitos sin riesgo de impago; con costes de transacción, una banda en lugar de un precio",
+      "Para la no cubierta, además, expectativas racionales y neutralidad al riesgo (hipótesis conjunta)"
+     ],
+     "ecuaciones": [
+      {
+       "tex": "F=S\\,\\frac{1+r_f\\,\\tau}{1+r_f^*\\,\\tau}",
+       "que": "Paridad cubierta por la réplica del contrato a plazo (KEYNES, 1923), con S y F en euros por dólar"
+      },
+      {
+       "tex": "F^{b}\\le\\frac{S^{a}\\,(1+r^{p}_f\\,\\tau)}{1+r^{d*}_f\\,\\tau}\\quad\\text{y}\\quad F^{a}\\ge\\frac{S^{b}\\,(1+r^{d}_f\\,\\tau)}{1+r^{p*}_f\\,\\tau}",
+       "que": "Banda sin arbitraje con precios comprador y vendedor y tipos de préstamo y de depósito (FRENKEL y LEVICH, 1975)"
+      },
+      {
+       "tex": "x=r_f^*-r^{\\$}_{\\mathrm{sint}},\\qquad r^{\\$}_{\\mathrm{sint}}=\\frac{1}{\\tau}\\left[\\frac{S}{F}\\,(1+r_f\\,\\tau)-1\\right]",
+       "que": "Base de divisas (DU, TEPPER y VERDELHAN, 2018): nula si se cumple la paridad, negativa desde 2008"
+      },
+      {
+       "tex": "\\Delta s_{t+1}=\\alpha+\\beta\\,(f_t-s_t)+\\varepsilon_{t+1}",
+       "que": "Regresión de FAMA (1984): β=1 si se cumple la no cubierta; media de −0,88 en unas 75 estimaciones (FROOT y THALER, 1990)"
+      },
+      {
+       "tex": "f_t-s_t=\\pi_t+\\mathbb{E}_t[\\Delta s_{t+1}],\\qquad \\beta<0\\;\\Rightarrow\\;\\mathrm{var}(\\pi_t)>\\mathrm{var}\\left(\\mathbb{E}_t[\\Delta s_{t+1}]\\right)",
+       "que": "Descomposición de FAMA (1984): una pendiente negativa exige una prima más variable que la depreciación esperada"
+      }
+     ],
+     "desarrollo": "El intermediario D fabrica la venta a plazo pidiendo prestados euros, comprando dólares al contado y depositándolos hasta T; la réplica no exige capital y deja en T una cantidad conocida que, sin arbitraje, debe ser nula. De ahí que el tipo a plazo no contenga ninguna previsión, que la moneda de tipo alto cotice con descuento y que la réplica ocupe el balance: con horquillas la paridad deja una banda, y desde 2008 la base es negativa y persistente porque ese balance se ha encarecido, con el techo de las líneas swap. La no cubierta añade expectativas racionales y neutralidad al riesgo; la regresión de FAMA da pendientes negativas, que su descomposición atribuye a una prima más variable que la depreciación esperada, FROOT y FRANKEL (1989) a errores de previsión y KRASKER (1980) al problema del peso.",
+     "implicaciones": [
+      "El tipo a plazo no contiene ninguna previsión: depende del contado y de los tipos de interés de hoy",
+      "La moneda con el tipo de interés más alto cotiza a plazo con descuento; el FX swap es un instrumento de tipos de interés, no de tipo de cambio",
+      "La base de divisas no es una ganancia sin coste, sino el precio del balance de los intermediarios, con techo en las líneas swap",
+      "El rechazo de la no cubierta no prueba ineficiencia (hipótesis conjunta) y explica la rentabilidad del carry trade, que vende un seguro contra las crisis",
+      "La paradoja se limita a las economías desarrolladas y a plazos cortos, y cambió de signo después de 2008"
+     ],
+     "huella": "1kqqz2d",
+     "epigrafes_analizados": [
+      "3.3.2 Especulación: ¿por qué rinde el carry trade y cuándo se derrumba?",
+      "4.3.1 Arbitraje: ¿se cumple la paridad cubierta?",
+      "4.3.2 Información: ¿anticipa el tipo a plazo la depreciación?",
+      "I.4.3 Puntos a plazo: ¿cómo se cotiza el precio a plazo?",
+      "I.4.4 Cobertura en el mercado de dinero: ¿puede fabricarse un contrato a plazo?",
+      "I.5.2 Puntos swap: ¿cuál es el precio de un FX swap?",
+      "I.5.6 Base de divisas: ¿qué cuesta conseguir dólares con un swap?",
+      "I.8.2 Carry trade: ¿por qué rinde endeudarse en la moneda de tipo bajo?",
+      "I.9.3 Cubierto de intereses: ¿qué banda deja la paridad cubierta?",
+      "II.6.1 Antes de 2008: ¿se cumplían los arbitrajes?",
+      "II.6.2 Base de divisas: ¿qué revela su comportamiento desde 2008?",
+      "II.6.3 Tensiones: ¿cuándo se dispara la base?",
+      "II.7.1 Hipótesis conjunta: ¿qué se contrasta al preguntar si acierta el tipo a plazo?",
+      "II.7.2 Regresión de FAMA: ¿anticipa el tipo a plazo la depreciación?",
+      "II.7.3 Descomposición de FAMA: ¿prima de riesgo o errores de previsión?",
+      "II.7.4 Horizontes y monedas: ¿dónde se cumple la paridad no cubierta?"
+     ]
+    },
     "3.B.14": {
-     "epigrafe": "2.3.1 Desarrollo formal (con 2.3.1.1 Paridad Cubierta de Intereses: Forward, 2.3.1.2 Paridad No Cubierta de Intereses: Especulación y 2.3.2 Implicaciones de Política Económica) y 4.4 Paradoja del Margen Forward",
-     "papel": "Fundamento del enfoque de activos del tipo de cambio: con la paridad no cubierta, el diferencial de tipos de interés determina la depreciación esperada; la paradoja del margen a plazo sirve para contrastar la eficiencia del mercado de divisas.",
-     "contexto": "Se presenta entre las teorías tradicionales del tipo de cambio (enfoque de flujos) y se retoma en los desarrollos recientes con la paradoja del margen a plazo y el carry trade.",
+     "epigrafe": "2.3 Paridad de Intereses: PCI y PCNI (2.3.1 Desarrollo formal, con 2.3.1.1 Paridad Cubierta de Intereses: Forward y 2.3.1.2 Paridad No Cubierta de Intereses: Especulación; 2.3.2 Implicaciones de Política Económica, con Limitaciones: Evidencia Empírica) y 4.4 Paradoja del Margen Forward: Hipótesis de los Mercados Eficientes (con 4.4.1-4.4.3)",
+     "papel": "Teoría tradicional del tipo de cambio: con la paridad no cubierta, el diferencial de tipos de interés determina la depreciación esperada, y la paradoja del margen a plazo sirve para contrastar la eficiencia del mercado de divisas.",
+     "contexto": "Se presenta como la teoría que, al final de Bretton Woods, desplaza la atención de los flujos comerciales a los de capital, y se retoma en los desarrollos recientes con la paradoja del margen a plazo, sus explicaciones (la constante de HODRICK, la prima de FAMA y los agentes heterogéneos) y el carry trade.",
      "supuestos": [
       "Libre movilidad de capitales",
       "Perfecta sustituibilidad entre activos nacionales y extranjeros",
       "Neutralidad al riesgo cambiario",
-      "Expectativas no sesgadas"
+      "Expectativas no sesgadas",
+      "Un periodo, capitalización discreta y aproximación lineal"
      ],
      "ecuaciones": [
       {
-       "tex": "(1+i_t)=(1+i_t^*)\\frac{F_t^{t+1}}{E_t}",
-       "que": "Paridad cubierta: el depósito nacional rinde lo mismo que el extranjero cubierto a plazo"
-      },
-      {
-       "tex": "i_t-i_t^*\\simeq\\frac{F_t^{t+1}-E_t}{E_t}=\\text{MF}_t",
-       "que": "Aproximación lineal: diferencial de tipos igual al margen a plazo"
+       "tex": "(1+i_t)=(1+i_t^*)\\frac{F_t^{t+1}}{E_t}\\;\\Rightarrow\\;i_t-i_t^*\\simeq\\frac{F_t^{t+1}-E_t}{E_t}=\\text{MF}_t",
+       "que": "Paridad cubierta y su aproximación: el margen a plazo iguala el diferencial de tipos"
       },
       {
        "tex": "(1+i_t)=(1+i_t^*)\\frac{E[E_{t+1}\\mid\\Omega_t]}{E_t}\\;\\Rightarrow\\;i_t-i_t^*\\simeq\\text{TDE}_t",
-       "que": "Paridad no cubierta: diferencial igual a la tasa de depreciación esperada"
+       "que": "Paridad no cubierta: el diferencial iguala la tasa de depreciación esperada"
+      },
+      {
+       "tex": "i\\simeq i^*+\\frac{E[E_{t+1}\\mid\\Omega_t]-E_t}{E_t}+\\delta",
+       "que": "No cubierta con prima de riesgo δ (nota de Limitaciones: Evidencia Empírica); el signo no cuadra con el texto"
       },
       {
        "tex": "\\Delta E_{t+1}=\\beta_0+\\beta_1(F_t^{t+1}-E_t)+\\varepsilon_{t+1}",
-       "que": "Regresión de FROOT y THALER (1990): β_1=1 si el tipo a plazo es un predictor insesgado; las estimaciones se acercan a −1"
+       "que": "Regresión del contraste, atribuida a FROOT y THALER (1990): β_1=1 si el tipo a plazo es insesgado; las estimaciones se acercan a −1"
       }
      ],
-     "desarrollo": "Compara invertir una unidad en un activo nacional, que rinde 1+i, con convertirla a divisa, invertirla al tipo i^* y reconvertirla. Si se reconvierte con un contrato a plazo, se obtiene la paridad cubierta; si al contado futuro esperado, la no cubierta. Con neutralidad al riesgo las dos coinciden, de modo que el tipo de cambio queda determinado por los tipos de interés, y la paradoja del margen a plazo contrasta la igualdad entre el tipo a plazo y el contado esperado.",
+     "desarrollo": "Compara invertir una unidad de moneda nacional en un activo nacional, que rinde 1+i, con cambiarla a divisa, invertirla al tipo i^* y reconvertirla: si se reconvierte con un contrato a plazo se obtiene la paridad cubierta, y si al contado futuro esperado, la no cubierta. Con neutralidad al riesgo las dos coinciden y el diferencial de tipos determina la depreciación esperada, de modo que una subida del tipo nacional aprecia hoy la moneda. Las limitaciones introducen una prima de riesgo, y la paradoja del margen a plazo, con β_1 cercano a −1, se lee con la constante de HODRICK, la prima de FAMA, el problema del peso y los agentes heterogéneos.",
      "implicaciones": [
       "El margen a plazo refleja la diferencia de tipos; solo coincide con la depreciación esperada si se cumple también la paridad no cubierta",
       "Una subida del tipo de interés nacional aprecia hoy la moneda y aumenta la depreciación esperada hasta restablecer la paridad",
-      "La evidencia (β_1 cercano a −1) rechaza que el tipo a plazo prediga el contado futuro, en contra de la eficiencia del mercado de divisas con neutralidad al riesgo",
+      "La no cubierta falla por la aversión al riesgo (prima) o por expectativas sesgadas, y el tema lee la evidencia como rechazo de la eficiencia del mercado de divisas",
       "El éxito del carry trade refleja el incumplimiento de la paridad no cubierta"
      ],
      "huella": "509ba2",
@@ -5671,39 +5819,43 @@
      ]
     },
     "3.B.25": {
-     "epigrafe": "3.2.2 Paridad Cubierta: ¿cuánto vale una divisa a plazo?, II.2.2 Paridad Cubierta: ¿qué tipo de cambio a plazo fija el arbitraje? y II.10.2 Paridad Cubierta: ¿por qué dejó de cumplirse a partir de 2008?",
-     "papel": "Caso particular de la relación de coste de acarreo aplicada a las divisas: fija el tipo de cambio a plazo, el precio del FX swap y la base de divisas.",
-     "contexto": "En el cuerpo, dentro de la valoración de los contratos a plazo, que aplica el método del marco común (una réplica fija y el valor esperado con las probabilidades neutrales al riesgo), para mostrar que el precio a plazo no es una previsión; en el anexo II, con la figura del arbitraje y, al final, las desviaciones desde 2008.",
+     "epigrafe": "3.2.2 Paridad Cubierta: ¿cuánto vale una divisa a plazo? (tras 3.2.1 Coste de Acarreo), II.2.2 Paridad Cubierta: ¿qué tipo de cambio a plazo fija el arbitraje? y II.10.2 Paridad Cubierta: ¿por qué dejó de cumplirse a partir de 2008?",
+     "papel": "Caso particular de la relación de coste de acarreo aplicada a las divisas: fija el tipo de cambio a plazo y el precio del FX swap, muestra que el precio a plazo no es una previsión y, con la base de divisas, ilustra los límites del arbitraje.",
+     "contexto": "En el cuerpo, dentro de la valoración de los contratos a plazo con el método del marco común (réplica y valor esperado con las probabilidades neutrales al riesgo); en el anexo II, con la figura de los dos caminos hacia los euros en T y, entre los límites del arbitraje, las desviaciones desde 2008.",
      "supuestos": [
       "Ausencia de oportunidades de arbitraje",
-      "Endeudamiento y depósito sin riesgo en las dos monedas",
+      "Depósito y endeudamiento sin riesgo en las dos monedas",
       "Capitalización continua, con la versión discreta como equivalencia",
       "Ningún supuesto sobre preferencias ni expectativas"
      ],
      "ecuaciones": [
       {
        "tex": "F_0=S_0\\,e^{(r_f-\\delta)T}",
-       "que": "Relación de coste de acarreo (HULL, 2022)"
+       "que": "Relación de coste de acarreo (HULL, 2022), con δ el rendimiento continuo del subyacente"
       },
       {
        "tex": "F_0=S_0\\,e^{(r_f-r_f^*)T}",
-       "que": "Paridad cubierta (KEYNES, 1923): coste de acarreo con δ=r_f^*"
+       "que": "Paridad cubierta (KEYNES, 1923): coste de acarreo con δ=r_f^* y S en euros por dólar"
       },
       {
        "tex": "F_0=S_0\\,\\frac{1+r_T}{1+r_T^*}",
        "que": "Versión en tiempo discreto, con r_T y r_T^* los tipos del periodo"
       },
       {
+       "tex": "\\frac{F_0}{E[S_T]}=e^{(r_f-\\mu)T}",
+       "que": "El precio a plazo solo es el esperado si el subyacente no tiene prima de riesgo (μ=r_f)"
+      },
+      {
        "tex": "x=r_f^*-\\left[r_f-\\frac{1}{T}\\ln\\frac{F_0}{S_0}\\right]",
        "que": "Base de divisas (DU, TEPPER y VERDELHAN, 2018): nula si se cumple la paridad"
       }
      ],
-     "desarrollo": "Quien debe entregar el subyacente a plazo puede cubrirse comprándolo hoy con dinero prestado; sin arbitraje, el precio a plazo es el coste de financiarlo menos lo que rinde. Una divisa rinde el tipo extranjero, y la relación da la paridad cubierta: depositar en euros, o cambiar a dólares, depositarlos y venderlos a plazo, deben dar lo mismo. Desde 2008, la demanda de dólares cubiertos y el coste de balance de los arbitrajistas abren una base negativa, que las líneas swap de los bancos centrales acotan.",
+     "desarrollo": "Quien debe entregar el subyacente a plazo se cubre comprándolo hoy con dinero prestado; sin arbitraje, el precio a plazo es el coste de financiarlo menos lo que rinde, y el mismo resultado sale del valor esperado con las probabilidades neutrales al riesgo. Una divisa rinde el tipo extranjero, y la relación da la paridad cubierta: depositar en euros, o cambiar a dólares, depositarlos y venderlos a plazo, deben dar lo mismo. Desde 2008, la demanda de dólares cubiertos y el coste del balance de los arbitrajistas abren una base negativa, nula mientras la demanda cabe en su capacidad, a la que las líneas swap ponen techo.",
      "implicaciones": [
       "El precio a plazo no es una previsión: el margen a plazo refleja la diferencia de tipos, no la depreciación esperada",
       "La moneda con el tipo más alto cotiza a plazo con descuento",
-      "El margen a plazo da el precio del FX swap",
-      "Las desviaciones desde 2008 reflejan límites al arbitraje (regulación del balance bancario), no riesgo de crédito"
+      "La paridad cubierta da el precio del FX swap",
+      "Las desviaciones desde 2008 reflejan límites al arbitraje (el coste del balance bancario), no riesgo de crédito; las líneas swap las acotan"
      ],
      "huella": "17xitn2",
      "epigrafes_analizados": [
@@ -5713,7 +5865,7 @@
      ]
     }
    },
-   "fecha": "2026-11-04"
+   "fecha": "2026-11-05"
   },
   "Riesgo de crédito estructural": {
    "familia": "Riesgo de crédito estructural",
@@ -5969,6 +6121,165 @@
     }
    },
    "fecha": "2026-11-04"
+  },
+  "Valoración de opciones": {
+   "familia": "Valoración de opciones",
+   "prioridad": "baja",
+   "motivo_prioridad": "Las dos presentaciones son coherentes: la fórmula de GARMAN y KOHLHAGEN del 3.B.13 es la de BLACK-SCHOLES-MERTON del 3.B.25 con δ=r_f^*, con la misma cotización (euros por dólar) y la misma paridad con el tipo a plazo, y la diferencia de profundidad responde al fin de cada tema (el 3.B.13 remite la derivación al 3.B.25). Solo quedan choques de nombres (Φ, mariposa, en el dinero) y matices de lectura (forma de la sonrisa, probabilidades neutrales al riesgo) que conviene alinear.",
+   "enfoque_comun": "Ambos valoran la opción europea con la fórmula de BLACK-SCHOLES-MERTON para un subyacente con rendimiento continuo: el subyacente descontado a su rendimiento por una probabilidad normal, menos el precio de ejercicio descontado al tipo sin riesgo por otra; el 3.B.25 la deriva por réplica y valoración neutral al riesgo, y el 3.B.13 la aplica a la divisa, que rinde el tipo de interés extranjero (δ=r_f^*). Usan el mismo convenio (S y F en euros por dólar, r_f del euro y r_f^* del dólar, capitalización continua), escriben la paridad put-call con el tipo a plazo, c−p=e^{−r_fT}(F−K), y explican que las opciones se cotizan en volatilidad implícita porque es el único dato que no se observa.",
+   "divergencias": [
+    {
+     "aspecto": "profundidad",
+     "descripcion": "3.B.25 construye la valoración desde la réplica de dos estados (Δ y Z), el árbol binomial de uno y de n periodos con su convergencia, la ecuación de BLACK-SCHOLES por cobertura delta y la fórmula por valoración neutral al riesgo, con sus lecturas, la paridad con sus cotas y el ejercicio anticipado, también en divisas (II.4.3, línea 2661); GARMAN y KOHLHAGEN es allí una línea de las extensiones (II.6.8). 3.B.13 da directamente la fórmula y la paridad y remite la derivación al 3.B.25, pero desarrolla lo que este no trata: la dualidad call dólar put euro, el pago en cada moneda, los precios de ejercicio en deltas y la cotización con la risk reversal y la mariposa. El reparto es complementario, aunque la remisión solo va del 3.B.13 al 3.B.25: el 3.B.25 no remite al 3.B.13 al tratar las opciones sobre divisas.",
+     "temas": [
+      "3.B.13",
+      "3.B.25"
+     ]
+    },
+    {
+     "aspecto": "notacion",
+     "descripcion": "3.B.13 escribe Φ(·) para la distribución normal estándar porque N es su nominal en dólares (I.6.2, línea 1772), y 3.B.25 escribe N(·); la diferencia está justificada y recogida en el glosario. El choque está en que 3.B.25 usa a su vez Φ(a;n,q) para la binomial complementaria de COX, ROSS y RUBINSTEIN (II.5.2, línea 2701), de modo que la misma letra es la normal en un tema y la binomial en el otro, justo en la fórmula que converge a la de BLACK-SCHOLES. El resto es de escritura (S y F frente a S_0 y F_0, r_f^* frente a δ), con el mismo convenio de cotización, y las fórmulas coinciden término a término con δ=r_f^*.",
+     "temas": [
+      "3.B.13",
+      "3.B.25"
+     ]
+    },
+    {
+     "aspecto": "implicaciones",
+     "descripcion": "3.B.25 (II.9.2, líneas 3066-3068) contrapone la sonrisa de las divisas, con la volatilidad implícita mayor por arriba y por abajo y una figura con saltos simétricos, al sesgo de los índices bursátiles, donde son caras las puts fuera del dinero. 3.B.13 (I.6.3, líneas 1789-1791) subraya en cambio la asimetría de la sonrisa de las divisas, que mide la risk reversal, negativa en su figura, con puts caras sobre las monedas de tipos altos frente a las monedas refugio, el riesgo de derrumbe del carry trade (BRUNNERMEIER, NAGEL y PEDERSEN, 2008). No es una contradicción, porque una sonrisa puede subir por los dos lados y ser asimétrica, pero quien lea solo el 3.B.25 tomará por simétrica la de las divisas.",
+     "temas": [
+      "3.B.13",
+      "3.B.25"
+     ]
+    },
+    {
+     "aspecto": "implicaciones",
+     "descripcion": "3.B.13 lee la opción de 25 delta como una probabilidad aproximada de uno entre cuatro de terminar dentro del dinero (I.6.3, línea 1779) y dice que de los precios de las opciones se extraen las probabilidades que el mercado asigna a cada tipo de cambio futuro (línea 1791), sin precisar que son neutrales al riesgo. 3.B.25 distingue la delta, e^{−δT}N(d_1), de la probabilidad neutral al riesgo de ejercer, N(d_2), que es menor (3.3.3, línea 1247), y advierte que la densidad que se extrae de las opciones (BREEDEN y LITZENBERGER, 1978) no es la real, porque incorpora la prima de riesgo y da más peso a los estados malos (II.7.5, línea 2943). Con una volatilidad del 10 % y plazos de uno a doce meses, N(d_2) de una call de 25 delta queda entre 0,23 y 0,24, de modo que la aproximación del 3.B.13 es buena: solo le falta decir de qué probabilidad se trata.",
+     "temas": [
+      "3.B.13",
+      "3.B.25"
+     ]
+    },
+    {
+     "aspecto": "notacion",
+     "descripcion": "En el dinero no tiene la misma referencia. 3.B.25 lo define con el contado, S_t en torno a K (I.4.1, línea 2242), y solo lo usa en términos del precio a plazo, S_0=Ke^{−r_fT}, en la aproximación de BRENNER y SUBRAHMANYAM (II.6.6, línea 2831) y en la volatilidad implícita que se deduce de ella (II.9.1). 3.B.13 (I.6.2, línea 1776) toma como referencia de las divisas el tipo a plazo, K=F, donde la call y la put valen lo mismo, o, en la convención más extendida del mercado, el precio de ejercicio que anula la delta de la combinación de una call y una put. La diferencia se justifica porque la divisa rinde r_f^*, y la paridad con rendimiento del 3.B.25, c−p=(F_0−K)e^{−r_fT}, lleva al mismo resultado.",
+     "temas": [
+      "3.B.13",
+      "3.B.25"
+     ]
+    },
+    {
+     "aspecto": "notacion",
+     "descripcion": "Mariposa nombra dos cosas. En 3.B.25 es la estrategia de tres precios de ejercicio (comprar una call en K_1 y otra en K_3 y vender dos en K_2), cuyo precio no puede ser negativo y, dividido por la amplitud, da el precio de estado de BREEDEN y LITZENBERGER (II.4.2 y II.7.5, líneas 2654 y 2933); en 3.B.13 también lo es en la nota de las estrategias (I.8.1, línea 1868). Pero en la cotización del 3.B.13, BF_25, es una diferencia de volatilidades implícitas, la media de las alas de 25 delta menos la del centro, que mide la curvatura de la sonrisa (I.6.3, línea 1780). Están relacionadas, porque esa cotización procede de una combinación que compra las alas y vende el centro, pero una es un precio y la otra una medida de la forma de la sonrisa.",
+     "temas": [
+      "3.B.13",
+      "3.B.25"
+     ]
+    }
+   ],
+   "propuesta": "Tomar 3.B.25 como referencia para la valoración (réplica, árbol, BLACK-SCHOLES-MERTON con rendimiento continuo y paridad) y 3.B.13 para las convenciones del mercado de divisas (dualidad de la opción, en el dinero con el tipo a plazo o con delta nula, deltas, risk reversal y mariposa); las ecuaciones ya coinciden con δ=r_f^* y no hay que cambiarlas. En 3.B.25 conviene remitir al 3.B.13 desde GARMAN y KOHLHAGEN (II.6.8) y desde la sonrisa de las divisas (II.9.2), con el matiz de que es más simétrica que la de los índices bursátiles pero no del todo, y dar otra letra a la binomial complementaria, Φ(a;n,q), que choca con la normal del 3.B.13. Si se quiere afinar, la cota inferior del cuerpo (3.3.3, línea 1251), escrita sin rentas justo después de la fórmula con δ (es correcta para la figura, que no tiene rentas), puede escribirse e^{−r_fT}max{F_0−K,0}, que vale también para una divisa y enlaza con la referencia del tipo a plazo del 3.B.13. En 3.B.13 conviene decir que la probabilidad de la opción de 25 delta y las que se extraen de la sonrisa son neutrales al riesgo, distinguir la mariposa que se cotiza, una diferencia de volatilidades, de la estrategia del mismo nombre, y precisar que la risk reversal se refiere a la divisa base del par, el euro en EUR/USD, de modo que su call es una put sobre el dólar en la notación S del tema. Φ para la normal se mantiene en el 3.B.13, porque N es allí el nominal.",
+   "referencia": "3.B.25",
+   "temas": {
+    "3.B.13": {
+     "epigrafe": "I.6 Opciones: ¿qué añade a la cobertura el derecho a no cambiar? (I.6.1 Contrato, I.6.2 Valor, I.6.3 Cotización)",
+     "papel": "Valorar y cotizar las opciones sobre divisas, el instrumento que cubre solo la cola desfavorable del tipo de cambio, en lo que tienen de propio frente a la teoría general de las opciones.",
+     "contexto": "En el anexo I, el de los instrumentos, después del contado, el plazo y los swaps y antes de la cobertura; en el cuerpo (2.4.3 Variantes), la opción de venta aparece como un seguro y remite a este apartado, y la teoría general se remite al 3.B.25.",
+     "supuestos": [
+      "S y K en euros por dólar (cotización directa); r_f es el tipo del euro y r_f^* el del dólar",
+      "La divisa rinde su tipo de interés como un dividendo continuo",
+      "Opciones europeas, como casi todas las de divisas",
+      "Capitalización continua y los supuestos de BLACK-SCHOLES, que no enuncia y remite al 3.B.25"
+     ],
+     "ecuaciones": [
+      {
+       "tex": "N\\,(S_T-K)^+\\ \\text{euros}\\quad\\text{o}\\quad N\\,\\frac{(S_T-K)^+}{S_T}\\ \\text{dólares}",
+       "que": "Pago al vencimiento de una call dólar put euro de N dólares, expresado en cada moneda"
+      },
+      {
+       "tex": "c=S\\,e^{-r_f^*T}\\,\\Phi(d_1)-K\\,e^{-r_fT}\\,\\Phi(d_2),\\qquad d_{1,2}=\\frac{\\ln(S/K)+\\left(r_f-r_f^*\\pm\\tfrac{1}{2}\\sigma^2\\right)T}{\\sigma\\sqrt{T}}",
+       "que": "Valor de una call europea sobre dólares (GARMAN y KOHLHAGEN, 1983); Φ es la normal estándar y σ la volatilidad del tipo de cambio"
+      },
+      {
+       "tex": "c-p=e^{-r_fT}\\,(F-K),\\qquad F=S\\,e^{(r_f-r_f^*)T}",
+       "que": "Paridad put-call con el tipo a plazo: si K=F, la call y la put valen lo mismo"
+      },
+      {
+       "tex": "RR_{25}=\\sigma_{25c}-\\sigma_{25p},\\qquad BF_{25}=\\frac{\\sigma_{25c}+\\sigma_{25p}}{2}-\\sigma_{ATM}",
+       "que": "Risk reversal (asimetría) y mariposa (curvatura) de la sonrisa, con las volatilidades implícitas de 25 delta y la del dinero"
+      }
+     ],
+     "desarrollo": "Como las dos partes del intercambio son dinero, una call de N dólares a K es una put sobre KN euros, y su pago puede expresarse en cualquiera de las dos monedas; B se cubre comprando la call y A comprando la put. La divisa rinde su tipo de interés, de modo que su opción se valora como la de una acción con un dividendo continuo igual a r_f^*, que es el modelo de GARMAN y KOHLHAGEN, y la paridad hace del tipo a plazo la referencia del en el dinero. Como solo la volatilidad no se observa, el mercado cotiza en volatilidad implícita y en deltas, y con la volatilidad en el dinero, la risk reversal y la mariposa reconstruye la sonrisa.",
+     "implicaciones": [
+      "Toda opción sobre divisas es a la vez de compra de una moneda y de venta de la otra (call dólar put euro)",
+      "La referencia del mercado es el tipo a plazo, no el contado: con K=F la call y la put valen lo mismo",
+      "Las opciones se cotizan en volatilidad implícita y sus precios de ejercicio, en deltas",
+      "Una risk reversal negativa indica que el mercado paga más por protegerse de una caída brusca de la divisa base; en las monedas de tipos altos, es el riesgo de derrumbe del carry trade",
+      "Los bancos centrales leen en la volatilidad implícita, la risk reversal y la mariposa lo que teme el mercado"
+     ],
+     "huella": "1ggr4p1",
+     "epigrafes_analizados": [
+      "I.6.1 Contrato: ¿por qué una opción sobre divisas es a la vez de compra y de venta?",
+      "I.6.2 Valor: ¿de qué depende el precio de una opción sobre divisas?",
+      "I.6.3 Cotización: ¿qué dicen la risk reversal y la mariposa?"
+     ]
+    },
+    "3.B.25": {
+     "epigrafe": "3.3 Opciones: ¿cuánto vale un derecho? (3.3.1 Valor, 3.3.2 Réplica Dinámica, 3.3.3 BLACK-SCHOLES-MERTON, 3.3.4 Paridad Put-Call), con 3.1.2 Réplica y Cobertura y, en el anexo II, II.4.1 Paridad Put-Call, II.5.1-II.5.2 Árbol Binomial y II.6.4-II.6.5 Cobertura Delta y Fórmula",
+     "papel": "Caso difícil del método común de valoración por réplica: el derecho, cuyo pago tiene un vértice, exige una réplica dinámica, y su valor depende sobre todo de la volatilidad.",
+     "contexto": "En el bloque de valoración y cobertura, después del marco común (arbitraje, réplica y probabilidades neutrales al riesgo) y de los contratos a plazo, y antes de la cobertura con griegas y del teorema fundamental; el anexo II desarrolla las cotas, el árbol, la derivación de la fórmula, sus extensiones (MERTON, 1973; GARMAN y KOHLHAGEN, 1983; BLACK, 1976; MERTON, 1974) y la sonrisa.",
+     "supuestos": [
+      "Ausencia de arbitraje y ley del precio único, en un mercado sin costes de transacción y con venta en corto",
+      "Árbol binomial con d<e^{r_fτ}<u, que da probabilidades neutrales al riesgo entre 0 y 1",
+      "BLACK-SCHOLES-MERTON: movimiento browniano geométrico con volatilidad constante, negociación continua y tipo sin riesgo constante",
+      "Opción europea y subyacente sin rentas o con un rendimiento continuo δ (δ=r_f^* en una divisa)"
+     ],
+     "ecuaciones": [
+      {
+       "tex": "f=e^{-r_f\\tau}\\left[q\\,f_u+(1-q)\\,f_d\\right],\\qquad q=\\frac{e^{r_f\\tau}-d}{u-d},\\qquad \\Delta=\\frac{f_u-f_d}{S_0(u-d)}",
+       "que": "Valor y delta de la réplica en el árbol binomial de un periodo (COX, ROSS y RUBINSTEIN, 1979)"
+      },
+      {
+       "tex": "\\frac{\\partial f}{\\partial t}+r_fS\\frac{\\partial f}{\\partial S}+\\frac{1}{2}\\sigma^2S^2\\frac{\\partial^2f}{\\partial S^2}=r_ff",
+       "que": "Ecuación de BLACK-SCHOLES, obtenida con la cartera cubierta en delta (BLACK y SCHOLES, 1973; MERTON, 1973)"
+      },
+      {
+       "tex": "c=e^{-r_fT}E^{\\mathbb Q}\\left[(S_T-K)^+\\right]",
+       "que": "Valoración neutral al riesgo (COX y ROSS, 1976)"
+      },
+      {
+       "tex": "c=S_0e^{-\\delta T}N(d_1)-Ke^{-r_fT}N(d_2),\\qquad d_1=\\frac{\\ln(S_0/K)+(r_f-\\delta+\\sigma^2/2)\\,T}{\\sigma\\sqrt T},\\qquad d_2=d_1-\\sigma\\sqrt T",
+       "que": "Fórmula de BLACK-SCHOLES-MERTON con rendimiento continuo; con δ=r_f^*, la de GARMAN y KOHLHAGEN (1983); N es la normal estándar"
+      },
+      {
+       "tex": "c-p=S_0e^{-\\delta T}-Ke^{-r_fT}=(F_0-K)\\,e^{-r_fT}",
+       "que": "Paridad put-call con rendimiento del subyacente (STOLL, 1969; MERTON, 1973)"
+      }
+     ],
+     "desarrollo": "En dos estados, la réplica combina Δ unidades del subyacente con un préstamo, y su coste, sin las probabilidades reales, es el valor esperado del pago con las neutrales al riesgo, descontado; hecha al revés, es la cobertura. Como el pago de la opción tiene un vértice, la réplica hay que rehacerla: el árbol se valora hacia atrás y, con periodos cada vez más cortos, converge al movimiento browniano geométrico, donde la cartera cubierta en delta da la ecuación de BLACK-SCHOLES y la valoración neutral al riesgo, la fórmula. La paridad put-call da la put sin otro modelo y muestra que una call sin rentas vale más viva que ejercida.",
+     "implicaciones": [
+      "El precio no depende de la rentabilidad esperada ni de las preferencias, que ya están en el precio del subyacente",
+      "N(d_2) es la probabilidad neutral al riesgo de ejercer, y e^{−δT}N(d_1), la delta de la réplica",
+      "La volatilidad es el dato del que más depende el valor y el único que no se observa: las opciones se negocian por su volatilidad implícita",
+      "Una call equivale a una posición apalancada en el subyacente",
+      "Una call americana sin rentas no se ejerce antes del vencimiento; con rentas, como el tipo extranjero de una divisa, puede convenir"
+     ],
+     "huella": "1hnu3zk",
+     "epigrafes_analizados": [
+      "3.1.2 Réplica y Cobertura: ¿cómo se fabrica un derivado y cómo se neutraliza su riesgo?",
+      "3.3 Opciones: ¿cuánto vale un derecho?",
+      "3.3.1 Valor: ¿de qué depende lo que vale una opción?",
+      "3.3.2 Réplica Dinámica: ¿por qué hay que rehacer la cartera que fabrica una opción?",
+      "3.3.3 BLACK-SCHOLES-MERTON: ¿qué dice la fórmula del precio de una opción?",
+      "3.3.4 Paridad Put-Call: ¿cómo se relacionan la call y la put?",
+      "II.4.1 Paridad Put-Call: ¿qué relación hay entre el precio de una call y el de una put?",
+      "II.5.1 Un Periodo: ¿cuánto vale una opción si el subyacente solo puede subir o bajar?",
+      "II.5.2 Varios Periodos: ¿cómo se valora una opción hacia atrás?",
+      "II.6.4 Cobertura Delta: ¿por qué el precio no depende de la rentabilidad esperada?",
+      "II.6.5 Fórmula: ¿cuánto vale una opción europea?"
+     ]
+    }
+   },
+   "fecha": "2026-11-05"
   }
  }
 }
