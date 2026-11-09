@@ -152,6 +152,8 @@ de lo que se acaba de decir. Lo evitan §8.4 (fusionar en lugar de duplicar) y l
   - **Otro tamaño para una figura concreta**: `\imagenfit[1]{…}{…}{…}` (página entera), `[0.5]` (media página), etc.
   - **Figura apaisada grande**: `\imagenfithorizontal{fichero}{título}{fuente}`, que la pone en una página girada en ese punto del texto.
   - Si una figura no cabe en lo que queda de página, pasa entera a la siguiente: no se reduce para aprovechar el hueco.
+    Tampoco se mueve la figura ni se reordena el texto para taparlo (pasar párrafos delante, partirlos, llevarla al final del apartado):
+    la figura va tras el párrafo que la presenta y el hueco se acepta.
   - **En los anexos no se usa `\imagenfit`**, porque sus figuras no deben entrar en el índice de figuras. La imagen va centrada a su
     tamaño natural (`[width=\linewidth]` solo si es más ancha que el texto), con el título en negrita encima y la fuente debajo, dentro
     de un `minipage` que lo mantiene unido:
