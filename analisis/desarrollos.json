@@ -1755,6 +1755,152 @@
     "bloques": 1,
     "grado": "Parcial"
    }
+  ],
+  "3.B.16": [
+   {
+    "familia": "Paridad de poder adquisitivo",
+    "area": "Macroeconomía abierta",
+    "forma": "Tipo de cambio real en una unión, Δq = π* − π",
+    "epigrafes": "Tipo de cambio: ¿cómo se ajustan los precios relativos sin él? | Renuncia: ¿qué instrumentos se ceden y qué queda?",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Paridad de poder adquisitivo",
+    "area": "Macroeconomía abierta",
+    "forma": "BALASSA y SAMUELSON: diferenciales de inflación de equilibrio",
+    "epigrafes": "Diferenciales de inflación: ¿equilibrio o desequilibrio?",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Paridad de intereses",
+    "area": "Macroeconomía abierta",
+    "forma": "No cubierta con prima de riesgo en una unión y prima de redenominación",
+    "epigrafes": "Tipo de interés: ¿de qué depende el de cada miembro? | Renuncia: ¿qué instrumentos se ceden y qué queda? | Redenominación: ¿qué riesgo es propio de una unión monetaria? | Redenominación: ¿qué riesgo tiene una unión que no tiene una nación?",
+    "bloques": 4,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Inconsistencia temporal de la política",
+    "area": "Macroeconomía",
+    "forma": "Credibilidad importada en una unión (BARRO y GORDON, 1983; ALESINA y BARRO, 2002)",
+    "epigrafes": "Credibilidad: ¿puede un país comprar la reputación de otro? | Condiciones: ¿cuándo se importa de verdad la credibilidad? | Credibilidad: ¿puede tomarse prestada?",
+    "bloques": 3,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Ecuación de FISHER e inflación implícita",
+    "area": "Finanzas",
+    "forma": "Tipos reales de los miembros con un tipo nominal común (WALTERS, 1990)",
+    "epigrafes": "Tipos reales: ¿por qué un tipo nominal común acentúa los ciclos de cada país? | Tipos reales procíclicos: ¿por qué sigue vigente la crítica de WALTERS?",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Dinámica y sostenibilidad de la deuda pública",
+    "area": "Macroeconomía",
+    "forma": "Con prima de riesgo soberana en una unión (DE GRAUWE, 2011)",
+    "epigrafes": "Canales: ¿por dónde entra la desconfianza en la deuda? | Competitividad: ¿cómo divergen los costes y cómo se corrigen? | Austeridad forzada: ¿por qué consolidar en plena crisis puede elevar la deuda?",
+    "bloques": 3,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Crisis cambiarias de segunda generación",
+    "area": "Macroeconomía abierta",
+    "forma": "Equilibrios múltiples en la deuda soberana de una unión (OBSTFELD, 1996; CALVO, 1988; COLE y KEHOE, 2000; DE GRAUWE, 2011)",
+    "epigrafes": "Equilibrios múltiples: ¿pueden los mercados forzar un impago?",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Nuevo keynesiano de tres ecuaciones (NEK-2)",
+    "area": "Macroeconomía",
+    "forma": "Bloque de la media de la unión con una regla de TAYLOR común",
+    "epigrafes": "Bloques: ¿qué puede y qué no puede hacer una política monetaria común?",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Nueva macroeconomía de economía abierta (NOEM)",
+    "area": "Macroeconomía abierta",
+    "forma": "Unión monetaria de dos países: bloque de las diferencias (BENIGNO, 2004; GALÍ y MONACELLI, 2008)",
+    "epigrafes": "Bloques: ¿qué puede y qué no puede hacer una política monetaria común?",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Monopolio sindical",
+    "area": "Mercado de trabajo",
+    "forma": "Sindicato que anticipa la respuesta del gobierno (McDONALD y SOLOW, 1981; DE GRAUWE, 2020)",
+    "epigrafes": "Instituciones laborales: ¿por qué una misma perturbación de oferta mueve distinto los salarios?",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Imposición / tarificación óptima de Ramsey",
+    "area": "Sector público",
+    "forma": "Impuesto inflacionista óptimo (PHELPS, 1973; CANZONERI y ROGERS, 1990)",
+    "epigrafes": "Señoreaje: ¿pierden más quienes más dependían del impuesto inflacionista? | Impuesto inflacionista: ¿qué pierde quien recaudaba con la inflación?",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Coordinación internacional (juego de cooperación)",
+    "area": "Macroeconomía abierta",
+    "forma": "Devaluaciones competitivas como dilema del prisionero",
+    "epigrafes": "Devaluaciones competitivas: ¿por qué el tipo de cambio de un socio es un riesgo? | Devaluaciones competitivas: ¿qué gana un mercado común al suprimirlas?",
+    "bloques": 2,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Solow-Swan",
+    "area": "Crecimiento",
+    "forma": "Capital de largo plazo con prima de riesgo, f'(k*) = r + λ (BALDWIN, 1989)",
+    "epigrafes": "Prima de riesgo y crecimiento: ¿acelera la unión la acumulación de capital?",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Modelo de gravedad",
+    "area": "Comercio internacional",
+    "forma": "Efecto comercio de una moneda común (ROSE, 2000)",
+    "epigrafes": "Comercio: ¿cuánto ha aumentado el comercio entre los miembros?",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Reparto del riesgo (condición de BORCH)",
+    "area": "Finanzas",
+    "forma": "Diversificación internacional de la renta frente a las perturbaciones (MUNDELL, 1973)",
+    "epigrafes": "MUNDELL (1973): ¿y si el tipo de cambio fuera una fuente de perturbaciones?",
+    "bloques": 1,
+    "grado": "Parcial"
+   },
+   {
+    "familia": "Áreas monetarias óptimas / umbral de apertura",
+    "area": "Macroeconomía abierta",
+    "forma": "Modelo de dos países de MUNDELL (1961)",
+    "epigrafes": "Perturbaciones asimétricas: ¿cuánto cuesta perder el tipo de cambio? | MUNDELL (1961): ¿por qué importa la movilidad de los factores?",
+    "bloques": 2,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Áreas monetarias óptimas / umbral de apertura",
+    "area": "Macroeconomía abierta",
+    "forma": "Umbral de apertura de KRUGMAN (1990) y condición de entrada",
+    "epigrafes": "Umbral: ¿qué es un área monetaria óptima? | Apertura: ¿por qué crecen los beneficios con la integración? | Umbral: ¿dónde se cruzan beneficios y costes? | Transición y convergencia: ¿cuánto cuesta entrar en una unión?",
+    "bloques": 4,
+    "grado": "Completo"
+   },
+   {
+    "familia": "Áreas monetarias óptimas / umbral de apertura",
+    "area": "Macroeconomía abierta",
+    "forma": "Línea AMO, unión presupuestaria y endogeneidad (DE GRAUWE, 2020; FRANKEL y ROSE, 1998)",
+    "epigrafes": "Criterios: ¿cómo se identifica un área monetaria óptima? | Simetría y flexibilidad: ¿qué combinaciones hacen óptima un área? | Unión presupuestaria y flexibilidad: ¿qué sustituye a qué? | Dinámica: ¿se vuelve óptima una unión al formarse?",
+    "bloques": 4,
+    "grado": "Completo"
+   }
   ]
  },
  "por_familia": {
@@ -1790,7 +1936,8 @@
   ],
   "Inconsistencia temporal de la política": [
    "3.A.23",
-   "3.A.6"
+   "3.A.6",
+   "3.B.16"
   ],
   "Islas de Lucas (información imperfecta)": [
    "3.A.42",
@@ -1863,7 +2010,8 @@
   ],
   "Imposición / tarificación óptima de Ramsey": [
    "3.A.20",
-   "4.B.11"
+   "4.B.11",
+   "3.B.16"
   ],
   "Monopolio": [
    "3.A.17",
@@ -1922,12 +2070,14 @@
    "3.B.14"
   ],
   "Paridad de poder adquisitivo": [
-   "3.B.14"
+   "3.B.14",
+   "3.B.16"
   ],
   "Paridad de intereses": [
    "3.B.13",
    "3.B.14",
-   "3.B.25"
+   "3.B.25",
+   "3.B.16"
   ],
   "Burbujas racionales": [
    "3.A.42",
@@ -1941,7 +2091,8 @@
   ],
   "Dinámica y sostenibilidad de la deuda pública": [
    "3.A.39",
-   "3.B.29"
+   "3.B.29",
+   "3.B.16"
   ],
   "Ciclo Real (RBC)": [
    "3.A.42"
@@ -1951,14 +2102,16 @@
    "3.A.37",
    "3.A.41",
    "3.A.42",
-   "3.A.7"
+   "3.A.7",
+   "3.B.16"
   ],
   "Acelerador financiero": [
    "3.A.42"
   ],
   "Nueva macroeconomía de economía abierta (NOEM)": [
    "3.A.32",
-   "3.A.42"
+   "3.A.42",
+   "3.B.16"
   ],
   "Costes de menú": [
    "3.A.7"
@@ -2018,13 +2171,15 @@
    "3.A.35"
   ],
   "Monopolio sindical": [
-   "3.A.27"
+   "3.A.27",
+   "3.B.16"
   ],
   "Costes de ajuste (demanda dinámica de factores)": [
    "3.A.26"
   ],
   "Solow-Swan": [
-   "3.A.43"
+   "3.A.43",
+   "3.B.16"
   ],
   "Capital humano": [
    "3.A.44"
@@ -2049,7 +2204,8 @@
    "3.B.7"
   ],
   "Modelo de gravedad": [
-   "3.B.10"
+   "3.B.10",
+   "3.B.16"
   ],
   "Enfoque de elasticidades": [
    "3.B.12"
@@ -2066,7 +2222,8 @@
    "3.B.17"
   ],
   "Crisis cambiarias de segunda generación": [
-   "3.B.17"
+   "3.B.17",
+   "3.B.16"
   ],
   "Crisis cambiarias de tercera generación": [
    "3.B.17"
@@ -2099,7 +2256,8 @@
    "3.A.22"
   ],
   "Coordinación internacional (juego de cooperación)": [
-   "3.B.19"
+   "3.B.19",
+   "3.B.16"
   ],
   "Estructura temporal: expectativas y hábitat": [
    "3.B.24"
@@ -2114,7 +2272,8 @@
    "3.B.25"
   ],
   "Reparto del riesgo (condición de BORCH)": [
-   "3.B.25"
+   "3.B.25",
+   "3.B.16"
   ],
   "Teorema fundamental de la valoración": [
    "3.B.25"
@@ -2130,7 +2289,8 @@
    "3.B.25"
   ],
   "Ecuación de FISHER e inflación implícita": [
-   "3.B.24"
+   "3.B.24",
+   "3.B.16"
   ],
   "Curva de NELSON y SIEGEL y factores de la curva": [
    "3.B.24"
@@ -2164,6 +2324,9 @@
   ],
   "Exposición cambiaria de la empresa (ADLER y DUMAS)": [
    "3.B.13"
+  ],
+  "Áreas monetarias óptimas / umbral de apertura": [
+   "3.B.16"
   ]
  }
 }
