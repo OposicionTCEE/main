@@ -165,7 +165,31 @@ Estados: `pendiente` (por transcribir), `transcrito`, `error`.
   a partir de las voces (decisión del usuario: por si se equivoca).
 - Lo guardado (🔒) no se puede volver a identificar ni renombrar hasta pulsar *Editar*.
 
-## 9. Ideas para más adelante (no hechas)
+## 9. Posición de lectura (v0.52, 13 de noviembre de 2026)
+
+- **El fallo:** leyendo una transcripción larga, a veces volvía sola al principio, sin tocar nada. El panel recibe datos nuevos cada vez que
+  se guarda cualquier tema (también cuando Claude o un agente trabajan en otro), se cambia de editor, termina una compilación o avanza una
+  transcripción o una identificación de voces. Hasta la v0.51, `media/panel.js` rehacía entera la página con cada envío (cabecera, pestañas y
+  contenedor) y la pestaña se pintaba en un contenedor nuevo y vacío: la caja con barra de desplazamiento era otra y empezaba arriba. El arreglo
+  que ya tenía `render()` en `media/cante.js` (guardar el `scrollTop` de `.cante-dcha` y reponerlo) no servía, porque leía la caja del
+  contenedor nuevo, que aún estaba vacío.
+- **Carcasa estable** (`media/panel.js`): la cabecera y el contenedor de la pestaña (`#cuerpo`) se crean una sola vez. Con cada envío solo se
+  cambian los textos que varían (tiempo restante, «● Cante») y la pestaña activa se repinta dentro del mismo contenedor.
+  Si llega un error, la carcasa se rehace.
+- **Conservar la lectura** (`media/desplazamiento.js`, `window.TCEE_DESPLAZAMIENTO`): recuerda qué cajas ha desplazado el usuario (escucha
+  `scroll` en toda la página), las identifica por su ruta dentro de la pestaña (id, o etiqueta y clases con su orden entre hermanos iguales)
+  y, tras repintar, las devuelve a su sitio, igual que la página entera. Lo usan `panel.js` en cada repintado y `render()` del cante en los suyos
+  (marcar tramos, corregir palabras…). Sirve para todas las pestañas, no solo para el cante.
+- **Al cambiar de pestaña** se guarda dónde se estaba leyendo y, al volver, la pestaña reaparece en el mismo sitio (mientras el panel siga abierto).
+- **Idiomas** conserva su raíz entre repintados: si ya está en el contenedor no se vuelve a meter (sacarla y meterla movía la lectura y el foco).
+- **Regla para pestañas nuevas:** pintar dentro del contenedor que se recibe (`el.innerHTML = …` o un hijo propio), sin poner escuchas en el
+  propio contenedor (es el mismo en cada repintado y se acumularían), y repintar con `ctx.repintar()` o, si la pestaña se repinta por su cuenta,
+  envolver el repintado con `TCEE_DESPLAZAMIENTO.conservar(contenedor, () => …)`.
+- **Prueba:** `node extension/pruebas/panel_desplazamiento.js` (Playwright con Chromium; en la nube de Claude ya está). Carga el panel con una
+  transcripción larga, baja a mitad y comprueba que no se mueve al llegar datos iguales, al cambiar la cabecera, al repintarse la pestaña,
+  al ir a Temas y volver, y en ventana estrecha. Con el código de la v0.51 fallan cinco comprobaciones.
+
+## 10. Ideas para más adelante (no hechas)
 
 - Comparar la transcripción con el `main.tex` del tema: epígrafes no mencionados, orden y tiempo por epígrafe.
 - Evolución de la duración y del ritmo por tema y por vuelta.

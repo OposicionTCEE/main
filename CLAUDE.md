@@ -43,7 +43,7 @@ que no figuran allí: no cuentan Introducción, Conclusión ni Preguntas Test. D
 Nueva nota (`inferencia.js`): añade `\textbf{NOTA (dd/mm/aaaa[, desde X.Y.N]):} texto` como párrafo final de `\modificaciones{…}` del tema destino
 (buscado tras `\begin{document}`: en el preámbulo está la definición de la macro).
 Panel Oposición (`panelOposicion.js` + `media/panel.js/.css`, pestaña webview): pestañas Calendario, Temas (`media/temas.js`: cartas por bloque de `config/bloques.json`, filtro de ejercicio y partes, páginas del cuerpo de cada tema),
-Relaciones, Cante y Test; se abre en una ventana aparte (`workbench.action.moveEditorToNewWindow`). Lo que abre (temas, líneas) va a la ventana principal:
+Relaciones, Cante y Test; se abre en una ventana aparte (`workbench.action.moveEditorToNewWindow`). La cabecera y el contenedor de la pestaña se crean una sola vez y cada repintado conserva la posición de lectura (`media/desplazamiento.js`; reglas, regla para pestañas nuevas y prueba `extension/pruebas/panel_desplazamiento.js` en `main/CANTE.md` §9). Lo que abre (temas, líneas) va a la ventana principal:
 `tcee.irA(uri, linea, {principal:true})` usa el último grupo de editores de texto activo.
 Para ahorrar batería guarda por tema el texto y los pendientes y solo los recalcula si cambia el fichero, el documento abierto o `.build/estado`;
 `Progreso.todos()` se guarda 5 s. La transcripción del cante nunca se lanza sola (botón *Transcribir*). El plan semanal se eliminó (v0.11).

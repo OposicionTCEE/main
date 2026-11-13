@@ -126,6 +126,7 @@
     ctx = c;
     if (!pedido) { pedido = true; enviar({ tipo: 'idiCargar' }); }
     if (raiz && raiz.childNodes.length && X) {
+      if (raiz.parentNode === e) return;   // ya está en su sitio: sacarla y volverla a meter movería la lectura y el foco
       const foco = document.activeElement && raiz.contains(document.activeElement) ? document.activeElement : null;
       e.appendChild(raiz); if (foco) foco.focus();
       return;

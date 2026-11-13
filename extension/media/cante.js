@@ -73,9 +73,11 @@
   function render() {
     // a mitad de una selección con el ratón no se repinta (se perdería): se hace al soltar
     if (seleccionando) { repintarLuego = true; return; }
+    // la lectura (transcripción, historial o la página) no se mueve al repintar: CANTE.md, «Posición de lectura»
+    if (window.TCEE_DESPLAZAMIENTO) { window.TCEE_DESPLAZAMIENTO.conservar(el, renderAhora); return; }
     const dcha = el.querySelector('.cante-dcha'), scD = dcha ? dcha.scrollTop : 0;
     renderAhora();
-    const d2 = el.querySelector('.cante-dcha'); if (d2) d2.scrollTop = scD;   // el texto no salta arriba al marcar
+    const d2 = el.querySelector('.cante-dcha'); if (d2) d2.scrollTop = scD;
   }
   function renderAhora() {
     clearInterval(tic); tic = null;

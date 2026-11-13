@@ -473,6 +473,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
 <link rel="stylesheet" href="${url('katex/katex.min.css')}"><link rel="stylesheet" href="${url('panel.css')}"><title>Panel Oposición</title></head>
 <body><div id="app"><p class="vacio">Calculando los temas…</p></div>
 <script nonce="${nonce}" src="${url('katex/katex.min.js')}"></script>
+<script nonce="${nonce}" src="${url('desplazamiento.js')}"></script>
 <script nonce="${nonce}" src="${url('calendario.js')}"></script>
 <script nonce="${nonce}" src="${url('temas.js')}"></script>
 <script nonce="${nonce}" src="${url('relaciones.js')}"></script>
