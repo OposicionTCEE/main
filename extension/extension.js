@@ -148,30 +148,9 @@ async function textoDe(uri) {
   try { return Buffer.from(await vscode.workspace.fs.readFile(uri)).toString('utf8'); } catch (e) { return ''; }
 }
 
-// ---------------------------------------------------------------- Acciones (panel superior)
-class Acciones {
-  constructor() { this._ev = new vscode.EventEmitter(); this.onDidChangeTreeData = this._ev.event; }
-  getTreeItem(e) { return e; }
-  getChildren() {
-    const item = (label, icono, command, tooltip, atajo) => {
-      const t = new vscode.TreeItem(label);
-      if (atajo) t.description = atajo;   // el atajo a la vista, para irlo aprendiendo
-      t.iconPath = new vscode.ThemeIcon(icono);
-      t.command = { command, title: label };
-      t.tooltip = tooltip;
-      return t;
-    };
-    return [
-      item('Compilar tema', 'play', 'tcee.compilar', 'Compila el tema que se muestra en el índice (⌘⌥B)'),
-      item('Sincronizar con GitHub', 'sync', 'tcee.sincronizar', 'Guarda, trae y sube los cambios de main, temario y progreso'),
-      item('Nueva nota', 'note', 'tcee.nota', 'Añade una nota al final de \\modificaciones del tema que elijas'),
-      item('Panel Oposición', 'dashboard', 'tcee.panelOposicion', 'Calendario, tiempo restante de todos los temas y relaciones entre temas (se abre en una ventana aparte)'),
-      item('Atajos', 'keyboard', 'tcee.atajos', 'Todos los atajos del Panel TCEE en una ventana (se cierra con Esc; ⚙ cambia un atajo). Atajo: ⌘⌥K', '⌘⌥K'),
-      item('Notas del tema con Claude', 'comment-discussion', 'tcee.notasClaude', 'Abre Claude Code con el encargo ya escrito (tema, pasada y documentos que debe leer: CLAUDE.md y GUIA_TEMAS.md). Solo tienes que añadir qué quieres tratar'),
-      item('Rehacer informes', 'beaker', 'tcee.rehacerInformes', 'Comprueba qué informes faltan o están desactualizados (armonización de modelos y cobertura de las preguntas de test falladas) y prepara el encargo para Claude Code'),
-    ];
-  }
-}
+// ---------------------------------------------------------------- Acciones (panel superior): catálogo en acciones.js, ajustes en ajustes.js (main/AJUSTES.md)
+const { VistaAcciones, atajos, bonito } = require('./acciones');
+const { abrirClaude } = require('./claudeCode');
 
 // ---------------------------------------------------------------- Índice (panel inferior)
 class Indice {
@@ -236,10 +215,15 @@ class Indice {
 function esTema(doc) { return doc && doc.uri.scheme === 'file' && codigoTema(doc.uri.fsPath); }
 
 function activate(context) {
-  const acciones = new Acciones();
+  const acciones = new VistaAcciones(context.extension.packageJSON);
   const indice = new Indice();
   const vistaAcciones = vscode.window.createTreeView('tcee.acciones', { treeDataProvider: acciones });
   context.subscriptions.push(vistaAcciones);
+  // ---- Ajustes: ventanita (acción Ajustes y ⚙ de la cabecera); al cambiar qué acciones se ven, la vista se rehace sola
+  context.subscriptions.push(
+    vscode.commands.registerCommand('tcee.ajustes', () => require('./ajustes').abrir(context)),
+    vscode.workspace.onDidChangeConfiguration((e) => { if (e.affectsConfiguration('tcee.accionesOcultas')) acciones.refrescar(); }),
+  );
   const progreso = new Progreso(context);
 
   // ---- Tiempo restante: en la cabecera de Acciones, fijo; botón ✓ Hecho al lado
@@ -547,17 +531,10 @@ async function rehacerInformes() {
   const elegido = await vscode.window.showInformationMessage(
     `Hay ${n} ${n === 1 ? 'informe' : 'informes'} por rehacer`,
     { modal: true, detail: `${resumen}\n\nLos rehace Claude Code (consume uso de tu plan: cuantos más, más). `
-      + 'Copiaré el encargo y abriré Claude Code: solo tendrás que pegarlo (⌘V) y pulsar Intro.' },
-    'Copiar encargo y abrir Claude Code');
+      + 'Abriré Claude Code con el encargo ya escrito (dónde, en Ajustes): solo tendrás que pulsar Intro.' },
+    'Abrir Claude Code con el encargo');
   if (!elegido) return;
-  await vscode.env.clipboard.writeText(encargo);
-  // abre Claude Code si su extensión está instalada (el nombre exacto del comando depende de la versión)
-  const cmds = (await vscode.commands.getCommands(true)).filter((c) => /^claude/i.test(c));
-  const abrir = ['claude-vscode.sidebar.open', 'claude-vscode.editor.open', 'claude-vscode.editor.openLast', 'claude-code.focus']
-    .find((c) => cmds.includes(c)) || cmds.find((c) => /(open|focus)/i.test(c) && !/settings|log|terminal/i.test(c));
-  if (abrir) { try { await vscode.commands.executeCommand(abrir); } catch (e) { /* se abre a mano */ } }
-  vscode.window.showInformationMessage(abrir ? 'Encargo copiado: pégalo (⌘V) en Claude Code y pulsa Intro.'
-    : 'Encargo copiado. Abre Claude Code, pégalo (⌘V) y pulsa Intro.');
+  await abrirClaude(encargo, 'pulsa Intro para que empiece');
 }
 
 /** Cuenta notas y etiquetas del tema (main/GUIA_TEMAS.md, §7 y §8.2) */
@@ -607,31 +584,8 @@ async function notasConClaude(mostrado) {
     + `Tema: ${codigo} (${rel}). Pasada: ${p.pasada}`
     + (p.pasada === 'segunda' ? ' (quita las etiquetas naranjas de la pasada anterior y no pongas nuevas)' : ' (etiqueta en naranja lo que no sea seguro)')
     + `. Notas magenta en el tema: ${c.magenta}. Empieza con el plan y espera mi visto bueno. Quiero tratar: `;
-  // se copia siempre: si la versión de Claude Code no admite el mensaje prellenado, basta con pegarlo
-  await vscode.env.clipboard.writeText(encargo);
-  let abierto = false;
-  // en la barra lateral: «sidebar.open» fija la barra lateral como sitio preferido y «editor.open» en modo programático
-  // la respeta y le pasa el mensaje (Claude Code 2.1.29x). Si no existen esas órdenes, el enlace vscode:// lo abre en una pestaña.
-  const cmds = await vscode.commands.getCommands(true);
-  if (cmds.includes('claude-vscode.sidebar.open') && cmds.includes('claude-vscode.editor.open')) {
-    try {
-      // «sidebar.open» guarda la preferencia sin esperar: si no se espera aquí, «editor.open» aún lee «panel» y abre una pestaña
-      const conf = vscode.workspace.getConfiguration('claudeCode');
-      if (conf.get('preferredLocation') !== 'sidebar') await conf.update('preferredLocation', 'sidebar', vscode.ConfigurationTarget.Global);
-      await vscode.commands.executeCommand('claude-vscode.sidebar.open');
-      await vscode.commands.executeCommand('claude-vscode.editor.open', undefined, encargo, undefined, undefined, undefined,
-        { programmatic: 'honor-preferred-location' });
-      abierto = true;
-    } catch (e) { /* abajo */ }
-  }
-  if (!abierto) {
-    try { abierto = await vscode.env.openExternal(vscode.Uri.parse('vscode://anthropic.claude-code/open?prompt=' + encodeURIComponent(encargo))); } catch (e) { /* abajo */ }
-  }
-  if (abierto) {
-    vscode.window.showInformationMessage('Encargo escrito en Claude Code: añade al final qué quieres tratar y pulsa Intro. (Si no aparece escrito, está copiado: pégalo con ⌘V.)');
-  } else {
-    vscode.window.showInformationMessage('Encargo copiado. Abre Claude Code, pégalo (⌘V), añade qué quieres tratar y pulsa Intro.');
-  }
+  // dónde se abre: ajuste «Dónde se abre Claude Code» (claudeCode.js; main/AJUSTES.md). El encargo se copia siempre
+  await abrirClaude(encargo, 'añade al final qué quieres tratar y pulsa Intro');
 }
 
 /** Envuelve (o desenvuelve) las selecciones del editor activo en \<macro>{…} */
@@ -1024,22 +978,8 @@ function activarEscritura(context) {
   context.subscriptions.push(vscode.commands.registerCommand('tcee.atajos', () => {
     const pj = context.extension.packageJSON.contributes;
     const titulos = Object.fromEntries((pj.commands || []).map((c) => [c.command, c.title]));
-    const mac = process.platform === 'darwin';
-    const bonito = (k) => k.split(' ').map((acorde) => acorde.split('+').map((x) => (mac
-      ? ({ cmd: '⌘', ctrl: '⌃', alt: '⌥', shift: '⇧' }[x] || x.toUpperCase()) : x[0].toUpperCase() + x.slice(1))).join(mac ? '' : '+')).join(' ');
-    // atajos por defecto (package.json) y, encima, los que el usuario haya cambiado en VS Code (keybindings.json)
-    const atajo = {};
-    (pj.keybindings || []).forEach((k) => { atajo[k.command] = (mac && k.mac) || k.key; });
-    try {
-      const dir = mac ? path.join(require('os').homedir(), 'Library', 'Application Support', 'Code', 'User')
-        : process.platform === 'win32' ? path.join(process.env.APPDATA || '', 'Code', 'User') : path.join(require('os').homedir(), '.config', 'Code', 'User');
-      const txt = require('fs').readFileSync(path.join(dir, 'keybindings.json'), 'utf8').replace(/^\s*\/\/.*$/gm, '').replace(/,(\s*[\]}])/g, '$1');
-      for (const k of JSON.parse(txt)) {
-        if (typeof k.command !== 'string') continue;
-        if (k.command.startsWith('-tcee.')) { if (atajo[k.command.slice(1)] === k.key) atajo[k.command.slice(1)] = null; }
-        else if (k.command.startsWith('tcee.')) atajo[k.command] = k.key;
-      }
-    } catch (e) { /* sin atajos propios */ }
+    // atajos por defecto (package.json) y, encima, los que el usuario haya cambiado en VS Code (keybindings.json): acciones.js
+    const atajo = atajos(pj);
     const boton = { iconPath: new vscode.ThemeIcon('gear'), tooltip: 'Cambiar este atajo' };
     const qp = vscode.window.createQuickPick();
     qp.title = 'Atajos del Panel TCEE · Esc cierra · Intro lo ejecuta · ⚙ lo cambia';
@@ -1056,8 +996,10 @@ function activarEscritura(context) {
   // botón «⌨ Atajos» en la barra inferior mientras se edita un .tex: un clic y se ven todos
   const barra = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 200);
   barra.text = '$(keyboard) Atajos'; barra.command = 'tcee.atajos'; barra.tooltip = 'Atajos del Panel TCEE (⌘⌥K)';
-  const verBarra = (ed) => (ed && ed.document.languageId === 'latex' ? barra.show() : barra.hide());
-  context.subscriptions.push(barra, vscode.window.onDidChangeActiveTextEditor(verBarra));
+  // se puede quitar en Ajustes (tcee.botonAtajos; main/AJUSTES.md)
+  const verBarra = (ed) => (ed && ed.document.languageId === 'latex' && vscode.workspace.getConfiguration('tcee').get('botonAtajos', true) !== false ? barra.show() : barra.hide());
+  context.subscriptions.push(barra, vscode.window.onDidChangeActiveTextEditor(verBarra),
+    vscode.workspace.onDidChangeConfiguration((e) => { if (e.affectsConfiguration('tcee.botonAtajos')) verBarra(vscode.window.activeTextEditor); }));
   verBarra(vscode.window.activeTextEditor);
 }
 

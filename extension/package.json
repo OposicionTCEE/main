@@ -2,7 +2,7 @@
   "name": "tcee-panel",
   "displayName": "Panel TCEE",
   "description": "Panel de trabajo para los temas de la oposición TCEE: acciones, tiempo restante, índice, calendario, relaciones y cante.",
-  "version": "0.52.0",
+  "version": "0.53.0",
   "publisher": "oposiciontcee",
   "license": "UNLICENSED",
   "repository": {
@@ -23,6 +23,54 @@
     "configuration": {
       "title": "Panel TCEE",
       "properties": {
+        "tcee.accionesOcultas": {
+          "type": "array",
+          "default": [],
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "compilar",
+              "sincronizar",
+              "nota",
+              "panelOposicion",
+              "atajos",
+              "notasClaude",
+              "rehacerInformes"
+            ]
+          },
+          "description": "Acciones de la barra lateral TCEE que no se ven (se cambian en la acción Ajustes; main/AJUSTES.md). «Ajustes» siempre se ve."
+        },
+        "tcee.indiceVisible": {
+          "type": "boolean",
+          "default": true,
+          "description": "Mostrar la vista Índice del tema en la barra lateral TCEE (debajo de Acciones)."
+        },
+        "tcee.botonAtajos": {
+          "type": "boolean",
+          "default": true,
+          "description": "Mostrar el botón «Atajos» en la barra inferior mientras se edita un .tex."
+        },
+        "tcee.claudeAbrirEn": {
+          "type": "string",
+          "default": "barraLateral",
+          "enum": [
+            "barraLateral",
+            "pestana",
+            "ventanaNueva"
+          ],
+          "enumItemLabels": [
+            "En la barra lateral",
+            "En una pestaña",
+            "En una ventana aparte"
+          ],
+          "enumDescriptions": [
+            "A la derecha, junto al panel TCEE (como hasta ahora).",
+            "En una pestaña nueva del editor, junto a tus temas.",
+            "En tu ventana de Claude si ya hay una abierta; si no, en una ventana nueva."
+          ],
+          "description": "Dónde se abre Claude Code con el encargo ya escrito (Notas del tema con Claude y Rehacer informes; main/AJUSTES.md)."
+        },
         "tcee.notasContraidasAlAbrir": {
           "type": "boolean",
           "default": true,
@@ -59,7 +107,8 @@
         {
           "id": "tcee.indice",
           "name": "Índice",
-          "initialSize": 2
+          "initialSize": 2,
+          "when": "config.tcee.indiceVisible"
         }
       ]
     },
@@ -205,6 +254,12 @@
         "command": "tcee.atajos",
         "title": "Ver los atajos del Panel TCEE",
         "category": "TCEE"
+      },
+      {
+        "command": "tcee.ajustes",
+        "title": "Ajustes del Panel TCEE",
+        "category": "TCEE",
+        "icon": "$(gear)"
       }
     ],
     "menus": {
@@ -238,6 +293,11 @@
           "command": "tcee.detalleTiempo",
           "when": "view == tcee.acciones && tcee.hayTema",
           "group": "detalle@1"
+        },
+        {
+          "command": "tcee.ajustes",
+          "when": "view == tcee.acciones",
+          "group": "navigation@9"
         }
       ],
       "commandPalette": [

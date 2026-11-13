@@ -47,8 +47,8 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     idiomaUI, rutaPaquete: (l, rel) => idiomas.rutaPaquete(l, rel),
     // un micrófono y un whisper cada vez entre el cante, el oral y las clases
     cante: () => { try { const a = cante.estado(), b = clases.estado(); return { grabando: a.grabando || b.grabando, transcribiendo: a.transcribiendo || b.transcribiendo }; } catch (e) { return null; } },
-    avisar: (texto, error) => { if (panel) panel.webview.postMessage({ tipo: 'aviso', texto, error: !!error }); },
-    alCambiar: () => { if (panel) panel.webview.postMessage({ tipo: 'idiOral', estado: practicas.estadoOral() }); },
+    avisar: (texto, error) => avisarFin(texto, error),
+    alCambiar: () => { if (panel) panel.webview.postMessage({ tipo: 'idiOral', estado: practicas.estadoOral() }); avisarTrabajos(); },
   });
   // Voces neuronales (Piper): cada frase lista se manda a la pantalla con su dirección
   const voz = crearVoz({
@@ -62,16 +62,54 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
     voces,
     dirPerfil: () => idiomas.dirActivo(), idiomaUI,
     otroOcupado: () => { try { const a = cante.estado(), b = practicas.estadoOral(); return { grabando: a.grabando || b.grabando, transcribiendo: a.transcribiendo || b.transcribiendo }; } catch (e) { return null; } },
-    avisar: (texto, error) => { if (panel) panel.webview.postMessage({ tipo: 'aviso', texto, error: !!error }); },
-    alCambiar: () => { if (panel) panel.webview.postMessage({ tipo: 'idiClaseEstado', estado: clases.estado() }); },
+    avisar: (texto, error) => avisarFin(texto, error),
+    alCambiar: () => { if (panel) panel.webview.postMessage({ tipo: 'idiClaseEstado', estado: clases.estado() }); avisarTrabajos(); },
   });
   // Cante: grabación y transcripción (main/CANTE.md). alCambiar(ligero): solo el estado en vivo (nivel, % transcrito) o todo el panel
   const cacheEscucha = path.join(context.globalStorageUri.fsPath, 'cante-escucha');   // copias MP3 para escuchar en el panel
   const cante = crearCante({
     raiz, progreso, cacheEscucha, voces,
-    avisar: (texto, error) => { if (panel) panel.webview.postMessage({ tipo: 'aviso', texto, error: !!error }); else (error ? vscode.window.showWarningMessage : vscode.window.showInformationMessage)(texto); },
-    alCambiar: (ligero) => { if (!panel) return; if (ligero) panel.webview.postMessage({ tipo: 'canteEstado', estado: cante.estado() }); else enviar(); },
+    avisar: (texto, error) => avisarFin(texto, error),
+    alCambiar: (ligero) => { if (!panel) return; avisarTrabajos(); if (ligero) panel.webview.postMessage({ tipo: 'canteEstado', estado: cante.estado() }); else enviar(); },
   });
+
+  // ---- Trabajos en marcha (transcribir e identificar voces) de cantes, clases y orales: aviso en la cabecera del panel, en todas las pestañas.
+  // Siguen en el Mac aunque se cambie de pestaña, se vuelva atrás o se cierre el panel (no al cerrar VS Code o recargar). main/CANTE.md §10
+  const titulosClase = new Map();
+  const tituloClase = (id) => {
+    if (!titulosClase.has(id)) { let t = null; try { t = (clases.clase(id) || {}).titulo || null; } catch (e) { /* sin perfil */ } titulosClase.set(id, t); }
+    return titulosClase.get(id);
+  };
+  function trabajos() {
+    const de = (f) => { try { return f() || {}; } catch (e) { return {}; } };
+    const a = de(() => cante.estado()), b = de(() => clases.estado()), o = de(() => practicas.estadoOral());
+    const pct = (x) => Math.round(x.pct || 0);
+    const clase = (x) => `clase «${tituloClase(x.id) || 'sin título'}»`;
+    const lista = [
+      a.transcribiendo && { tipo: 'transcribir', que: `cante de ${a.transcribiendo.codigo}`, pct: pct(a.transcribiendo) },
+      a.identificando && { tipo: 'voces', que: `cante de ${a.identificando.codigo}`, pct: pct(a.identificando) },
+      b.transcribiendo && { tipo: 'transcribir', que: clase(b.transcribiendo), pct: pct(b.transcribiendo) },
+      b.identificando && { tipo: 'voces', que: clase(b.identificando), pct: pct(b.identificando) },
+      o.transcribiendo && { tipo: 'transcribir', que: 'expresión oral', pct: pct(o.transcribiendo) },
+    ].filter(Boolean);
+    return { lista, cola: (a.cola || []).length + (b.cola || []).length + (o.cola || []).length };
+  }
+  let esperaTrabajos = null, ultimosTrabajos = '';
+  /** Manda los trabajos en marcha a la página (como mucho cada 0,3 s y solo si han cambiado) */
+  function avisarTrabajos() {
+    if (!panel || esperaTrabajos) return;
+    esperaTrabajos = setTimeout(() => {
+      esperaTrabajos = null;
+      if (!panel) return;
+      const t = trabajos(), k = JSON.stringify(t);
+      if (k !== ultimosTrabajos) { ultimosTrabajos = k; panel.webview.postMessage({ tipo: 'trabajos', trabajos: t }); }
+    }, 300);
+  }
+  /** Aviso al terminar (o al fallar): en el panel si está abierto; si no, como notificación de VS Code */
+  function avisarFin(texto, error) {
+    if (panel) panel.webview.postMessage({ tipo: 'aviso', texto, error: !!error });
+    else (error ? vscode.window.showWarningMessage : vscode.window.showInformationMessage)(texto);
+  }
   setTimeout(() => { try { cante.retomar(); } catch (e) { /* sin carpeta aún */ } }, 5000);
   setTimeout(() => { try { practicas.retomar(); clases.retomar(); } catch (e) { /* sin perfil aún */ } }, 8000);
   let latido = null;   // mientras se graba, el nivel del micrófono se envía cada medio segundo
@@ -158,6 +196,7 @@ function crear(context, { progreso, textoDe, temaMostrado, alMarcar }) {
       cante: { ...cante.estado(), lista: cante.lista(), abierto, semana: ((cal.cal && cal.cal.semanas) || []).filter((s) => s.estado === 'en curso').flatMap((s) => s.orden),
         objetivo: context.globalState.get('tcee.canteObjetivo', 30), micro: context.globalState.get('tcee.canteMicro', '') },
       mapa: mapa(lista, dev),
+      trabajos: (() => { const t = trabajos(); ultimosTrabajos = JSON.stringify(t); return t; })(),
     };
   }
 

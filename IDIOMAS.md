@@ -397,6 +397,8 @@ Ajustes, **«Idioma del panel»** (`perfil.ajustes.idiomaFichas`: la estudiada �
   de `clase.json`. Pulsar la etiqueta de una intervención cambia su voz (solo esa intervención: las palabras seguidas de la misma voz). Desde la v0.51, como en
   el cante, también se seleccionan palabras (pulsar, arrastrar, Mayúsculas + clic; Esc quita la selección) y los botones **Voz: [nombre] … [Otra]** de la barra
   de arriba las pasan a esa voz (la intervención se parte si hace falta). La barra tiene alto fijo para que el texto no se mueva bajo el ratón al seleccionar.
+- **Mientras transcribe o identifica voces** (v0.53, 13/11/2026) se puede *Volver* y seguir con otra cosa (fichas, otras pestañas): sigue en el Mac,
+  la cabecera del Panel Oposición enseña cómo va y avisa al terminar. Al volver a la clase se ve el porcentaje o el resultado. `main/CANTE.md`, apartado 10.
 
 ## Inicio: columnas con desplazamiento propio (v0.38)
 

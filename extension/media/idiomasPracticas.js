@@ -1438,8 +1438,8 @@
           return `<div class="idi-k-aud"><div class="idi-k-aud-cab"><b>${esc(a.nombre || a.fichero)}</b><span class="apagado idi-mini">${a.origen === 'grabado' ? ui('grabado en el Mac') : ui('subido')} · ${mmss(a.segundos || 0)} · ${tam(a.bytes)}</span>
             ${bloq ? '' : `<button class="idi-x" data-quitar-aud="${esc(a.fichero)}" title="${ui('Borrar este audio')}">✕</button>`}</div>
             <div data-reproductor="${esc(a.fichero)}"><button data-oir="${esc(a.fichero)}">▶ ${ui('Escuchar')}</button></div>
-            ${ahora ? `<p class="idi-progreso">${ui('Transcribiendo… {0} %', tx.pct || 0)}</p><div class="carga"><span style="width:${tx.pct || 0}%"></span></div>`
-    : enCola ? `<p class="idi-progreso">${ui('En cola para transcribir…')}</p>`
+            ${ahora ? `<p class="idi-progreso">${ui('Transcribiendo… {0} %', tx.pct || 0)}</p><div class="carga"><span style="width:${tx.pct || 0}%"></span></div><p class="apagado idi-mini">${ui('Puedes volver atrás y seguir con otra cosa: sigue en el Mac y te aviso al terminar.')}</p>`
+    : enCola ? `<p class="idi-progreso">${ui('En cola para transcribir…')}</p><p class="apagado idi-mini">${ui('Puedes volver atrás y seguir con otra cosa: sigue en el Mac y te aviso al terminar.')}</p>`
     : bloq ? ''
     : `<p class="idi-acciones"><select data-idioma="${esc(a.fichero)}" title="${ui('Idioma que más se habla en la clase')}">${[[c.lengua, c.lengua === 'fr' ? 'Francés' : 'Inglés'], ['es', 'Castellano'], ['auto', 'Automático']].map(([k, n]) => `<option value="${k}">${ui(n)}</option>`).join('')}</select>
               <button class="${tsx.has(a.fichero) ? '' : 'primario'}" data-transcribir="${esc(a.fichero)}">${tsx.has(a.fichero) ? ui('Volver a transcribir') : ui('Transcribir')}</button></p>`}
@@ -1516,7 +1516,7 @@
     }
     function vocesAudio(c, a, e, bloq, tsx, ocupadoTx) {
       const iv = e.identificando;
-      if (iv && iv.id === c.id && iv.fichero === a.fichero) return `<p class="idi-progreso">👥 ${ui('Identificando voces… {0} %', iv.pct || 0)}</p><div class="carga"><span style="width:${iv.pct || 0}%"></span></div>`;
+      if (iv && iv.id === c.id && iv.fichero === a.fichero) return `<p class="idi-progreso">👥 ${ui('Identificando voces… {0} %', iv.pct || 0)}</p><div class="carga"><span style="width:${iv.pct || 0}%"></span></div><p class="apagado idi-mini">${ui('Puedes volver atrás y seguir con otra cosa: sigue en el Mac y te aviso al terminar.')}</p>`;
       if (bloq || ocupadoTx || !tsx.has(a.fichero)) return '';
       const hay = !!((c.voces || {})[a.fichero]);
       if (!e.voces) return hay ? '' : `<p class="apagado idi-mini">👥 ${ui('Falta instalar «Identificar voces»: pulsa «Instalar herramientas» en Ajustes de Idiomas.')}</p>`;

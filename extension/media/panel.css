@@ -15,6 +15,12 @@ a:hover { text-decoration: underline; }
 header { position: sticky; top: 0; background: var(--vscode-editor-background); padding-top: 14px; z-index: 2; border-bottom: 1px solid var(--borde); }
 .resumen { display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; font-size: 1.1em; }
 .resumen span, .apagado { color: var(--apagado); }
+.r-texto { display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; }
+/* trabajos en marcha (transcribir, identificar voces): a la derecha de la cabecera, sin cambiar su alto (CANTE.md §10) */
+.trabajos { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; font-size: .82em; }
+.trabajos:empty { display: none; }
+.resumen .trabajo { color: var(--vscode-badge-foreground, inherit); background: var(--vscode-badge-background, var(--borde)); border-radius: 10px;
+  padding: 1px 9px; white-space: nowrap; font-variant-numeric: tabular-nums; cursor: help; }
 nav { display: flex; gap: 2px; margin-top: 10px; }
 .pest { background: none; border: none; border-bottom: 2px solid transparent; color: var(--apagado); padding: 6px 12px; cursor: pointer; font: inherit; }
 .pest:hover { color: var(--vscode-foreground); }

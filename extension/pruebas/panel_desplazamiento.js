@@ -28,6 +28,7 @@ function datosDePrueba(n) {
   return {
     temas: [{ codigo: '3.A.1', titulo: 'Tema de prueba', parte: 'Ejercicio 3, parte A', minutos: 60, pct: 50 }],
     total: { tiempo: `${n} h`, hechos: 1, n: 145 },
+    trabajos: { lista: [], cola: 0 },
     cante: { lista: [{ id: f.id, codigo: f.codigo, fecha: f.fecha, duracion: f.duracion, objetivo: f.objetivo, estado: f.estado, marcado: false, real: f.duracion, palabrasExpo: 4800, audioExiste: false }],
       falta: [], cola: [], transcribiendo: null, identificando: null, voces: {}, grabando: null, abierto: null, semana: [], objetivo: 30, micro: '' },
   };
@@ -101,6 +102,20 @@ ${fs.existsSync(path.join(media, 'desplazamiento.js')) ? `<script src="file://${
   await enviarDatos(4); await pagina.waitForTimeout(50);
   comprobar('la cabecera se actualiza en su sitio', marca && await pagina.evaluate(() => document.querySelector('[data-pest="cante"]').__marca === 1
     && document.querySelector('.resumen strong').textContent.includes('4 h')));
+
+  // 7) trabajos en marcha (CANTE.md §10): aparecen en la cabecera, sin mover la lectura ni cambiar el alto de la cabecera
+  await pagina.setViewportSize({ width: 1400, height: 900 }); await pagina.waitForTimeout(100);
+  await pagina.$eval(caja, (e) => { e.scrollTop = 2500; });
+  const alto = () => pagina.$eval('header', (h) => h.getBoundingClientRect().height);
+  const altoAntes = await alto();
+  await pagina.evaluate(() => window.postMessage({ tipo: 'trabajos', trabajos: { lista: [{ tipo: 'transcribir', que: 'clase «Leçon 3»', pct: 34 }], cola: 1 } }, '*'));
+  await pagina.waitForTimeout(100);
+  const chips = await pagina.$$eval('.trabajos .trabajo', (xs) => xs.map((x) => x.textContent));
+  comprobar('trabajos: se ve en la cabecera', chips.length === 2 && chips[0].includes('Transcribiendo: clase «Leçon 3» · 34 %') && chips[1] === '+1 en cola', chips.join(' | '));
+  comprobar('trabajos: la transcripción no se mueve', Math.abs((await pos()) - 2500) < 2, `${await pos()}`);
+  comprobar('trabajos: la cabecera no cambia de alto', Math.abs((await alto()) - altoAntes) < 1, `${altoAntes} → ${await alto()}`);
+  await enviarDatos(5); await pagina.waitForTimeout(100);   // datos sin trabajos (ya terminó): desaparece
+  comprobar('trabajos: al terminar desaparece', (await pagina.$$('.trabajos .trabajo')).length === 0);
 
   await navegador.close();
   fs.unlinkSync(fichero);

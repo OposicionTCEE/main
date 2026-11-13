@@ -15,7 +15,8 @@
 
   window.addEventListener('message', (e) => {
     const m = e.data;
-    if (m.tipo === 'datos') { D = m.datos; pintar(); }
+    if (m.tipo === 'datos') { D = m.datos; if (D.trabajos) T = D.trabajos; pintar(); }
+    if (m.tipo === 'trabajos') { T = m.trabajos; pintarTrabajos(); }
     if (m.tipo === 'error') { carcasa = null; app.innerHTML = `<p class="vacio">No se pudo calcular el panel: ${esc(m.texto)}</p>`; }
     if (m.tipo === 'previa' && window.TCEE_CAL) window.TCEE_CAL.previa(m.previa);
     if (m.tipo === 'traer' && window.TCEE_CAL) window.TCEE_CAL.traer(m.traer);
@@ -58,11 +59,11 @@
   function crearCarcasa() {
     app.innerHTML = `
       <header>
-        <div class="resumen"></div>
+        <div class="resumen"><div class="r-texto"></div><div class="trabajos" role="status" aria-live="polite"></div></div>
         <nav>${PESTANAS.map(([k, t]) => `<button class="pest" data-pest="${k}">${t}</button>`).join('')}</nav>
       </header>
       <main id="cuerpo"></main>`;
-    carcasa = { resumen: app.querySelector('.resumen'), botones: {}, cuerpo: app.querySelector('#cuerpo'), pestana: null };
+    carcasa = { resumen: app.querySelector('.r-texto'), trabajos: app.querySelector('.trabajos'), botones: {}, cuerpo: app.querySelector('#cuerpo'), pestana: null };
     app.querySelectorAll('[data-pest]').forEach((b) => {
       carcasa.botones[b.dataset.pest] = b;
       b.onclick = () => { if (b.dataset.pest !== 'cante' && window.TCEE_CANTE) window.TCEE_CANTE.salir(); estado.pestana = b.dataset.pest; guardar(); pintar(); };
@@ -75,6 +76,7 @@
     // cabecera: solo los textos que cambian
     const resumen = `<strong>Tiempo restante del temario: ${esc(D.total.tiempo)}</strong><span>${D.total.hechos} de ${D.total.n} temas hechos</span>`;
     if (carcasa.resumen.innerHTML !== resumen) carcasa.resumen.innerHTML = resumen;
+    pintarTrabajos();
     const pestana = PINTORES[estado.pestana] ? estado.pestana : 'calendario';
     for (const [k, t] of PESTANAS) {
       const b = carcasa.botones[k], texto = k === 'cante' && D.cante && D.cante.grabando ? '● Cante' : t;
@@ -89,6 +91,17 @@
     carcasa.pestana = pestana;
     PINTORES[pestana](cuerpo);
     DESPL.restaurar(cuerpo, posiciones[pestana] || { pagina: 0, cajas: [] });
+  }
+
+  // ---- trabajos en marcha (transcribir, identificar voces): en la cabecera, en todas las pestañas (CANTE.md §10)
+  let T = null;   // lo último recibido: con los datos o con el mensaje «trabajos» (cada avance)
+  const AYUDA_TRABAJOS = 'Sigue en el Mac aunque cambies de pestaña, vuelvas atrás o cierres el panel (no si cierras VS Code o recargas la ventana). Te aviso al terminar.';
+  function pintarTrabajos() {
+    if (!carcasa) return;
+    const lista = (T && T.lista) || [], cola = (T && T.cola) || 0;
+    const html = lista.map((x) => `<span class="trabajo" title="${esc(AYUDA_TRABAJOS)}">${x.tipo === 'voces' ? '👥 Identificando voces' : '⏳ Transcribiendo'}: ${esc(x.que)} · ${Number(x.pct) || 0} %</span>`).join('')
+      + (cola ? `<span class="trabajo" title="${esc(AYUDA_TRABAJOS)}">+${cola} en cola</span>` : '');
+    if (carcasa.trabajos.innerHTML !== html) carcasa.trabajos.innerHTML = html;
   }
 
   function enlaces(el) {

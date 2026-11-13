@@ -189,7 +189,25 @@ Estados: `pendiente` (por transcribir), `transcrito`, `error`.
   transcripción larga, baja a mitad y comprueba que no se mueve al llegar datos iguales, al cambiar la cabecera, al repintarse la pestaña,
   al ir a Temas y volver, y en ventana estrecha. Con el código de la v0.51 fallan cinco comprobaciones.
 
-## 10. Ideas para más adelante (no hechas)
+## 10. Trabajos en marcha (v0.53, 13 de noviembre de 2026)
+
+- **Lo que pidió el usuario:** moverse por el panel (otras pestañas, *Volver*, una ficha de gramática…) mientras se transcribe o se identifican
+  voces y, al volver, ver si ha terminado o cómo va. **Ya funcionaba así**: whisper y la identificación de voces corren como programas aparte
+  en el Mac (`spawn` en `cante.js`, `idiomasClases.js`, `idiomasPracticas.js` y `voces.js`) y nada los para al cambiar de pestaña, volver atrás
+  o cerrar el panel. Solo los paran *Cancelar*, cerrar VS Code o recargar la ventana (entonces hay que volver a pulsar *Transcribir*: los
+  pendientes no se transcriben solos). Faltaba que se viera.
+- **Cabecera del Panel Oposición**, en todas las pestañas: un aviso por trabajo («⏳ Transcribiendo: cante de 3.A.25 · 34 %»,
+  «👥 Identificando voces: clase «…» · 12 %») y «+N en cola». Al pasar el ratón explica que sigue en el Mac. Desaparece al terminar.
+  `trabajos()` en `panelOposicion.js` junta `cante.estado()`, `clases.estado()` y `practicas.estadoOral()`. Va con los datos y, en cada avance,
+  en el mensaje `trabajos` (como mucho cada 0,3 s y solo si cambia). En la página lo pinta `pintarTrabajos()` de `media/panel.js`, a la derecha
+  del tiempo restante. **No cambia el alto de la cabecera**: los paneles fijos de las pestañas (`top: 92px`) cuentan con él.
+- **En la clase** (Idiomas): bajo «Transcribiendo… %», «En cola» e «Identificando voces…», una línea dice que se puede volver atrás
+  (texto traducido en `media/i18n-idiomas.js`). El cante ya lo decía.
+- **Aviso al terminar:** en el panel si está abierto; si no, notificación de VS Code (`avisarFin`). Antes, las clases y los orales no avisaban
+  con el panel cerrado.
+- **Prueba:** `node extension/pruebas/panel_desplazamiento.js`, comprobaciones «trabajos» (se ve, no mueve la lectura, no cambia el alto, desaparece).
+
+## 11. Ideas para más adelante (no hechas)
 
 - Comparar la transcripción con el `main.tex` del tema: epígrafes no mencionados, orden y tiempo por epígrafe.
 - Evolución de la duración y del ritmo por tema y por vuelta.
