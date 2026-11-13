@@ -45,7 +45,7 @@ comprobar('compilar.sh deja la copia del .tex junto al PDF', fs.readFileSync(pat
     static parse(t) { return new Uri(t); }
   };
   const oyentes = { rangos: [], seleccion: [], texto: [], vigias: [] };
-  const tipos = [];   // decoraciones creadas: la 1.ª es la banda; la 2.ª, el atenuado
+  const tipos = [];   // decoraciones creadas: la 1.ª es la banda; las de opacidad, el atenuado (se rehace al cambiar cuánto oscurece)
   const evento = (lista) => (f) => { lista.push(f); return { dispose() { lista.splice(lista.indexOf(f), 1); } }; };
   Object.assign(v.window, {
     onDidChangeTextEditorVisibleRanges: evento(oyentes.rangos), onDidChangeTextEditorSelection: evento(oyentes.seleccion),
@@ -70,7 +70,7 @@ comprobar('compilar.sh deja la copia del .tex junto al PDF', fs.readFileSync(pat
       revealRange(r, tipo) { this.revelado.push({ linea: r.start.line + 1, car: r.start.character, tipo }); if (tipo === v.TextEditorRevealType.AtTop) this.visibleRanges = [new Range(r.start.line, r.start.character, r.start.line + 40, 0)]; oyentes.rangos.forEach((f) => f({ textEditor: this, visibleRanges: this.visibleRanges })); },
       setDecorations(t, rs) { this.decos.set(t, rs); },
       get deco() { return (this.decos.get(tipos[0]) || []).map((r) => r.start.line + 1); },
-      get atenuado() { return (this.decos.get(tipos[1]) || []).map((r) => [r.start.line + 1, r.end.line + 1]); } };
+      get atenuado() { const t = tipos.filter((x) => x.o && x.o.opacity).pop(); return ((t && this.decos.get(t)) || []).map((r) => [r.start.line + 1, r.end.line + 1]); } };
     Object.defineProperty(ed, 'viewColumn', { get: () => grupo.viewColumn });
     editores.push(ed); v.window.visibleTextEditors = editores.filter((e) => sim.grupos.includes(e.grupo));
     return ed;
@@ -121,7 +121,7 @@ comprobar('compilar.sh deja la copia del .tex junto al PDF', fs.readFileSync(pat
   comprobar('manda el PDF al visor', cargar && cargar.datos.length > 1000 && /^\d\d\/\d\d \d\d:\d\d$/.test(cargar.fecha), cargar && cargar.fecha);
   comprobar('lo abre donde se leía el texto (línea 30)', cargar && cargar.posicion && cargar.posicion.pagina >= 1, JSON.stringify(cargar && cargar.posicion));
   const modo = panel.recibidos.find((m) => m.tipo === 'modo');
-  comprobar('dice el modo (PDF → texto, sigue al parar, atenuar)', modo && modo.sentido.titulo === 'PDF → texto' && modo.seguimiento.titulo === 'Sigue: al parar' && modo.atenuar === true, JSON.stringify(modo));
+  comprobar('dice el modo (PDF → texto, sigue al parar, atenuar al 70 %)', modo && modo.sentido.titulo === 'PDF → texto' && modo.seguimiento.titulo === 'Sigue: al parar' && modo.atenuar === true && modo.oscuridad === 70, JSON.stringify(modo));
   comprobar('sin aviso (copia del .tex y SyncTeX al día)', cargar && !cargar.aviso, cargar && cargar.aviso);
 
   const { leer } = require('../synctex');
@@ -178,6 +178,12 @@ comprobar('compilar.sh deja la copia del .tex junto al PDF', fs.readFileSync(pat
   panel.recibidos.length = 0;
   await panel.decir({ tipo: 'raton', dentro: false });
   comprobar('ratón fuera del PDF: el PDF se atenúa y el texto no', !aparte.atenuado.length && panel.recibidos.some((m) => m.tipo === 'atenuar' && m.si === true));
+  const opacidad = () => tipos.filter((x) => x.o && x.o.opacity).pop().o.opacity;
+  comprobar('oscurece por defecto un 70 % (opacidad 0,3)', opacidad() === '0.3', opacidad());
+  W['tcee.revisarOscuridad'] = 85;
+  await panel.decir({ tipo: 'raton', dentro: false }); await panel.decir({ tipo: 'raton', dentro: true });
+  comprobar('«Mucho»: opacidad 0,15', opacidad() === '0.15' && aparte.atenuado.length === 2, opacidad());
+  delete W['tcee.revisarOscuridad'];
   W['tcee.revisarAtenuar'] = false;
   await panel.decir({ tipo: 'raton', dentro: true });
   comprobar('sin atenuar (ajuste apagado)', !aparte.atenuado.length);

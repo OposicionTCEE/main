@@ -27,6 +27,14 @@ const SEGUIMIENTOS_REVISAR = [
   { valor: 'continuo', titulo: 'Continuo', detalle: 'El otro lado se mueve a la vez que el que mueves.' },
 ];
 
+/** Valores de «Cuánto se oscurece» en Revisar (en %: la opacidad que queda es el resto) */
+const OSCURIDADES_REVISAR = [
+  { valor: 40, titulo: 'Poco (40 %)', detalle: 'Se sigue leyendo bien el lado oscurecido.' },
+  { valor: 55, titulo: 'Medio (55 %)', detalle: 'Como en la versión 0.55.' },
+  { valor: 70, titulo: 'Bastante (70 %)', detalle: 'Por defecto: el lado sin ratón queda en segundo plano.' },
+  { valor: 85, titulo: 'Mucho (85 %)', detalle: 'Casi no se ve: solo el lado donde está el ratón.' },
+];
+
 /**
  * Secciones de la ventanita, en orden. Tipos de entrada:
  *  - accion: mostrar u ocultar una acción de la vista Acciones (se guarda en la lista tcee.accionesOcultas)
@@ -46,6 +54,7 @@ const SECCIONES = [
     { tipo: 'opcion', clave: 'revisarSentido', titulo: 'Quién manda al desplazarse', opciones: SENTIDOS_REVISAR },
     { tipo: 'opcion', clave: 'revisarSeguimiento', titulo: 'Cuándo se mueve el otro lado', opciones: SEGUIMIENTOS_REVISAR },
     { tipo: 'siNo', clave: 'revisarAtenuar', titulo: 'Oscurecer el lado donde no está el ratón' },
+    { tipo: 'opcion', clave: 'revisarOscuridad', titulo: 'Cuánto se oscurece', opciones: OSCURIDADES_REVISAR },
     { tipo: 'siNo', clave: 'revisarSuave', titulo: 'Deslizarse en vez de saltar (también el texto: desplazamiento suave de VS Code en los .tex)' },
     { tipo: 'siNo', clave: 'revisarBanda', titulo: 'Banda en el texto con el párrafo que se lee arriba en el PDF' },
   ] },

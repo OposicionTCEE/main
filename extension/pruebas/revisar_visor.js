@@ -146,7 +146,11 @@ function servir(manejador) {
   // atenuar y modo
   await p.evaluate(() => window.postMessage({ tipo: 'atenuar', si: true }, '*')); await p.waitForTimeout(400);
   const op = await p.$eval('.hoja', (h) => getComputedStyle(h).opacity);
-  comprobar('atenuado: el PDF se oscurece', Number(op) < 0.7, op);
+  comprobar('atenuado: el PDF se oscurece (70 % por defecto)', Math.abs(Number(op) - 0.3) < 0.01, op);
+  await p.evaluate(() => window.postMessage({ tipo: 'modo', sentido: { titulo: 'PDF → texto' }, seguimiento: { titulo: 'Sigue: al parar' }, atenuar: true, oscuridad: 85, suave: true }, '*'));
+  await p.waitForTimeout(400);
+  const op2 = await p.$eval('.hoja', (h) => getComputedStyle(h).opacity);
+  comprobar('cuánto se oscurece sigue el ajuste (85 %)', Math.abs(Number(op2) - 0.15) < 0.01, op2);
   await p.evaluate(() => window.postMessage({ tipo: 'modo', sentido: { titulo: 'PDF ⇄ texto' }, seguimiento: { titulo: 'Sigue: al cambiar' }, atenuar: false, suave: true }, '*'));
   await p.waitForTimeout(100);
   comprobar('la barra dice el modo', (await p.textContent('#seguimiento')) === 'Sigue: al cambiar' && (await p.getAttribute('#atenuar', 'aria-pressed')) === 'false');

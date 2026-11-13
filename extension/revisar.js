@@ -8,7 +8,7 @@
 // - Sentido (ajuste tcee.revisarSentido): el PDF manda (por defecto), en los dos sentidos o sin sincronizar. Lo que mueve uno por orden
 //   del otro no se devuelve (si no, se perseguirían). Doble clic en el PDF: el cursor del texto a esa línea. Clic en el texto: se señala en el PDF.
 // - Seguimiento (tcee.revisarSeguimiento): el otro lado se mueve al parar (por defecto), al cambiar de lado con el ratón o continuo.
-//   Atenuar (tcee.revisarAtenuar): el lado donde no está el ratón se oscurece. Suave (tcee.revisarSuave): el PDF se desliza y, para el texto,
+//   Atenuar (tcee.revisarAtenuar): el lado donde no está el ratón se oscurece, tanto como diga tcee.revisarOscuridad. Suave (tcee.revisarSuave): el PDF se desliza y, para el texto,
 //   se activa el desplazamiento suave de VS Code en los .tex (editor.smoothScrolling, en TCEE.code-workspace).
 // - Banda de lectura (ajuste tcee.revisarBanda): en el texto, el párrafo que corresponde al borde de arriba del PDF.
 'use strict';
@@ -52,8 +52,21 @@ function crearRevisar(context, { codigoTema, temaMostrado }) {
     isWholeLine: true, backgroundColor: new vscode.ThemeColor('editor.rangeHighlightBackground'),
     overviewRulerColor: new vscode.ThemeColor('editorOverviewRuler.rangeHighlightForeground'), overviewRulerLane: vscode.OverviewRulerLane.Center,
   });
-  const atenuado = vscode.window.createTextEditorDecorationType({ opacity: '0.45' });
-  context.subscriptions.push(banda, atenuado, { dispose: () => { if (s) s.panel.dispose(); } });
+  context.subscriptions.push(banda, { dispose: () => { if (s) s.panel.dispose(); } });
+  // cuánto se oscurece el lado sin ratón (tcee.revisarOscuridad, en %): la decoración del texto lleva la opacidad fija, así que se
+  // rehace al cambiar el ajuste (la anterior se quita de los editores al desecharla)
+  const oscuridad = () => { const v = Number(conf().get('revisarOscuridad', 70)); return Number.isFinite(v) ? Math.min(95, Math.max(10, v)) : 70; };
+  let atenuado = null, atenuadoNivel = null;
+  function decoAtenuado() {
+    const o = oscuridad();
+    if (!atenuado || atenuadoNivel !== o) {
+      if (atenuado) atenuado.dispose();
+      atenuado = vscode.window.createTextEditorDecorationType({ opacity: String(Math.round(100 - o) / 100) });
+      atenuadoNivel = o;
+    }
+    return atenuado;
+  }
+  context.subscriptions.push({ dispose: () => { if (atenuado) atenuado.dispose(); } });
 
   /**
    * Desplazamiento suave del texto: lo hace VS Code (editor.smoothScrolling) y solo se puede pedir para todos los .tex. Se pone en el espacio
@@ -258,6 +271,7 @@ function crearRevisar(context, { codigoTema, temaMostrado }) {
   function atenuar(x) {
     const si = conf().get('revisarAtenuar', true) !== false && sentido() !== 'no';
     const ed = editorTexto(x);
+    const atenuado = decoAtenuado();
     for (const e of vscode.window.visibleTextEditors) if (e !== ed && e.document.uri.toString() === x.uri.toString()) e.setDecorations(atenuado, []);
     if (ed) {
       let rs = [];
@@ -275,7 +289,7 @@ function crearRevisar(context, { codigoTema, temaMostrado }) {
   }
   const enviar = (x, m) => x.panel.webview.postMessage(m);
   const enviarModo = (x) => enviar(x, { tipo: 'modo', sentido: SENTIDOS[sentido()], seguimiento: SEGUIMIENTOS[seguimiento()],
-    atenuar: conf().get('revisarAtenuar', true) !== false, suave: suave() });
+    atenuar: conf().get('revisarAtenuar', true) !== false, oscuridad: oscuridad(), suave: suave() });
 
   /** Aplica lo último que ha mandado el PDF (según el seguimiento, al momento, al parar o al cambiar de lado) */
   function aplicarPdf(x) {
@@ -382,14 +396,14 @@ function crearRevisar(context, { codigoTema, temaMostrado }) {
     const alCompilar = () => { if (s === x && mtime(x.r.pdf) > x.foto.fecha + 500) enviar(x, { tipo: 'nuevo', hay: true }); };
     subs.push(vigia, vigia.onDidChange(alCompilar), vigia.onDidCreate(alCompilar));
     subs.push(vscode.workspace.onDidChangeConfiguration((e) => {
-      if (s !== x || !['tcee.revisarSentido', 'tcee.revisarSeguimiento', 'tcee.revisarAtenuar', 'tcee.revisarBanda', 'tcee.revisarSuave'].some((k) => e.affectsConfiguration(k))) return;
+      if (s !== x || !['tcee.revisarSentido', 'tcee.revisarSeguimiento', 'tcee.revisarAtenuar', 'tcee.revisarOscuridad', 'tcee.revisarBanda', 'tcee.revisarSuave'].some((k) => e.affectsConfiguration(k))) return;
       enviarModo(x); ponerBanda(x);
     }));
 
     x.panel.onDidDispose(() => {
       clearTimeout(tPdf); clearTimeout(tTexto);
       subs.forEach((d) => d.dispose());
-      for (const e of vscode.window.visibleTextEditors) if (e.document.uri.toString() === x.uri.toString()) { e.setDecorations(banda, []); e.setDecorations(atenuado, []); }
+      for (const e of vscode.window.visibleTextEditors) if (e.document.uri.toString() === x.uri.toString()) { e.setDecorations(banda, []); e.setDecorations(decoAtenuado(), []); }
       // se cierra la copia del texto de la ventana aparte (si no tiene cambios sin guardar): la ventana se cierra sola si queda vacía
       if (x.grupo && vscode.window.tabGroups.all.includes(x.grupo)) {
         const t = x.grupo.tabs.find((y) => y.input instanceof vscode.TabInputText && y.input.uri.toString() === x.uri.toString());

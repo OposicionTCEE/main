@@ -2,7 +2,7 @@
   "name": "tcee-panel",
   "displayName": "Panel TCEE",
   "description": "Panel de trabajo para los temas de la oposición TCEE: acciones, tiempo restante, índice, calendario, relaciones y cante.",
-  "version": "0.55.0",
+  "version": "0.56.0",
   "publisher": "oposiciontcee",
   "license": "UNLICENSED",
   "repository": {
@@ -116,6 +116,29 @@
           "type": "boolean",
           "default": true,
           "description": "Revisar: oscurecer el lado donde no está el ratón (en el texto, menos el párrafo de la banda). También con el botón ◐ del visor."
+        },
+        "tcee.revisarOscuridad": {
+          "type": "number",
+          "default": 70,
+          "enum": [
+            40,
+            55,
+            70,
+            85
+          ],
+          "enumItemLabels": [
+            "Poco (40 %)",
+            "Medio (55 %)",
+            "Bastante (70 %)",
+            "Mucho (85 %)"
+          ],
+          "enumDescriptions": [
+            "Se sigue leyendo bien el lado oscurecido.",
+            "Como en la versión 0.55.",
+            "Por defecto: el lado sin ratón queda en segundo plano.",
+            "Casi no se ve: solo el lado donde está el ratón."
+          ],
+          "description": "Revisar: cuánto se oscurece el lado donde no está el ratón (si «Oscurecer» está encendido)."
         },
         "tcee.revisarSuave": {
           "type": "boolean",

@@ -87,7 +87,9 @@ Se rehace al escribir (como mucho dos veces por segundo); con un tema de 1.800 l
   visor avisa de si el ratón entra o sale, `raton`: al salir del PDF el texto va a su sitio; al entrar, el PDF va al del texto si mandan
   los dos) o *continuo*.
 - **Atenuar** (`tcee.revisarAtenuar`): el lado donde no está el ratón se oscurece. En el texto, con una decoración de opacidad
-  sobre todo menos el párrafo de la banda; en el PDF, las páginas a media opacidad.
+  sobre todo menos el párrafo de la banda (se rehace al cambiar cuánto); en el PDF, las páginas con menos opacidad (`--atenuado`).
+  **Cuánto** (`tcee.revisarOscuridad`, v0.56, a petición del usuario: más oscuro y ajustable): poco (40 %), medio (55 %), bastante
+  (70 %, por defecto) o mucho (85 %).
 - **Suave** (`tcee.revisarSuave`): el visor se desliza (animación de 0,16 a 0,38 s, frenando; si el usuario toca la rueda o el teclado,
   se para y manda él; nada si el sistema pide reducir el movimiento). El texto lo mueve VS Code: se pone `editor.smoothScrolling` para
   LaTeX en el espacio de trabajo (afecta a todos los `.tex`; con la rueda de un ratón se nota, con el trackpad apenas) y se quita al

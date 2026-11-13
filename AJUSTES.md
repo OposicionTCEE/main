@@ -36,6 +36,7 @@ Ventanita para cambiar los ajustes del Panel TCEE sin tocar ficheros. Código: `
 | `tcee.revisarSentido` | Revisar: quién manda al desplazarse: `pdf`, `ambos` o `no` (también con el botón del visor; `REVISAR.md`) | el PDF |
 | `tcee.revisarSeguimiento` | Revisar: cuándo se mueve el otro lado: `alParar`, `alCambiar` o `continuo` (también con el botón del visor) | al parar |
 | `tcee.revisarAtenuar` | Revisar: oscurecer el lado donde no está el ratón (también con el botón ◐) | sí |
+| `tcee.revisarOscuridad` | Revisar: cuánto se oscurece el lado sin ratón: 40, 55, 70 u 85 % | 70 % |
 | `tcee.revisarSuave` | Revisar: deslizarse en vez de saltar; para el texto pone `editor.smoothScrolling` en los `.tex` (y lo quita al apagarlo) | sí |
 | `tcee.revisarBanda` | Revisar: banda en el texto con el párrafo que se lee en el PDF | sí |
 | `tcee.notasContraidasAlAbrir` | Contraer las notas al pie al abrir un tema (`NOTAS.md`) | sí |

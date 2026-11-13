@@ -251,6 +251,7 @@ window.addEventListener('message', (e) => {
     $('#seguimiento').textContent = m.seguimiento.titulo; $('#seguimiento').title = m.seguimiento.ayuda || '';
     $('#atenuar').setAttribute('aria-pressed', m.atenuar ? 'true' : 'false');
     suave = m.suave !== false;
+    if (Number.isFinite(m.oscuridad)) document.body.style.setProperty('--atenuado', String((100 - m.oscuridad) / 100));   // tcee.revisarOscuridad
   }
   if (m.tipo === 'atenuar') document.body.classList.toggle('atenuado', !!m.si);
   if (m.tipo === 'aviso') $('#aviso').textContent = m.texto || '';
