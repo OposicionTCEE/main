@@ -63,7 +63,16 @@
       "**/.build": true, "**/*.aux": true, "**/*.fls": true, "**/*.fdb_latexmk": true,
       "**/*.synctex.gz": true, "**/*.leq": true, "**/*.toc": true, "**/*.out": true
     },
-    "search.exclude": { "**/.build": true, "**/*.log": true, "**/*.pdf": true }
+    "search.exclude": {
+      "**/.build": true,
+      "**/*.log": true,
+      "**/*.pdf": true
+    },
+    "tcee.accionesOcultas": [
+      "atajos",
+      "rehacerInformes"
+    ],
+    "tcee.claudeAbrirEn": "ventanaNueva"
   },
   "tasks": {
     "version": "2.0.0",
