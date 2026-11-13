@@ -20,6 +20,9 @@ cd "$DIR" || exit 1
 [ -d /Library/TeX/texbin ] && export PATH="/Library/TeX/texbin:$PATH"
 
 rm -f "$TMP/$BASE.pdf"   # para saber con certeza si esta compilación ha generado PDF
+# Copia del .tex tal como se compila: con el PDF y el SyncTeX, la usa «Revisar» del panel para saber qué línea es cada trozo
+# del PDF aunque el tema cambie después (main/REVISAR.md). Solo pasa a <salida>/ si se genera PDF, junto a él.
+cp "$BASE.tex" "$TMP/$BASE.fuente.tex"
 latexmk -pdf -f -synctex=1 -interaction=nonstopmode -file-line-error -outdir="$TMP" "$BASE.tex"
 
 # El registro siempre se copia, para que VS Code muestre los errores en "Problemas"
@@ -44,12 +47,16 @@ if [ -f "$TMP/$BASE.pdf" ]; then
   if [ -n "$CUERPO" ]; then echo "$CUERPO" > "$OUT/cuerpo"; else rm -f "$OUT/cuerpo"; fi
 fi
 
-# Estado de la última compilación (lo lee el panel TCEE para el tiempo restante; al cambiar, el panel relee también el cuerpo)
-if [ -f "$TMP/$BASE.pdf" ]; then echo ok > "$OUT/estado"; else echo error > "$OUT/estado"; fi
-
 if [ -f "$TMP/$BASE.pdf" ]; then
   cp "$TMP/$BASE.pdf" "$OUT/$BASE.pdf"
   [ -f "$TMP/$BASE.synctex.gz" ] && cp "$TMP/$BASE.synctex.gz" "$OUT/$BASE.synctex.gz"
+  [ -f "$TMP/$BASE.fuente.tex" ] && cp "$TMP/$BASE.fuente.tex" "$OUT/$BASE.fuente.tex"
+fi
+# Estado de la última compilación (lo lee el panel TCEE para el tiempo restante; al cambiar, el panel relee también el cuerpo
+# y «Revisar» sabe que hay PDF nuevo). Se escribe después de copiar el PDF, el SyncTeX y la copia del .tex: cuando cambia, ya están.
+if [ -f "$TMP/$BASE.pdf" ]; then echo ok > "$OUT/estado"; else echo error > "$OUT/estado"; fi
+
+if [ -f "$TMP/$BASE.pdf" ]; then
   # Copia visible del PDF dentro de la carpeta del tema (p. ej. 3.A.43/3.A.43.pdf). No se sube a GitHub.
   CODIGO="$(basename "$DIR")"; CODIGO="${CODIGO#Tema-}"
   cp "$OUT/$BASE.pdf" "$DIR/$CODIGO.pdf"

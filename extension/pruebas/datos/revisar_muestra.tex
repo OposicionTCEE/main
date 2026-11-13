@@ -1,0 +1,38 @@
+% Documento de prueba de SyncTeX para «Revisar» (pruebas/synctex.js y pruebas/revisar_visor.js). No es un tema.
+\documentclass[11pt]{article}
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{lipsum}
+\begin{document}
+\section{Primera sección}
+Este es el primer párrafo, escrito en una sola línea larga como en los temas, con muchas palabras para que ocupe varias líneas en el PDF y podamos comprobar que la sincronización por líneas del fichero funciona bien aunque el editor tenga el ajuste de línea activado.
+
+Segundo párrafo: \lipsum[1]
+
+\subsection{Una subsección}
+Tercer párrafo con una ecuación $$E = mc^2$$ y algo de texto después de la ecuación para que haya material.
+
+\lipsum[2-6]
+
+\section{Segunda sección}
+Párrafo de la segunda sección.\footnote{Una nota al pie bastante larga para ver dónde cae.}
+
+\lipsum[7-14]
+
+\section{Tercera sección}
+Una lista:
+\begin{itemize}
+  \item Primer elemento de la lista, con texto suficiente para ocupar más de una línea en el PDF de prueba y ver los saltos.
+  \item Segundo elemento.
+\end{itemize}
+
+Una ecuación numerada:
+\begin{equation}
+  Y = C + I + G + (X - M)
+\end{equation}
+y el párrafo sigue después de la ecuación con más palabras para rellenar la línea y pasar a la siguiente sin problema alguno.
+
+\lipsum[15-20]
+
+Último párrafo del documento de prueba.
+\end{document}

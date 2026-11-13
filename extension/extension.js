@@ -489,6 +489,10 @@ function activate(context) {
     alMarcar: () => indice.refrescar(),
   });
   context.subscriptions.push(vscode.commands.registerCommand('tcee.panelOposicion', () => panelOpo.abrir()));
+
+  // ---- Revisar: el tema y su PDF lado a lado, con el desplazamiento sincronizado (revisar.js; main/REVISAR.md)
+  const revisar = require('./revisar').crearRevisar(context, { codigoTema, temaMostrado: () => indice.mostrado });
+  context.subscriptions.push(vscode.commands.registerCommand('tcee.revisar', (uri) => revisar.abrir(uri)));
   const avisoEditor = vscode.window.onDidChangeActiveTextEditor(() => panelOpo.temaCambiado());
   context.subscriptions.push(avisoEditor, vscode.workspace.onDidSaveTextDocument((d) => { if (esTema(d)) panelOpo.refrescar(); }));
 

@@ -2,7 +2,7 @@
   "name": "tcee-panel",
   "displayName": "Panel TCEE",
   "description": "Panel de trabajo para los temas de la oposición TCEE: acciones, tiempo restante, índice, calendario, relaciones y cante.",
-  "version": "0.53.0",
+  "version": "0.54.0",
   "publisher": "oposiciontcee",
   "license": "UNLICENSED",
   "repository": {
@@ -31,6 +31,7 @@
             "type": "string",
             "enum": [
               "compilar",
+              "revisar",
               "sincronizar",
               "nota",
               "panelOposicion",
@@ -70,6 +71,31 @@
             "En tu ventana de Claude si ya hay una abierta; si no, en una ventana nueva."
           ],
           "description": "Dónde se abre Claude Code con el encargo ya escrito (Notas del tema con Claude y Rehacer informes; main/AJUSTES.md)."
+        },
+        "tcee.revisarSentido": {
+          "type": "string",
+          "default": "pdf",
+          "enum": [
+            "pdf",
+            "ambos",
+            "no"
+          ],
+          "enumItemLabels": [
+            "El PDF manda",
+            "En los dos sentidos",
+            "Sin sincronizar"
+          ],
+          "enumDescriptions": [
+            "Al moverte por el PDF, el texto lo sigue; el texto se mueve libre.",
+            "El que muevas manda: el otro lo sigue.",
+            "Se mueven por separado; el doble clic en el PDF sigue llevando el cursor al texto."
+          ],
+          "description": "Revisar: quién manda al desplazarse (main/REVISAR.md). También se cambia con el botón del visor."
+        },
+        "tcee.revisarBanda": {
+          "type": "boolean",
+          "default": true,
+          "description": "Revisar: resaltar en el texto el párrafo que corresponde al punto de lectura del PDF."
         },
         "tcee.notasContraidasAlAbrir": {
           "type": "boolean",
@@ -118,6 +144,12 @@
         "title": "Compilar tema",
         "category": "TCEE",
         "icon": "$(play)"
+      },
+      {
+        "command": "tcee.revisar",
+        "title": "Revisar el tema y su PDF (lado a lado, sincronizados)",
+        "category": "TCEE",
+        "icon": "$(open-preview)"
       },
       {
         "command": "tcee.sincronizar",
@@ -370,6 +402,12 @@
         "key": "ctrl+alt+c",
         "mac": "ctrl+c",
         "when": "editorTextFocus && !editorReadonly && editorLangId == latex"
+      },
+      {
+        "command": "tcee.revisar",
+        "key": "ctrl+alt+e",
+        "mac": "cmd+alt+e",
+        "when": "editorLangId == latex"
       }
     ]
   }

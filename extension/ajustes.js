@@ -13,6 +13,13 @@ const DONDE_CLAUDE = [
   { valor: 'ventanaNueva', titulo: 'En una ventana aparte', detalle: 'En tu ventana de Claude si ya hay una abierta; si no, en una ventana nueva.' },
 ];
 
+/** Valores de «Quién manda al desplazarse» en Revisar (revisar.js tiene los textos cortos del botón del visor) */
+const SENTIDOS_REVISAR = [
+  { valor: 'pdf', titulo: 'El PDF manda', detalle: 'Al moverte por el PDF, el texto lo sigue; el texto se mueve libre.' },
+  { valor: 'ambos', titulo: 'En los dos sentidos', detalle: 'El que muevas manda: el otro lo sigue.' },
+  { valor: 'no', titulo: 'Sin sincronizar', detalle: 'Se mueven por separado; el doble clic en el PDF sigue llevando el cursor al texto.' },
+];
+
 /**
  * Secciones de la ventanita, en orden. Tipos de entrada:
  *  - accion: mostrar u ocultar una acción de la vista Acciones (se guarda en la lista tcee.accionesOcultas)
@@ -27,6 +34,10 @@ const SECCIONES = [
   ] },
   { titulo: 'Claude Code', entradas: [
     { tipo: 'opcion', clave: 'claudeAbrirEn', titulo: 'Dónde se abre (Notas del tema con Claude y Rehacer informes)', opciones: DONDE_CLAUDE },
+  ] },
+  { titulo: 'Revisar (el tema y su PDF lado a lado)', entradas: [
+    { tipo: 'opcion', clave: 'revisarSentido', titulo: 'Quién manda al desplazarse', opciones: SENTIDOS_REVISAR },
+    { tipo: 'siNo', clave: 'revisarBanda', titulo: 'Banda en el texto con el párrafo que se lee en el PDF' },
   ] },
   { titulo: 'Al abrir un tema', entradas: [
     { tipo: 'siNo', clave: 'notasContraidasAlAbrir', titulo: 'Contraer las notas al pie' },

@@ -14,6 +14,8 @@ const path = require('path');
 const ACCIONES = [
   { id: 'compilar', titulo: 'Compilar tema', icono: 'play', orden: 'tcee.compilar',
     ayuda: 'Compila el tema que se muestra en el índice' },
+  { id: 'revisar', titulo: 'Revisar', icono: 'open-preview', orden: 'tcee.revisar',
+    ayuda: 'Ventana aparte con el tema a la izquierda y su PDF a la derecha, con el desplazamiento sincronizado. El PDF no cambia solo: botón «Actualizar»' },
   { id: 'sincronizar', titulo: 'Sincronizar con GitHub', icono: 'sync', orden: 'tcee.sincronizar',
     ayuda: 'Guarda, trae y sube los cambios de main, temario y progreso' },
   { id: 'nota', titulo: 'Nueva nota', icono: 'note', orden: 'tcee.nota',

@@ -1,0 +1,4 @@
+pdf.js (Mozilla), versión 6.5.438, del paquete npm pdfjs-dist (licencia Apache 2.0, en LICENSE).
+Copiados tal cual: legacy/build/pdf.min.mjs y legacy/build/pdf.worker.min.mjs (la versión «legacy» funciona también
+en las versiones de VS Code algo antiguas). Los usa el visor de «Revisar» (media/revisar.js; main/REVISAR.md).
+Para actualizar: npm pack pdfjs-dist@<versión>, copiar esos dos ficheros y LICENSE, y probar con pruebas/revisar_visor.js.

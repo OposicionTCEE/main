@@ -36,6 +36,7 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
   - historial y cómo deshacer cambios (`HISTORIAL.md`).
 - **Panel TCEE** (extensión propia, barra lateral derecha):
   - **Acciones**: Compilar, Sincronizar, Nueva nota, Panel Oposición (se abre en una ventana aparte) y Rehacer informes (estado de `armonizacion.json` y encargo copiado para Claude Code). En la cabecera, *Tiempo restante (%)* y el botón ✓ *Hecho*.
+  - **Revisar** (v0.54, `REVISAR.md`): el tema y su PDF lado a lado en una ventana aparte, sincronizados; PDF fijo hasta *Actualizar*.
   - **Ajustes** (v0.53, `AJUSTES.md`): qué acciones se ven, Índice, botón Atajos, dónde se abre Claude Code y los ajustes de notas, preámbulo y fusión; la versión del panel en el título.
   - **Índice** del tema con todos los niveles, *paragraph* incluidos, y ○ en los epígrafes vacíos.
   - **Nueva nota**: deduce el tema de destino y escribe la nota en `\modificaciones`.
@@ -97,11 +98,8 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
 
 ## Pendiente
 
-0. **Panel TCEE, fase 3: «Revisar»** (acordada el 13/11/2026): ventana aparte con el `main.tex` a la izquierda y el PDF a la derecha, desplazamiento
-   sincronizado (SyncTeX), PDF congelado al abrir (PDF + SyncTeX + copia del `.tex` que los produjo) con botón *Actualizar*, traducción de líneas por
-   contenido para seguir los párrafos movidos, visor propio con pdf.js (descarga aprobada). Plan completo en la conversación del 13/11/2026; documento
-   previsto `REVISAR.md`. Las fases 1 (v0.52, posición de lectura) y 2 (v0.53, Ajustes y trabajos en marcha) están hechas.
-
+0. **Panel TCEE, Revisar** (v0.54, 13/11/2026): hecha la fase 3 (`REVISAR.md`), pendiente de que el usuario la pruebe en el Mac.
+   Lo que no se ha podido simular: la ventana aparte real y el desplazamiento del editor de VS Code (registro en *Salida › Panel TCEE: Revisar*).
 1. **Cante**: la pestaña de práctica está hecha (v0.13, sin probar aún en el Mac del usuario). Ideas siguientes en `CANTE.md`, apartado 6;
    registrar el cante con la preparadora sigue por definir.
 2. **4º ejercicio**:

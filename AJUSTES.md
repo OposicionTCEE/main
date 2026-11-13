@@ -33,6 +33,8 @@ Ventanita para cambiar los ajustes del Panel TCEE sin tocar ficheros. Código: `
 | `tcee.indiceVisible` | Vista Índice del tema, debajo de Acciones | sí |
 | `tcee.botonAtajos` | Botón «Atajos» en la barra inferior al editar un `.tex` | sí |
 | `tcee.claudeAbrirEn` | Dónde se abre Claude Code: `barraLateral`, `pestana` o `ventanaNueva` | barra lateral |
+| `tcee.revisarSentido` | Revisar: quién manda al desplazarse: `pdf`, `ambos` o `no` (también con el botón del visor; `REVISAR.md`) | el PDF |
+| `tcee.revisarBanda` | Revisar: banda en el texto con el párrafo que se lee en el PDF | sí |
 | `tcee.notasContraidasAlAbrir` | Contraer las notas al pie al abrir un tema (`NOTAS.md`) | sí |
 | `tcee.preambuloContraidoAlAbrir` | Plegar el preámbulo al abrir un tema (`NOTAS.md`) | sí |
 | `tcee.fusionAlGuardar` | Fusión al guardar (`EDICION_SIMULTANEA.md`) | sí |
