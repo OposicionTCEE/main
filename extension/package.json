@@ -2,7 +2,7 @@
   "name": "tcee-panel",
   "displayName": "Panel TCEE",
   "description": "Panel de trabajo para los temas de la oposición TCEE: acciones, tiempo restante, índice, calendario, relaciones y cante.",
-  "version": "0.54.0",
+  "version": "0.55.0",
   "publisher": "oposiciontcee",
   "license": "UNLICENSED",
   "repository": {
@@ -91,6 +91,36 @@
             "Se mueven por separado; el doble clic en el PDF sigue llevando el cursor al texto."
           ],
           "description": "Revisar: quién manda al desplazarse (main/REVISAR.md). También se cambia con el botón del visor."
+        },
+        "tcee.revisarSeguimiento": {
+          "type": "string",
+          "default": "alParar",
+          "enum": [
+            "alParar",
+            "alCambiar",
+            "continuo"
+          ],
+          "enumItemLabels": [
+            "Al parar",
+            "Al cambiar de lado",
+            "Continuo"
+          ],
+          "enumDescriptions": [
+            "El otro lado no se mueve mientras te desplazas: va a su sitio cuando paras medio segundo.",
+            "El otro lado se queda quieto hasta que pasas el ratón a él.",
+            "El otro lado se mueve a la vez que el que mueves."
+          ],
+          "description": "Revisar: cuándo se mueve el lado que sigue al otro (main/REVISAR.md). También con el botón «Sigue» del visor."
+        },
+        "tcee.revisarAtenuar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Revisar: oscurecer el lado donde no está el ratón (en el texto, menos el párrafo de la banda). También con el botón ◐ del visor."
+        },
+        "tcee.revisarSuave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Revisar: deslizarse en vez de saltar. Para el texto activa el desplazamiento suave de VS Code en los .tex (editor.smoothScrolling, en TCEE.code-workspace); al apagarlo se quita."
         },
         "tcee.revisarBanda": {
           "type": "boolean",

@@ -45,10 +45,11 @@ comprobar('compilar.sh deja la copia del .tex junto al PDF', fs.readFileSync(pat
     static parse(t) { return new Uri(t); }
   };
   const oyentes = { rangos: [], seleccion: [], texto: [], vigias: [] };
+  const tipos = [];   // decoraciones creadas: la 1.ª es la banda; la 2.ª, el atenuado
   const evento = (lista) => (f) => { lista.push(f); return { dispose() { lista.splice(lista.indexOf(f), 1); } }; };
   Object.assign(v.window, {
     onDidChangeTextEditorVisibleRanges: evento(oyentes.rangos), onDidChangeTextEditorSelection: evento(oyentes.seleccion),
-    createTextEditorDecorationType: () => ({ dispose() {} }),
+    createTextEditorDecorationType: (o) => { const t = { o, dispose() {} }; tipos.push(t); return t; },
     withProgress: async (_, f) => f({ report() {} }, { isCancellationRequested: false }),
     showWarningMessage: (t) => { sim.mensajes.push(`AVISO: ${t}`); return Promise.resolve(); },
     visibleTextEditors: [],
@@ -60,13 +61,16 @@ comprobar('compilar.sh deja la copia del .tex junto al PDF', fs.readFileSync(pat
 
   // documento del tema
   const uri = v.Uri.file(TEX);
-  const doc = { uri, isDirty: false, texto: fs.readFileSync(TEX, 'utf8'), getText() { return this.texto; }, save: async () => true, version: 1 };
+  const doc = { uri, isDirty: false, texto: fs.readFileSync(TEX, 'utf8'), getText() { return this.texto; }, save: async () => true, version: 1,
+    lineAt(i) { return { text: this.texto.split('\n')[i] }; }, get lineCount() { return this.texto.split('\n').length; } };
   v.workspace.openTextDocument = async () => doc;
   const editores = [];
   function nuevoEditor(grupo) {
-    const ed = { document: doc, viewColumn: grupo.viewColumn, grupo, visibleRanges: [new Range(0, 0, 40, 0)], deco: [], revelado: [],
-      revealRange(r, tipo) { this.revelado.push({ linea: r.start.line + 1, tipo }); if (tipo === v.TextEditorRevealType.AtTop) this.visibleRanges = [new Range(r.start.line, 0, r.start.line + 40, 0)]; oyentes.rangos.forEach((f) => f({ textEditor: this, visibleRanges: this.visibleRanges })); },
-      setDecorations(_, rs) { this.deco = rs.map((r) => r.start.line + 1); } };
+    const ed = { document: doc, viewColumn: grupo.viewColumn, grupo, visibleRanges: [new Range(0, 0, 40, 0)], decos: new Map(), revelado: [],
+      revealRange(r, tipo) { this.revelado.push({ linea: r.start.line + 1, car: r.start.character, tipo }); if (tipo === v.TextEditorRevealType.AtTop) this.visibleRanges = [new Range(r.start.line, r.start.character, r.start.line + 40, 0)]; oyentes.rangos.forEach((f) => f({ textEditor: this, visibleRanges: this.visibleRanges })); },
+      setDecorations(t, rs) { this.decos.set(t, rs); },
+      get deco() { return (this.decos.get(tipos[0]) || []).map((r) => r.start.line + 1); },
+      get atenuado() { return (this.decos.get(tipos[1]) || []).map((r) => [r.start.line + 1, r.end.line + 1]); } };
     Object.defineProperty(ed, 'viewColumn', { get: () => grupo.viewColumn });
     editores.push(ed); v.window.visibleTextEditors = editores.filter((e) => sim.grupos.includes(e.grupo));
     return ed;
@@ -111,24 +115,74 @@ comprobar('compilar.sh deja la copia del .tex junto al PDF', fs.readFileSync(pat
   comprobar('la página del visor lleva su política de seguridad', /Content-Security-Policy/.test(panel.webview.html) && /nonce-/.test(panel.webview.html));
   const aparte = editores[1];
 
+  comprobar('activa el desplazamiento suave de VS Code para los .tex', sim.guardado.workspace['editor.smoothScrolling'] === true);
   await panel.decir({ tipo: 'listo' });
   const cargar = panel.recibidos.find((m) => m.tipo === 'cargar');
   comprobar('manda el PDF al visor', cargar && cargar.datos.length > 1000 && /^\d\d\/\d\d \d\d:\d\d$/.test(cargar.fecha), cargar && cargar.fecha);
   comprobar('lo abre donde se leía el texto (línea 30)', cargar && cargar.posicion && cargar.posicion.pagina >= 1, JSON.stringify(cargar && cargar.posicion));
-  comprobar('dice quién manda («PDF → texto»)', panel.recibidos.some((m) => m.tipo === 'sentido' && m.titulo === 'PDF → texto'));
+  const modo = panel.recibidos.find((m) => m.tipo === 'modo');
+  comprobar('dice el modo (PDF → texto, sigue al parar, atenuar)', modo && modo.sentido.titulo === 'PDF → texto' && modo.seguimiento.titulo === 'Sigue: al parar' && modo.atenuar === true, JSON.stringify(modo));
   comprobar('sin aviso (copia del .tex y SyncTeX al día)', cargar && !cargar.aviso, cargar && cargar.aviso);
 
-  // ---- el PDF manda: el texto sigue y no se devuelve
   const { leer } = require('../synctex');
   const idx = leer(fs.readFileSync(path.join(dirTema, '.build', 'main.synctex.gz')), 'main.tex');
   const linea = (t) => doc.texto.split('\n').findIndex((l) => l.includes(t)) + 1;
-  const lPar = linea('Párrafo de la segunda sección'), sitio = idx.posicion(lPar);
+  const ultimo = () => aparte.revelado[aparte.revelado.length - 1];
+  const W = sim.guardado.workspace;
+
+  // ---- continuo: el texto sigue al momento, por el borde de arriba
+  W['tcee.revisarSeguimiento'] = 'continuo';
+  const lPar = linea('Primera sección') + 1, filas = idx.filas(lPar), sitio = filas[0];   // el primer párrafo, de varios renglones
   panel.recibidos.length = 0;
-  await panel.decir({ tipo: 'vista', pagina: sitio.pagina, y: sitio.arriba + 2 });
-  const rev = aparte.revelado[aparte.revelado.length - 1];
-  comprobar('el texto sigue al PDF (línea del párrafo arriba)', rev && rev.linea === lPar && rev.tipo === v.TextEditorRevealType.AtTop, JSON.stringify(rev));
-  comprobar('banda en el párrafo que se lee', aparte.deco.length === 1 && aparte.deco[0] === lPar, JSON.stringify(aparte.deco));
+  await panel.decir({ tipo: 'vista', pagina: sitio.pagina, y: sitio.arriba + 1 });
+  comprobar('el texto pone arriba el párrafo de arriba del PDF', ultimo() && ultimo().linea === lPar && ultimo().car === 0 && ultimo().tipo === v.TextEditorRevealType.AtTop, JSON.stringify(ultimo()));
+  comprobar('banda en ese párrafo', aparte.deco.length === 1 && aparte.deco[0] === lPar, JSON.stringify(aparte.deco));
   comprobar('lo movido por el PDF no se devuelve al PDF', !panel.recibidos.some((m) => m.tipo === 'ir'));
+  // a mitad del párrafo (tercer renglón): el texto baja dentro del párrafo, empezando en palabra
+  await panel.decir({ tipo: 'vista', pagina: filas[2].pagina, y: filas[2].arriba + 1 });
+  const t = doc.lineAt(lPar - 1).text, r3 = ultimo();
+  comprobar('renglón a renglón: dentro del párrafo, en proporción', r3.linea === lPar && r3.car > t.length * 0.3 && r3.car < t.length * 0.8, `${r3.car} de ${t.length}`);
+  comprobar('…y empezando en palabra', r3.car > 0 && t[r3.car - 1] === ' ', JSON.stringify(t.slice(r3.car - 3, r3.car + 5)));
+  // la cabecera de una página cuenta como lo primero de su cuerpo (no como la línea en que TeX cerró la página)
+  const pag2 = idx.paginas()[1];
+  await panel.decir({ tipo: 'vista', pagina: pag2, y: 20 });
+  const enCabecera = ultimo().linea;
+  await panel.decir({ tipo: 'vista', pagina: pag2 - 1, y: 790 });   // el pie de la página anterior: también lo primero de la siguiente
+  comprobar('cabecera y pie: lo primero del cuerpo de la página', enCabecera === ultimo().linea && enCabecera < linea('Tercera sección'), `${enCabecera} / ${ultimo().linea}`);
+
+  // ---- al parar: no se mueve hasta medio segundo sin desplazarse
+  W['tcee.revisarSeguimiento'] = 'alParar';
+  let n = aparte.revelado.length;
+  await panel.decir({ tipo: 'vista', pagina: sitio.pagina, y: sitio.arriba + 1 });
+  await pausa(200);
+  const quieto = aparte.revelado.length === n;
+  await pausa(400);
+  comprobar('al parar: quieto mientras te desplazas y luego va', quieto && aparte.revelado.length === n + 1 && ultimo().linea === lPar, `${quieto} ${aparte.revelado.length - n}`);
+
+  // ---- al cambiar de lado: no se mueve hasta que el ratón sale del PDF
+  W['tcee.revisarSeguimiento'] = 'alCambiar';
+  await panel.decir({ tipo: 'raton', dentro: true });
+  n = aparte.revelado.length;
+  await panel.decir({ tipo: 'vista', pagina: filas[2].pagina, y: filas[2].arriba + 1 });
+  await pausa(600);
+  const quieto2 = aparte.revelado.length === n;
+  await panel.decir({ tipo: 'raton', dentro: false });
+  comprobar('al cambiar de lado: quieto hasta sacar el ratón del PDF', quieto2 && aparte.revelado.length === n + 1 && ultimo().car > 0, `${quieto2} ${aparte.revelado.length - n}`);
+
+  // ---- atenuar: el lado sin ratón
+  panel.recibidos.length = 0;
+  await panel.decir({ tipo: 'raton', dentro: true });
+  const at = aparte.atenuado;
+  comprobar('ratón en el PDF: el texto se atenúa, menos el párrafo de la banda', at.length === 2 && at[0][1] === lPar - 1 && at[1][0] === lPar + 1, JSON.stringify(at));
+  comprobar('…y el PDF no', panel.recibidos.some((m) => m.tipo === 'atenuar' && m.si === false));
+  panel.recibidos.length = 0;
+  await panel.decir({ tipo: 'raton', dentro: false });
+  comprobar('ratón fuera del PDF: el PDF se atenúa y el texto no', !aparte.atenuado.length && panel.recibidos.some((m) => m.tipo === 'atenuar' && m.si === true));
+  W['tcee.revisarAtenuar'] = false;
+  await panel.decir({ tipo: 'raton', dentro: true });
+  comprobar('sin atenuar (ajuste apagado)', !aparte.atenuado.length);
+  W['tcee.revisarAtenuar'] = true;
+  W['tcee.revisarSeguimiento'] = 'continuo';
 
   // ---- doble clic
   const lItem = linea('Primer elemento de la lista'), sItem = idx.posicion(lItem);
@@ -141,32 +195,37 @@ comprobar('compilar.sh deja la copia del .tex junto al PDF', fs.readFileSync(pat
   const marca = panel.recibidos.find((m) => m.tipo === 'marca');
   comprobar('clic en el texto: se marca en el PDF', marca && marca.pagina === sItem.pagina && marca.abajo > marca.arriba, JSON.stringify(marca));
 
-  // ---- en los dos sentidos: al mover el texto, el PDF va
-  sim.guardado.workspace['tcee.revisarSentido'] = 'ambos';
-  await pausa(450);   // pasa el tiempo en que se ignora lo movido por el PDF
+  // ---- en los dos sentidos: al mover el texto, el PDF va (por el borde de arriba, renglón a renglón)
+  W['tcee.revisarSentido'] = 'ambos';
+  await pausa(550);   // pasa el tiempo en que se ignora lo movido por el PDF
   panel.recibidos.length = 0;
-  aparte.visibleRanges = [new Range(lItem - 1, 0, lItem + 30, 0)];
+  aparte.visibleRanges = [new Range(lPar - 1, 0, lPar + 30, 0)];
   oyentes.rangos.forEach((f) => f({ textEditor: aparte, visibleRanges: aparte.visibleRanges }));
   await pausa(120);
-  const ir = panel.recibidos.find((m) => m.tipo === 'ir');
-  comprobar('en los dos sentidos: el PDF sigue al texto', ir && ir.pagina === sItem.pagina && Math.abs(ir.y - sItem.arriba) < 1, JSON.stringify(ir));
-  sim.guardado.workspace['tcee.revisarSentido'] = 'pdf';
+  let ir = panel.recibidos.find((m) => m.tipo === 'ir');
+  comprobar('en los dos sentidos: el PDF pone arriba el párrafo de arriba del texto', ir && ir.pagina === filas[0].pagina && Math.abs(ir.y - filas[0].arriba) < 1, JSON.stringify(ir));
+  panel.recibidos.length = 0;
+  aparte.visibleRanges = [new Range(lPar - 1, Math.floor(t.length * 0.6), lPar + 30, 0)];
+  oyentes.rangos.forEach((f) => f({ textEditor: aparte, visibleRanges: aparte.visibleRanges }));
+  await pausa(120);
+  ir = panel.recibidos.find((m) => m.tipo === 'ir');
+  comprobar('…y dentro del párrafo, el renglón que toca', ir && ir.y > filas[1].arriba, JSON.stringify(ir));
+  W['tcee.revisarSentido'] = 'pdf';
 
   // ---- el usuario mueve un párrafo y compila: aviso de PDF nuevo; el PDF visto no cambia
   const viejo = doc.texto;
-  const parrafo = viejo.split('\n').find((l) => l.startsWith('Párrafo de la segunda sección'));
+  const lMov = linea('Párrafo de la segunda sección'), sMov = idx.posicion(lMov);
+  const parrafo = viejo.split('\n')[lMov - 1];
   doc.texto = viejo.replace(`${parrafo}\n`, '').replace('\\section{Primera sección}\n', `\\section{Primera sección}\n${parrafo}\n\n`);
   oyentes.texto.forEach((f) => f({ document: doc }));
   await pausa(600);
-  // con el texto cambiado (sin compilar), el PDF viejo sigue llevando al párrafo en su sitio nuevo
-  panel.recibidos.length = 0;
   await pausa(450);
-  await panel.decir({ tipo: 'vista', pagina: sitio.pagina, y: sitio.arriba + 2 });
-  const rev2 = aparte.revelado[aparte.revelado.length - 1];
-  comprobar('párrafo movido sin compilar: el texto va a su sitio nuevo', rev2 && rev2.linea === linea('Párrafo de la segunda sección'), `${rev2 && rev2.linea} ≠ ${linea('Párrafo de la segunda sección')}`);
+  await panel.decir({ tipo: 'vista', pagina: sMov.pagina, y: sMov.arriba + 1 });
+  comprobar('párrafo movido sin compilar: el texto va a su sitio nuevo', ultimo().linea === linea('Párrafo de la segunda sección'), `${ultimo().linea} ≠ ${linea('Párrafo de la segunda sección')}`);
   fs.writeFileSync(TEX, doc.texto);
   await pausa(1100);   // el PDF nuevo tiene que ser más reciente que el visto
   try { compilar(); } catch (e) { /* */ }
+  panel.recibidos.length = 0;
   oyentes.vigias.forEach((w) => w.cambio.forEach((f) => f()));
   comprobar('aviso de PDF nuevo (no se carga solo)', panel.recibidos.some((m) => m.tipo === 'nuevo' && m.hay) && !panel.recibidos.some((m) => m.tipo === 'cargar'));
 
@@ -175,14 +234,14 @@ comprobar('compilar.sh deja la copia del .tex junto al PDF', fs.readFileSync(pat
   await panel.decir({ tipo: 'actualizar' });
   const c2 = panel.recibidos.find((m) => m.tipo === 'cargar');
   const idx2 = leer(fs.readFileSync(path.join(dirTema, '.build', 'main.synctex.gz')), 'main.tex');
-  const s2 = idx2.posicion(linea('Párrafo de la segunda sección'));
+  const f2 = idx2.filas(linea('Párrafo de la segunda sección'))[0];
   comprobar('Actualizar: carga el PDF nuevo', !!c2);
-  comprobar('Actualizar: sigue en el mismo párrafo (en su sitio nuevo)', c2 && c2.posicion && c2.posicion.pagina === s2.pagina && Math.abs(c2.posicion.y - (s2.arriba + 2)) < 1.5, `${JSON.stringify(c2 && c2.posicion)} vs ${s2.pagina}/${(s2.arriba + 2).toFixed(1)}`);
+  comprobar('Actualizar: sigue en el mismo párrafo (en su sitio nuevo)', c2 && c2.posicion && c2.posicion.pagina === f2.pagina && Math.abs(c2.posicion.y - f2.arriba) < 3, `${JSON.stringify(c2 && c2.posicion)} vs ${f2.pagina}/${f2.arriba.toFixed(1)}`);
 
   // ---- Actualizar con el tema cambiado: pregunta; «Actualizar con el PDF que hay» no compila
   doc.isDirty = true; respuestaModal = 'Actualizar con el PDF que hay'; sim.mensajes.length = 0;
   await panel.decir({ tipo: 'actualizar' });
-  comprobar('Actualizar con cambios sin compilar: pregunta antes', sim.mensajes.some((t) => /anterior a tus últimos cambios/.test(t)));
+  comprobar('Actualizar con cambios sin compilar: pregunta antes', sim.mensajes.some((x) => /anterior a tus últimos cambios/.test(x)));
   doc.isDirty = false;
 
   // ---- cerrar: se cierra la copia del texto (y con ella la ventana aparte)
@@ -190,7 +249,7 @@ comprobar('compilar.sh deja la copia del .tex junto al PDF', fs.readFileSync(pat
   panel.dispose();
   await pausa(10);
   comprobar('al cerrar se cierra la copia del texto de la ventana aparte', sim.grupos.length === gruposAntes - 1 && sim.grupos[0].tabs.length === 1, `grupos ${gruposAntes} → ${sim.grupos.length}`);
-  comprobar('y se quita la banda', editores.every((e) => !e.deco.length));
+  comprobar('y se quitan la banda y el atenuado', editores.every((e) => !e.deco.length && !e.atenuado.length));
 
   fs.rmSync(raiz, { recursive: true, force: true });
   console.log(fallos ? `\n${fallos} comprobación(es) fallida(s)` : '\nTodo correcto');

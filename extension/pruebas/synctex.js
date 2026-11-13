@@ -3,7 +3,7 @@
 //  - de línea a PDF: página y altura del primer sitio de cada línea (synctex view);
 //  - de PDF a línea: la línea en una rejilla de puntos de cada página (synctex edit).
 // No tiene que coincidir siempre: SyncTeX da varios sitios por línea y la referencia elige con otras reglas; basta con que
-// coincida (o se quede a ±2 líneas, un renglón) en la gran mayoría de los casos (mínimo 85 %; en el 3.B.20, 91 % y 97 %).
+// coincida (o se quede a ±2 líneas, un renglón) en la gran mayoría de los casos (mínimo 85 %; en el 3.B.20, 96 % y 93 %).
 // Uso: node pruebas/synctex.js [otro.tex]   (necesita pdflatex y synctex; en la nube de Claude están). Sale con 1 si falla algo.
 'use strict';
 const fs = require('fs');

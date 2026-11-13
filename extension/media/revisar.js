@@ -1,14 +1,17 @@
 // «Revisar»: visor del PDF con pdf.js (lib/pdfjs), en la mitad derecha de la ventana de revisión (revisar.js; main/REVISAR.md).
 // El PDF llega de la extensión (bytes de la foto tomada al abrir o al pulsar «Actualizar»): nunca cambia solo.
-// Sincronización: avisa a la extensión del punto que se está leyendo (a un cuarto de la altura de la vista, en puntos del PDF desde
-// arriba de la página) y obedece «ir» y «marca». Lo que mueve el propio visor por orden de la extensión no se vuelve a avisar
-// (si no, el texto y el PDF se perseguirían). Doble clic: lleva el cursor del texto a esa línea.
+// Sincronización: avisa a la extensión de lo que se ve arriba (el borde de arriba de la vista, en puntos del PDF desde arriba de la
+// página) y obedece «ir» (pone ese punto arriba, deslizándose) y «marca». Lo que mueve el propio visor por orden de la extensión no se
+// vuelve a avisar (si no, el texto y el PDF se perseguirían). Avisa también de si el ratón está dentro (seguimiento «al cambiar de lado»
+// y atenuar el lado sin ratón). Doble clic: lleva el cursor del texto a esa línea.
 const vscode = acquireVsCodeApi();
 const CFG = JSON.parse(document.getElementById('cfg').textContent);
 const $ = (s) => document.querySelector(s);
 const hojas = $('#hojas');
-const REF = 0.25;               // altura de la vista (fracción) que se toma como punto de lectura
+const ARRIBA = 6;               // px bajo el borde de arriba de la vista: el punto de referencia (lo primero que se lee)
 const MARGEN = 10;              // px entre páginas (revisar.css, .hoja)
+let suave = true;               // deslizarse en vez de saltar (ajuste tcee.revisarSuave)
+const sinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)');
 const estado = Object.assign({ zoom: null }, vscode.getState() || {});   // zoom: null = ajustar al ancho
 let pdfjs = null, doc = null, tareaDoc = null, paginas = [], escala = 1, generacion = 0;
 let ignorarHasta = 0;           // hasta cuándo no se avisa del desplazamiento (lo ha movido la extensión)
@@ -114,22 +117,46 @@ function pintar(pg) {
 }
 
 // ------------------------------------------------------------------ posiciones
-/** Punto de lectura: página y altura (puntos del PDF desde arriba) a un cuarto de la vista */
+/** Punto de lectura: página y altura (puntos del PDF desde arriba de la página) en el borde de arriba de la vista */
 function puntoLectura() {
   if (!paginas.length) return null;
-  const yv = hojas.scrollTop + hojas.clientHeight * REF;
+  const yv = hojas.scrollTop + ARRIBA;
   let pg = paginas[0];
   for (const p of paginas) { if (p.div.offsetTop - MARGEN <= yv) pg = p; else break; }
   const y = (yv - pg.div.offsetTop) / escala;
   return { pagina: pg.n, y: Math.min(Math.max(y, 0), pg.alto) };
 }
 
-/** Pone el punto (página, y) a la altura de lectura. Lo que mueve la extensión no se le vuelve a avisar */
-function irA(pagina, y, avisar = false) {
+/** Pone el punto (página, y) arriba de la vista. Lo que mueve la extensión no se le vuelve a avisar. deslizar: con animación */
+function irA(pagina, y, avisar = false, deslizar = false) {
   const pg = paginas[Math.min(Math.max(pagina, 1), paginas.length) - 1];
   if (!pg) return;
-  if (!avisar) ignorarHasta = Date.now() + 300;
-  hojas.scrollTop = Math.max(0, pg.div.offsetTop + y * escala - hojas.clientHeight * REF);
+  desplazarA(pg.div.offsetTop + y * escala - ARRIBA, !avisar, deslizar);
+}
+
+// desplazamiento con animación (suave): rápido al principio y frenando; si el usuario toca la rueda o el teclado, se para y manda él
+let animacion = null;
+function desplazarA(destino, programado, deslizar) {
+  destino = Math.max(0, Math.min(destino, hojas.scrollHeight - hojas.clientHeight));
+  if (animacion) { cancelAnimationFrame(animacion); animacion = null; }
+  const desde = hojas.scrollTop, d = destino - desde;
+  if (!deslizar || !suave || sinMovimiento.matches || Math.abs(d) < 2) {
+    if (programado) ignorarHasta = Date.now() + 300;
+    hojas.scrollTop = destino;
+    return;
+  }
+  const t0 = performance.now(), dur = Math.min(380, 160 + Math.abs(d) / 6);
+  if (programado) ignorarHasta = Infinity;
+  const paso = (t) => {
+    const u = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - u, 3);
+    hojas.scrollTop = desde + d * e;
+    if (u < 1) animacion = requestAnimationFrame(paso);
+    else { animacion = null; if (programado) ignorarHasta = Date.now() + 150; }
+  };
+  animacion = requestAnimationFrame(paso);
+}
+for (const ev of ['wheel', 'touchstart', 'keydown', 'mousedown']) {
+  hojas.addEventListener(ev, () => { if (animacion) { cancelAnimationFrame(animacion); animacion = null; ignorarHasta = 0; } }, { passive: true });
 }
 
 function actualizarPagina() {
@@ -165,8 +192,16 @@ function marcar({ pagina, arriba, abajo }) {
   m.style.top = `${Math.max(0, arriba * escala - 3)}px`; m.style.height = `${Math.max(6, (abajo - arriba) * escala + 6)}px`;
   pg.div.appendChild(m); setTimeout(() => m.remove(), 1700);
   const y0 = pg.div.offsetTop + arriba * escala, y1 = pg.div.offsetTop + abajo * escala;
-  if (y0 < hojas.scrollTop || y1 > hojas.scrollTop + hojas.clientHeight) irA(pagina, arriba);
+  if (y0 < hojas.scrollTop || y1 > hojas.scrollTop + hojas.clientHeight) desplazarA(y0 - hojas.clientHeight * 0.25, true, true);
 }
+
+// ratón dentro o fuera del visor: para «al cambiar de lado» y para atenuar el lado donde no está
+let dentro = null;
+const avisarRaton = (d) => { if (d !== dentro) { dentro = d; enviar({ tipo: 'raton', dentro: d }); } };
+document.documentElement.addEventListener('mouseenter', () => avisarRaton(true));
+document.documentElement.addEventListener('mouseleave', () => avisarRaton(false));
+document.addEventListener('mousemove', () => { if (dentro !== true) avisarRaton(true); }, { passive: true });
+window.addEventListener('blur', () => { if (dentro) avisarRaton(false); });
 
 // ------------------------------------------------------------------ zoom y barra
 function cambiarZoom(z) {
@@ -194,6 +229,8 @@ document.addEventListener('click', (ev) => {
   if (a === 'mas') cambiarZoom(Math.min(4, Math.round((escala + 0.1) * 10) / 10));
   if (a === 'ancho') cambiarZoom(null);
   if (a === 'sentido') enviar({ tipo: 'sentido' });
+  if (a === 'seguimiento') enviar({ tipo: 'seguimiento' });
+  if (a === 'atenuar') enviar({ tipo: 'atenuar' });
   if (a === 'actualizar') enviar({ tipo: 'actualizar' });
 });
 document.addEventListener('keydown', (ev) => {
@@ -206,10 +243,16 @@ document.addEventListener('keydown', (ev) => {
 window.addEventListener('message', (e) => {
   const m = e.data;
   if (m.tipo === 'cargar') cargar(m);
-  if (m.tipo === 'ir' && paginas.length) irA(m.pagina, m.y);
+  if (m.tipo === 'ir' && paginas.length) irA(m.pagina, m.y, false, m.suave !== false);
   if (m.tipo === 'marca' && paginas.length) marcar(m);
   if (m.tipo === 'nuevo') nuevoPdf(m.hay, m.texto);
-  if (m.tipo === 'sentido') { $('#sentido').textContent = m.titulo; $('#sentido').title = m.ayuda || ''; }
+  if (m.tipo === 'modo') {
+    $('#sentido').textContent = m.sentido.titulo; $('#sentido').title = m.sentido.ayuda || '';
+    $('#seguimiento').textContent = m.seguimiento.titulo; $('#seguimiento').title = m.seguimiento.ayuda || '';
+    $('#atenuar').setAttribute('aria-pressed', m.atenuar ? 'true' : 'false');
+    suave = m.suave !== false;
+  }
+  if (m.tipo === 'atenuar') document.body.classList.toggle('atenuado', !!m.si);
   if (m.tipo === 'aviso') $('#aviso').textContent = m.texto || '';
   if (m.tipo === 'trabajador' && pideTrabajador) { pideTrabajador(m.texto); pideTrabajador = null; }
 });

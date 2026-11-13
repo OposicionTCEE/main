@@ -98,7 +98,8 @@ Nada de `progreso` se copia nunca a `main` ni a `temario`.
 
 ## Pendiente
 
-0. **Panel TCEE, Revisar** (v0.54, 13/11/2026): hecha la fase 3 (`REVISAR.md`), pendiente de que el usuario la pruebe en el Mac.
+0. **Panel TCEE, Revisar** (v0.54, 13/11/2026; ajustes de la v0.55 tras la primera prueba: suavidad, arriba con arriba, modos y atenuado):
+   pendiente de que el usuario pruebe la v0.55 en el Mac (`REVISAR.md`).
    Lo que no se ha podido simular: la ventana aparte real y el desplazamiento del editor de VS Code (registro en *Salida › Panel TCEE: Revisar*).
 1. **Cante**: la pestaña de práctica está hecha (v0.13, sin probar aún en el Mac del usuario). Ideas siguientes en `CANTE.md`, apartado 6;
    registrar el cante con la preparadora sigue por definir.

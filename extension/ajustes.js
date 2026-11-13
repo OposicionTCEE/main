@@ -20,6 +20,13 @@ const SENTIDOS_REVISAR = [
   { valor: 'no', titulo: 'Sin sincronizar', detalle: 'Se mueven por separado; el doble clic en el PDF sigue llevando el cursor al texto.' },
 ];
 
+/** Valores de «Cuándo se mueve el otro lado» en Revisar */
+const SEGUIMIENTOS_REVISAR = [
+  { valor: 'alParar', titulo: 'Al parar', detalle: 'El otro lado no se mueve mientras te desplazas: va a su sitio cuando paras medio segundo.' },
+  { valor: 'alCambiar', titulo: 'Al cambiar de lado', detalle: 'El otro lado se queda quieto hasta que pasas el ratón a él.' },
+  { valor: 'continuo', titulo: 'Continuo', detalle: 'El otro lado se mueve a la vez que el que mueves.' },
+];
+
 /**
  * Secciones de la ventanita, en orden. Tipos de entrada:
  *  - accion: mostrar u ocultar una acción de la vista Acciones (se guarda en la lista tcee.accionesOcultas)
@@ -37,7 +44,10 @@ const SECCIONES = [
   ] },
   { titulo: 'Revisar (el tema y su PDF lado a lado)', entradas: [
     { tipo: 'opcion', clave: 'revisarSentido', titulo: 'Quién manda al desplazarse', opciones: SENTIDOS_REVISAR },
-    { tipo: 'siNo', clave: 'revisarBanda', titulo: 'Banda en el texto con el párrafo que se lee en el PDF' },
+    { tipo: 'opcion', clave: 'revisarSeguimiento', titulo: 'Cuándo se mueve el otro lado', opciones: SEGUIMIENTOS_REVISAR },
+    { tipo: 'siNo', clave: 'revisarAtenuar', titulo: 'Oscurecer el lado donde no está el ratón' },
+    { tipo: 'siNo', clave: 'revisarSuave', titulo: 'Deslizarse en vez de saltar (también el texto: desplazamiento suave de VS Code en los .tex)' },
+    { tipo: 'siNo', clave: 'revisarBanda', titulo: 'Banda en el texto con el párrafo que se lee arriba en el PDF' },
   ] },
   { titulo: 'Al abrir un tema', entradas: [
     { tipo: 'siNo', clave: 'notasContraidasAlAbrir', titulo: 'Contraer las notas al pie' },

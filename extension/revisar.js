@@ -4,9 +4,13 @@
 // - Foto fija: al abrir se leen a la vez el PDF, su SyncTeX y la copia del .tex con que se compiló (.build/main.fuente.tex, que deja
 //   scripts/compilar.sh). El PDF que se ve no cambia aunque se compile de nuevo: «Actualizar» toma otra foto y sigue en el mismo sitio.
 // - Las líneas del PDF (las de la copia) se traducen a las del texto de ahora por contenido (mapaLineas.js): los párrafos movidos se siguen.
+// - Referencia: el borde de arriba de cada lado (lo primero que se ve arriba en el PDF, arriba en el texto), por renglones dentro del párrafo.
 // - Sentido (ajuste tcee.revisarSentido): el PDF manda (por defecto), en los dos sentidos o sin sincronizar. Lo que mueve uno por orden
 //   del otro no se devuelve (si no, se perseguirían). Doble clic en el PDF: el cursor del texto a esa línea. Clic en el texto: se señala en el PDF.
-// - Banda de lectura (ajuste tcee.revisarBanda): en el texto, el párrafo que corresponde al punto de lectura del PDF.
+// - Seguimiento (tcee.revisarSeguimiento): el otro lado se mueve al parar (por defecto), al cambiar de lado con el ratón o continuo.
+//   Atenuar (tcee.revisarAtenuar): el lado donde no está el ratón se oscurece. Suave (tcee.revisarSuave): el PDF se desliza y, para el texto,
+//   se activa el desplazamiento suave de VS Code en los .tex (editor.smoothScrolling, en TCEE.code-workspace).
+// - Banda de lectura (ajuste tcee.revisarBanda): en el texto, el párrafo que corresponde al borde de arriba del PDF.
 'use strict';
 const vscode = require('vscode');
 const fs = require('fs');
@@ -22,6 +26,13 @@ const SENTIDOS = {
   no: { titulo: 'Sin sincronizar', ayuda: 'Se mueven por separado; el doble clic en el PDF sigue llevando el cursor al texto. Pulsa para cambiar' },
 };
 const ORDEN = ['pdf', 'ambos', 'no'];
+const SEGUIMIENTOS = {
+  alParar: { titulo: 'Sigue: al parar', ayuda: 'El otro lado no se mueve mientras te desplazas: va a su sitio cuando paras medio segundo. Pulsa para cambiar' },
+  alCambiar: { titulo: 'Sigue: al cambiar', ayuda: 'El otro lado se queda quieto hasta que pasas el ratón a él. Pulsa para cambiar' },
+  continuo: { titulo: 'Sigue: continuo', ayuda: 'El otro lado se mueve a la vez que este. Pulsa para cambiar' },
+};
+const ORDEN_SEGUIMIENTO = ['alParar', 'alCambiar', 'continuo'];
+const ESPERA_PARAR = 450;   // ms sin moverse para que el otro lado vaya a su sitio («al parar»)
 const pausa = (ms) => new Promise((r) => setTimeout(r, ms));
 const mtime = (f) => { try { return fs.statSync(f).mtimeMs; } catch (e) { return 0; } };
 async function esperar(cond, ms) { const fin = Date.now() + ms; for (;;) { const r = cond(); if (r) return r; if (Date.now() > fin) return null; await pausa(100); } }
@@ -35,11 +46,28 @@ function crearRevisar(context, { codigoTema, temaMostrado }) {
   const log = (t) => { if (!salida) salida = vscode.window.createOutputChannel('Panel TCEE: Revisar'); salida.appendLine(`${new Date().toLocaleTimeString('es-ES')}  ${t}`); };
   const conf = () => vscode.workspace.getConfiguration('tcee');
   const sentido = () => (SENTIDOS[conf().get('revisarSentido')] ? conf().get('revisarSentido') : 'pdf');
+  const seguimiento = () => (SEGUIMIENTOS[conf().get('revisarSeguimiento')] ? conf().get('revisarSeguimiento') : 'alParar');
+  const suave = () => conf().get('revisarSuave', true) !== false;
   const banda = vscode.window.createTextEditorDecorationType({
     isWholeLine: true, backgroundColor: new vscode.ThemeColor('editor.rangeHighlightBackground'),
     overviewRulerColor: new vscode.ThemeColor('editorOverviewRuler.rangeHighlightForeground'), overviewRulerLane: vscode.OverviewRulerLane.Center,
   });
-  context.subscriptions.push(banda, { dispose: () => { if (s) s.panel.dispose(); } });
+  const atenuado = vscode.window.createTextEditorDecorationType({ opacity: '0.45' });
+  context.subscriptions.push(banda, atenuado, { dispose: () => { if (s) s.panel.dispose(); } });
+
+  /**
+   * Desplazamiento suave del texto: lo hace VS Code (editor.smoothScrolling) y solo se puede pedir para todos los .tex. Se pone en el espacio
+   * de trabajo (TCEE.code-workspace) para LaTeX con tcee.revisarSuave y se quita al apagarlo (si lo puso el panel)
+   */
+  async function asegurarSuave() {
+    try {
+      const c = vscode.workspace.getConfiguration('editor', { languageId: 'latex' });
+      const ins = c.inspect('smoothScrolling') || {};
+      if (suave() && c.get('smoothScrolling') !== true) { await c.update('smoothScrolling', true, vscode.ConfigurationTarget.Workspace, true); log('desplazamiento suave de VS Code activado para los .tex'); }
+      if (!suave() && ins.workspaceLanguageValue === true) { await c.update('smoothScrolling', undefined, vscode.ConfigurationTarget.Workspace, true); log('desplazamiento suave de VS Code quitado para los .tex'); }
+    } catch (e) { log(`desplazamiento suave: ${e.message}`); }
+  }
+  context.subscriptions.push(vscode.workspace.onDidChangeConfiguration((e) => { if (e.affectsConfiguration('tcee.revisarSuave')) asegurarSuave(); }));
 
   const rutasDe = (uri) => {
     const dir = path.dirname(uri.fsPath), b = path.join(dir, '.build');
@@ -145,7 +173,8 @@ function crearRevisar(context, { codigoTema, temaMostrado }) {
     const codigo = codigoTema(uri.fsPath), r = rutasDe(uri);
     // dónde se estaba leyendo el texto, para abrir el PDF en ese sitio
     const ed0 = vscode.window.activeTextEditor;
-    const lineaInicial = ed0 && ed0.document === doc && ed0.visibleRanges.length ? ed0.visibleRanges[0].start.line + 1 : null;
+    const posInicial = ed0 && ed0.document === doc && ed0.visibleRanges.length ? ed0.visibleRanges[0].start : null;
+    asegurarSuave();
 
     const d = await decidir(doc, r, codigo, 'abrir');
     if (!d) return;
@@ -158,8 +187,9 @@ function crearRevisar(context, { codigoTema, temaMostrado }) {
     const panel = vscode.window.createWebviewPanel('tceeRevisar', `Revisar ${codigo}`, { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true },
       { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [media, lib] });
     panel.iconPath = new vscode.ThemeIcon('open-preview');
-    s = { uri, doc, codigo, r, panel, foto, grupo, mapa: crearMapa(foto.fuente, doc.getText()), lineaInicial,
-      vista: null, lineaLectura: null, ultimaRevelada: null, ignorarEditorHasta: 0, ultimoTop: null, subs: [] };
+    s = { uri, doc, codigo, r, panel, foto, grupo, mapa: crearMapa(foto.fuente, doc.getText()), posInicial,
+      vista: null, lineaLectura: null, ultimaRevelada: null, ignorarEditorHasta: 0, ultimoTop: null,
+      pendPdf: null, pendTexto: null, raton: null, pdfAtenuado: null, subs: [] };
     log(`revisar ${codigo}: ${s.mapa.emparejadas} líneas emparejadas entre el PDF y el texto de ahora`);
     const nonce = crypto.randomBytes(16).toString('base64');
     panel.webview.html = html({ nonce, csp: panel.webview.cspSource, url: (rel) => panel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, ...rel.split('/'))).toString() });
@@ -173,30 +203,104 @@ function crearRevisar(context, { codigoTema, temaMostrado }) {
     if (x.grupo && vscode.window.tabGroups.all.includes(x.grupo)) { const e = vis.find((v) => v.viewColumn === x.grupo.viewColumn); if (e) return e; }
     return vis[vis.length - 1] || null;
   }
-  /** Línea del texto de ahora en un punto del PDF (o null) */
-  function lineaEn(x, pagina, y, px) {
+  /** Línea del texto de ahora en un punto del PDF (o null). arriba: lo primero que se ve desde ese punto hacia abajo */
+  function lineaVieja(x, pagina, y, px, arriba = false) {
     if (!x.foto.idx) return null;
-    let lv = x.foto.idx.linea(pagina, y, px);
+    let lv = x.foto.idx.linea(pagina, y, px, { arriba });
     if (!lv) return null;
     // si SyncTeX da una línea vacía o de cierre, la de contenido de encima (el párrafo que se está leyendo)
     for (let k = 0; k < 6 && lv > 1 && vacia(x.foto.lineasFuente[lv - 1]); k++) lv--;
-    return x.mapa.aNuevo(lv);
+    return lv;
   }
-  /** Sitio del PDF de una línea del texto de ahora (o null). Una línea vacía o de cierre lleva al párrafo de debajo (el que empieza ahí) */
-  function sitioDe(x, linea) {
-    if (!x.foto.idx) return null;
+  function lineaEn(x, pagina, y, px) { const lv = lineaVieja(x, pagina, y, px); return lv ? x.mapa.aNuevo(lv) : null; }
+  /** Línea vieja (la del PDF) de una del texto de ahora; una vacía o de cierre lleva al párrafo de debajo (el que empieza ahí) */
+  function lineaDelPdf(x, linea) {
     let lv = x.mapa.aViejo(linea);
     for (let k = 0; k < 6 && lv < x.foto.lineasFuente.length && vacia(x.foto.lineasFuente[lv - 1]); k++) lv++;
-    return x.foto.idx.posicion(lv);
+    return lv;
   }
+  /** Sitio del PDF de una línea del texto de ahora (o null) */
+  function sitioDe(x, linea) { return x.foto.idx ? x.foto.idx.posicion(lineaDelPdf(x, linea)) : null; }
+  const textoLinea = (x, ln) => { try { return x.doc.lineAt(ln - 1).text; } catch (e) { return ''; } };
+
+  /**
+   * PDF → texto, por el borde de arriba: el punto de arriba de la vista del PDF da una línea y qué parte de ella queda por encima
+   * (por renglones: un párrafo es una sola línea del .tex). En el texto se pone arriba ese mismo trozo del párrafo, empezando en palabra
+   */
+  function destinoTexto(x, v) {
+    const lv = lineaVieja(x, v.pagina, v.y, null, true);
+    if (!lv) return null;
+    const f = x.foto.idx.fraccion(lv, v.pagina, v.y);
+    const ln = x.mapa.aNuevo(lv);
+    const t = textoLinea(x, ln);
+    let car = Math.round(f * t.length);
+    if (car > 0) { const e = t.lastIndexOf(' ', car); car = e >= 0 ? e + 1 : 0; }
+    return { ln, car, clave: `${ln}:${car}` };
+  }
+  /** Texto → PDF, por el borde de arriba: la posición de arriba del editor (línea y carácter) da el renglón del PDF */
+  function destinoPdf(x, pos) {
+    if (!x.foto.idx) return null;
+    const t = textoLinea(x, pos.line + 1);
+    const f = t.length ? Math.min(1, pos.character / t.length) : 0;
+    const lv = lineaDelPdf(x, pos.line + 1);
+    const fila = x.foto.idx.filaEn(lv, f) || x.foto.idx.posicion(lv);
+    return fila ? { pagina: fila.pagina, y: fila.arriba } : null;
+  }
+
   function ponerBanda(x, linea) {
+    x.lineaLectura = linea || x.lineaLectura;
     for (const e of vscode.window.visibleTextEditors) if (e.document.uri.toString() === x.uri.toString()) e.setDecorations(banda, []);
     const ed = editorTexto(x);
-    if (!ed || !linea || conf().get('revisarBanda', true) === false || sentido() === 'no') return;
-    ed.setDecorations(banda, [new vscode.Range(linea - 1, 0, linea - 1, 0)]);
+    if (ed && x.lineaLectura && conf().get('revisarBanda', true) !== false && sentido() !== 'no') ed.setDecorations(banda, [new vscode.Range(x.lineaLectura - 1, 0, x.lineaLectura - 1, 0)]);
+    atenuar(x);
+  }
+  /** Atenúa el lado donde no está el ratón (ajuste tcee.revisarAtenuar): el texto, menos el párrafo de la banda; o el PDF */
+  function atenuar(x) {
+    const si = conf().get('revisarAtenuar', true) !== false && sentido() !== 'no';
+    const ed = editorTexto(x);
+    for (const e of vscode.window.visibleTextEditors) if (e !== ed && e.document.uri.toString() === x.uri.toString()) e.setDecorations(atenuado, []);
+    if (ed) {
+      let rs = [];
+      if (si && x.raton === true) {
+        const n = x.doc.lineCount, b = conf().get('revisarBanda', true) !== false ? x.lineaLectura : null;
+        if (b && b >= 1 && b <= n) {
+          if (b > 1) rs.push(new vscode.Range(0, 0, b - 2, Number.MAX_SAFE_INTEGER));
+          if (b < n) rs.push(new vscode.Range(b, 0, n - 1, Number.MAX_SAFE_INTEGER));
+        } else rs = [new vscode.Range(0, 0, n - 1, Number.MAX_SAFE_INTEGER)];
+      }
+      ed.setDecorations(atenuado, rs);
+    }
+    const pdf = si && x.raton === false;
+    if (x.pdfAtenuado !== pdf) { x.pdfAtenuado = pdf; enviar(x, { tipo: 'atenuar', si: pdf }); }
   }
   const enviar = (x, m) => x.panel.webview.postMessage(m);
-  const enviarSentido = (x) => enviar(x, { tipo: 'sentido', ...SENTIDOS[sentido()] });
+  const enviarModo = (x) => enviar(x, { tipo: 'modo', sentido: SENTIDOS[sentido()], seguimiento: SEGUIMIENTOS[seguimiento()],
+    atenuar: conf().get('revisarAtenuar', true) !== false, suave: suave() });
+
+  /** Aplica lo último que ha mandado el PDF (según el seguimiento, al momento, al parar o al cambiar de lado) */
+  function aplicarPdf(x) {
+    const v = x.pendPdf; x.pendPdf = null;
+    if (!v || sentido() === 'no') return;
+    const d = destinoTexto(x, v);
+    if (!d) return;
+    ponerBanda(x, d.ln);
+    const ed = editorTexto(x);
+    if (ed && d.clave !== x.ultimaRevelada) {
+      x.ultimaRevelada = d.clave;
+      x.ignorarEditorHasta = Date.now() + 500;
+      ed.revealRange(new vscode.Range(d.ln - 1, d.car, d.ln - 1, d.car), vscode.TextEditorRevealType.AtTop);
+    }
+  }
+  /** Aplica lo último que ha mandado el texto (solo «en los dos sentidos») */
+  function aplicarTexto(x) {
+    const pos = x.pendTexto; x.pendTexto = null;
+    if (!pos || sentido() !== 'ambos') return;
+    const clave = `${pos.line}:${pos.character}`;
+    if (clave === x.ultimoTop) return;
+    x.ultimoTop = clave;
+    const p = destinoPdf(x, pos);
+    if (p) { enviar(x, { tipo: 'ir', pagina: p.pagina, y: p.y, suave: suave() }); ponerBanda(x, pos.line + 1); }
+  }
 
   function cargarEnVisor(x, posicion) {
     const f = x.foto;
@@ -205,65 +309,66 @@ function crearRevisar(context, { codigoTema, temaMostrado }) {
 
   function conectar(x) {
     const subs = x.subs;
+    let tPdf = null, tTexto = null;
     subs.push(x.panel.webview.onDidReceiveMessage(async (m) => {
       if (s !== x) return;
       if (m.tipo === 'listo') {
-        // al abrir, donde se leía el texto; si la página del visor se recarga (VS Code puede hacerlo), donde estaba
-        enviarSentido(x);
-        const p = !x.vista && x.lineaInicial ? sitioDe(x, x.lineaInicial) : null;
-        cargarEnVisor(x, x.vista || (p ? { pagina: p.pagina, y: p.arriba } : null));
+        // al abrir, donde se leía el texto (su borde de arriba); si la página del visor se recarga (VS Code puede hacerlo), donde estaba
+        x.pdfAtenuado = null;
+        enviarModo(x);
+        const p = !x.vista && x.posInicial ? destinoPdf(x, x.posInicial) : null;
+        cargarEnVisor(x, x.vista || p);
       } else if (m.tipo === 'pideTrabajador') {
         enviar(x, { tipo: 'trabajador', texto: fs.readFileSync(path.join(context.extensionPath, 'lib', 'pdfjs', 'pdf.worker.min.mjs'), 'utf8') });
       } else if (m.tipo === 'vista') {
         x.vista = { pagina: m.pagina, y: m.y };
         if (sentido() === 'no') return;
-        const ln = lineaEn(x, m.pagina, m.y);
-        if (!ln) return;
-        x.lineaLectura = ln;
-        ponerBanda(x, ln);
-        const ed = editorTexto(x);
-        if (ed && ln !== x.ultimaRevelada) {
-          x.ultimaRevelada = ln;
-          x.ignorarEditorHasta = Date.now() + 400;
-          ed.revealRange(new vscode.Range(ln - 1, 0, ln - 1, 0), vscode.TextEditorRevealType.AtTop);
-        }
+        x.pendPdf = x.vista;
+        const modo = seguimiento();
+        clearTimeout(tPdf);
+        if (modo === 'continuo') aplicarPdf(x);
+        else if (modo === 'alParar') tPdf = setTimeout(() => { if (s === x) aplicarPdf(x); }, ESPERA_PARAR);
+        // «al cambiar de lado»: espera a que el ratón salga del PDF
+      } else if (m.tipo === 'raton') {
+        x.raton = !!m.dentro;
+        if (seguimiento() === 'alCambiar') { if (!m.dentro) aplicarPdf(x); else aplicarTexto(x); }
+        atenuar(x);
       } else if (m.tipo === 'dobleClic') {
         const ln = lineaEn(x, m.pagina, m.y, m.x);
         const ed = editorTexto(x);
         if (!ln || !ed) return;
-        x.ignorarEditorHasta = Date.now() + 400;
+        x.ignorarEditorHasta = Date.now() + 500;
         const r = new vscode.Range(ln - 1, 0, ln - 1, 0);
         await vscode.window.showTextDocument(ed.document, { viewColumn: ed.viewColumn, preserveFocus: false, selection: r });
         ed.revealRange(r, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
-        x.lineaLectura = ln; ponerBanda(x, ln);
+        ponerBanda(x, ln);
       } else if (m.tipo === 'actualizar') {
         await actualizar(x);
-      } else if (m.tipo === 'sentido') {
-        const v = ORDEN[(ORDEN.indexOf(sentido()) + 1) % ORDEN.length];
-        await require('./ajustes').guardar('revisarSentido', v);   // se avisa al visor al cambiar el ajuste (abajo)
+      } else if (m.tipo === 'sentido' || m.tipo === 'seguimiento') {
+        const [clave, orden, actual] = m.tipo === 'sentido' ? ['revisarSentido', ORDEN, sentido()] : ['revisarSeguimiento', ORDEN_SEGUIMIENTO, seguimiento()];
+        await require('./ajustes').guardar(clave, orden[(orden.indexOf(actual) + 1) % orden.length]);   // el visor se entera al cambiar el ajuste
+      } else if (m.tipo === 'atenuar') {
+        await require('./ajustes').guardar('revisarAtenuar', conf().get('revisarAtenuar', true) === false);
       } else if (m.tipo === 'error') log(`visor: ${m.texto}`);
     }));
 
-    // texto → PDF (solo «en los dos sentidos»), con el desplazamiento del editor; lo movido por el PDF no se devuelve
-    let tTexto = null;
+    // texto → PDF (solo «en los dos sentidos»), por el borde de arriba del editor; lo movido por el PDF no se devuelve
     subs.push(vscode.window.onDidChangeTextEditorVisibleRanges((e) => {
       if (s !== x || sentido() !== 'ambos' || e.textEditor !== editorTexto(x) || !e.visibleRanges.length) return;
       if (Date.now() < x.ignorarEditorHasta) return;
+      x.pendTexto = e.visibleRanges[0].start;
+      const modo = seguimiento();
       clearTimeout(tTexto);
-      tTexto = setTimeout(() => {
-        const top = e.visibleRanges[0].start.line + 1;
-        if (top === x.ultimoTop) return;
-        x.ultimoTop = top;
-        const p = sitioDe(x, top);
-        if (p) { enviar(x, { tipo: 'ir', pagina: p.pagina, y: p.arriba }); x.lineaLectura = top; ponerBanda(x, top); }
-      }, 60);
+      if (modo === 'continuo') tTexto = setTimeout(() => { if (s === x) aplicarTexto(x); }, 60);
+      else if (modo === 'alParar') tTexto = setTimeout(() => { if (s === x) aplicarTexto(x); }, ESPERA_PARAR);
+      // «al cambiar de lado»: espera a que el ratón entre en el PDF
     }));
     // clic en el texto → se señala en el PDF (y se trae a la vista si no se ve)
     subs.push(vscode.window.onDidChangeTextEditorSelection((e) => {
       if (s !== x || e.kind !== vscode.TextEditorSelectionChangeKind.Mouse || e.textEditor.document.uri.toString() !== x.uri.toString()) return;
       if (sentido() === 'no') return;
       const p = sitioDe(x, e.selections[0].active.line + 1);
-      if (p) enviar(x, { tipo: 'marca', pagina: p.pagina, arriba: p.arriba, abajo: p.abajo });
+      if (p) enviar(x, { tipo: 'marca', pagina: p.pagina, arriba: p.arriba, abajo: p.abajo, suave: suave() });
     }));
     // el texto cambia: se rehace la correspondencia (poco a poco: como mucho dos veces por segundo)
     let tMapa = null;
@@ -277,14 +382,14 @@ function crearRevisar(context, { codigoTema, temaMostrado }) {
     const alCompilar = () => { if (s === x && mtime(x.r.pdf) > x.foto.fecha + 500) enviar(x, { tipo: 'nuevo', hay: true }); };
     subs.push(vigia, vigia.onDidChange(alCompilar), vigia.onDidCreate(alCompilar));
     subs.push(vscode.workspace.onDidChangeConfiguration((e) => {
-      if (s !== x) return;
-      if (e.affectsConfiguration('tcee.revisarSentido')) { enviarSentido(x); ponerBanda(x, x.lineaLectura); }
-      if (e.affectsConfiguration('tcee.revisarBanda')) ponerBanda(x, x.lineaLectura);
+      if (s !== x || !['tcee.revisarSentido', 'tcee.revisarSeguimiento', 'tcee.revisarAtenuar', 'tcee.revisarBanda', 'tcee.revisarSuave'].some((k) => e.affectsConfiguration(k))) return;
+      enviarModo(x); ponerBanda(x);
     }));
 
     x.panel.onDidDispose(() => {
+      clearTimeout(tPdf); clearTimeout(tTexto);
       subs.forEach((d) => d.dispose());
-      for (const e of vscode.window.visibleTextEditors) if (e.document.uri.toString() === x.uri.toString()) e.setDecorations(banda, []);
+      for (const e of vscode.window.visibleTextEditors) if (e.document.uri.toString() === x.uri.toString()) { e.setDecorations(banda, []); e.setDecorations(atenuado, []); }
       // se cierra la copia del texto de la ventana aparte (si no tiene cambios sin guardar): la ventana se cierra sola si queda vacía
       if (x.grupo && vscode.window.tabGroups.all.includes(x.grupo)) {
         const t = x.grupo.tabs.find((y) => y.input instanceof vscode.TabInputText && y.input.uri.toString() === x.uri.toString());
@@ -301,20 +406,15 @@ function crearRevisar(context, { codigoTema, temaMostrado }) {
     if (!d || s !== x) return;
     if (d === 'compilar') { const ed = editorTexto(x); await compilar(x.doc, x.r, x.codigo, ed ? ed.viewColumn : vscode.ViewColumn.One); }
     if (mtime(x.r.pdf) <= x.foto.fecha && d !== 'compilar') { vscode.window.showInformationMessage('Ya estás viendo el último PDF compilado.'); enviar(x, { tipo: 'nuevo', hay: false }); return; }
-    // dónde se está: línea del texto de ahora y cuánto se ha bajado dentro de ella (para quedar igual en el PDF nuevo)
-    let linea = null, dentro = 0;
-    if (x.vista && x.foto.idx) {
-      linea = lineaEn(x, x.vista.pagina, x.vista.y);
-      const p = linea && sitioDe(x, linea);
-      if (p && p.pagina === x.vista.pagina) dentro = x.vista.y - p.arriba;
-    }
+    // dónde se está (el borde de arriba del PDF, en el texto de ahora: línea y carácter), para quedar igual en el PDF nuevo
+    const d0 = x.vista && x.foto.idx ? destinoTexto(x, x.vista) : null;
     const foto = tomarFoto(x.r, x.doc);
     if (!foto || s !== x) return;
     x.foto = foto;
     x.mapa = crearMapa(foto.fuente, x.doc.getText());
     x.ultimaRevelada = null;
-    const p = linea ? sitioDe(x, linea) : null;
-    cargarEnVisor(x, p ? { pagina: p.pagina, y: p.arriba + dentro } : x.vista);
+    const p = d0 ? destinoPdf(x, { line: d0.ln - 1, character: d0.car }) : null;
+    cargarEnVisor(x, p || x.vista);
   }
 
   return { abrir };

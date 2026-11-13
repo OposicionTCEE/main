@@ -1,4 +1,4 @@
-# Revisar: el tema y su PDF lado a lado (v0.54, 13 de noviembre de 2026)
+# Revisar: el tema y su PDF lado a lado (v0.54–0.55, 13 de noviembre de 2026)
 
 Acción **Revisar** de la barra lateral (y ⌘⌥E en un `.tex`): una ventana aparte con el `main.tex` a la izquierda y su PDF a la
 derecha, con el desplazamiento sincronizado. Código: `extension/revisar.js` (la extensión), `extension/synctex.js` (qué línea es cada trozo
@@ -18,6 +18,16 @@ del PDF), `extension/mapaLineas.js` (líneas del PDF ↔ líneas de ahora), `ext
 - Visor propio con **pdf.js** (Mozilla, Apache 2.0; descarga aprobada por el usuario): el visor de LaTeX Workshop no avisa de su
   desplazamiento y no se puede sincronizar con él.
 
+### Ajustes tras la primera prueba (v0.55, 13 de noviembre de 2026, con vídeo del usuario)
+
+- **Más suave**: los saltos eran bruscos. El PDF se desliza; el texto avanza renglón a renglón dentro del párrafo (antes saltaba de
+  párrafo en párrafo) y, para que se deslice, se activa el desplazamiento suave de VS Code en los `.tex` (ajuste `tcee.revisarSuave`).
+- **Referencia arriba con arriba** (propuesta del usuario): lo primero que se ve arriba en el PDF va arriba en el texto, y al revés.
+  Antes era a un cuarto de la altura del PDF. En el vídeo, con una figura arriba del PDF, el texto saltaba a un párrafo posterior: corregido.
+- **Que el movimiento no distraiga**: el usuario propuso oscurecer el lado donde no está el ratón y moverse solo al cambiar de lado, y
+  ofrecerlo como opción. Claude añadió **«al parar»** (el otro lado no se mueve mientras te desplazas; va a su sitio al parar medio
+  segundo), que es el valor por defecto. Quedan tres modos (al parar, al cambiar de lado, continuo) y el atenuado aparte, combinable.
+
 ## 2. La foto fija
 
 - `scripts/compilar.sh` copia el `.tex` al empezar a compilar (`.build/.tmp/main.fuente.tex`) y, si sale PDF, lo deja junto a él:
@@ -32,14 +42,23 @@ del PDF), `extension/mapaLineas.js` (líneas del PDF ↔ líneas de ahora), `ext
 
 - Lee el `.synctex.gz` (formato de SyncTeX, `synctex_parser.c`) y guarda los registros de `main.tex`: cajas de renglón y puntos
   (palabras, espacios, fórmulas), en puntos del PDF desde la esquina superior izquierda, como pdf.js. Un tema de 61 páginas: 0,15 s.
-- **PDF → línea**: dentro del cuerpo de la página (la cabecera y el pie llevan la línea en que TeX cerró la página y harían saltar la
-  sincronización), lo que contiene el punto; antes las palabras que las cajas (la caja de un renglón lleva la línea donde acabó el
-  párrafo, a menudo la línea en blanco de después); luego lo más cercano. `revisar.js` sube además a la línea con contenido si SyncTeX
-  da una vacía o de cierre (`}`, `\end{…}`, `\clearpage`).
+- **PDF → línea**: dentro del cuerpo de la página, lo que contiene el punto; antes las palabras que las cajas (la caja de un renglón lleva
+  la línea donde acabó el párrafo, a menudo la línea en blanco de después); luego lo más cercano. `revisar.js` sube además a la línea con
+  contenido si SyncTeX da una vacía o de cierre (`}`, `\end{…}`, `\clearpage`).
+  - **Cuerpo de la página**: la cabecera, el pie y los pegamentos de arriba de cada página llevan la línea en que TeX *cerró* la página
+    (más abajo en el `.tex`) y hacían saltar la sincronización. El cuerpo es la columna de texto: la más baja de las cajas grandes que
+    miden al menos el 60 % de la más alta (la página entera, con cabecera y pie, también es una caja). No se leen los pegamentos ni los
+    espacios (`g`, `k`) ni las cajas de alto cero que no son sangrías.
+  - **Por el borde de arriba** (`{ arriba: true }`, para sincronizar): lo primero que se ve desde ese punto hacia abajo; si el punto cae
+    en el pie o en el hueco entre páginas, lo primero de la página siguiente. En el 3.B.20, el renglón de arriba de 52 de las 61 páginas
+    da la misma línea que la orden `synctex` (o una a menos de 6); las otras son la portada y los índices, o el arranque de un bloque.
+  - **Figuras y tablas**: si el punto no está en ningún renglón pero sí en una caja grande que no es el cuerpo, es de ella.
+- **Renglones de una línea** (`filas`, `fraccion`, `filaEn`): un párrafo es una sola línea del `.tex` y ocupa varios renglones en el PDF.
+  Se sabe qué parte del párrafo queda por encima de un punto (y al revés), para seguirlo renglón a renglón.
 - **Línea → PDF**: el primer sitio de la línea (página menor y, en ella, lo más arriba), primero por sus palabras; las líneas vacías
   llevan al párrafo de debajo.
-- Comparado con la orden `synctex` de TeX Live (`pruebas/synctex.js`): en el 3.B.20, el 91 % de los puntos del PDF dan la misma línea
-  o una a ±2 (un renglón) y el 97 % de las líneas caen a menos de un renglón de donde las pone la referencia; en la muestra de prueba,
+- Comparado con la orden `synctex` de TeX Live (`pruebas/synctex.js`): en el 3.B.20, el 96 % de los puntos del PDF dan la misma línea
+  o una a ±2 (un renglón) y el 93 % de las líneas caen a menos de un renglón de donde las pone la referencia; en la muestra de prueba,
   con listas, 94 % y 88 %. No tiene que coincidir siempre: SyncTeX da varios sitios por línea y la referencia elige con otras reglas.
 
 ## 4. Líneas del PDF ↔ líneas de ahora (`mapaLineas.js`)
@@ -59,17 +78,27 @@ Se rehace al escribir (como mucho dos veces por segundo); con un tema de 1.800 l
 
 ## 6. Sincronización
 
-- **Punto de lectura** del PDF: a un cuarto de la altura de la vista. El visor avisa de él al desplazarse (`vista`, como mucho cada 80 ms).
-- **El PDF manda** (por defecto): el texto pone arriba la línea de ese punto (`revealRange` AtTop) y la marca con la **banda**.
-- **En los dos sentidos**: además, al desplazar el texto, el PDF pone su línea de arriba a la altura de lectura (`ir`).
-- **Sin sincronizar**: se mueven por separado (el doble clic sigue funcionando).
-- **Sin persecución**: lo que mueve uno por orden del otro no se devuelve (el visor no avisa durante 0,3 s tras un `ir`; la extensión ignora
-  el desplazamiento del texto 0,4 s tras moverlo).
+- **Referencia: el borde de arriba** de cada lado. El visor avisa de lo que se ve arriba (`vista`, 6 px por debajo del borde, como mucho
+  cada 80 ms). Con ello se calcula la línea y qué parte del párrafo queda por encima; en el texto se pone arriba ese trozo
+  (`revealRange` AtTop en la línea y el carácter, al principio de una palabra). Al revés, el carácter de arriba del editor
+  (`visibleRanges[0].start`) da el renglón del PDF que va arriba (`ir`).
+- **Quién manda** (`tcee.revisarSentido`): el PDF (por defecto), los dos o ninguno (el doble clic sigue funcionando).
+- **Cuándo se mueve el otro lado** (`tcee.revisarSeguimiento`): *al parar* (por defecto: 0,45 s sin moverse), *al cambiar de lado* (el
+  visor avisa de si el ratón entra o sale, `raton`: al salir del PDF el texto va a su sitio; al entrar, el PDF va al del texto si mandan
+  los dos) o *continuo*.
+- **Atenuar** (`tcee.revisarAtenuar`): el lado donde no está el ratón se oscurece. En el texto, con una decoración de opacidad
+  sobre todo menos el párrafo de la banda; en el PDF, las páginas a media opacidad.
+- **Suave** (`tcee.revisarSuave`): el visor se desliza (animación de 0,16 a 0,38 s, frenando; si el usuario toca la rueda o el teclado,
+  se para y manda él; nada si el sistema pide reducir el movimiento). El texto lo mueve VS Code: se pone `editor.smoothScrolling` para
+  LaTeX en el espacio de trabajo (afecta a todos los `.tex`; con la rueda de un ratón se nota, con el trackpad apenas) y se quita al
+  apagar el ajuste.
+- **Sin persecución**: lo que mueve uno por orden del otro no se devuelve (el visor no avisa mientras se desliza ni 0,15 s después; la
+  extensión ignora el desplazamiento del texto 0,5 s tras moverlo).
+- Los botones del visor cambian quién manda, cuándo sigue y el atenuado (se guardan en Ajustes); la banda se quita en Ajustes (`tcee.revisarBanda`).
 - **Doble clic** en el PDF: el cursor del texto va al principio de esa línea. **Clic** en el texto: se marca en el PDF (franja amarilla que se
   apaga) y, si no se ve, se trae a la vista.
-- El botón del visor cambia quién manda (se guarda en Ajustes, `tcee.revisarSentido`); la banda se quita en Ajustes (`tcee.revisarBanda`).
-- **Actualizar** guarda la línea de ahora que se está leyendo y cuánto se ha bajado dentro de ella, y en el PDF nuevo vuelve a ese sitio
-  (aunque el párrafo se haya movido).
+- **Actualizar** guarda el trozo del texto de ahora que está arriba (línea y carácter) y en el PDF nuevo vuelve a ese sitio (aunque el
+  párrafo se haya movido).
 
 ## 7. El visor (`media/revisar.js`)
 
@@ -79,6 +108,7 @@ Se rehace al escribir (como mucho dos veces por segundo); con un tema de 1.800 l
 - Solo se pintan las páginas cercanas a la vista (1.200 px arriba y abajo); las lejanas se liberan (un tema de 60 páginas a doble
   resolución ocuparía cientos de MB). Cada página se pinta en un lienzo aparte y se cambia al terminar: no se ve en blanco mientras tanto.
 - Zoom (−, +, ↔ ajustar al ancho; teclas + y −) sin perder el punto de lectura. Ajustar al ancho sigue al tamaño de la ventana.
+- Barra: página, zoom, *PDF → texto* (quién manda), *Sigue: …* (cuándo), ◐ (atenuar), fecha del PDF y *Actualizar*.
 - Política de seguridad: scripts con nonce y de la extensión; trabajador desde Blob; `connect-src` solo la extensión.
 
 ## 8. Pruebas
@@ -86,15 +116,19 @@ Se rehace al escribir (como mucho dos veces por segundo); con un tema de 1.800 l
 - `node extension/pruebas/synctex.js [tema.tex]`: SyncTeX contra la orden `synctex` de TeX Live (85 % como mínimo en cada sentido).
 - `node extension/pruebas/mapa_lineas.js`: añadir, borrar, mover y retocar párrafos; un tema real con cambios (822 de 822 líneas).
 - `node extension/pruebas/revisar_visor.js [fichero.pdf]`: el visor en Chromium con la página y los ficheros en orígenes distintos y la
-  misma política de seguridad que en VS Code (carga, pintado, avisos, `ir` sin persecución, doble clic, marca, zoom, Actualizar).
+  misma política de seguridad que en VS Code (carga, pintado, avisos por el borde de arriba, `ir` deslizándose y sin persecución, doble
+  clic, marca, zoom, Actualizar, ratón dentro y fuera, atenuado y botones).
 - `node extension/pruebas/revisar_sesion.js`: la lógica de la extensión con VS Code simulado y un tema compilado con `compilar.sh`
-  (ventana, sincronización, párrafo movido, aviso de PDF nuevo, Actualizar en el mismo párrafo, cierre).
+  (ventana, desplazamiento suave, borde de arriba renglón a renglón, cabecera y pie, los tres modos, atenuado, los dos sentidos, párrafo
+  movido, aviso de PDF nuevo, Actualizar en el mismo sitio, cierre).
 - No simulable: la ventana aparte real y el desplazamiento del editor de VS Code. Se prueba en el Mac; cada paso queda en
   *Salida › Panel TCEE: Revisar*.
 
 ## 9. Límites conocidos
 
-- La sincronización va por **líneas del `.tex`**: un párrafo escrito en una sola línea larga se sigue entero (el texto no baja renglón a
-  renglón dentro de él). La banda dice qué párrafo es.
+- Dentro de un párrafo se sigue **por proporción de renglones**: el renglón del PDF y el trozo del texto se corresponden aproximadamente
+  (las órdenes de LaTeX ocupan sitio en el texto y no en el PDF).
+- El **sticky scroll** de VS Code (las líneas fijas de arriba con `\section` y `\subsection`) tapa las primeras líneas del texto: «arriba
+  con arriba» se queda unas líneas corto mientras esté encendido.
 - Las figuras, tablas y notas al pie que TeX coloca en otro sitio llevan a donde TeX las puso.
 - Si el editor de la ventana aparte se cierra, se sincroniza con el de la ventana principal.

@@ -19,6 +19,8 @@ function html({ nonce, csp, url }) {
   <button data-a="ancho" title="Ajustar al ancho">↔</button>
   <span class="sep"></span>
   <button data-a="sentido" id="sentido" title="">PDF → texto</button>
+  <button data-a="seguimiento" id="seguimiento" title="">Sigue: al parar</button>
+  <button data-a="atenuar" id="atenuar" aria-pressed="true" title="Oscurecer el lado donde no está el ratón (pulsa para quitarlo o ponerlo)">◐</button>
   <span class="hueco"></span>
   <span id="fecha" class="apagado"></span>
   <button data-a="actualizar" id="actualizar">Actualizar</button>

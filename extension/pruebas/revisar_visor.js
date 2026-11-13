@@ -83,25 +83,28 @@ function servir(manejador) {
   await p.evaluate(() => { window.__enviados.length = 0; document.querySelector('#hojas').scrollTop = 1500; });
   const vista = await esperarMensaje('vista', 2000);
   const esperado = await p.evaluate((A) => {
-    const h = document.querySelector('#hojas'), yv = h.scrollTop + h.clientHeight * 0.25;
+    const h = document.querySelector('#hojas'), yv = h.scrollTop + 6;
     const hs = [...document.querySelectorAll('.hoja')]; let pg = hs[0]; for (const x of hs) if (x.offsetTop - 10 <= yv) pg = x;
     return { pagina: Number(pg.dataset.n), y: (yv - pg.offsetTop) / (pg.clientWidth / Number(pg.dataset.ancho)) };
   }, ANCHO);
   comprobar('al desplazarse avisa de página y altura', vista && vista.pagina === esperado.pagina && Math.abs(vista.y - esperado.y) < 2, JSON.stringify(vista));
 
-  // «ir»: se mueve y no lo vuelve a avisar
-  await p.evaluate(() => { window.__enviados.length = 0; window.postMessage({ tipo: 'ir', pagina: 3, y: 200 }, '*'); });
-  await p.waitForTimeout(500);
-  const tras = await p.evaluate((A) => { const h = document.querySelector('#hojas'), pg = document.querySelectorAll('.hoja')[2]; const e = pg.clientWidth / Number(pg.dataset.ancho); return { top: h.scrollTop, quiero: pg.offsetTop + 200 * e - h.clientHeight * 0.25 }; }, ANCHO);
-  comprobar('«ir» pone ese punto a la altura de lectura', Math.abs(tras.top - tras.quiero) < 2, JSON.stringify(tras));
+  // «ir»: se desliza (no salta), llega y no lo vuelve a avisar
+  await p.evaluate(() => { window.__enviados.length = 0; window.__alturas = []; const h = document.querySelector('#hojas'); h.addEventListener('scroll', () => window.__alturas.push(h.scrollTop)); window.postMessage({ tipo: 'ir', pagina: 3, y: 200 }, '*'); });
+  await p.waitForTimeout(600);
+  const pasos = await p.evaluate(() => window.__alturas.length);
+  comprobar('«ir» se desliza en varios pasos (no salta)', pasos >= 4, `${pasos} pasos`);
+  const tras = await p.evaluate((A) => { const h = document.querySelector('#hojas'), pg = document.querySelectorAll('.hoja')[2]; const e = pg.clientWidth / Number(pg.dataset.ancho); return { top: h.scrollTop, quiero: pg.offsetTop + 200 * e - 6 }; }, ANCHO);
+  comprobar('«ir» pone ese punto arriba de la vista', Math.abs(tras.top - tras.quiero) < 2, JSON.stringify(tras));
   comprobar('«ir» no se vuelve a avisar (no hay persecución)', !(await enviados()).some((m) => m.tipo === 'vista'));
   comprobar('el contador de páginas sigue', (await p.textContent('#pag')).startsWith('3 /'));
 
   // doble clic
-  const caja = await p.$eval('.hoja[data-n="3"]', (d) => { const r = d.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + 150 }; });
+  // (en la parte de la página 3 que se ve: 100 puntos por debajo del borde de arriba de la vista, que está en y = 200)
+  const caja = await p.$eval('.hoja[data-n="3"]', (d) => { const r = d.getBoundingClientRect(), e = d.clientWidth / Number(d.dataset.ancho); return { x: r.left + r.width / 2, y: r.top + 300 * e }; });
   await p.mouse.dblclick(caja.x, caja.y);
   const dc = await esperarMensaje('dobleClic', 2000);
-  comprobar('doble clic: página y punto del PDF', dc && dc.pagina === 3 && dc.x > 250 && dc.x < 360, JSON.stringify(dc));
+  comprobar('doble clic: página y punto del PDF', dc && dc.pagina === 3 && dc.x > 250 && dc.x < 360 && Math.abs(dc.y - 300) < 2, JSON.stringify(dc));
 
   // marca
   await p.evaluate(() => window.postMessage({ tipo: 'marca', pagina: 3, arriba: 300, abajo: 340 }, '*'));
@@ -112,7 +115,7 @@ function servir(manejador) {
   const antes = await p.evaluate(() => { const h = document.querySelector('#hojas'); return h.scrollTop; });
   await p.click('[data-a="mas"]'); await p.waitForTimeout(400);
   const despues = await p.evaluate((A) => {
-    const h = document.querySelector('#hojas'), yv = h.scrollTop + h.clientHeight * 0.25;
+    const h = document.querySelector('#hojas'), yv = h.scrollTop + 6;
     const hs = [...document.querySelectorAll('.hoja')]; let pg = hs[0]; for (const x of hs) if (x.offsetTop - 10 <= yv) pg = x;
     return { pagina: Number(pg.dataset.n), y: (yv - pg.offsetTop) / (pg.clientWidth / Number(pg.dataset.ancho)), zoom: document.querySelector('#zoom').textContent };
   }, ANCHO);
@@ -130,8 +133,26 @@ function servir(manejador) {
   await cargarPdf({ fecha: '13/11 19:00', posicion: { pagina: 2, y: 300 } });
   const recargado = await esperarMensaje('cargado', 30000); await p.waitForTimeout(300);
   comprobar('vuelve a cargar (Actualizar)', !!recargado, JSON.stringify((await enviados()).slice(-3)));
-  const otra = !recargado ? 999 : await p.evaluate((A) => { const h = document.querySelector('#hojas'), pg = document.querySelectorAll('.hoja')[1]; const e = pg.clientWidth / Number(pg.dataset.ancho); return Math.abs(h.scrollTop - (pg.offsetTop + 300 * e - h.clientHeight * 0.25)); }, ANCHO);
+  const otra = !recargado ? 999 : await p.evaluate((A) => { const h = document.querySelector('#hojas'), pg = document.querySelectorAll('.hoja')[1]; const e = pg.clientWidth / Number(pg.dataset.ancho); return Math.abs(h.scrollTop - (pg.offsetTop + 300 * e - 6)); }, ANCHO);
   comprobar('al recargar va al sitio pedido', otra < 2, `${otra}`);
+
+  // ratón: avisa al entrar y al salir (para «al cambiar de lado» y para atenuar)
+  await p.evaluate(() => { window.__enviados.length = 0; });
+  await p.evaluate(() => document.documentElement.dispatchEvent(new MouseEvent('mouseleave')));
+  await p.waitForTimeout(100);
+  await p.mouse.move(420, 420); await p.waitForTimeout(100);
+  const raton = (await enviados()).filter((m) => m.tipo === 'raton').map((m) => m.dentro);
+  comprobar('avisa de si el ratón está dentro o fuera', JSON.stringify(raton) === '[false,true]', JSON.stringify(raton));
+  // atenuar y modo
+  await p.evaluate(() => window.postMessage({ tipo: 'atenuar', si: true }, '*')); await p.waitForTimeout(400);
+  const op = await p.$eval('.hoja', (h) => getComputedStyle(h).opacity);
+  comprobar('atenuado: el PDF se oscurece', Number(op) < 0.7, op);
+  await p.evaluate(() => window.postMessage({ tipo: 'modo', sentido: { titulo: 'PDF ⇄ texto' }, seguimiento: { titulo: 'Sigue: al cambiar' }, atenuar: false, suave: true }, '*'));
+  await p.waitForTimeout(100);
+  comprobar('la barra dice el modo', (await p.textContent('#seguimiento')) === 'Sigue: al cambiar' && (await p.getAttribute('#atenuar', 'aria-pressed')) === 'false');
+  await p.click('#seguimiento'); await p.click('#atenuar');
+  const pedidos = (await enviados()).map((m) => m.tipo);
+  comprobar('los botones se lo piden a la extensión', pedidos.includes('seguimiento') && pedidos.includes('atenuar'), pedidos.join(','));
 
   comprobar('sin violaciones de la política de seguridad', !violaciones.length, violaciones.join(' | '));
   comprobar('sin errores en la consola', !errores.length, errores.slice(0, 3).join(' | '));
