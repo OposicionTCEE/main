@@ -75,7 +75,8 @@
     ],
     "tcee.claudeAbrirEn": "ventanaNueva",
     "tcee.revisarSeguimiento": "continuo",
-    "tcee.revisarSentido": "ambos"
+    "tcee.revisarSentido": "ambos",
+    "tcee.revisarOscuridad": 85
   },
   "tasks": {
     "version": "2.0.0",
